@@ -1,0 +1,31 @@
+{
+  "name": "semajsx",
+  "version": "0.0.1",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "bun run --filter='./packages/*' build",
+    "test": "vitest --config vitest.config.ts",
+    "test:unit": "vitest --config packages/sema/vitest.unit.config.ts",
+    "test:all": "bun run test:unit -- --run && bun run test -- --run",
+    "typecheck": "bun run --filter='./packages/*' typecheck",
+    "lint": "bun run --filter='./packages/sema' lint",
+    "format": "bun run --filter='./packages/sema' format"
+  },
+  "devDependencies": {
+    "@prettier/plugin-oxc": "^0.0.4",
+    "@semajsx/config": "workspace:*",
+    "@types/bun": "^1.2.19",
+    "@types/node": "^24.1.0",
+    "@vitest/browser": "^3.2.4",
+    "oxlint": "^1.9.0",
+    "playwright": "^1.54.2",
+    "prettier": "^3.6.2",
+    "tsdown": "^0.13.2",
+    "typescript": "^5.9.2",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.2.4"
+  }
+}
