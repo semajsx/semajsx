@@ -1,7 +1,7 @@
 {
-  "name": "@semajsx/core",
+  "name": "@semajsx/web",
   "version": "0.0.1",
-  "description": "Core runtime and reactivity system for semajsx",
+  "description": "Web/DOM rendering strategies and plugins for semajsx",
   "module": "dist/index.js",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,11 +14,16 @@
     "./jsx-runtime": {
       "types": "./dist/jsx-runtime.d.ts",
       "import": "./dist/jsx-runtime.js"
+    },
+    "./jsx-dev-runtime": {
+      "types": "./dist/jsx-dev-runtime.d.ts",
+      "import": "./dist/jsx-dev-runtime.js"
     }
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "jsx.d.ts"
   ],
   "scripts": {
     "build": "tsdown",
@@ -26,7 +31,9 @@
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "bun run build"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@semajsx/core": "workspace:*"
+  },
   "devDependencies": {
     "typescript": "^5.0.0"
   },

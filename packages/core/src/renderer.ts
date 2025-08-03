@@ -6,7 +6,7 @@ export interface Renderer {
   render(
     vnode: VNode,
     container: any,
-  ): RenderedNode | null | Promise<RenderedNode>;
+  ): RenderedNode;
   unmount(node: RenderedNode): void;
   plugins: PluginManager;
 }
@@ -23,8 +23,14 @@ export function createRenderer<TNode, TContainer>(
   function render(
     vnode: VNode,
     container: TContainer,
-  ): RenderedNode | null | Promise<RenderedNode> {
-    return renderNode(vnode, container, strategies, pluginManager);
+  ): RenderedNode {
+    const result = renderNode(vnode, container, strategies, pluginManager);
+    if (result instanceof Promise) {
+      throw result;
+    } else if (result === null) {
+      throw new Error("Rendered node is null");
+    }
+    return result as RenderedNode;
   }
 
   return {

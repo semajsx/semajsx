@@ -1,188 +1,220 @@
-import { VNode, Component, SignalProps } from './core/types';
+import type { VNode, Signal, Component, Fragment, ErrorBoundary, Suspense } from './types';
+
+// Helper type to make properties optionally accept Signals
+type MaybeSignal<T> = T | Signal<T>;
+
+// Base element attributes
+interface BaseElementAttributes {
+  key?: string | number;
+  ref?: any;
+  children?: any;
+}
+
+// Base HTML attributes
+interface BaseHTMLAttributes extends BaseElementAttributes {
+  // Event handlers
+  onClick?: (event: Event) => void;
+  onInput?: (event: Event) => void;
+  onChange?: (event: Event) => void;
+  onSubmit?: (event: Event) => void;
+  onFocus?: (event: Event) => void;
+  onBlur?: (event: Event) => void;
+  onKeyDown?: (event: KeyboardEvent) => void;
+  onKeyUp?: (event: KeyboardEvent) => void;
+  onMouseDown?: (event: MouseEvent) => void;
+  onMouseUp?: (event: MouseEvent) => void;
+  onMouseEnter?: (event: MouseEvent) => void;
+  onMouseLeave?: (event: MouseEvent) => void;
+
+  // Standard HTML attributes - can be signals
+  id?: MaybeSignal<string>;
+  className?: MaybeSignal<string>;
+  class?: MaybeSignal<string>;
+  style?: MaybeSignal<string | Record<string, string | number>>;
+  title?: MaybeSignal<string>;
+  role?: MaybeSignal<string>;
+  tabIndex?: MaybeSignal<number>;
+  hidden?: MaybeSignal<boolean>;
+  
+  // Data and ARIA attributes
+  [key: `data-${string}`]: any;
+  [key: `aria-${string}`]: any;
+}
+
+// HTML attributes type
+type HTMLAttributes = BaseHTMLAttributes;
 
 declare global {
   namespace JSX {
     interface Element extends VNode {}
     
     interface IntrinsicElements {
-      // HTML elements
-      a: SignalProps<HTMLAnchorElement>;
-      abbr: SignalProps<HTMLElement>;
-      address: SignalProps<HTMLElement>;
-      area: SignalProps<HTMLAreaElement>;
-      article: SignalProps<HTMLElement>;
-      aside: SignalProps<HTMLElement>;
-      audio: SignalProps<HTMLAudioElement>;
-      b: SignalProps<HTMLElement>;
-      base: SignalProps<HTMLBaseElement>;
-      bdi: SignalProps<HTMLElement>;
-      bdo: SignalProps<HTMLElement>;
-      big: SignalProps<HTMLElement>;
-      blockquote: SignalProps<HTMLQuoteElement>;
-      body: SignalProps<HTMLBodyElement>;
-      br: SignalProps<HTMLBRElement>;
-      button: SignalProps<HTMLButtonElement>;
-      canvas: SignalProps<HTMLCanvasElement>;
-      caption: SignalProps<HTMLElement>;
-      cite: SignalProps<HTMLElement>;
-      code: SignalProps<HTMLElement>;
-      col: SignalProps<HTMLTableColElement>;
-      colgroup: SignalProps<HTMLTableColElement>;
-      data: SignalProps<HTMLDataElement>;
-      datalist: SignalProps<HTMLDataListElement>;
-      dd: SignalProps<HTMLElement>;
-      del: SignalProps<HTMLModElement>;
-      details: SignalProps<HTMLDetailsElement>;
-      dfn: SignalProps<HTMLElement>;
-      dialog: SignalProps<HTMLDialogElement>;
-      div: SignalProps<HTMLDivElement>;
-      dl: SignalProps<HTMLDListElement>;
-      dt: SignalProps<HTMLElement>;
-      em: SignalProps<HTMLElement>;
-      embed: SignalProps<HTMLEmbedElement>;
-      fieldset: SignalProps<HTMLFieldSetElement>;
-      figcaption: SignalProps<HTMLElement>;
-      figure: SignalProps<HTMLElement>;
-      footer: SignalProps<HTMLElement>;
-      form: SignalProps<HTMLFormElement>;
-      h1: SignalProps<HTMLHeadingElement>;
-      h2: SignalProps<HTMLHeadingElement>;
-      h3: SignalProps<HTMLHeadingElement>;
-      h4: SignalProps<HTMLHeadingElement>;
-      h5: SignalProps<HTMLHeadingElement>;
-      h6: SignalProps<HTMLHeadingElement>;
-      head: SignalProps<HTMLHeadElement>;
-      header: SignalProps<HTMLElement>;
-      hgroup: SignalProps<HTMLElement>;
-      hr: SignalProps<HTMLHRElement>;
-      html: SignalProps<HTMLHtmlElement>;
-      i: SignalProps<HTMLElement>;
-      iframe: SignalProps<HTMLIFrameElement>;
-      img: SignalProps<HTMLImageElement>;
-      input: SignalProps<HTMLInputElement>;
-      ins: SignalProps<HTMLModElement>;
-      kbd: SignalProps<HTMLElement>;
-      keygen: SignalProps<HTMLElement>;
-      label: SignalProps<HTMLLabelElement>;
-      legend: SignalProps<HTMLLegendElement>;
-      li: SignalProps<HTMLLIElement>;
-      link: SignalProps<HTMLLinkElement>;
-      main: SignalProps<HTMLElement>;
-      map: SignalProps<HTMLMapElement>;
-      mark: SignalProps<HTMLElement>;
-      menu: SignalProps<HTMLElement>;
-      menuitem: SignalProps<HTMLElement>;
-      meta: SignalProps<HTMLMetaElement>;
-      meter: SignalProps<HTMLMeterElement>;
-      nav: SignalProps<HTMLElement>;
-      noindex: SignalProps<HTMLElement>;
-      noscript: SignalProps<HTMLElement>;
-      object: SignalProps<HTMLObjectElement>;
-      ol: SignalProps<HTMLOListElement>;
-      optgroup: SignalProps<HTMLOptGroupElement>;
-      option: SignalProps<HTMLOptionElement>;
-      output: SignalProps<HTMLOutputElement>;
-      p: SignalProps<HTMLParagraphElement>;
-      param: SignalProps<HTMLParamElement>;
-      picture: SignalProps<HTMLElement>;
-      pre: SignalProps<HTMLPreElement>;
-      progress: SignalProps<HTMLProgressElement>;
-      q: SignalProps<HTMLQuoteElement>;
-      rp: SignalProps<HTMLElement>;
-      rt: SignalProps<HTMLElement>;
-      ruby: SignalProps<HTMLElement>;
-      s: SignalProps<HTMLElement>;
-      samp: SignalProps<HTMLElement>;
-      slot: SignalProps<HTMLSlotElement>;
-      script: SignalProps<HTMLScriptElement>;
-      section: SignalProps<HTMLElement>;
-      select: SignalProps<HTMLSelectElement>;
-      small: SignalProps<HTMLElement>;
-      source: SignalProps<HTMLSourceElement>;
-      span: SignalProps<HTMLSpanElement>;
-      strong: SignalProps<HTMLElement>;
-      style: SignalProps<HTMLStyleElement>;
-      sub: SignalProps<HTMLElement>;
-      summary: SignalProps<HTMLElement>;
-      sup: SignalProps<HTMLElement>;
-      table: SignalProps<HTMLTableElement>;
-      template: SignalProps<HTMLTemplateElement>;
-      tbody: SignalProps<HTMLTableSectionElement>;
-      td: SignalProps<HTMLTableDataCellElement>;
-      textarea: SignalProps<HTMLTextAreaElement>;
-      tfoot: SignalProps<HTMLTableSectionElement>;
-      th: SignalProps<HTMLTableHeaderCellElement>;
-      thead: SignalProps<HTMLTableSectionElement>;
-      time: SignalProps<HTMLTimeElement>;
-      title: SignalProps<HTMLTitleElement>;
-      tr: SignalProps<HTMLTableRowElement>;
-      track: SignalProps<HTMLTrackElement>;
-      u: SignalProps<HTMLElement>;
-      ul: SignalProps<HTMLUListElement>;
-      var: SignalProps<HTMLElement>;
-      video: SignalProps<HTMLVideoElement>;
-      wbr: SignalProps<HTMLElement>;
-      webview: SignalProps<HTMLElement>;
+      // Document structure
+      html: HTMLAttributes;
+      head: HTMLAttributes;
+      body: HTMLAttributes;
+      title: HTMLAttributes;
+      
+      // Content sections
+      main: HTMLAttributes;
+      section: HTMLAttributes;
+      article: HTMLAttributes;
+      aside: HTMLAttributes;
+      header: HTMLAttributes;
+      footer: HTMLAttributes;
+      nav: HTMLAttributes;
+      address: HTMLAttributes;
+      
+      // Headings
+      h1: HTMLAttributes;
+      h2: HTMLAttributes;
+      h3: HTMLAttributes;
+      h4: HTMLAttributes;
+      h5: HTMLAttributes;
+      h6: HTMLAttributes;
+      
+      // Text content
+      div: HTMLAttributes;
+      span: HTMLAttributes;
+      p: HTMLAttributes;
+      pre: HTMLAttributes;
+      blockquote: HTMLAttributes;
+      hr: HTMLAttributes;
+      br: HTMLAttributes;
+      
+      // Inline text semantics
+      a: HTMLAttributes & {
+        href?: MaybeSignal<string>;
+        target?: MaybeSignal<string>;
+        rel?: MaybeSignal<string>;
+        download?: MaybeSignal<boolean | string>;
+      };
+      b: HTMLAttributes;
+      bdi: HTMLAttributes;
+      bdo: HTMLAttributes;
+      cite: HTMLAttributes;
+      code: HTMLAttributes;
+      data: HTMLAttributes;
+      dfn: HTMLAttributes;
+      em: HTMLAttributes;
+      i: HTMLAttributes;
+      kbd: HTMLAttributes;
+      mark: HTMLAttributes;
+      q: HTMLAttributes;
+      rp: HTMLAttributes;
+      rt: HTMLAttributes;
+      ruby: HTMLAttributes;
+      s: HTMLAttributes;
+      samp: HTMLAttributes;
+      small: HTMLAttributes;
+      strong: HTMLAttributes;
+      sub: HTMLAttributes;
+      sup: HTMLAttributes;
+      time: HTMLAttributes;
+      u: HTMLAttributes;
+      var: HTMLAttributes;
+      wbr: HTMLAttributes;
+      
+      // Lists
+      ol: HTMLAttributes;
+      ul: HTMLAttributes;
+      li: HTMLAttributes;
+      dl: HTMLAttributes;
+      dt: HTMLAttributes;
+      dd: HTMLAttributes;
+      
+      // Forms
+      form: HTMLAttributes & {
+        action?: MaybeSignal<string>;
+        method?: MaybeSignal<string>;
+      };
+      fieldset: HTMLAttributes;
+      legend: HTMLAttributes;
+      label: HTMLAttributes & {
+        htmlFor?: MaybeSignal<string>;
+      };
+      input: HTMLAttributes & {
+        type?: MaybeSignal<string>;
+        value?: MaybeSignal<string | number>;
+        placeholder?: MaybeSignal<string>;
+        disabled?: MaybeSignal<boolean>;
+        required?: MaybeSignal<boolean>;
+        name?: MaybeSignal<string>;
+        checked?: MaybeSignal<boolean>;
+      };
+      button: HTMLAttributes & {
+        type?: MaybeSignal<"button" | "submit" | "reset">;
+        disabled?: MaybeSignal<boolean>;
+      };
+      select: HTMLAttributes & {
+        value?: MaybeSignal<string | string[]>;
+        multiple?: MaybeSignal<boolean>;
+        disabled?: MaybeSignal<boolean>;
+        name?: MaybeSignal<string>;
+      };
+      option: HTMLAttributes & {
+        value?: MaybeSignal<string>;
+        selected?: MaybeSignal<boolean>;
+        disabled?: MaybeSignal<boolean>;
+      };
+      textarea: HTMLAttributes & {
+        value?: MaybeSignal<string>;
+        placeholder?: MaybeSignal<string>;
+        disabled?: MaybeSignal<boolean>;
+        rows?: MaybeSignal<number>;
+        cols?: MaybeSignal<number>;
+      };
+      
+      // Media
+      img: HTMLAttributes & {
+        src?: MaybeSignal<string>;
+        alt?: MaybeSignal<string>;
+        width?: MaybeSignal<string | number>;
+        height?: MaybeSignal<string | number>;
+        loading?: MaybeSignal<"lazy" | "eager">;
+      };
+      
+      // Tables
+      table: HTMLAttributes;
+      thead: HTMLAttributes;
+      tbody: HTMLAttributes;
+      tfoot: HTMLAttributes;
+      tr: HTMLAttributes;
+      th: HTMLAttributes;
+      td: HTMLAttributes;
       
       // SVG elements
-      svg: SignalProps<SVGSVGElement>;
-      animate: SignalProps<SVGAnimateElement>;
-      animateMotion: SignalProps<SVGAnimateMotionElement>;
-      animateTransform: SignalProps<SVGAnimateTransformElement>;
-      circle: SignalProps<SVGCircleElement>;
-      clipPath: SignalProps<SVGClipPathElement>;
-      defs: SignalProps<SVGDefsElement>;
-      desc: SignalProps<SVGDescElement>;
-      ellipse: SignalProps<SVGEllipseElement>;
-      feBlend: SignalProps<SVGFEBlendElement>;
-      feColorMatrix: SignalProps<SVGFEColorMatrixElement>;
-      feComponentTransfer: SignalProps<SVGFEComponentTransferElement>;
-      feComposite: SignalProps<SVGFECompositeElement>;
-      feConvolveMatrix: SignalProps<SVGFEConvolveMatrixElement>;
-      feDiffuseLighting: SignalProps<SVGFEDiffuseLightingElement>;
-      feDisplacementMap: SignalProps<SVGFEDisplacementMapElement>;
-      feDistantLight: SignalProps<SVGFEDistantLightElement>;
-      feDropShadow: SignalProps<SVGFEDropShadowElement>;
-      feFlood: SignalProps<SVGFEFloodElement>;
-      feFuncA: SignalProps<SVGFEFuncAElement>;
-      feFuncB: SignalProps<SVGFEFuncBElement>;
-      feFuncG: SignalProps<SVGFEFuncGElement>;
-      feFuncR: SignalProps<SVGFEFuncRElement>;
-      feGaussianBlur: SignalProps<SVGFEGaussianBlurElement>;
-      feImage: SignalProps<SVGFEImageElement>;
-      feMerge: SignalProps<SVGFEMergeElement>;
-      feMergeNode: SignalProps<SVGFEMergeNodeElement>;
-      feMorphology: SignalProps<SVGFEMorphologyElement>;
-      feOffset: SignalProps<SVGFEOffsetElement>;
-      fePointLight: SignalProps<SVGFEPointLightElement>;
-      feSpecularLighting: SignalProps<SVGFESpecularLightingElement>;
-      feSpotLight: SignalProps<SVGFESpotLightElement>;
-      feTile: SignalProps<SVGFETileElement>;
-      feTurbulence: SignalProps<SVGFETurbulenceElement>;
-      filter: SignalProps<SVGFilterElement>;
-      foreignObject: SignalProps<SVGForeignObjectElement>;
-      g: SignalProps<SVGGElement>;
-      image: SignalProps<SVGImageElement>;
-      line: SignalProps<SVGLineElement>;
-      linearGradient: SignalProps<SVGLinearGradientElement>;
-      marker: SignalProps<SVGMarkerElement>;
-      mask: SignalProps<SVGMaskElement>;
-      metadata: SignalProps<SVGMetadataElement>;
-      mpath: SignalProps<SVGElement>;
-      path: SignalProps<SVGPathElement>;
-      pattern: SignalProps<SVGPatternElement>;
-      polygon: SignalProps<SVGPolygonElement>;
-      polyline: SignalProps<SVGPolylineElement>;
-      radialGradient: SignalProps<SVGRadialGradientElement>;
-      rect: SignalProps<SVGRectElement>;
-      stop: SignalProps<SVGStopElement>;
-      switch: SignalProps<SVGSwitchElement>;
-      symbol: SignalProps<SVGSymbolElement>;
-      text: SignalProps<SVGTextElement>;
-      textPath: SignalProps<SVGTextPathElement>;
-      tspan: SignalProps<SVGTSpanElement>;
-      use: SignalProps<SVGUseElement>;
-      view: SignalProps<SVGViewElement>;
+      svg: HTMLAttributes & {
+        viewBox?: MaybeSignal<string>;
+        width?: MaybeSignal<string | number>;
+        height?: MaybeSignal<string | number>;
+      };
+      path: HTMLAttributes & {
+        d?: MaybeSignal<string>;
+        fill?: MaybeSignal<string>;
+        stroke?: MaybeSignal<string>;
+        strokeWidth?: MaybeSignal<string | number>;
+      };
+      circle: HTMLAttributes & {
+        cx?: MaybeSignal<string | number>;
+        cy?: MaybeSignal<string | number>;
+        r?: MaybeSignal<string | number>;
+        fill?: MaybeSignal<string>;
+        stroke?: MaybeSignal<string>;
+      };
+      rect: HTMLAttributes & {
+        x?: MaybeSignal<string | number>;
+        y?: MaybeSignal<string | number>;
+        width?: MaybeSignal<string | number>;
+        height?: MaybeSignal<string | number>;
+        fill?: MaybeSignal<string>;
+        stroke?: MaybeSignal<string>;
+      };
+      g: HTMLAttributes;
+      line: HTMLAttributes;
+      polygon: HTMLAttributes;
+      polyline: HTMLAttributes;
+      text: HTMLAttributes;
     }
     
     interface ElementChildrenAttribute {

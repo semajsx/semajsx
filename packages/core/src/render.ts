@@ -61,7 +61,11 @@ export function renderNode(
     return renderComponent(vnode, container, strategies, plugins);
   }
 
-  throw new Error(`Unknown vnode type: ${vnode.type}`);
+  throw new Error(
+    `Unknown vnode type: ${
+      typeof vnode.type === "symbol" ? vnode.type : vnode.type
+    }`,
+  );
 }
 
 function renderTextNode(
@@ -70,12 +74,31 @@ function renderTextNode(
   strategies: RenderStrategies<any, any>,
 ): RenderedNode {
   const text = vnode.props?.nodeValue || "";
+  const signal = vnode.props?.signal;
   const element = strategies.createTextNode(text, container);
+
+  const subscriptions: (() => void)[] = [];
+
+  // If this text node is connected to a signal, subscribe to changes
+  if (signal) {
+    const unsubscribe = signal.subscribe((newValue: any) => {
+      const newText = String(newValue);
+
+      if (element.nodeValue !== undefined) {
+        // Text node
+        element.nodeValue = newText;
+      } else if (element.textContent !== undefined) {
+        // Element node
+        element.textContent = newText;
+      }
+    });
+    subscriptions.push(unsubscribe);
+  }
 
   return {
     vnode,
     element,
-    subscriptions: [],
+    subscriptions,
     children: [],
   };
 }
@@ -147,12 +170,19 @@ function renderComponent(
     if (result instanceof Promise) {
       return result.then((resolvedVNode) => {
         popComponentStack();
-        return renderNode(
+        const renderedNode = renderNode(
           resolvedVNode,
           container,
           strategies,
           plugins,
         ) as RenderedNode;
+
+        // Append the rendered component to the container
+        if (renderedNode && renderedNode.element) {
+          strategies.appendChild(container, renderedNode.element);
+        }
+
+        return renderedNode;
       }).catch((error) => {
         popComponentStack();
         throw error;
@@ -160,7 +190,19 @@ function renderComponent(
     }
 
     popComponentStack();
-    return renderNode(result, container, strategies, plugins) as RenderedNode;
+    const renderedNode = renderNode(
+      result,
+      container,
+      strategies,
+      plugins,
+    ) as RenderedNode;
+
+    // Append the rendered component to the container
+    if (renderedNode && renderedNode.element) {
+      strategies.appendChild(container, renderedNode.element);
+    }
+
+    return renderedNode;
   } catch (error) {
     popComponentStack();
     throw error;
