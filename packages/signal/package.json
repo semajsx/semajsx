@@ -2,15 +2,12 @@
   "name": "@semajsx/signal",
   "version": "0.0.1",
   "description": "Reactive signal system for semajsx",
-  "module": "dist/index.js",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "module": "src/mod.ts",
+  "main": "src/mod.ts",
+  "types": "src/mod.ts",
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    }
+    ".": "./src/mod.ts"
   },
   "files": [
     "dist",

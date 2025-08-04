@@ -4,7 +4,7 @@
   "description": "Reactive signal system for SemaJSX - lightweight signals with automatic dependency tracking",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/mod.ts"
   },
   "publish": {
     "exclude": [

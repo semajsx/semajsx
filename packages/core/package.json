@@ -2,19 +2,13 @@
   "name": "@semajsx/core",
   "version": "0.0.1",
   "description": "Core runtime and reactivity system for semajsx",
-  "module": "dist/index.js",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "module": "src/mod.ts",
+  "main": "src/mod.ts",
+  "types": "src/mod.ts",
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./jsx-runtime": {
-      "types": "./dist/jsx-runtime.d.ts",
-      "import": "./dist/jsx-runtime.js"
-    }
+    ".": "./src/mod.ts",
+    "./jsx-runtime": "./src/jsx-runtime.ts"
   },
   "files": [
     "dist",

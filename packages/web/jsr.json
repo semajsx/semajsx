@@ -4,7 +4,7 @@
   "description": "Web/DOM rendering strategies and browser optimizations for SemaJSX framework",
   "license": "MIT",
   "exports": {
-    ".": "./src/index.ts",
+    ".": "./src/mod.ts",
     "./jsx-runtime": "./src/jsx-runtime.ts",
     "./jsx-dev-runtime": "./src/jsx-dev-runtime.ts"
   },
