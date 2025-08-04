@@ -22,7 +22,8 @@
     "jsr:dry-run:all": "bun run jsr:dry-run:signal && bun run jsr:dry-run:core && bun run jsr:dry-run:web",
     "jsr:dry-run:core": "cd packages/core && npx jsr publish --dry-run",
     "jsr:dry-run:signal": "cd packages/signal && npx jsr publish --dry-run",
-    "jsr:dry-run:web": "cd packages/web && npx jsr publish --dry-run"
+    "jsr:dry-run:web": "cd packages/web && npx jsr publish --dry-run",
+    "build:blog": "bun run --filter='./packages/*' build && bun run --filter='./apps/blog' build && mv ./apps/blog/dist ./dist"
   },
   "devDependencies": {
     "@prettier/plugin-oxc": "^0.0.4",
