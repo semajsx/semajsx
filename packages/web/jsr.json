@@ -1,0 +1,22 @@
+{
+  "name": "@semajsx/web",
+  "version": "0.0.1",
+  "description": "Web/DOM rendering strategies and browser optimizations for SemaJSX framework",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts",
+    "./jsx-runtime": "./src/jsx-runtime.ts",
+    "./jsx-dev-runtime": "./src/jsx-dev-runtime.ts"
+  },
+  "imports": {
+    "@semajsx/core": "jsr:@semajsx/core@^0.0.1"
+  },
+  "publish": {
+    "exclude": [
+      "dist",
+      "tsdown.config.ts",
+      "**/*.test.ts",
+      "**/*.test.tsx"
+    ]
+  }
+}

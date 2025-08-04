@@ -12,7 +12,17 @@
     "test:all": "bun run test:unit -- --run && bun run test -- --run",
     "typecheck": "bun run --filter='./packages/*' typecheck",
     "lint": "bun run --filter='./packages/sema' lint",
-    "format": "bun run --filter='./packages/sema' format"
+    "format": "bun run --filter='./packages/sema' format",
+    "jsr:publish": "bun run jsr:publish:all",
+    "jsr:publish:all": "bun run jsr:publish:signal && bun run jsr:publish:core && bun run jsr:publish:web",
+    "jsr:publish:core": "cd packages/core && npx jsr publish",
+    "jsr:publish:signal": "cd packages/signal && npx jsr publish",
+    "jsr:publish:web": "cd packages/web && npx jsr publish",
+    "jsr:dry-run": "bun run jsr:dry-run:all",
+    "jsr:dry-run:all": "bun run jsr:dry-run:signal && bun run jsr:dry-run:core && bun run jsr:dry-run:web",
+    "jsr:dry-run:core": "cd packages/core && npx jsr publish --dry-run",
+    "jsr:dry-run:signal": "cd packages/signal && npx jsr publish --dry-run",
+    "jsr:dry-run:web": "cd packages/web && npx jsr publish --dry-run"
   },
   "devDependencies": {
     "@prettier/plugin-oxc": "^0.0.4",
