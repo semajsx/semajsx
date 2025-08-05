@@ -9,7 +9,7 @@ import {
 } from "./types";
 import { PluginManager } from "./plugin-manager";
 import { applyProps } from "./signal-utils";
-import { createTextVNode } from "./vnode";
+import { createTextVNode, isVNode } from "./vnode";
 import {
   clearSuspenseState,
   getComponentStack,
@@ -50,6 +50,11 @@ export function renderNode(
   // Text node handling
   if (vnode.type === "#text") {
     return renderTextNode(vnode, container, strategies);
+  }
+
+  // Signal VNode handling
+  if (vnode.type === "#signal") {
+    return renderSignalNode(vnode, container, strategies, plugins);
   }
 
   // Regular elements and components
@@ -100,6 +105,61 @@ function renderTextNode(
     element,
     subscriptions,
     children: [],
+  };
+}
+
+function renderSignalNode(
+  vnode: VNode,
+  container: any,
+  strategies: RenderStrategies<any, any>,
+  plugins: PluginManager,
+): RenderedNode {
+  const signal = vnode.props?.signal;
+  const initialVNode = vnode.props?.signalVNode;
+
+  if (!signal || !initialVNode) {
+    throw new Error("Invalid signal VNode: missing signal or signalVNode props");
+  }
+
+  // Render the initial VNode
+  let currentRenderedNode = renderNode(initialVNode, container, strategies, plugins) as RenderedNode;
+  
+  const subscriptions: (() => void)[] = [];
+
+  // Subscribe to signal changes
+  const unsubscribe = signal.subscribe((newValue: any) => {
+    // Check if the new value is a VNode
+    if (isVNode(newValue)) {
+      // Unmount the current node
+      if (currentRenderedNode) {
+        unmountNode(currentRenderedNode, strategies);
+        if (currentRenderedNode.element) {
+          strategies.removeChild(container, currentRenderedNode.element);
+        }
+      }
+
+      // Render the new VNode
+      const newRenderedNode = renderNode(newValue, container, strategies, plugins) as RenderedNode;
+      if (newRenderedNode && newRenderedNode.element) {
+        strategies.appendChild(container, newRenderedNode.element);
+      }
+      
+      currentRenderedNode = newRenderedNode;
+    }
+  });
+  
+  subscriptions.push(unsubscribe);
+
+  // Append initial element to container
+  if (currentRenderedNode && currentRenderedNode.element) {
+    strategies.appendChild(container, currentRenderedNode.element);
+  }
+
+  return {
+    vnode,
+    element: currentRenderedNode?.element || null,
+    subscriptions,
+    children: currentRenderedNode ? [currentRenderedNode] : [],
   };
 }
 

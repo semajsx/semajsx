@@ -34,16 +34,30 @@ function flattenChildren(children: JSXNode[]): VNode[] {
       // Convert primitives to text vnodes
       result.push(createTextVNode(String(child)));
     } else if (isSignal(child)) {
-      // Create a text node with signal information
-      result.push({
-        type: "#text",
-        props: {
-          nodeValue: String(child.value),
-          signal: child,
-        },
-        children: [],
-        key: undefined,
-      } as VNode);
+      // Check if signal value is a VNode
+      if (isVNode(child.value)) {
+        // Create a special signal VNode wrapper
+        result.push({
+          type: "#signal",
+          props: {
+            signal: child,
+            signalVNode: child.value,
+          },
+          children: [],
+          key: undefined,
+        } as VNode);
+      } else {
+        // Create a text node with signal information for primitive values
+        result.push({
+          type: "#text",
+          props: {
+            nodeValue: String(child.value),
+            signal: child,
+          },
+          children: [],
+          key: undefined,
+        } as VNode);
+      }
     } else {
       // Already a VNode
       result.push(child as VNode);
