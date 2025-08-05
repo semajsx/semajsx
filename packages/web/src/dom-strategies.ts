@@ -238,6 +238,12 @@ export const domStrategies: WebRenderStrategies = {
     parent.insertBefore(child, before);
   },
 
+  replaceChild(parent: Node, newChild: Node, oldChild: Node): void {
+    if (oldChild.parentNode === parent) {
+      parent.replaceChild(newChild, oldChild);
+    }
+  },
+
   onMount(element: Node, container: Element): void {
     // Lifecycle hook for when element is mounted
     if (element instanceof Element) {

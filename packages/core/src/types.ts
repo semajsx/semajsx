@@ -73,6 +73,7 @@ export interface RenderStrategies<TNode, TContainer> {
   appendChild(parent: TNode, child: TNode): void;
   removeChild(parent: TNode, child: TNode): void;
   insertBefore(parent: TNode, child: TNode, before: TNode): void;
+  replaceChild(parent: TNode, newChild: TNode, oldChild: TNode): void;
   
   // Lifecycle
   onMount?(element: TNode, container: TContainer): void;

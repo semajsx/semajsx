@@ -130,18 +130,26 @@ function renderSignalNode(
   const unsubscribe = signal.subscribe((newValue: any) => {
     // Check if the new value is a VNode
     if (isVNode(newValue)) {
-      // Unmount the current node
+      // Get the current element reference before unmounting
+      const currentElement = currentRenderedNode?.element;
+      
+      // Render the new VNode first
+      const newRenderedNode = renderNode(newValue, container, strategies, plugins) as RenderedNode;
+      
+      // Replace the old element with the new one
+      if (currentElement && newRenderedNode?.element) {
+        strategies.replaceChild(container, newRenderedNode.element, currentElement);
+      } else if (newRenderedNode?.element && !currentElement) {
+        // If no current element, just append the new one
+        strategies.appendChild(container, newRenderedNode.element);
+      } else if (currentElement && !newRenderedNode?.element) {
+        // If no new element, remove the old one
+        strategies.removeChild(container, currentElement);
+      }
+      
+      // Unmount the old node after replacement
       if (currentRenderedNode) {
         unmountNode(currentRenderedNode, strategies);
-        if (currentRenderedNode.element) {
-          strategies.removeChild(container, currentRenderedNode.element);
-        }
-      }
-
-      // Render the new VNode
-      const newRenderedNode = renderNode(newValue, container, strategies, plugins) as RenderedNode;
-      if (newRenderedNode && newRenderedNode.element) {
-        strategies.appendChild(container, newRenderedNode.element);
       }
       
       currentRenderedNode = newRenderedNode;
