@@ -29,7 +29,7 @@ export default defineConfig({
   resolve: {
     extensions: [".ts", ".tsx", ".js", ".jsx", ".mdx"],
     alias: {
-      "@/": "/src",
+      "@/": "/src/",
     },
   },
   esbuild: {
