@@ -4,8 +4,37 @@ import { h } from "./vnode";
 
 // JSX automatic runtime
 export { Fragment };
-export const jsx = h;
-export const jsxs = h;
+
+// Production jsx runtime - children are passed in props
+export function jsx(
+  type: any,
+  props: any,
+  key?: any
+): any {
+  const { children, ...restProps } = props || {};
+  const propsWithKey = key ? { ...restProps, key } : restProps;
+  
+  if (children !== undefined) {
+    return h(type, propsWithKey, children);
+  }
+  return h(type, propsWithKey);
+}
+
+// Production jsxs runtime - children are passed in props as array
+export function jsxs(
+  type: any,
+  props: any,
+  key?: any
+): any {
+  const { children, ...restProps } = props || {};
+  const propsWithKey = key ? { ...restProps, key } : restProps;
+  
+  if (children !== undefined) {
+    // children is already an array in jsxs
+    return h(type, propsWithKey, ...(Array.isArray(children) ? children : [children]));
+  }
+  return h(type, propsWithKey);
+}
 
 // Development version of jsx function with additional debug info
 export function jsxDEV(
