@@ -61,7 +61,7 @@ export default function PostList({ posts }: { posts: Record<string, any> }) {
                 )}
                 
                 {post.metadata.description && (
-                  <p className="mt-2 text-gray-600">{post.metadata.description}</p>
+                  <p className="mt-2 text-gray-600 prose prose-sm max-w-none">{post.metadata.description}</p>
                 )}
                 
                 <Link 
