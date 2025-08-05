@@ -9,7 +9,7 @@ export default defineConfig({
   plugins: [
     tailwindcss(),
     mdx({
-      jsxImportSource: "@semajsx/dom",
+      jsxImportSource: "@semajsx/web",
       jsxRuntime: "automatic",
       development: false,
       rehypePlugins: [

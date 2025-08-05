@@ -1,42 +1,30 @@
 {
-  "name": "semajsx",
-  "version": "0.0.1",
+  "name": "demo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "workspaces": [
-    "apps/*",
     "packages/*"
   ],
   "scripts": {
-    "build": "bun run --filter='./packages/*' build",
-    "test": "vitest --config vitest.config.ts",
-    "test:unit": "vitest --config packages/sema/vitest.unit.config.ts",
-    "test:all": "bun run test:unit -- --run && bun run test -- --run",
-    "typecheck": "bun run --filter='./packages/*' typecheck",
-    "lint": "bun run --filter='./packages/sema' lint",
-    "format": "bun run --filter='./packages/sema' format",
-    "jsr:publish": "bun run jsr:publish:all",
-    "jsr:publish:all": "bun run jsr:publish:signal && bun run jsr:publish:core && bun run jsr:publish:web",
-    "jsr:publish:core": "cd packages/core && npx jsr publish",
-    "jsr:publish:signal": "cd packages/signal && npx jsr publish",
-    "jsr:publish:web": "cd packages/web && npx jsr publish",
-    "jsr:dry-run": "bun run jsr:dry-run:all",
-    "jsr:dry-run:all": "bun run jsr:dry-run:signal && bun run jsr:dry-run:core && bun run jsr:dry-run:web",
-    "jsr:dry-run:core": "cd packages/core && npx jsr publish --dry-run",
-    "jsr:dry-run:signal": "cd packages/signal && npx jsr publish --dry-run",
-    "jsr:dry-run:web": "cd packages/web && npx jsr publish --dry-run",
-    "build:blog": "bun run --filter='./packages/*' build && bun run --filter='./apps/blog' build && mv ./apps/blog/dist ./dist"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@semajsx/signal": "workspace:*",
+    "@semajsx/web": "workspace:*",
+    "@tailwindcss/vite": "^4.1.11",
+    "tailwindcss": "^4.1.11"
   },
   "devDependencies": {
-    "@prettier/plugin-oxc": "^0.0.4",
-    "@semajsx/config": "workspace:*",
-    "@types/bun": "^1.2.19",
-    "@types/node": "^24.1.0",
-    "@vitest/browser": "^3.2.4",
-    "oxlint": "^1.9.0",
-    "playwright": "^1.54.2",
-    "prettier": "^3.6.2",
-    "tsdown": "^0.13.2",
-    "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
+    "@mdx-js/rollup": "^3.1.0",
+    "@shikijs/rehype": "^3.9.2",
+    "@types/node": "^22.0.0",
+    "remark-frontmatter": "^5.0.0",
+    "remark-gfm": "^4.0.1",
+    "typescript": "^5.0.0",
+    "vite": "^6.0.0"
   },
   "packageManager": "bun@1.2"
 }
