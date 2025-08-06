@@ -121,51 +121,51 @@ function renderSignalNode(
     throw new Error("Invalid signal VNode: missing signal or signalVNode props");
   }
 
-  // Render the initial VNode
-  let currentRenderedNode = renderNode(initialVNode, container, strategies, plugins) as RenderedNode;
+  // Create a placeholder element to mark the position
+  const placeholder = strategies.createTextNode("", container);
+  strategies.appendChild(container, placeholder);
+
+  // Render the initial VNode without appending it yet
+  let currentRenderedNode = renderNode(initialVNode, placeholder.parentNode, strategies, plugins) as RenderedNode;
   
   const subscriptions: (() => void)[] = [];
+
+  // Replace placeholder with initial element
+  if (currentRenderedNode && currentRenderedNode.element) {
+    strategies.replaceChild(container, currentRenderedNode.element, placeholder);
+  }
 
   // Subscribe to signal changes
   const unsubscribe = signal.subscribe((newValue: any) => {
     // Check if the new value is a VNode
     if (isVNode(newValue)) {
-      // Get the current element reference before unmounting
+      // Get the current element reference
       const currentElement = currentRenderedNode?.element;
       
-      // Render the new VNode first
-      const newRenderedNode = renderNode(newValue, container, strategies, plugins) as RenderedNode;
+      if (!currentElement) return;
+      
+      // Render the new VNode
+      const newRenderedNode = renderNode(newValue, currentElement.parentNode, strategies, plugins) as RenderedNode;
       
       // Replace the old element with the new one
-      if (currentElement && newRenderedNode?.element) {
-        strategies.replaceChild(container, newRenderedNode.element, currentElement);
-      } else if (newRenderedNode?.element && !currentElement) {
-        // If no current element, just append the new one
-        strategies.appendChild(container, newRenderedNode.element);
-      } else if (currentElement && !newRenderedNode?.element) {
-        // If no new element, remove the old one
-        strategies.removeChild(container, currentElement);
+      if (newRenderedNode?.element) {
+        strategies.replaceChild(currentElement.parentNode, newRenderedNode.element, currentElement);
+        
+        // Unmount the old node after replacement
+        if (currentRenderedNode) {
+          unmountNode(currentRenderedNode, strategies);
+        }
+        
+        currentRenderedNode = newRenderedNode;
       }
-      
-      // Unmount the old node after replacement
-      if (currentRenderedNode) {
-        unmountNode(currentRenderedNode, strategies);
-      }
-      
-      currentRenderedNode = newRenderedNode;
     }
   });
   
   subscriptions.push(unsubscribe);
 
-  // Append initial element to container
-  if (currentRenderedNode && currentRenderedNode.element) {
-    strategies.appendChild(container, currentRenderedNode.element);
-  }
-
   return {
     vnode,
-    element: currentRenderedNode?.element || null,
+    element: currentRenderedNode?.element || placeholder,
     subscriptions,
     children: currentRenderedNode ? [currentRenderedNode] : [],
   };
