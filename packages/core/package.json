@@ -15,10 +15,7 @@
     "src"
   ],
   "scripts": {
-    "build": "tsdown",
-    "dev": "tsdown --watch",
-    "typecheck": "tsc --noEmit",
-    "prepublishOnly": "bun run build"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {},
   "devDependencies": {

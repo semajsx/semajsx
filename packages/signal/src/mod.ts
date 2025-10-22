@@ -74,7 +74,11 @@ export function computed<T>(fn: () => T): ComputedSignal<T> {
   
   const compute = () => {
     const prevEffect = currentEffect;
-    currentEffect = compute;
+    currentEffect = () => {
+      dirty = true;
+      // Notify all subscribers when dependencies change
+      subscribers.forEach(sub => sub());
+    };
     try {
       value = fn();
       dirty = false;
