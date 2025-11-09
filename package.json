@@ -1,31 +1,56 @@
 {
-  "name": "demo",
-  "private": true,
-  "version": "0.0.0",
+  "name": "semajsx",
+  "version": "0.1.0",
+  "description": "A signal-based reactive JSX runtime for building modern web applications",
   "type": "module",
-  "workspaces": [
-    "packages/*"
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./jsx-runtime": {
+      "import": "./dist/jsx-runtime.js",
+      "types": "./dist/jsx-runtime.d.ts"
+    },
+    "./jsx-dev-runtime": {
+      "import": "./dist/jsx-dev-runtime.js",
+      "types": "./dist/jsx-dev-runtime.d.ts"
+    },
+    "./signal": {
+      "import": "./dist/signal/index.js",
+      "types": "./dist/signal/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "jsx-runtime.d.ts"
   ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "example:dev": "cd examples/basic && npm run dev",
+    "example:build": "cd examples/basic && npm run build"
   },
-  "dependencies": {
-    "@semajsx/signal": "workspace:*",
-    "@semajsx/web": "workspace:*",
-    "@tailwindcss/vite": "^4.1.11",
-    "tailwindcss": "^4.1.11"
-  },
+  "keywords": [
+    "jsx",
+    "signal",
+    "reactive",
+    "ui",
+    "framework",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
   "devDependencies": {
-    "@mdx-js/rollup": "^3.1.0",
-    "@shikijs/rehype": "^3.9.2",
-    "@tailwindcss/typography": "^0.5.16",
     "@types/node": "^22.0.0",
-    "remark-frontmatter": "^5.0.0",
-    "remark-gfm": "^4.0.1",
-    "typescript": "^5.0.0",
-    "vite": "^6.0.0"
+    "tsup": "^8.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.0.0"
   },
   "packageManager": "bun@1.2"
 }

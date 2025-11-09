@@ -1,0 +1,91 @@
+import type { Component, JSXChild, JSXChildren, VNode, VNodeType } from './types';
+import { Fragment } from './types';
+import { isSignal } from '../signal';
+
+/**
+ * Create a VNode (Virtual Node)
+ */
+export function h(
+  type: VNodeType,
+  props: Record<string, any> | null,
+  ...children: JSXChildren[]
+): VNode {
+  return {
+    type,
+    props: props || {},
+    children: normalizeChildren(children),
+    key: props?.key,
+  };
+}
+
+/**
+ * Create a text VNode
+ */
+export function createTextVNode(text: string | number): VNode {
+  return {
+    type: '#text',
+    props: { nodeValue: String(text) },
+    children: [],
+  };
+}
+
+/**
+ * Create a signal VNode wrapper
+ */
+export function createSignalVNode(signal: any): VNode {
+  return {
+    type: '#signal',
+    props: { signal },
+    children: [],
+  };
+}
+
+/**
+ * Normalize children into an array of VNodes
+ */
+function normalizeChildren(children: JSXChildren[]): VNode[] {
+  const result: VNode[] = [];
+
+  for (const child of children) {
+    if (child == null || typeof child === 'boolean') {
+      // Skip nullish and boolean values
+      continue;
+    }
+
+    if (Array.isArray(child)) {
+      // Recursively flatten arrays
+      result.push(...normalizeChildren(child));
+    } else if (typeof child === 'string' || typeof child === 'number') {
+      // Convert primitives to text nodes
+      result.push(createTextVNode(child));
+    } else if (isSignal(child)) {
+      // Wrap signals in special signal nodes
+      result.push(createSignalVNode(child));
+    } else {
+      // Already a VNode
+      result.push(child as VNode);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Check if a value is a VNode
+ */
+export function isVNode(value: any): value is VNode {
+  return (
+    value != null &&
+    typeof value === 'object' &&
+    'type' in value &&
+    'props' in value &&
+    'children' in value
+  );
+}
+
+/**
+ * Create a Fragment
+ */
+export function createFragment(children: JSXChildren[]): VNode {
+  return h(Fragment, null, ...children);
+}
