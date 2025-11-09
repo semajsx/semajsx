@@ -1,37 +1,10 @@
 /**
- * Batch multiple signal updates to run effects only once
+ * Batch multiple signal updates
+ *
+ * This is a simple implementation that doesn't actually batch.
+ * Can be enhanced later with microtask scheduling if needed.
  */
 
-let batchDepth = 0;
-const pendingEffects = new Set<() => void>();
-
 export function batch<T>(fn: () => T): T {
-  batchDepth++;
-
-  try {
-    return fn();
-  } finally {
-    batchDepth--;
-
-    if (batchDepth === 0) {
-      flushEffects();
-    }
-  }
-}
-
-export function scheduleBatchedEffect(effect: () => void): void {
-  if (batchDepth > 0) {
-    pendingEffects.add(effect);
-  } else {
-    effect();
-  }
-}
-
-function flushEffects(): void {
-  const effects = Array.from(pendingEffects);
-  pendingEffects.clear();
-
-  for (const effect of effects) {
-    effect();
-  }
+  return fn();
 }

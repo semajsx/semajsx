@@ -1,6 +1,6 @@
 import type { VNode, RenderedNode, Component } from './types';
 import { Fragment } from './types';
-import { isSignal, effect } from '../signal';
+import { isSignal } from '../signal';
 import { isVNode } from './vnode';
 import { setProperty, setSignalProperty } from '../dom/properties';
 import {
@@ -84,40 +84,16 @@ function renderSignalNode(vnode: VNode): RenderedNode {
     throw new Error('Signal VNode must have a signal prop');
   }
 
-  // Create a placeholder comment
-  const placeholder = createComment('signal');
-  let currentDom: Node | null = placeholder;
-  let currentRendered: RenderedNode | null = null;
+  // Get initial value and render it
+  const initialValue = signal.peek();
+  let currentRendered = renderValueToNode(initialValue);
+  let currentDom = currentRendered.dom;
 
   const subscriptions: Array<() => void> = [];
 
   // Subscribe to signal changes
-  const unsubscribe = effect(() => {
-    const value = signal.value;
-    let newVNode: VNode;
-
-    // Convert value to VNode
-    if (isVNode(value)) {
-      newVNode = value;
-    } else if (typeof value === 'string' || typeof value === 'number') {
-      newVNode = {
-        type: '#text',
-        props: { nodeValue: String(value) },
-        children: [],
-      };
-    } else if (value == null || typeof value === 'boolean') {
-      // Render empty text for null/undefined/boolean
-      newVNode = {
-        type: '#text',
-        props: { nodeValue: '' },
-        children: [],
-      };
-    } else {
-      throw new Error(`Invalid signal value type: ${typeof value}`);
-    }
-
-    // Render new node
-    const newRendered = renderNode(newVNode);
+  const unsubscribe = signal.subscribe((value) => {
+    const newRendered = renderValueToNode(value);
 
     // Replace old node with new one
     if (currentDom && newRendered.dom) {
@@ -141,6 +117,35 @@ function renderSignalNode(vnode: VNode): RenderedNode {
     subscriptions,
     children: currentRendered ? [currentRendered] : [],
   };
+}
+
+/**
+ * Helper to convert a signal value to a rendered node
+ */
+function renderValueToNode(value: any): RenderedNode {
+  let newVNode: VNode;
+
+  // Convert value to VNode
+  if (isVNode(value)) {
+    newVNode = value;
+  } else if (typeof value === 'string' || typeof value === 'number') {
+    newVNode = {
+      type: '#text',
+      props: { nodeValue: String(value) },
+      children: [],
+    };
+  } else if (value == null || typeof value === 'boolean') {
+    // Render empty text for null/undefined/boolean
+    newVNode = {
+      type: '#text',
+      props: { nodeValue: '' },
+      children: [],
+    };
+  } else {
+    throw new Error(`Invalid signal value type: ${typeof value}`);
+  }
+
+  return renderNode(newVNode);
 }
 
 /**

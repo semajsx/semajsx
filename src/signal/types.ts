@@ -14,9 +14,5 @@ export interface WritableSignal<T = any> extends Signal<T> {
   update(fn: (prev: T) => T): void;
 }
 
-export interface ComputedSignal<T = any> extends Signal<T> {
-  readonly value: T;
-}
-
 export type MaybeSignal<T> = T | Signal<T>;
 export type SignalValue<S> = S extends Signal<infer T> ? T : never;

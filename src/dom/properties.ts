@@ -1,5 +1,4 @@
 import type { Signal } from '../signal';
-import { effect } from '../signal';
 
 /**
  * Set a property on an element
@@ -85,8 +84,7 @@ export function setSignalProperty(
   setProperty(element, key, signal.peek());
 
   // Subscribe to changes
-  return effect(() => {
-    const value = signal.value;
+  return signal.subscribe((value) => {
     setProperty(element, key, value);
   });
 }

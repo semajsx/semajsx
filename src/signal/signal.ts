@@ -1,16 +1,5 @@
 import type { WritableSignal } from './types';
 
-// Global effect tracking
-let currentEffect: (() => void) | null = null;
-
-export function getCurrentEffect(): (() => void) | null {
-  return currentEffect;
-}
-
-export function setCurrentEffect(effect: (() => void) | null): void {
-  currentEffect = effect;
-}
-
 /**
  * Create a writable signal
  */
@@ -20,10 +9,6 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
 
   const sig: WritableSignal<T> = {
     get value() {
-      // Auto-track when accessed inside effect
-      if (currentEffect) {
-        subscribers.add(currentEffect);
-      }
       return value;
     },
 
@@ -35,7 +20,6 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
     },
 
     peek() {
-      // Peek without tracking
       return value;
     },
 
@@ -56,7 +40,6 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
   };
 
   function notify() {
-    // Create a copy to avoid issues with subscribers modifying the set
     const subs = Array.from(subscribers);
     for (const listener of subs) {
       listener(value);

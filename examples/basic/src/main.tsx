@@ -3,7 +3,7 @@ import { render, signal, computed } from 'semajsx';
 // Counter component
 function Counter() {
   const count = signal(0);
-  const doubled = computed(() => count.value * 2);
+  const doubled = computed([count], c => c * 2);
 
   return (
     <div class="card">
@@ -20,7 +20,7 @@ function Counter() {
 // Input example
 function InputExample() {
   const text = signal('');
-  const length = computed(() => text.value.length);
+  const length = computed([text], t => t.length);
 
   return (
     <div class="card">
@@ -42,8 +42,8 @@ function InputExample() {
 // Conditional rendering
 function ConditionalExample() {
   const show = signal(true);
-  const content = computed(() =>
-    show.value ? <p>Content is visible! ✅</p> : <p>Content is hidden! ❌</p>
+  const content = computed([show], s =>
+    s ? <p>Content is visible! ✅</p> : <p>Content is hidden! ❌</p>
   );
 
   return (

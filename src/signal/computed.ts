@@ -1,31 +1,54 @@
-import type { ComputedSignal } from './types';
-import { getCurrentEffect, setCurrentEffect } from './signal';
+import type { Signal } from './types';
 
 /**
- * Create a computed signal that automatically tracks dependencies
+ * Create a computed signal with declarative dependencies
+ *
+ * @example
+ * const count = signal(0);
+ * const doubled = computed([count], c => c * 2);
+ *
+ * @example
+ * const firstName = signal('John');
+ * const lastName = signal('Doe');
+ * const fullName = computed([firstName, lastName], (f, l) => `${f} ${l}`);
  */
-export function computed<T>(compute: () => T): ComputedSignal<T> {
-  let value: T;
-  let dirty = true;
-  const subscribers = new Set<(value: T) => void>();
 
+// Single dependency overload
+export function computed<T, R>(
+  dep: Signal<T>,
+  compute: (value: T) => R
+): Signal<R>;
+
+// Multiple dependencies overload
+export function computed<T extends readonly Signal<any>[], R>(
+  deps: [...T],
+  compute: (...values: { [K in keyof T]: T[K] extends Signal<infer V> ? V : never }) => R
+): Signal<R>;
+
+// Implementation
+export function computed(deps: any, compute: any): Signal<any> {
+  const depsArray: Signal<any>[] = Array.isArray(deps) ? deps : [deps];
+
+  let value: any;
+  const subscribers = new Set<(value: any) => void>();
+
+  // Get current values from all dependencies
+  const getValues = () => depsArray.map(dep => dep.peek());
+
+  // Recompute when dependencies change
   const recompute = () => {
-    const prevEffect = getCurrentEffect();
+    const values = getValues();
+    const newValue = Array.isArray(deps)
+      ? compute(...values)
+      : compute(values[0]);
 
-    // Set ourselves as the current effect to track dependencies
-    setCurrentEffect(() => {
-      dirty = true;
+    if (!Object.is(value, newValue)) {
+      value = newValue;
       notify();
-    });
-
-    try {
-      value = compute();
-      dirty = false;
-    } finally {
-      setCurrentEffect(prevEffect);
     }
   };
 
+  // Notify subscribers
   const notify = () => {
     const subs = Array.from(subscribers);
     for (const listener of subs) {
@@ -33,40 +56,31 @@ export function computed<T>(compute: () => T): ComputedSignal<T> {
     }
   };
 
-  const sig: ComputedSignal<T> = {
+  // Initial computation
+  const initialValues = getValues();
+  value = Array.isArray(deps)
+    ? compute(...initialValues)
+    : compute(initialValues[0]);
+
+  // Subscribe to all dependencies
+  const unsubscribers = depsArray.map(dep => dep.subscribe(recompute));
+
+  return {
     get value() {
-      if (dirty) {
-        recompute();
-      }
-
-      // Track this computed as a dependency
-      const currentEff = getCurrentEffect();
-      if (currentEff) {
-        subscribers.add(currentEff);
-      }
-
       return value;
     },
 
     peek() {
-      if (dirty) {
-        recompute();
-      }
       return value;
     },
 
-    subscribe(listener: (value: T) => void) {
+    subscribe(listener: (value: any) => void) {
       subscribers.add(listener);
       return () => {
         subscribers.delete(listener);
       };
     },
   };
-
-  // Initial computation
-  recompute();
-
-  return sig;
 }
 
 export const memo = computed;

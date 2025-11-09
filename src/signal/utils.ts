@@ -1,5 +1,4 @@
 import type { Signal, MaybeSignal } from './types';
-import { getCurrentEffect, setCurrentEffect } from './signal';
 
 /**
  * Check if a value is a signal
@@ -22,21 +21,7 @@ export function unwrap<T>(value: MaybeSignal<T>): T {
 }
 
 /**
- * Run a function without tracking signal dependencies
- */
-export function untrack<T>(fn: () => T): T {
-  const prevEffect = getCurrentEffect();
-  setCurrentEffect(null);
-
-  try {
-    return fn();
-  } finally {
-    setCurrentEffect(prevEffect);
-  }
-}
-
-/**
- * Get the value of a signal without tracking
+ * Get the value of a signal without tracking (same as peek)
  */
 export function peek<T>(value: MaybeSignal<T>): T {
   if (isSignal(value)) {
