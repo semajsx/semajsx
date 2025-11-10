@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     browser: {
       enabled: true,
-      name: 'chromium',
+      name: 'chromium', // Note: deprecated in Vitest 3, will migrate to instances when stable
       provider: 'playwright',
       headless: true,
     },
