@@ -25,14 +25,14 @@
     }
   },
   "files": [
-    "dist",
-    "jsx-runtime.d.ts"
+    "dist"
   ],
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
+    "test:ui": "vitest --ui",
     "example:dev": "cd examples/basic && npm run dev",
     "example:build": "cd examples/basic && npm run build"
   },
@@ -48,9 +48,11 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@vitest/browser": "^3.0.7",
+    "playwright": "^1.49.1",
     "tsup": "^8.0.0",
     "typescript": "^5.6.0",
-    "vitest": "^2.0.0"
+    "vitest": "^3.0.7"
   },
   "packageManager": "bun@1.2"
 }
