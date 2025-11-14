@@ -87,6 +87,9 @@ export class TerminalRenderer {
       this.root.yogaNode.setFlexDirection(Yoga.FLEX_DIRECTION_COLUMN);
       this.root.yogaNode.setAlignItems(Yoga.ALIGN_FLEX_START);
     }
+
+    // Hide cursor for cleaner rendering
+    this.root.stream.write(ansiEscapes.cursorHide);
   }
 
   /**
@@ -333,6 +336,8 @@ export class TerminalRenderer {
    */
   destroy(): void {
     this.clear();
+    // Show cursor again on cleanup
+    this.root.stream.write(ansiEscapes.cursorShow);
     if (this.root.yogaNode) {
       this.root.yogaNode.freeRecursive();
     }

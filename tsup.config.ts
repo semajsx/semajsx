@@ -6,6 +6,7 @@ export default defineConfig({
     'jsx-runtime': 'src/jsx-runtime.ts',
     'jsx-dev-runtime': 'src/jsx-dev-runtime.ts',
     'signal/index': 'src/signal/index.ts',
+    'terminal/index': 'src/terminal/index.ts',
   },
   format: ['esm'],
   dts: {
