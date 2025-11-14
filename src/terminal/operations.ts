@@ -1,4 +1,5 @@
 import Yoga from 'yoga-layout-prebuilt';
+import stringWidth from 'string-width';
 import type { TerminalNode, TerminalElement, TerminalText, TerminalRoot, TerminalStyle } from './types';
 
 /**
@@ -23,6 +24,12 @@ export function createElement(tagName: string): TerminalElement {
  */
 export function createTextNode(text: string): TerminalText {
   const yogaNode = Yoga.Node.create();
+
+  // Set measure function to calculate text width
+  yogaNode.setMeasureFunc((width) => {
+    const textWidth = stringWidth(text);
+    return { width: textWidth, height: 1 };
+  });
 
   return {
     type: 'text',
@@ -122,6 +129,17 @@ export function replaceNode(oldNode: TerminalNode, newNode: TerminalNode): void 
 export function setText(node: TerminalNode, text: string): void {
   if (node.type === 'text') {
     node.content = text;
+
+    // Update measure function with new text
+    if (node.yogaNode) {
+      node.yogaNode.setMeasureFunc((width) => {
+        const textWidth = stringWidth(text);
+        return { width: textWidth, height: 1 };
+      });
+
+      // Mark as dirty to trigger relayout
+      node.yogaNode.markDirty();
+    }
   }
 }
 
