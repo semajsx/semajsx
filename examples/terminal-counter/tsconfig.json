@@ -9,5 +9,5 @@
     }
   },
   "references": [{ "path": "../../tsconfig.lib.json" }],
-  "include": ["**/*.ts", "**/*.tsx"]
+  "include": ["**/*.ts", "**/*.tsx", "../../src/terminal/jsx.d.ts"]
 }
