@@ -312,7 +312,20 @@ export class TerminalRenderer {
    * Output the buffer to terminal
    */
   private output(): void {
-    const output = this.buffer.join('\n');
+    // Remove trailing empty lines from buffer (only output actual content)
+    let lastNonEmptyIndex = -1;
+    for (let i = this.buffer.length - 1; i >= 0; i--) {
+      if (this.buffer[i].trim() !== '') {
+        lastNonEmptyIndex = i;
+        break;
+      }
+    }
+
+    // Get only the lines with content
+    const contentLines = lastNonEmptyIndex >= 0
+      ? this.buffer.slice(0, lastNonEmptyIndex + 1)
+      : [];
+    const output = contentLines.join('\n');
 
     // Only update if changed
     if (output !== this.previousOutput) {
@@ -325,8 +338,8 @@ export class TerminalRenderer {
       // Write new output (cursor is already at the right position after eraseLines)
       this.root.stream.write(output);
 
-      // Calculate and store output height
-      this.lastOutputHeight = output === '' ? 0 : output.split('\n').length;
+      // Calculate and store output height (number of actual lines rendered)
+      this.lastOutputHeight = contentLines.length;
       this.previousOutput = output;
     }
   }
