@@ -22,6 +22,10 @@
     "./signal": {
       "import": "./dist/signal/index.js",
       "types": "./dist/signal/index.d.ts"
+    },
+    "./terminal": {
+      "import": "./dist/terminal/index.js",
+      "types": "./dist/terminal/index.d.ts"
     }
   },
   "files": [
@@ -36,7 +40,8 @@
     "test:ui": "vitest --ui",
     "example:dev": "cd examples/basic && npm run dev",
     "example:build": "cd examples/basic && npm run build",
-    "example:bun": "bun --port=0 examples/bun-html/server.ts"
+    "example:bun": "bun --port=0 examples/bun-html/server.ts",
+    "example:terminal": "bun examples/terminal-counter/simple.ts"
   },
   "keywords": [
     "jsx",
@@ -59,5 +64,14 @@
     "@types/bun": "latest"
   },
   "packageManager": "bun@1.2",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "ansi-escapes": "^7.2.0",
+    "chalk": "^5.6.2",
+    "cli-boxes": "^4.0.1",
+    "slice-ansi": "^7.1.2",
+    "string-width": "^8.1.0",
+    "wrap-ansi": "^9.0.2",
+    "yoga-layout-prebuilt": "^1.10.0"
+  }
 }
