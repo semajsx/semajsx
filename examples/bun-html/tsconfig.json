@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "jsxImportSource": "semajsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "semajsx": ["../../src/index.ts"]
+    },
+    "composite": true,
+    "rootDir": ".",
+    "outDir": "./dist"
+  },
+  "references": [{ "path": "../../" }],
+  "include": ["**/*.ts", "**/*.tsx"]
+}

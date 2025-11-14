@@ -31,10 +31,12 @@
     "dev": "tsup --watch",
     "build": "tsup",
     "typecheck": "tsc --noEmit",
+    "typecheck:examples": "tsc --noEmit -p examples/bun-html",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "example:dev": "cd examples/basic && npm run dev",
-    "example:build": "cd examples/basic && npm run build"
+    "example:build": "cd examples/basic && npm run build",
+    "example:bun": "bun --port=0 examples/bun-html/server.ts"
   },
   "keywords": [
     "jsx",
@@ -53,7 +55,9 @@
     "playwright": "^1.56.1",
     "tsup": "^8.0.0",
     "typescript": "^5.6.0",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.8",
+    "@types/bun": "latest"
   },
-  "packageManager": "bun@1.2"
+  "packageManager": "bun@1.2",
+  "private": true
 }
