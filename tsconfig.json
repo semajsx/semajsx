@@ -15,8 +15,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "jsx": "react-jsx",
-    "jsxImportSource": "semajsx",
-    "composite": true,
+    "jsxImportSource": "semajsx"
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "examples"]
