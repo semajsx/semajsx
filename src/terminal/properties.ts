@@ -1,5 +1,4 @@
 import type { Signal } from '../signal';
-import { effect } from '../signal/effect';
 import type { TerminalNode, TerminalElement, TerminalStyle } from './types';
 import { applyStyle } from './operations';
 
@@ -29,9 +28,11 @@ export function setSignalProperty(
   key: string,
   signal: Signal<any>
 ): () => void {
-  // Create an effect that updates the property when signal changes
-  return effect(() => {
-    const value = signal.value;
+  // Set initial value
+  setProperty(node, key, signal.peek());
+
+  // Subscribe to changes
+  return signal.subscribe((value) => {
     setProperty(node, key, value);
   });
 }
