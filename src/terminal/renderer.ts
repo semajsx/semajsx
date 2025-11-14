@@ -83,6 +83,9 @@ export class TerminalRenderer {
     if (this.root.yogaNode) {
       this.root.yogaNode.setWidth(columns || 80);
       this.root.yogaNode.setHeight(rows || 24);
+      // Set default flexbox properties to prevent children from stretching
+      this.root.yogaNode.setFlexDirection(Yoga.FLEX_DIRECTION_COLUMN);
+      this.root.yogaNode.setAlignItems(Yoga.ALIGN_FLEX_START);
     }
   }
 
