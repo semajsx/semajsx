@@ -68,6 +68,7 @@ export class TerminalRenderer {
   private root: TerminalRoot;
   private buffer: string[] = [];
   private previousOutput: string = '';
+  private lastOutputHeight: number = 0;
 
   constructor(stream: NodeJS.WriteStream = process.stdout) {
     this.root = {
@@ -315,9 +316,19 @@ export class TerminalRenderer {
 
     // Only update if changed
     if (output !== this.previousOutput) {
-      this.root.stream.write(ansiEscapes.clearScreen);
+      // Erase previous output if there was any
+      if (this.lastOutputHeight > 0) {
+        this.root.stream.write(ansiEscapes.eraseLines(this.lastOutputHeight));
+      }
+
+      // Move cursor to top
       this.root.stream.write(ansiEscapes.cursorTo(0, 0));
+
+      // Write new output
       this.root.stream.write(output);
+
+      // Calculate and store output height
+      this.lastOutputHeight = output === '' ? 0 : output.split('\n').length;
       this.previousOutput = output;
     }
   }
@@ -335,9 +346,16 @@ export class TerminalRenderer {
    * Cleanup
    */
   destroy(): void {
-    this.clear();
+    // Move cursor to the line after the last output
+    if (this.lastOutputHeight > 0) {
+      this.root.stream.write(ansiEscapes.cursorTo(0, this.lastOutputHeight - 1));
+      this.root.stream.write('\n');
+    }
+
     // Show cursor again on cleanup
     this.root.stream.write(ansiEscapes.cursorShow);
+
+    // Free yoga layout
     if (this.root.yogaNode) {
       this.root.yogaNode.freeRecursive();
     }
