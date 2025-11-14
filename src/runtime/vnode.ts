@@ -32,7 +32,7 @@ export function createTextVNode(text: string | number): VNode {
 /**
  * Create a signal VNode wrapper
  */
-export function createSignalVNode(signal: any): VNode {
+export function createSignalVNode(signal: Signal<unknown>): VNode {
   return {
     type: '#signal',
     props: { signal },
@@ -61,9 +61,12 @@ function normalizeChildren(children: JSXChildren[]): VNode[] {
     } else if (isSignal(child)) {
       // Wrap signals in special signal nodes
       result.push(createSignalVNode(child));
-    } else {
+    } else if (isVNode(child)) {
       // Already a VNode
-      result.push(child as VNode);
+      result.push(child);
+    } else {
+      // Unknown type, skip
+      console.warn('Unknown child type:', typeof child);
     }
   }
 
@@ -73,7 +76,7 @@ function normalizeChildren(children: JSXChildren[]): VNode[] {
 /**
  * Check if a value is a VNode
  */
-export function isVNode(value: any): value is VNode {
+export function isVNode(value: unknown): value is VNode {
   return (
     value != null &&
     typeof value === 'object' &&

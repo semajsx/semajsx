@@ -147,7 +147,7 @@ function renderSignalNode(vnode: VNode): RenderedTerminalNode {
 /**
  * Helper to convert a signal value to a rendered node
  */
-function renderValueToNode(value: any): RenderedTerminalNode {
+function renderValueToNode(value: unknown): RenderedTerminalNode {
   let newVNode: VNode;
 
   // Convert value to VNode
@@ -192,7 +192,11 @@ function renderFragment(vnode: VNode): RenderedTerminalNode {
  * Render a component
  */
 function renderComponent(vnode: VNode): RenderedTerminalNode {
-  const Component = vnode.type as Component;
+  if (typeof vnode.type !== 'function') {
+    throw new Error('Component vnode must have a function type');
+  }
+
+  const Component = vnode.type;
   const props = { ...vnode.props, children: vnode.children };
 
   // Call component function
@@ -213,7 +217,11 @@ function renderComponent(vnode: VNode): RenderedTerminalNode {
  * Render an element
  */
 function renderElement(vnode: VNode): RenderedTerminalNode {
-  const element = createElement(vnode.type as string);
+  if (typeof vnode.type !== 'string') {
+    throw new Error('Element vnode must have a string type');
+  }
+
+  const element = createElement(vnode.type);
   const subscriptions: Array<() => void> = [];
 
   // Apply props

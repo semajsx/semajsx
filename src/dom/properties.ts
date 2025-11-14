@@ -3,7 +3,7 @@ import type { Signal } from '../signal';
 /**
  * Set a property on an element
  */
-export function setProperty(element: Element, key: string, value: any): void {
+export function setProperty(element: Element, key: string, value: unknown): void {
   // Skip internal props
   if (key === 'key' || key === 'ref' || key === 'children') {
     return;
@@ -12,7 +12,9 @@ export function setProperty(element: Element, key: string, value: any): void {
   // Handle events
   if (key.startsWith('on') && typeof value === 'function') {
     const eventName = key.slice(2).toLowerCase();
-    (element as any)[key.toLowerCase()] = value;
+    // Set event handler as property on element
+    const elementWithEvents = element as Record<string, unknown>;
+    elementWithEvents[key.toLowerCase()] = value;
     return;
   }
 
@@ -75,16 +77,16 @@ export function setProperty(element: Element, key: string, value: any): void {
 /**
  * Set a signal property on an element
  */
-export function setSignalProperty(
+export function setSignalProperty<T = unknown>(
   element: Element,
   key: string,
-  signal: Signal<any>
+  signal: Signal<T>
 ): () => void {
   // Set initial value
   setProperty(element, key, signal.peek());
 
   // Subscribe to changes
-  return signal.subscribe((value) => {
+  return signal.subscribe((value: T) => {
     setProperty(element, key, value);
   });
 }

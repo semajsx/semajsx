@@ -128,7 +128,7 @@ export function setText(node: TerminalNode, text: string): void {
 /**
  * Apply yoga layout styles
  */
-export function applyStyle(element: TerminalElement, style: TerminalStyle): void {
+export function applyStyle(element: TerminalElement, style: Partial<TerminalStyle>): void {
   const { yogaNode } = element;
   if (!yogaNode) return;
 
