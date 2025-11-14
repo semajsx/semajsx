@@ -3,6 +3,8 @@
   "compilerOptions": {
     "composite": true,
     "baseUrl": ".",
+    "jsx": "react-jsx",
+    "jsxImportSource": "../../src",
     "paths": {
       "semajsx": ["../../src/index.ts"],
       "semajsx/terminal": ["../../src/terminal/index.ts"]
