@@ -30,12 +30,29 @@ const app = h(
 const renderer = new TerminalRenderer(process.stdout);
 render(app, renderer);
 
+// Enable stdin to receive input
+if (process.stdin.isTTY) {
+  process.stdin.resume();
+}
+
 // Auto re-render on signal changes
 setInterval(() => {
   renderer.render();
 }, 100);
 
-// Cleanup on exit
+// Handle Ctrl+C in raw mode
+// In raw mode, Ctrl+C is represented as \u0003
+if (process.stdin.isTTY) {
+  process.stdin.on('data', (data) => {
+    // Check for Ctrl+C (\u0003)
+    if (data.toString() === '\u0003') {
+      renderer.destroy();
+      process.exit(0);
+    }
+  });
+}
+
+// Fallback for non-TTY environments
 process.on('SIGINT', () => {
   renderer.destroy();
   process.exit(0);
