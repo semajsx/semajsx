@@ -317,14 +317,12 @@ export class TerminalRenderer {
     // Only update if changed
     if (output !== this.previousOutput) {
       // Erase previous output if there was any
+      // eraseLines moves cursor up and erases, so we're ready to write at the start position
       if (this.lastOutputHeight > 0) {
         this.root.stream.write(ansiEscapes.eraseLines(this.lastOutputHeight));
       }
 
-      // Move cursor to top
-      this.root.stream.write(ansiEscapes.cursorTo(0, 0));
-
-      // Write new output
+      // Write new output (cursor is already at the right position after eraseLines)
       this.root.stream.write(output);
 
       // Calculate and store output height
@@ -334,11 +332,13 @@ export class TerminalRenderer {
   }
 
   /**
-   * Clear the terminal
+   * Clear the rendered output
    */
   clear(): void {
-    this.root.stream.write(ansiEscapes.clearScreen);
-    this.root.stream.write(ansiEscapes.cursorTo(0, 0));
+    if (this.lastOutputHeight > 0) {
+      this.root.stream.write(ansiEscapes.eraseLines(this.lastOutputHeight));
+      this.lastOutputHeight = 0;
+    }
     this.previousOutput = '';
   }
 
@@ -346,11 +346,11 @@ export class TerminalRenderer {
    * Cleanup
    */
   destroy(): void {
-    // Move cursor to the line after the last output
-    if (this.lastOutputHeight > 0) {
-      this.root.stream.write(ansiEscapes.cursorTo(0, this.lastOutputHeight - 1));
-      this.root.stream.write('\n');
-    }
+    // Final render to ensure latest state is shown
+    this.render();
+
+    // Move cursor to line after output (it's already at end of last line)
+    this.root.stream.write('\n');
 
     // Show cursor again on cleanup
     this.root.stream.write(ansiEscapes.cursorShow);
