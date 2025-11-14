@@ -23,6 +23,9 @@ const app = h(
     h('text', { bold: true, color: 'green' }, ['Terminal Counter']),
     h('text', { marginTop: 1 }, ['Count: ', count]),
     h('text', { dim: true, marginTop: 1 }, ['Updates every second...']),
+    h('text', { dim: true, marginTop: 1, color: 'yellow' }, [
+      'Press Ctrl+C or ESC to exit',
+    ]),
   ]
 );
 
@@ -40,15 +43,19 @@ setInterval(() => {
   renderer.render();
 }, 100);
 
-// Handle Ctrl+C in raw mode
-// In raw mode, Ctrl+C is represented as \u0003
+// Handle keyboard input in raw mode
 if (process.stdin.isTTY) {
   process.stdin.on('data', (data) => {
-    // Check for Ctrl+C (\u0003)
-    if (data.toString() === '\u0003') {
+    const key = data.toString();
+
+    // Ctrl+C (\u0003) or ESC (\u001b) to exit
+    if (key === '\u0003' || key === '\u001b') {
       renderer.destroy();
       process.exit(0);
     }
+
+    // You can add more key handlers here
+    // For example: 'q' to quit, 'r' to reset, etc.
   });
 }
 
