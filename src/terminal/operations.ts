@@ -1,5 +1,6 @@
 import Yoga from 'yoga-layout-prebuilt';
 import stringWidth from 'string-width';
+import wrapAnsi from 'wrap-ansi';
 import type { TerminalNode, TerminalElement, TerminalText, TerminalRoot, TerminalStyle } from './types';
 
 /**
@@ -8,7 +9,7 @@ import type { TerminalNode, TerminalElement, TerminalText, TerminalRoot, Termina
 export function createElement(tagName: string): TerminalElement {
   const yogaNode = Yoga.Node.create();
 
-  return {
+  const element: TerminalElement = {
     type: 'element',
     tagName,
     style: {},
@@ -17,24 +18,25 @@ export function createElement(tagName: string): TerminalElement {
     parent: null,
     children: [],
   };
+
+  // Set measure function for text containers
+  // Text elements need to measure their text content
+  if (tagName === 'text') {
+    yogaNode.setMeasureFunc(measureTextNode.bind(null, element));
+  }
+
+  return element;
 }
 
 /**
  * Create a terminal text node
+ * Text nodes don't have yoga nodes - they are pure data containers
  */
 export function createTextNode(text: string): TerminalText {
-  const yogaNode = Yoga.Node.create();
-
-  // Set measure function to calculate text width
-  yogaNode.setMeasureFunc((width) => {
-    const textWidth = stringWidth(text);
-    return { width: textWidth, height: 1 };
-  });
-
   return {
     type: 'text',
     content: text,
-    yogaNode,
+    yogaNode: undefined,
     parent: null,
     children: [],
   };
@@ -128,17 +130,15 @@ export function replaceNode(oldNode: TerminalNode, newNode: TerminalNode): void 
  */
 export function setText(node: TerminalNode, text: string): void {
   if (node.type === 'text') {
+    if (node.content === text) {
+      return;
+    }
+
     node.content = text;
 
-    // Update measure function with new text
-    if (node.yogaNode) {
-      node.yogaNode.setMeasureFunc((width) => {
-        const textWidth = stringWidth(text);
-        return { width: textWidth, height: 1 };
-      });
-
-      // Mark as dirty to trigger relayout
-      node.yogaNode.markDirty();
+    // Text nodes don't have yoga nodes, mark parent as dirty
+    if (node.parent) {
+      markNodeAsDirty(node.parent);
     }
   }
 }
@@ -251,5 +251,71 @@ export function applyStyle(element: TerminalElement, style: Partial<TerminalStyl
   }
   if (style.paddingBottom !== undefined) {
     yogaNode.setPadding(Yoga.EDGE_BOTTOM, style.paddingBottom);
+  }
+}
+
+/**
+ * Recursively collect all text content from a node's children
+ * Similar to Ink's squashTextNodes
+ */
+export function collectText(node: TerminalNode): string {
+  if (node.type === 'text') {
+    return node.content;
+  }
+
+  let text = '';
+  for (const child of node.children) {
+    text += collectText(child);
+  }
+
+  return text;
+}
+
+/**
+ * Measure text node for Yoga layout
+ * This is called by Yoga when calculating layout
+ */
+function measureTextNode(node: TerminalElement, width: number): { width: number; height: number } {
+  // Collect all text from children
+  const text = collectText(node);
+
+  if (text.length === 0) {
+    return { width: 0, height: 0 };
+  }
+
+  const textWidth = stringWidth(text);
+  const lines = text.split('\n');
+  const height = lines.length;
+
+  // Text fits within width, no wrapping needed
+  if (textWidth <= width) {
+    return { width: textWidth, height };
+  }
+
+  // Edge case: Yoga asking if we can fit in <1px
+  if (textWidth >= 1 && width > 0 && width < 1) {
+    return { width: textWidth, height };
+  }
+
+  // Wrap text if it exceeds width
+  const wrappedText = wrapAnsi(text, Math.floor(width), { hard: true, trim: false });
+  const wrappedLines = wrappedText.split('\n');
+  const wrappedWidth = Math.max(...wrappedLines.map(line => stringWidth(line)));
+
+  return { width: wrappedWidth, height: wrappedLines.length };
+}
+
+/**
+ * Mark a node and its ancestors as dirty for relayout
+ */
+export function markNodeAsDirty(node: TerminalNode): void {
+  if (node.yogaNode) {
+    node.yogaNode.markDirty();
+    return;
+  }
+
+  // Walk up to find a yoga node
+  if (node.parent) {
+    markNodeAsDirty(node.parent);
   }
 }
