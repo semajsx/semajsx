@@ -7,6 +7,6 @@
       "semajsx": ["../../src/index.ts"]
     }
   },
-  "references": [{ "path": "../../src" }],
+  "references": [{ "path": "../../tsconfig.lib.json" }],
   "include": ["**/*.ts", "**/*.tsx"]
 }
