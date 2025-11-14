@@ -3,6 +3,7 @@
   "references": [
     { "path": "./tsconfig.lib.json" },
     { "path": "./examples/basic" },
-    { "path": "./examples/bun-html" }
+    { "path": "./examples/bun-html" },
+    { "path": "./examples/terminal-counter" }
   ]
 }
