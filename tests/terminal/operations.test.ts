@@ -45,10 +45,11 @@ describe('Terminal Operations', () => {
       expect(text.children).toEqual([]);
     });
 
-    it('should create text node with yoga node', () => {
+    it('should create text node without yoga node', () => {
       const text = createTextNode('test');
 
-      expect(text.yogaNode).toBeDefined();
+      // Text nodes don't have yoga nodes - they are pure data containers
+      expect(text.yogaNode).toBeUndefined();
     });
   });
 

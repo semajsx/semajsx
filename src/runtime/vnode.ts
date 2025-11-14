@@ -1,4 +1,5 @@
 import type { Component, JSXChild, JSXChildren, VNode, VNodeType } from './types';
+import type { Signal } from '../signal';
 import { Fragment } from './types';
 import { isSignal } from '../signal';
 

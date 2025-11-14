@@ -8,9 +8,12 @@ export default defineConfig({
     'signal/index': 'src/signal/index.ts',
   },
   format: ['esm'],
-  dts: true,
+  dts: {
+    resolve: true,
+  },
   clean: true,
   sourcemap: true,
   splitting: false,
   treeshake: true,
+  tsconfig: 'tsconfig.build.json',
 });

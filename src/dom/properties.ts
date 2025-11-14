@@ -13,7 +13,7 @@ export function setProperty(element: Element, key: string, value: unknown): void
   if (key.startsWith('on') && typeof value === 'function') {
     const eventName = key.slice(2).toLowerCase();
     // Set event handler as property on element
-    const elementWithEvents = element as Record<string, unknown>;
+    const elementWithEvents = element as unknown as Record<string, unknown>;
     elementWithEvents[key.toLowerCase()] = value;
     return;
   }
@@ -55,7 +55,7 @@ export function setProperty(element: Element, key: string, value: unknown): void
       element instanceof HTMLTextAreaElement ||
       element instanceof HTMLSelectElement
     ) {
-      element.value = value ?? '';
+      element.value = String(value ?? '');
       return;
     }
   }

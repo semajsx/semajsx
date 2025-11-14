@@ -17,7 +17,7 @@ export type Component<P = any> = (props: P) => VNode;
 
 export type JSXChild =
   | VNode
-  | Signal<VNode>
+  | Signal<JSXChild>
   | string
   | number
   | boolean

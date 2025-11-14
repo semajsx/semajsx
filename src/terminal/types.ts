@@ -1,4 +1,6 @@
-import type { Node as YogaNode } from 'yoga-layout-prebuilt';
+import Yoga from 'yoga-layout-prebuilt';
+
+export type YogaNodeType = ReturnType<typeof Yoga.Node.create>;
 
 /**
  * Terminal node types
@@ -47,7 +49,7 @@ export interface TerminalStyle {
  */
 export interface TerminalNodeBase {
   type: TerminalNodeType;
-  yogaNode?: YogaNode;
+  yogaNode?: YogaNodeType;
   parent: TerminalNode | null;
   children: TerminalNode[];
   x?: number;

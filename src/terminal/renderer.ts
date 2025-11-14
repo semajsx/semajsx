@@ -5,6 +5,7 @@ import ansiEscapes from 'ansi-escapes';
 import stringWidth from 'string-width';
 import sliceAnsi from 'slice-ansi';
 import type { TerminalNode, TerminalElement, TerminalText, TerminalRoot } from './types';
+import { collectText } from './operations';
 
 /**
  * Get a chalk color function by name
@@ -82,6 +83,9 @@ export class TerminalRenderer {
     if (this.root.yogaNode) {
       this.root.yogaNode.setWidth(columns || 80);
       this.root.yogaNode.setHeight(rows || 24);
+      // Set default flexbox properties to prevent children from stretching
+      this.root.yogaNode.setFlexDirection(Yoga.FLEX_DIRECTION_COLUMN);
+      this.root.yogaNode.setAlignItems(Yoga.ALIGN_FLEX_START);
     }
   }
 
@@ -137,6 +141,14 @@ export class TerminalRenderer {
       for (const child of node.children) {
         this.updatePositions(child, node.x || 0, node.y || 0);
       }
+    } else {
+      // Text nodes don't have yoga nodes - inherit parent position
+      node.x = parentX;
+      node.y = parentY;
+
+      for (const child of node.children) {
+        this.updatePositions(child, parentX, parentY);
+      }
     }
   }
 
@@ -175,7 +187,7 @@ export class TerminalRenderer {
    * Render an element node
    */
   private renderElement(node: TerminalElement): void {
-    const { style, x = 0, y = 0, width = 0, height = 0 } = node;
+    const { style, x = 0, y = 0, width = 0, height = 0, tagName } = node;
 
     // Render border if specified
     if (style.border && style.border !== 'none') {
@@ -187,9 +199,38 @@ export class TerminalRenderer {
       this.renderBackground(node);
     }
 
-    // Render children
-    for (const child of node.children) {
-      this.renderNode(child);
+    // For text elements, collect and render all text content at once
+    if (tagName === 'text') {
+      const text = collectText(node);
+      if (text) {
+        // Apply text styling
+        let styledText = text;
+        if (style.color) {
+          styledText = getChalkColor(style.color)(styledText);
+        }
+        if (style.bold) {
+          styledText = chalk.bold(styledText);
+        }
+        if (style.italic) {
+          styledText = chalk.italic(styledText);
+        }
+        if (style.underline) {
+          styledText = chalk.underline(styledText);
+        }
+        if (style.strikethrough) {
+          styledText = chalk.strikethrough(styledText);
+        }
+        if (style.dim) {
+          styledText = chalk.dim(styledText);
+        }
+
+        this.writeAt(x, y, styledText);
+      }
+    } else {
+      // For other elements, render children normally
+      for (const child of node.children) {
+        this.renderNode(child);
+      }
     }
   }
 
@@ -252,10 +293,11 @@ export class TerminalRenderer {
 
     const row = this.buffer[y] || '';
     const width = stringWidth(text);
+    const rowWidth = stringWidth(row);
 
     // Pad row if needed
-    if (row.length < x) {
-      this.buffer[y] = row + ' '.repeat(x - row.length) + text;
+    if (rowWidth < x) {
+      this.buffer[y] = row + ' '.repeat(x - rowWidth) + text;
     } else {
       // Replace characters at position
       this.buffer[y] = sliceAnsi(row, 0, x) + text + sliceAnsi(row, x + width);
