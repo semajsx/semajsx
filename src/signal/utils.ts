@@ -3,7 +3,7 @@ import type { Signal, MaybeSignal } from './types';
 /**
  * Check if a value is a signal
  */
-export function isSignal<T = any>(value: any): value is Signal<T> {
+export function isSignal<T = unknown>(value: unknown): value is Signal<T> {
   return (
     value != null &&
     typeof value === 'object' &&

@@ -5,34 +5,33 @@ import { applyStyle } from './operations';
 /**
  * Set a property on a terminal node
  */
-export function setProperty(node: TerminalNode, key: string, value: any): void {
+export function setProperty(node: TerminalNode, key: string, value: unknown): void {
   if (node.type !== 'element') return;
-
-  const element = node as TerminalElement;
 
   // Handle style properties
   if (isStyleProperty(key)) {
-    applyStyle(element, { [key]: value } as TerminalStyle);
+    const styleUpdate: Partial<TerminalStyle> = { [key]: value };
+    applyStyle(node, styleUpdate);
     return;
   }
 
   // Store other props
-  element.props[key] = value;
+  node.props[key] = value;
 }
 
 /**
  * Set a signal property on a terminal node
  */
-export function setSignalProperty(
+export function setSignalProperty<T = unknown>(
   node: TerminalNode,
   key: string,
-  signal: Signal<any>
+  signal: Signal<T>
 ): () => void {
   // Set initial value
   setProperty(node, key, signal.peek());
 
   // Subscribe to changes
-  return signal.subscribe((value) => {
+  return signal.subscribe((value: T) => {
     setProperty(node, key, value);
   });
 }
