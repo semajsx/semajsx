@@ -293,10 +293,11 @@ export class TerminalRenderer {
 
     const row = this.buffer[y] || '';
     const width = stringWidth(text);
+    const rowWidth = stringWidth(row);
 
     // Pad row if needed
-    if (row.length < x) {
-      this.buffer[y] = row + ' '.repeat(x - row.length) + text;
+    if (rowWidth < x) {
+      this.buffer[y] = row + ' '.repeat(x - rowWidth) + text;
     } else {
       // Replace characters at position
       this.buffer[y] = sliceAnsi(row, 0, x) + text + sliceAnsi(row, x + width);
