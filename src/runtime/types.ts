@@ -13,7 +13,10 @@ export interface VNode {
   key?: string | number;
 }
 
-export type Component<P = any> = (props: P) => VNode;
+export type Component<P = any> =
+  | ((props: P) => VNode)
+  | ((props: P) => Promise<VNode>)
+  | ((props: P) => AsyncIterableIterator<VNode>);
 
 export type JSXChild =
   | VNode

@@ -2,6 +2,7 @@ import type { VNode, RenderedNode, Component } from './types';
 import { Fragment } from './types';
 import { isSignal } from '../signal';
 import { isVNode } from './vnode';
+import { resource, stream } from './helpers';
 import { setProperty, setSignalProperty } from '../dom/properties';
 import {
   createElement,
@@ -164,6 +165,20 @@ function renderFragment(vnode: VNode): RenderedNode {
 }
 
 /**
+ * Check if a value is a Promise
+ */
+function isPromise<T>(value: any): value is Promise<T> {
+  return value && typeof value.then === 'function';
+}
+
+/**
+ * Check if a value is an AsyncIterator
+ */
+function isAsyncIterator<T>(value: any): value is AsyncIterableIterator<T> {
+  return value && typeof value[Symbol.asyncIterator] === 'function';
+}
+
+/**
  * Render a component
  */
 function renderComponent(vnode: VNode): RenderedNode {
@@ -175,10 +190,54 @@ function renderComponent(vnode: VNode): RenderedNode {
   const props = { ...vnode.props, children: vnode.children };
 
   // Call component function
-  const resultVNode = Component(props);
+  const result = Component(props);
 
-  // Render the result
-  const rendered = renderNode(resultVNode);
+  // Handle async component (Promise<VNode>)
+  if (isPromise(result)) {
+    const fallback: VNode = {
+      type: '#text',
+      props: { nodeValue: '' },
+      children: [],
+    };
+    const resultSignal = resource(result, fallback);
+    const signalVNode: VNode = {
+      type: '#signal',
+      props: { signal: resultSignal },
+      children: [],
+    };
+    const rendered = renderNode(signalVNode);
+    return {
+      vnode,
+      dom: rendered.dom,
+      subscriptions: rendered.subscriptions,
+      children: [rendered],
+    };
+  }
+
+  // Handle async generator component (AsyncIterableIterator<VNode>)
+  if (isAsyncIterator(result)) {
+    const fallback: VNode = {
+      type: '#text',
+      props: { nodeValue: '' },
+      children: [],
+    };
+    const resultSignal = stream(result, fallback);
+    const signalVNode: VNode = {
+      type: '#signal',
+      props: { signal: resultSignal },
+      children: [],
+    };
+    const rendered = renderNode(signalVNode);
+    return {
+      vnode,
+      dom: rendered.dom,
+      subscriptions: rendered.subscriptions,
+      children: [rendered],
+    };
+  }
+
+  // Handle normal sync component (VNode)
+  const rendered = renderNode(result);
 
   return {
     vnode,
