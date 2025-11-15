@@ -1,6 +1,6 @@
+/** @jsxImportSource ../../src */
 import { signal } from "@/signal";
-import { h } from "@/runtime/vnode";
-import { TerminalRenderer, render } from "@/terminal";
+import { render } from "@/terminal";
 
 // Counter component
 function Counter() {
@@ -19,6 +19,9 @@ function Counter() {
       <text marginTop={1}>Count: {count}</text>
       <text dim marginTop={1}>
         Updates every second...
+      </text>
+      <text dim marginTop={1} color="yellow">
+        Press Ctrl+C or ESC to exit
       </text>
     </box>
   );
@@ -39,17 +42,10 @@ function App() {
   );
 }
 
-// Render to terminal
-const renderer = new TerminalRenderer(process.stdout);
-const { unmount } = render(<App />, renderer);
-
-// Auto re-render on signal changes
-setInterval(() => {
-  renderer.render();
-}, 100);
-
-// Cleanup on exit
-process.on("SIGINT", () => {
-  unmount();
-  process.exit(0);
-});
+// Render to terminal - that's it!
+// The render function automatically:
+// - Creates the renderer
+// - Sets up auto-rendering at 60 FPS
+// - Handles Ctrl+C and ESC keypresses
+// - Manages cleanup on exit
+render(<App />);
