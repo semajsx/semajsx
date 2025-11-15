@@ -12,15 +12,8 @@
     "baseUrl": ".",
     "paths": {
       "semajsx": ["../../src/index.ts"],
-      "semajsx/jsx-runtime": ["../../src/jsx-runtime.ts"],
-      "semajsx/jsx-dev-runtime": ["../../src/jsx-dev-runtime.ts"],
-      "semajsx/signal": ["../../src/signal/index.ts"],
-      "semajsx/terminal": ["../../src/terminal/index.ts"],
-      "@/*": ["../../src/*"],
-      "@/signal/*": ["../../src/signal/*"],
-      "@/runtime/*": ["../../src/runtime/*"],
-      "@/dom/*": ["../../src/dom/*"],
-      "@/terminal/*": ["../../src/terminal/*"]
+      "semajsx/*": ["../../src/*"],
+      "@/*": ["../../src/*"]
     }
   },
   "include": ["src", "vite.config.ts"]

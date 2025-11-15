@@ -6,4 +6,4 @@ const server = Bun.serve({
   },
 });
 
-console.log(server.url);
+console.log(server.url.toString());
