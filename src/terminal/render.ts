@@ -68,6 +68,17 @@ export interface RenderResult {
 }
 
 /**
+ * Options for print function
+ */
+export interface PrintOptions {
+  /**
+   * Output stream to print to.
+   * @default process.stdout
+   */
+  stream?: NodeJS.WriteStream;
+}
+
+/**
  * Render a VNode tree to the terminal
  *
  * @example
@@ -473,5 +484,87 @@ function unmountNode(node: RenderedTerminalNode): void {
   // Remove from tree
   if (node.node) {
     removeChild(node.node);
+  }
+}
+
+/**
+ * Print a VNode tree to the terminal once (no auto-rendering).
+ *
+ * This is a convenience function for one-time rendering scenarios like:
+ * - Server startup messages
+ * - CLI output
+ * - Static terminal displays
+ *
+ * Unlike `render()`, this function:
+ * - Does not subscribe to signal changes
+ * - Does not auto-render on updates
+ * - Immediately outputs and cleans up
+ * - Does not capture keyboard input
+ *
+ * @example
+ * // Simple server output
+ * print(
+ *   <box border="round" borderColor="green" padding={1}>
+ *     <text bold color="green">Server started!</text>
+ *     <text>URL: http://localhost:3000</text>
+ *   </box>
+ * );
+ *
+ * @example
+ * // Print to stderr
+ * print(<text color="red">Error occurred</text>, { stream: process.stderr });
+ */
+export function print(vnode: VNode, options: PrintOptions = {}): void {
+  const { stream = process.stdout } = options;
+
+  // Save raw mode state
+  const wasRawMode = process.stdin.isTTY && process.stdin.isRaw;
+
+  // Create renderer
+  const renderer = new TerminalRenderer(stream);
+  const root = renderer.getRoot();
+
+  // Render the vnode
+  const rendered = renderNode(vnode);
+
+  if (rendered.node) {
+    appendChild(root, rendered.node);
+  } else if (rendered.children.length > 0) {
+    // Fragment case - append all fragment children
+    for (const child of rendered.children) {
+      if (child.node) {
+        appendChild(root, child.node);
+      }
+    }
+  }
+
+  // Render once
+  renderer.render();
+
+  // Clean up subscriptions only (don't remove nodes from tree)
+  // This keeps the output visible after destroy
+  cleanupSubscriptions(rendered);
+
+  // Destroy renderer (outputs final result and shows cursor)
+  renderer.destroy();
+
+  // Restore raw mode if it was enabled
+  if (process.stdin.isTTY && process.stdin.setRawMode && wasRawMode) {
+    process.stdin.setRawMode(true);
+  }
+}
+
+/**
+ * Clean up subscriptions without removing nodes from tree
+ */
+function cleanupSubscriptions(node: RenderedTerminalNode): void {
+  // Cleanup subscriptions
+  for (const unsub of node.subscriptions) {
+    unsub();
+  }
+
+  // Recursively cleanup children
+  for (const child of node.children) {
+    cleanupSubscriptions(child);
   }
 }

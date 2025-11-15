@@ -6,8 +6,8 @@
  */
 
 export { TerminalRenderer } from "./renderer";
-export { render } from "./render";
-export type { RenderResult, RenderOptions } from "./render";
+export { render, print } from "./render";
+export type { RenderResult, RenderOptions, PrintOptions } from "./render";
 export type {
   TerminalNode,
   TerminalElement,
