@@ -30,6 +30,13 @@ type WithSignals<T> = {
 };
 
 /**
+ * Adds key property to element attributes for list reconciliation
+ */
+type WithKey<T> = T & {
+  key?: string | number;
+};
+
+/**
  * HTML attribute types (base definitions without Signal support)
  */
 interface BaseHTMLAttributes {
@@ -158,7 +165,7 @@ interface BaseHTMLAttributes {
  * HTML attributes with Signal support
  * All non-function properties can accept Signal values
  */
-export type HTMLAttributes = WithSignals<BaseHTMLAttributes> & {
+export type HTMLAttributes = WithKey<WithSignals<BaseHTMLAttributes>> & {
   // Data attributes support both plain values and Signals
   [dataAttribute: `data-${string}`]:
     | string
@@ -185,7 +192,7 @@ interface BaseAnchorHTMLAttributes extends BaseHTMLAttributes {
     | "unsafe-url";
 }
 
-export type AnchorHTMLAttributes = WithSignals<BaseAnchorHTMLAttributes>;
+export type AnchorHTMLAttributes = WithKey<WithSignals<BaseAnchorHTMLAttributes>>;
 
 interface BaseButtonHTMLAttributes extends BaseHTMLAttributes {
   disabled?: boolean;
@@ -200,7 +207,7 @@ interface BaseButtonHTMLAttributes extends BaseHTMLAttributes {
   formTarget?: string;
 }
 
-export type ButtonHTMLAttributes = WithSignals<BaseButtonHTMLAttributes>;
+export type ButtonHTMLAttributes = WithKey<WithSignals<BaseButtonHTMLAttributes>>;
 
 interface BaseInputHTMLAttributes extends BaseHTMLAttributes {
   accept?: string;
@@ -233,7 +240,7 @@ interface BaseInputHTMLAttributes extends BaseHTMLAttributes {
   value?: string | number;
 }
 
-export type InputHTMLAttributes = WithSignals<BaseInputHTMLAttributes>;
+export type InputHTMLAttributes = WithKey<WithSignals<BaseInputHTMLAttributes>>;
 
 interface BaseTextareaHTMLAttributes extends BaseHTMLAttributes {
   autoComplete?: string;
@@ -252,7 +259,7 @@ interface BaseTextareaHTMLAttributes extends BaseHTMLAttributes {
   wrap?: "hard" | "soft" | "off";
 }
 
-export type TextareaHTMLAttributes = WithSignals<BaseTextareaHTMLAttributes>;
+export type TextareaHTMLAttributes = WithKey<WithSignals<BaseTextareaHTMLAttributes>>;
 
 interface BaseSelectHTMLAttributes extends BaseHTMLAttributes {
   autoComplete?: string;
@@ -266,7 +273,7 @@ interface BaseSelectHTMLAttributes extends BaseHTMLAttributes {
   value?: string | string[];
 }
 
-export type SelectHTMLAttributes = WithSignals<BaseSelectHTMLAttributes>;
+export type SelectHTMLAttributes = WithKey<WithSignals<BaseSelectHTMLAttributes>>;
 
 interface BaseOptionHTMLAttributes extends BaseHTMLAttributes {
   disabled?: boolean;
@@ -275,7 +282,7 @@ interface BaseOptionHTMLAttributes extends BaseHTMLAttributes {
   value?: string | number;
 }
 
-export type OptionHTMLAttributes = WithSignals<BaseOptionHTMLAttributes>;
+export type OptionHTMLAttributes = WithKey<WithSignals<BaseOptionHTMLAttributes>>;
 
 interface BaseLabelHTMLAttributes extends BaseHTMLAttributes {
   for?: string;
@@ -283,7 +290,7 @@ interface BaseLabelHTMLAttributes extends BaseHTMLAttributes {
   form?: string;
 }
 
-export type LabelHTMLAttributes = WithSignals<BaseLabelHTMLAttributes>;
+export type LabelHTMLAttributes = WithKey<WithSignals<BaseLabelHTMLAttributes>>;
 
 interface BaseFormHTMLAttributes extends BaseHTMLAttributes {
   acceptCharset?: string;
@@ -296,7 +303,7 @@ interface BaseFormHTMLAttributes extends BaseHTMLAttributes {
   target?: "_blank" | "_self" | "_parent" | "_top";
 }
 
-export type FormHTMLAttributes = WithSignals<BaseFormHTMLAttributes>;
+export type FormHTMLAttributes = WithKey<WithSignals<BaseFormHTMLAttributes>>;
 
 interface BaseImgHTMLAttributes extends BaseHTMLAttributes {
   alt?: string;
@@ -312,7 +319,7 @@ interface BaseImgHTMLAttributes extends BaseHTMLAttributes {
   width?: number | string;
 }
 
-export type ImgHTMLAttributes = WithSignals<BaseImgHTMLAttributes>;
+export type ImgHTMLAttributes = WithKey<WithSignals<BaseImgHTMLAttributes>>;
 
 interface BaseVideoHTMLAttributes extends BaseHTMLAttributes {
   autoPlay?: boolean;
@@ -328,7 +335,7 @@ interface BaseVideoHTMLAttributes extends BaseHTMLAttributes {
   width?: number | string;
 }
 
-export type VideoHTMLAttributes = WithSignals<BaseVideoHTMLAttributes>;
+export type VideoHTMLAttributes = WithKey<WithSignals<BaseVideoHTMLAttributes>>;
 
 interface BaseAudioHTMLAttributes extends BaseHTMLAttributes {
   autoPlay?: boolean;
@@ -340,14 +347,14 @@ interface BaseAudioHTMLAttributes extends BaseHTMLAttributes {
   src?: string;
 }
 
-export type AudioHTMLAttributes = WithSignals<BaseAudioHTMLAttributes>;
+export type AudioHTMLAttributes = WithKey<WithSignals<BaseAudioHTMLAttributes>>;
 
 interface BaseCanvasHTMLAttributes extends BaseHTMLAttributes {
   height?: number | string;
   width?: number | string;
 }
 
-export type CanvasHTMLAttributes = WithSignals<BaseCanvasHTMLAttributes>;
+export type CanvasHTMLAttributes = WithKey<WithSignals<BaseCanvasHTMLAttributes>>;
 
 interface BaseIframeHTMLAttributes extends BaseHTMLAttributes {
   allow?: string;
@@ -362,14 +369,14 @@ interface BaseIframeHTMLAttributes extends BaseHTMLAttributes {
   width?: number | string;
 }
 
-export type IframeHTMLAttributes = WithSignals<BaseIframeHTMLAttributes>;
+export type IframeHTMLAttributes = WithKey<WithSignals<BaseIframeHTMLAttributes>>;
 
 interface BaseTableHTMLAttributes extends BaseHTMLAttributes {
   cellPadding?: number | string;
   cellSpacing?: number | string;
 }
 
-export type TableHTMLAttributes = WithSignals<BaseTableHTMLAttributes>;
+export type TableHTMLAttributes = WithKey<WithSignals<BaseTableHTMLAttributes>>;
 
 interface BaseTdHTMLAttributes extends BaseHTMLAttributes {
   colSpan?: number;
@@ -377,7 +384,7 @@ interface BaseTdHTMLAttributes extends BaseHTMLAttributes {
   rowSpan?: number;
 }
 
-export type TdHTMLAttributes = WithSignals<BaseTdHTMLAttributes>;
+export type TdHTMLAttributes = WithKey<WithSignals<BaseTdHTMLAttributes>>;
 
 interface BaseThHTMLAttributes extends BaseHTMLAttributes {
   abbr?: string;
@@ -387,7 +394,7 @@ interface BaseThHTMLAttributes extends BaseHTMLAttributes {
   scope?: "col" | "row" | "colgroup" | "rowgroup";
 }
 
-export type ThHTMLAttributes = WithSignals<BaseThHTMLAttributes>;
+export type ThHTMLAttributes = WithKey<WithSignals<BaseThHTMLAttributes>>;
 
 interface BaseStyleHTMLAttributes extends BaseHTMLAttributes {
   media?: string;
@@ -395,7 +402,7 @@ interface BaseStyleHTMLAttributes extends BaseHTMLAttributes {
   type?: string;
 }
 
-export type StyleHTMLAttributes = WithSignals<BaseStyleHTMLAttributes>;
+export type StyleHTMLAttributes = WithKey<WithSignals<BaseStyleHTMLAttributes>>;
 
 interface BaseScriptHTMLAttributes extends BaseHTMLAttributes {
   async?: boolean;
@@ -408,7 +415,7 @@ interface BaseScriptHTMLAttributes extends BaseHTMLAttributes {
   type?: string;
 }
 
-export type ScriptHTMLAttributes = WithSignals<BaseScriptHTMLAttributes>;
+export type ScriptHTMLAttributes = WithKey<WithSignals<BaseScriptHTMLAttributes>>;
 
 interface BaseLinkHTMLAttributes extends BaseHTMLAttributes {
   as?: string;
@@ -423,7 +430,7 @@ interface BaseLinkHTMLAttributes extends BaseHTMLAttributes {
   type?: string;
 }
 
-export type LinkHTMLAttributes = WithSignals<BaseLinkHTMLAttributes>;
+export type LinkHTMLAttributes = WithKey<WithSignals<BaseLinkHTMLAttributes>>;
 
 interface BaseMetaHTMLAttributes extends BaseHTMLAttributes {
   charSet?: string;
@@ -432,7 +439,7 @@ interface BaseMetaHTMLAttributes extends BaseHTMLAttributes {
   name?: string;
 }
 
-export type MetaHTMLAttributes = WithSignals<BaseMetaHTMLAttributes>;
+export type MetaHTMLAttributes = WithKey<WithSignals<BaseMetaHTMLAttributes>>;
 
 /**
  * JSX namespace for DOM elements
