@@ -17,6 +17,7 @@ export type {
 export * from "./operations";
 export * from "./properties";
 export * from "./components";
+export * from "./utils";
 
 // Re-export helpers for convenience
 export { when, resource, stream } from "../runtime/helpers";

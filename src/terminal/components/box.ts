@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import cliBoxes from "cli-boxes";
 import type { TerminalElement } from "../types";
-import { getChalkColor, getChalkBgColor } from "./colors";
+import { getChalkColor, getChalkBgColor } from "../utils/colors";
 
 /**
  * Render a border around an element

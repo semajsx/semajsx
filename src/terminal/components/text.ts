@@ -3,7 +3,7 @@ import stringWidth from "string-width";
 import sliceAnsi from "slice-ansi";
 import type { TerminalElement, TerminalText } from "../types";
 import { collectText } from "../operations";
-import { getChalkColor } from "./colors";
+import { getChalkColor } from "../utils/colors";
 
 /**
  * Render a text node
