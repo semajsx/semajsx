@@ -81,7 +81,7 @@
     "framework",
     "typescript"
   ],
-  "author": "",
+  "author": "lidessen",
   "license": "MIT",
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
