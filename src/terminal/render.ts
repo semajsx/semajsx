@@ -167,10 +167,10 @@ function renderValueToNode(value: unknown): RenderedTerminalNode {
       children: [],
     };
   } else if (value == null || typeof value === 'boolean') {
-    // Render empty text for null/undefined/boolean
+    // Render empty Fragment for null/undefined/boolean (renders nothing)
     newVNode = {
-      type: '#text',
-      props: { nodeValue: '' },
+      type: Fragment,
+      props: {},
       children: [],
     };
   } else {

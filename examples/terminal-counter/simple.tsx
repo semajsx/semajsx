@@ -1,14 +1,24 @@
 /** @jsxImportSource ../../src */
-import { signal } from '../../src/signal';
+import { signal, computed } from '../../src/signal';
 import { TerminalRenderer, render } from '../../src/terminal';
 
 // Simple counter with JSX
 const count = signal(0);
+const showExitHint = signal(true);
 
 // Auto-increment every second
 setInterval(() => {
   count.value++;
 }, 1000);
+
+// Conditional exit hint - hidden on exit
+const exitHint = computed([showExitHint], show =>
+  show ? (
+    <text dim marginTop={1} color="yellow">
+      Press Ctrl+C or ESC to exit
+    </text>
+  ) : null
+);
 
 // Build UI using JSX
 const app = (
@@ -20,9 +30,7 @@ const app = (
     <text dim marginTop={1}>
       Updates every second...
     </text>
-    <text dim marginTop={1} color="yellow">
-      Press Ctrl+C or ESC to exit
-    </text>
+    {exitHint}
   </box>
 );
 
@@ -47,8 +55,14 @@ if (process.stdin.isTTY) {
 
     // Ctrl+C (\u0003) or ESC (\u001b) to exit
     if (key === '\u0003' || key === '\u001b') {
-      renderer.destroy();
-      process.exit(0);
+      // Hide exit hint before final render
+      showExitHint.value = false;
+
+      // Wait for signal to update, then destroy
+      setTimeout(() => {
+        renderer.destroy();
+        process.exit(0);
+      }, 50);
     }
 
     // You can add more key handlers here
@@ -58,6 +72,9 @@ if (process.stdin.isTTY) {
 
 // Fallback for non-TTY environments
 process.on('SIGINT', () => {
-  renderer.destroy();
-  process.exit(0);
+  showExitHint.value = false;
+  setTimeout(() => {
+    renderer.destroy();
+    process.exit(0);
+  }, 50);
 });
