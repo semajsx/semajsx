@@ -6,7 +6,7 @@ This document summarizes the configuration improvements made to achieve best pra
 
 **Goal:** Simplify and standardize TypeScript and tooling configurations while following best practices.
 
-**Result:** Reduced configuration duplication by ~80% and improved type safety.
+**Result:** Reduced from 12 to 5 TypeScript configs (58% reduction) and improved type safety.
 
 ---
 
@@ -136,27 +136,27 @@ alias: {
 - tsconfig.json (root)
 - tsconfig.base.json
 - tsconfig.lib.json
-- tsconfig.build.json (REDUNDANT - nearly identical to lib)
+- tsconfig.build.json (REDUNDANT)
 - tsconfig.test.json
-- 6 example tsconfig.json files (each 50-60 lines)
+- tsconfig.examples.base.json
+- 6 individual example tsconfig.json files (each 50-60 lines)
 
-Total: ~400 lines of configuration
+Total: ~400 lines of configuration across many files
 ```
 
 ### After
 ```
-11 TypeScript configuration files:
-- tsconfig.json (root)
+5 TypeScript configuration files:
+- tsconfig.json (root - 3 project references)
 - tsconfig.base.json (enhanced with strict options)
-- tsconfig.examples.base.json (NEW - shared for all examples)
-- tsconfig.lib.json (merged with tsconfig.build.json, used by tsdown)
-- tsconfig.test.json
-- 6 example tsconfig.json files (each 3-7 lines)
+- tsconfig.lib.json (library build config, used by tsdown)
+- tsconfig.dom.json (ALL DOM examples + tests via include)
+- tsconfig.terminal.json (ALL Terminal examples + tests via include)
 
-Total: ~120 lines of configuration
+Total: ~100 lines of configuration
 ```
 
-**Net Result:** 70% reduction in configuration code, clearer hierarchy, fewer files.
+**Net Result:** 58% fewer files (12 → 5), 75% less configuration code, dramatically simpler.
 
 ---
 
@@ -234,36 +234,45 @@ No changes needed - `tsdown.config.ts` has all aliases configured.
 
 ---
 
-## Additional Simplification (Completed)
+## Dramatic Simplification (Completed)
 
-### Merged tsconfig Files
+### Phase 1: Merge tsconfig.build.json
 
 **Removed `tsconfig.build.json`:**
-- Was nearly identical to `tsconfig.lib.json` (only difference: `composite` flag)
-- Updated `tsdown.config.ts` to use `tsconfig.lib.json` instead
-- Reduces total count from 12 to 11 configuration files
-- `tsconfig.lib.json` now serves dual purpose: project references AND build config
+- Was nearly identical to `tsconfig.lib.json`
+- Updated `tsdown.config.ts` to use `tsconfig.lib.json`
+- Reduced from 12 to 11 files
+
+### Phase 2: Unified Configs by Rendering Target
+
+**Key Insight:** Instead of one config per example, group by rendering target!
+
+**Removed:**
+- `tsconfig.examples.base.json` (shared base)
+- `tsconfig.test.json` (separate test config)
+- All 6 individual example `tsconfig.json` files
+
+**Created:**
+- `tsconfig.dom.json` - Includes all DOM examples + DOM tests
+- `tsconfig.terminal.json` - Includes all Terminal examples + Terminal tests
+
+**Benefits:**
+- No need to create `tsconfig.json` for each new example
+- Tests and examples colocated by target
+- Just add to `include` pattern instead of new file
 
 **Final Configuration Hierarchy:**
 
 ```
-Root Level:
-├── tsconfig.json                    # Project references (IDE integration)
-├── tsconfig.base.json              # Shared base settings
-├── tsconfig.lib.json               # Library build (used by tsc AND tsdown)
-├── tsconfig.test.json              # Test-specific settings
-└── tsconfig.examples.base.json     # Shared example settings
-
-Example Level (inherit from examples.base):
-├── examples/bun-server/tsconfig.json       (3 lines)
-├── examples/vite-counter/tsconfig.json     (7 lines - Vite-specific)
-├── examples/performance-test/tsconfig.json (3 lines)
-├── examples/terminal-counter/tsconfig.json (3 lines)
-├── examples/terminal-print/tsconfig.json   (3 lines)
-└── examples/shared/tsconfig.json           (3 lines)
+Root (Minimal):
+├── tsconfig.json           # Project references (3 refs only)
+├── tsconfig.base.json      # Shared strict settings
+├── tsconfig.lib.json       # Library build (tsdown)
+├── tsconfig.dom.json       # All DOM code (examples + tests)
+└── tsconfig.terminal.json  # All Terminal code (examples + tests)
 ```
 
-**Each file now has a unique, essential purpose. Further consolidation would reduce flexibility.**
+**This is the minimal viable structure - each file has unique purpose.**
 
 ---
 
