@@ -53,7 +53,7 @@ export interface HTMLAttributes {
     | "date"
     | "time";
 
-  // Event handlers
+  // Event handlers (React-style camelCase)
   onClick?: (event: MouseEvent) => void;
   onDblClick?: (event: MouseEvent) => void;
   onMouseDown?: (event: MouseEvent) => void;
@@ -91,6 +91,45 @@ export interface HTMLAttributes {
   onDragLeave?: (event: DragEvent) => void;
   onDragOver?: (event: DragEvent) => void;
   onDrop?: (event: DragEvent) => void;
+
+  // Event handlers (native DOM lowercase)
+  onclick?: (event: MouseEvent) => void;
+  ondblclick?: (event: MouseEvent) => void;
+  onmousedown?: (event: MouseEvent) => void;
+  onmouseup?: (event: MouseEvent) => void;
+  onmouseenter?: (event: MouseEvent) => void;
+  onmouseleave?: (event: MouseEvent) => void;
+  onmousemove?: (event: MouseEvent) => void;
+  onmouseover?: (event: MouseEvent) => void;
+  onmouseout?: (event: MouseEvent) => void;
+  oncontextmenu?: (event: MouseEvent) => void;
+
+  onkeydown?: (event: KeyboardEvent) => void;
+  onkeyup?: (event: KeyboardEvent) => void;
+  onkeypress?: (event: KeyboardEvent) => void;
+
+  onfocus?: (event: FocusEvent) => void;
+  onblur?: (event: FocusEvent) => void;
+
+  onchange?: (event: Event) => void;
+  oninput?: (event: Event) => void;
+  onsubmit?: (event: Event) => void;
+
+  onscroll?: (event: Event) => void;
+  onwheel?: (event: WheelEvent) => void;
+
+  ontouchstart?: (event: TouchEvent) => void;
+  ontouchmove?: (event: TouchEvent) => void;
+  ontouchend?: (event: TouchEvent) => void;
+  ontouchcancel?: (event: TouchEvent) => void;
+
+  ondragstart?: (event: DragEvent) => void;
+  ondrag?: (event: DragEvent) => void;
+  ondragend?: (event: DragEvent) => void;
+  ondragenter?: (event: DragEvent) => void;
+  ondragleave?: (event: DragEvent) => void;
+  ondragover?: (event: DragEvent) => void;
+  ondrop?: (event: DragEvent) => void;
 
   // Data attributes
   [dataAttribute: `data-${string}`]: string | number | boolean | undefined;
