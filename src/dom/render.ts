@@ -140,15 +140,28 @@ function renderSignalNode(vnode: VNode): RenderedNode {
   const unsubscribe = signal.subscribe((value) => {
     const newRendered = renderValueToNode(value);
 
-    // Replace old node with new one
+    // Try to reuse the existing DOM node if possible
     if (currentDom && newRendered.dom) {
-      replaceNode(currentDom, newRendered.dom);
-      currentDom = newRendered.dom;
-    }
+      const reused = tryReuseNode(
+        currentDom,
+        newRendered.dom,
+        currentRendered,
+        newRendered,
+      );
 
-    // Cleanup old node
-    if (currentRendered) {
-      unmount(currentRendered);
+      if (!reused) {
+        // Can't reuse, replace the node
+        replaceNode(currentDom, newRendered.dom);
+        currentDom = newRendered.dom;
+
+        // Cleanup old node
+        if (currentRendered) {
+          unmount(currentRendered);
+        }
+      } else {
+        // Node was reused, update the DOM reference
+        currentDom = newRendered.dom;
+      }
     }
 
     currentRendered = newRendered;
@@ -162,6 +175,212 @@ function renderSignalNode(vnode: VNode): RenderedNode {
     subscriptions,
     children: currentRendered ? [currentRendered] : [],
   };
+}
+
+/**
+ * Try to reuse an existing DOM node instead of replacing it
+ * Returns true if the node was successfully reused
+ */
+function tryReuseNode(
+  oldDom: Node,
+  newDom: Node,
+  oldRendered: RenderedNode,
+  newRendered: RenderedNode,
+): boolean {
+  // Both are text nodes - just update the content
+  if (
+    oldDom.nodeType === Node.TEXT_NODE &&
+    newDom.nodeType === Node.TEXT_NODE
+  ) {
+    if (oldDom.textContent !== newDom.textContent) {
+      oldDom.textContent = newDom.textContent;
+    }
+    // Update the newRendered to point to the old (reused) DOM node
+    newRendered.dom = oldDom;
+    return true;
+  }
+
+  // Both are elements with the same tag name - update properties and children
+  if (
+    oldDom.nodeType === Node.ELEMENT_NODE &&
+    newDom.nodeType === Node.ELEMENT_NODE &&
+    (oldDom as Element).tagName === (newDom as Element).tagName
+  ) {
+    const oldElement = oldDom as Element;
+    const newElement = newDom as Element;
+
+    // Update attributes
+    // Remove old attributes
+    for (let i = oldElement.attributes.length - 1; i >= 0; i--) {
+      const attr = oldElement.attributes[i];
+      if (!newElement.hasAttribute(attr.name)) {
+        oldElement.removeAttribute(attr.name);
+      }
+    }
+
+    // Set new attributes
+    for (let i = 0; i < newElement.attributes.length; i++) {
+      const attr = newElement.attributes[i];
+      if (oldElement.getAttribute(attr.name) !== attr.value) {
+        oldElement.setAttribute(attr.name, attr.value);
+      }
+    }
+
+    // Use keyed reconciliation if children have keys
+    const hasKeys = hasChildKeys(oldRendered) || hasChildKeys(newRendered);
+
+    if (
+      hasKeys &&
+      oldRendered.children.length > 0 &&
+      newRendered.children.length > 0
+    ) {
+      reconcileKeyedChildren(
+        oldElement,
+        oldRendered.children,
+        newRendered.children,
+      );
+    } else {
+      // Fallback: replace all children
+      // Clear old children
+      while (oldElement.firstChild) {
+        oldElement.removeChild(oldElement.firstChild);
+      }
+
+      // Add new children
+      while (newElement.firstChild) {
+        oldElement.appendChild(newElement.firstChild);
+      }
+    }
+
+    // Update the newRendered to point to the old (reused) DOM node
+    newRendered.dom = oldDom;
+
+    // Cleanup old subscriptions
+    for (const unsub of oldRendered.subscriptions) {
+      unsub();
+    }
+
+    return true;
+  }
+
+  // Different node types - can't reuse
+  return false;
+}
+
+/**
+ * Check if any children have keys
+ */
+function hasChildKeys(rendered: RenderedNode): boolean {
+  return rendered.children.some((child) => child.vnode.key != null);
+}
+
+/**
+ * Reconcile children using keys for efficient list updates
+ */
+function reconcileKeyedChildren(
+  parent: Element,
+  oldChildren: RenderedNode[],
+  newChildren: RenderedNode[],
+): void {
+  // Build a map of old children by key
+  const oldKeyMap = new Map<string | number, RenderedNode>();
+  const oldKeylessChildren: RenderedNode[] = [];
+
+  for (const child of oldChildren) {
+    if (child.vnode.key != null) {
+      oldKeyMap.set(child.vnode.key, child);
+    } else {
+      oldKeylessChildren.push(child);
+    }
+  }
+
+  // Track which old children have been reused
+  const reusedKeys = new Set<string | number>();
+  let keylessIndex = 0;
+
+  // Process new children
+  for (let i = 0; i < newChildren.length; i++) {
+    const newChild = newChildren[i];
+    const newKey = newChild.vnode.key;
+    let oldChild: RenderedNode | undefined;
+    let reused = false;
+
+    // Try to find matching old child by key
+    if (newKey != null) {
+      oldChild = oldKeyMap.get(newKey);
+      if (oldChild) {
+        reusedKeys.add(newKey);
+        reused = true;
+      }
+    } else {
+      // No key, try to reuse next keyless child
+      if (keylessIndex < oldKeylessChildren.length) {
+        oldChild = oldKeylessChildren[keylessIndex++];
+      }
+    }
+
+    // If we found a matching old child, try to update it
+    if (oldChild && reused && oldChild.dom && newChild.dom) {
+      const sameType =
+        oldChild.vnode.type === newChild.vnode.type ||
+        (oldChild.dom.nodeType === Node.TEXT_NODE &&
+          newChild.dom.nodeType === Node.TEXT_NODE);
+
+      if (sameType) {
+        // Try to reuse the node
+        const nodeReused = tryReuseNode(
+          oldChild.dom,
+          newChild.dom,
+          oldChild,
+          newChild,
+        );
+
+        if (nodeReused) {
+          // Ensure the child is in the correct position
+          const currentNode = parent.childNodes[i];
+          if (currentNode !== oldChild.dom) {
+            parent.insertBefore(oldChild.dom, currentNode || null);
+          }
+          continue;
+        }
+      }
+    }
+
+    // Can't reuse, insert the new child
+    if (newChild.dom) {
+      const currentNode = parent.childNodes[i];
+      if (currentNode) {
+        parent.insertBefore(newChild.dom, currentNode);
+      } else {
+        parent.appendChild(newChild.dom);
+      }
+    }
+  }
+
+  // Remove old children that weren't reused
+  for (const [key, oldChild] of oldKeyMap) {
+    if (!reusedKeys.has(key) && oldChild.dom) {
+      removeChild(oldChild.dom);
+      unmount(oldChild);
+    }
+  }
+
+  // Remove excess keyless children
+  for (let i = keylessIndex; i < oldKeylessChildren.length; i++) {
+    const oldChild = oldKeylessChildren[i];
+    if (oldChild.dom) {
+      removeChild(oldChild.dom);
+      unmount(oldChild);
+    }
+  }
+
+  // Remove any extra DOM nodes that are still in the parent
+  while (parent.childNodes.length > newChildren.length) {
+    const lastChild = parent.lastChild;
+    if (lastChild) {
+      parent.removeChild(lastChild);
+    }
+  }
 }
 
 /**

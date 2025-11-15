@@ -1,4 +1,5 @@
 import type { Signal } from "./types";
+import { scheduleUpdate } from "./batch";
 
 /**
  * Create a computed signal with declarative dependencies
@@ -52,10 +53,14 @@ export function computed(deps: any, compute: any): Signal<any> {
 
   // Notify subscribers
   const notify = () => {
-    const subs = Array.from(subscribers);
-    for (const listener of subs) {
-      listener(value);
-    }
+    // Schedule the notification instead of running it immediately
+    // This allows batching multiple updates into a single microtask
+    scheduleUpdate(() => {
+      // Directly iterate over the Set - no need to copy to array
+      for (const listener of subscribers) {
+        listener(value);
+      }
+    });
   };
 
   // Initial computation
