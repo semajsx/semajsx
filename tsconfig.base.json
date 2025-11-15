@@ -12,6 +12,14 @@
     "declaration": true,
     "sourceMap": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "semajsx"
+    "jsxImportSource": "semajsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@/signal/*": ["src/signal/*"],
+      "@/runtime/*": ["src/runtime/*"],
+      "@/dom/*": ["src/dom/*"],
+      "@/terminal/*": ["src/terminal/*"]
+    }
   }
 }

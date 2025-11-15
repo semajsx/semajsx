@@ -1,6 +1,6 @@
-import { signal } from "../../src/signal";
-import { h } from "../../src/runtime/vnode";
-import { TerminalRenderer, render } from "../../src/terminal";
+import { signal } from "@/signal";
+import { h } from "@/runtime/vnode";
+import { TerminalRenderer, render } from "@/terminal";
 
 // Counter component
 function Counter() {

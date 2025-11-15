@@ -16,4 +16,13 @@ export default defineConfig({
   treeshake: false,
   tsconfig: "tsconfig.build.json",
   platform: "neutral",
+  esbuildOptions(options) {
+    options.alias = {
+      "@": "./src",
+      "@/signal": "./src/signal",
+      "@/runtime": "./src/runtime",
+      "@/dom": "./src/dom",
+      "@/terminal": "./src/terminal",
+    };
+  },
 });

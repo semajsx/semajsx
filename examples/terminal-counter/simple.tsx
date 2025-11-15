@@ -1,6 +1,6 @@
 /** @jsxImportSource ../../src */
-import { signal } from "../../src/signal";
-import { TerminalRenderer, render, when } from "../../src/terminal";
+import { signal } from "@/signal";
+import { TerminalRenderer, render, when } from "@/terminal";
 
 // Simple counter with JSX
 const count = signal(0);
