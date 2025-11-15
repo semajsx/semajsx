@@ -4,7 +4,7 @@
     "noEmit": true,
     "types": ["vitest/globals", "node"]
   },
-  "include": ["tests/**/*", "src/jsx.d.ts"],
+  "include": ["tests/**/*"],
   "references": [
     { "path": "./tsconfig.lib.json" }
   ]
