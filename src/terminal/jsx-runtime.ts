@@ -7,47 +7,66 @@ import { h } from "../runtime/vnode";
 import { Fragment } from "../runtime/types";
 import type { VNode, JSXChildren } from "../runtime/types";
 import type { TerminalStyle } from "./types";
+import type { Signal } from "../signal/types";
 
 export { Fragment };
 
 /**
- * Terminal element attributes
+ * Helper type to allow Signal values for any attribute
  */
+type SignalOr<T> = T | Signal<T>;
 
-export interface TerminalAttributes extends TerminalStyle {
+/**
+ * Makes all properties in T accept Signal values
+ */
+type WithSignals<T> = {
+  [K in keyof T]: K extends "children" ? T[K] : SignalOr<T[K]>;
+};
+
+/**
+ * Base terminal element attributes (without Signal support)
+ */
+interface BaseTerminalAttributes extends TerminalStyle {
   // Special props
   key?: string | number;
   children?: JSXChildren;
 }
 
 /**
+ * Terminal element attributes with Signal support
+ * All style properties can accept Signal values
+ */
+export type TerminalAttributes = WithSignals<BaseTerminalAttributes>;
+
+/**
  * Box element attributes
  * Used for layout containers with flexbox support
+ *
+ * All properties support both plain values and Signals:
+ * - flexDirection, justifyContent, alignItems
+ * - flexGrow, flexShrink, flexBasis
+ * - width, height, minWidth, minHeight, maxWidth, maxHeight
+ * - margin, marginLeft, marginRight, marginTop, marginBottom
+ * - padding, paddingLeft, paddingRight, paddingTop, paddingBottom
+ * - border, borderColor
+ * - backgroundColor
  */
-export interface BoxAttributes extends TerminalAttributes {
-  // Box inherits all TerminalStyle properties:
-  // - flexDirection, justifyContent, alignItems
-  // - flexGrow, flexShrink, flexBasis
-  // - width, height, minWidth, minHeight, maxWidth, maxHeight
-  // - margin, marginLeft, marginRight, marginTop, marginBottom
-  // - padding, paddingLeft, paddingRight, paddingTop, paddingBottom
-  // - border, borderColor
-  // - backgroundColor
-}
+export type BoxAttributes = TerminalAttributes;
 
 /**
  * Text element attributes
  * Used for displaying styled text content
+ *
+ * All properties support both plain values and Signals:
+ * - color: Text color
+ * - bold: Bold text
+ * - italic: Italic text
+ * - underline: Underlined text
+ * - strikethrough: Strikethrough text
+ * - dim: Dimmed text
+ * - Layout props: flexGrow, flexShrink, flexBasis, margin, etc.
  */
-export interface TextAttributes extends TerminalAttributes {
-  // Text styling (from TerminalStyle):
-  // - color: Text color
-  // - bold: Bold text
-  // - italic: Italic text
-  // - underline: Underlined text
-  // - strikethrough: Strikethrough text
-  // - dim: Dimmed text
-}
+export type TextAttributes = TerminalAttributes;
 
 /**
  * JSX namespace for Terminal elements
