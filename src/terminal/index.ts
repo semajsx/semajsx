@@ -7,6 +7,7 @@
 
 export { TerminalRenderer } from "./renderer";
 export { render } from "./render";
+export type { RenderResult } from "./render";
 export type {
   TerminalNode,
   TerminalElement,

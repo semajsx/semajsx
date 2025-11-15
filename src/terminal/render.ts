@@ -25,13 +25,44 @@ interface RenderedTerminalNode {
 }
 
 /**
+ * Return type for render function
+ */
+export interface RenderResult {
+  /**
+   * Re-render the tree (useful for manual updates)
+   */
+  rerender: () => void;
+  /**
+   * Unmount and cleanup
+   */
+  unmount: () => void;
+  /**
+   * Wait for all pending async operations
+   */
+  waitUntilExit: () => Promise<void>;
+}
+
+/**
  * Render a VNode tree to the terminal
+ *
+ * @example
+ * // Simple usage (ink-style)
+ * const { unmount } = render(<App />);
+ *
+ * @example
+ * // With custom renderer
+ * const renderer = new TerminalRenderer(process.stderr);
+ * const { unmount } = render(<App />, renderer);
  */
 export function render(
   vnode: VNode,
-  renderer: TerminalRenderer,
-): { rendered: RenderedTerminalNode; unmount: () => void } {
-  const root = renderer.getRoot();
+  renderer?: TerminalRenderer,
+): RenderResult {
+  // Auto-create renderer if not provided (ink-style API)
+  const autoCreated = !renderer;
+  const actualRenderer = renderer || new TerminalRenderer(process.stdout);
+
+  const root = actualRenderer.getRoot();
   const rendered = renderNode(vnode);
 
   if (rendered.node) {
@@ -46,15 +77,68 @@ export function render(
   }
 
   // Initial render
-  renderer.render();
+  actualRenderer.render();
 
-  // Return unmount function
+  // Auto re-render on signal changes (like ink)
+  let renderInterval: NodeJS.Timeout | null = null;
+  if (autoCreated) {
+    renderInterval = setInterval(() => {
+      actualRenderer.render();
+    }, 16); // ~60fps
+  }
+
+  // Promise that resolves on exit
+  let exitResolver: (() => void) | null = null;
+  const exitPromise = new Promise<void>((resolve) => {
+    exitResolver = resolve;
+  });
+
+  // Unmount function
   const unmount = () => {
+    if (renderInterval) {
+      clearInterval(renderInterval);
+      renderInterval = null;
+    }
     unmountNode(rendered);
-    renderer.destroy();
+    actualRenderer.destroy();
+    if (exitResolver) {
+      exitResolver();
+    }
   };
 
-  return { rendered, unmount };
+  // Handle Ctrl+C if auto-created
+  if (autoCreated) {
+    const handleExit = () => {
+      unmount();
+      process.exit(0);
+    };
+
+    process.on("SIGINT", handleExit);
+    process.on("SIGTERM", handleExit);
+
+    // Enable stdin for keyboard input
+    if (process.stdin.isTTY) {
+      process.stdin.setRawMode(true);
+      process.stdin.resume();
+
+      const handleKeypress = (data: Buffer) => {
+        const key = data.toString();
+        // Ctrl+C or ESC to exit
+        if (key === "\u0003" || key === "\u001b") {
+          process.stdin.removeListener("data", handleKeypress);
+          handleExit();
+        }
+      };
+
+      process.stdin.on("data", handleKeypress);
+    }
+  }
+
+  return {
+    rerender: () => actualRenderer.render(),
+    unmount,
+    waitUntilExit: () => exitPromise,
+  };
 }
 
 /**
