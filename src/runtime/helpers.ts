@@ -31,33 +31,36 @@ export function when(
 /**
  * Async resource helper for Promise<VNode>
  *
- * Renders a fallback while the promise is pending, then renders the resolved
- * VNode. If the promise rejects, renders the error handler result.
+ * Renders a fallback (or null) while the promise is pending, then renders
+ * the resolved VNode. Handle errors in the promise itself using .catch().
  *
  * @example
+ * // Handle everything in the promise
  * const content = resource(
- *   fetchData(),
- *   <text>Loading...</text>,
- *   (err) => <text color="red">Error: {err.message}</text>
+ *   fetchData()
+ *     .then(data => <text>{data}</text>)
+ *     .catch(err => <text color="red">Error: {err.message}</text>)
+ * );
+ *
+ * @example
+ * // With optional fallback
+ * const content = resource(
+ *   fetchData().then(data => <text>{data}</text>),
+ *   <text>Loading...</text>
  * );
  */
-export function resource<T extends VNode = VNode>(
-  promise: Promise<T>,
-  fallback: VNode,
-  errorHandler?: (error: Error) => VNode
-): Signal<VNode> {
-  const content = signal<VNode>(fallback);
+export function resource(
+  promise: Promise<VNode>,
+  fallback?: VNode
+): Signal<VNode | null> {
+  const content = signal<VNode | null>(fallback || null);
 
   promise
     .then(result => {
       content.value = result;
     })
     .catch(err => {
-      if (errorHandler) {
-        content.value = errorHandler(err);
-      } else {
-        console.error('Unhandled promise error in resource():', err);
-      }
+      console.error('Unhandled promise rejection in resource():', err);
     });
 
   return content;
