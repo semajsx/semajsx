@@ -25,6 +25,31 @@ interface RenderedTerminalNode {
 }
 
 /**
+ * Options for terminal rendering
+ */
+export interface RenderOptions {
+  /**
+   * Custom renderer instance. If not provided, one will be created automatically.
+   */
+  renderer?: TerminalRenderer;
+  /**
+   * Whether to automatically re-render on signal changes.
+   * @default true
+   */
+  autoRender?: boolean;
+  /**
+   * Target frames per second for auto-rendering.
+   * @default 60
+   */
+  fps?: number;
+  /**
+   * Output stream to render to. Only used if renderer is not provided.
+   * @default process.stdout
+   */
+  stream?: NodeJS.WriteStream;
+}
+
+/**
  * Return type for render function
  */
 export interface RenderResult {
@@ -50,17 +75,37 @@ export interface RenderResult {
  * const { unmount } = render(<App />);
  *
  * @example
+ * // With custom stream
+ * render(<App />, { stream: process.stderr });
+ *
+ * @example
+ * // Disable auto-rendering
+ * const { rerender } = render(<App />, { autoRender: false });
+ * setInterval(rerender, 100);
+ *
+ * @example
  * // With custom renderer
  * const renderer = new TerminalRenderer(process.stderr);
- * const { unmount } = render(<App />, renderer);
+ * render(<App />, { renderer });
+ *
+ * @example
+ * // Custom FPS
+ * render(<App />, { fps: 30 });
  */
 export function render(
   vnode: VNode,
-  renderer?: TerminalRenderer,
+  options: RenderOptions = {},
 ): RenderResult {
+  const {
+    renderer,
+    autoRender = true,
+    fps = 60,
+    stream = process.stdout,
+  } = options;
+
   // Auto-create renderer if not provided (ink-style API)
   const autoCreated = !renderer;
-  const actualRenderer = renderer || new TerminalRenderer(process.stdout);
+  const actualRenderer = renderer || new TerminalRenderer(stream);
 
   const root = actualRenderer.getRoot();
   const rendered = renderNode(vnode);
@@ -81,10 +126,11 @@ export function render(
 
   // Auto re-render on signal changes (like ink)
   let renderInterval: NodeJS.Timeout | null = null;
-  if (autoCreated) {
+  if (autoRender) {
+    const interval = Math.floor(1000 / fps);
     renderInterval = setInterval(() => {
       actualRenderer.render();
-    }, 16); // ~60fps
+    }, interval);
   }
 
   // Promise that resolves on exit

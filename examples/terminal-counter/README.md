@@ -25,11 +25,31 @@ render(
 That's it! The `render()` function automatically:
 
 - ✅ Creates and manages the renderer
-- ✅ Sets up automatic re-rendering (60fps)
+- ✅ Sets up automatic re-rendering (60fps by default)
 - ✅ Handles Ctrl+C and ESC key presses
 - ✅ Cleans up resources on exit
 
-See `ink-style.tsx` for a complete example.
+### Customization
+
+You can customize the rendering behavior with options:
+
+```tsx
+// Output to stderr
+render(app, { stream: process.stderr });
+
+// Custom FPS (lower = less CPU usage)
+render(app, { fps: 30 });
+
+// Disable auto-rendering (manual control)
+const { rerender } = render(app, { autoRender: false });
+setInterval(rerender, 100);
+
+// Use custom renderer
+const renderer = new TerminalRenderer(process.stderr);
+render(app, { renderer });
+```
+
+See `ink-style.tsx` and `options.tsx` for complete examples.
 
 ## Features
 
@@ -99,10 +119,10 @@ render(app);
 **Option B: Manual Control**
 
 ```typescript
-import { TerminalRenderer, render } from "semajsx/terminal";
+import { render } from "semajsx/terminal";
 
-const renderer = new TerminalRenderer(process.stdout);
-const { rerender, unmount } = render(app, renderer);
+// Disable auto-rendering for manual control
+const { rerender, unmount } = render(app, { autoRender: false });
 
 // Manual re-render on changes
 setInterval(() => {
@@ -114,6 +134,15 @@ process.on("SIGINT", () => {
   unmount();
   process.exit(0);
 });
+```
+
+**Option C: Custom Renderer**
+
+```typescript
+import { TerminalRenderer, render } from "semajsx/terminal";
+
+const renderer = new TerminalRenderer(process.stderr);
+render(app, { renderer });
 ```
 
 ## Available Components
