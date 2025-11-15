@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { render, signal, computed } from "@/index";
+import { signal, computed } from "@/index";
+import { render } from "@/dom/render";
 
 describe("JSX integration", () => {
   let container: HTMLDivElement;
