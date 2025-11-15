@@ -12,4 +12,4 @@ export * from './operations';
 export * from './properties';
 
 // Re-export helpers for convenience
-export { when } from '../runtime/helpers';
+export { when, resource, stream } from '../runtime/helpers';

@@ -10,4 +10,4 @@ export * from './runtime';
 export { jsx, jsxs, Fragment } from './jsx-runtime';
 
 // Helpers
-export { when } from './runtime/helpers';
+export { when, resource, stream } from './runtime/helpers';
