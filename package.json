@@ -69,6 +69,7 @@
     "example:dev": "cd examples/vite-counter && vite",
     "example:build": "cd examples/vite-counter && npm run build",
     "example:bun": "bun --port=0 examples/bun-server/server.tsx",
+    "example:perf": "bun --port=0 examples/performance-test/server.tsx",
     "example:terminal": "bun examples/terminal-counter/simple.tsx",
     "prepare": "husky"
   },

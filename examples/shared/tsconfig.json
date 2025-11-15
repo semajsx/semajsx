@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "semajsx/terminal",
+    "baseUrl": ".",
+    "paths": {
+      "semajsx": ["../../src/index.ts"],
+      "semajsx/*": ["../../src/*"],
+      "semajsx/dom/jsx-runtime": ["../../src/dom/jsx-runtime.ts"],
+      "semajsx/dom/jsx-dev-runtime": ["../../src/dom/jsx-dev-runtime.ts"],
+      "semajsx/terminal/jsx-runtime": ["../../src/terminal/jsx-runtime.ts"],
+      "semajsx/terminal/jsx-dev-runtime": [
+        "../../src/terminal/jsx-dev-runtime.ts"
+      ],
+      "@/*": ["../../src/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
+}

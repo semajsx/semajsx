@@ -1,4 +1,5 @@
 import type { WritableSignal } from "./types";
+import { scheduleUpdate } from "./batch";
 
 /**
  * Create a writable signal
@@ -40,10 +41,15 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
   };
 
   function notify() {
-    const subs = Array.from(subscribers);
-    for (const listener of subs) {
-      listener(value);
-    }
+    // Schedule the notification instead of running it immediately
+    // This allows batching multiple updates into a single microtask
+    scheduleUpdate(() => {
+      // Directly iterate over the Set - no need to copy to array
+      // The Set is stable during iteration even if modified
+      for (const listener of subscribers) {
+        listener(value);
+      }
+    });
   }
 
   return sig;
