@@ -1,5 +1,5 @@
 {
-  "jsPlugins": ["./oxlint-plugin-english.js"],
+  "jsPlugins": ["./.oxlint/plugins/oxlint-plugin-english.js"],
   "rules": {
     "no-unused-vars": "warn",
     "no-debugger": "warn",
