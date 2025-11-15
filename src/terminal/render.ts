@@ -25,13 +25,89 @@ interface RenderedTerminalNode {
 }
 
 /**
+ * Options for terminal rendering
+ */
+export interface RenderOptions {
+  /**
+   * Custom renderer instance. If not provided, one will be created automatically.
+   */
+  renderer?: TerminalRenderer;
+  /**
+   * Whether to automatically re-render on signal changes.
+   * @default true
+   */
+  autoRender?: boolean;
+  /**
+   * Target frames per second for auto-rendering.
+   * @default 60
+   */
+  fps?: number;
+  /**
+   * Output stream to render to. Only used if renderer is not provided.
+   * @default process.stdout
+   */
+  stream?: NodeJS.WriteStream;
+}
+
+/**
+ * Return type for render function
+ */
+export interface RenderResult {
+  /**
+   * Re-render the tree (useful for manual updates)
+   */
+  rerender: () => void;
+  /**
+   * Unmount and cleanup
+   */
+  unmount: () => void;
+  /**
+   * Wait for all pending async operations
+   */
+  waitUntilExit: () => Promise<void>;
+}
+
+/**
  * Render a VNode tree to the terminal
+ *
+ * @example
+ * // Simple usage (ink-style)
+ * const { unmount } = render(<App />);
+ *
+ * @example
+ * // With custom stream
+ * render(<App />, { stream: process.stderr });
+ *
+ * @example
+ * // Disable auto-rendering
+ * const { rerender } = render(<App />, { autoRender: false });
+ * setInterval(rerender, 100);
+ *
+ * @example
+ * // With custom renderer
+ * const renderer = new TerminalRenderer(process.stderr);
+ * render(<App />, { renderer });
+ *
+ * @example
+ * // Custom FPS
+ * render(<App />, { fps: 30 });
  */
 export function render(
   vnode: VNode,
-  renderer: TerminalRenderer,
-): { rendered: RenderedTerminalNode; unmount: () => void } {
-  const root = renderer.getRoot();
+  options: RenderOptions = {},
+): RenderResult {
+  const {
+    renderer,
+    autoRender = true,
+    fps = 60,
+    stream = process.stdout,
+  } = options;
+
+  // Auto-create renderer if not provided (ink-style API)
+  const autoCreated = !renderer;
+  const actualRenderer = renderer || new TerminalRenderer(stream);
+
+  const root = actualRenderer.getRoot();
   const rendered = renderNode(vnode);
 
   if (rendered.node) {
@@ -46,15 +122,69 @@ export function render(
   }
 
   // Initial render
-  renderer.render();
+  actualRenderer.render();
 
-  // Return unmount function
+  // Auto re-render on signal changes (like ink)
+  let renderInterval: NodeJS.Timeout | null = null;
+  if (autoRender) {
+    const interval = Math.floor(1000 / fps);
+    renderInterval = setInterval(() => {
+      actualRenderer.render();
+    }, interval);
+  }
+
+  // Promise that resolves on exit
+  let exitResolver: (() => void) | null = null;
+  const exitPromise = new Promise<void>((resolve) => {
+    exitResolver = resolve;
+  });
+
+  // Unmount function
   const unmount = () => {
+    if (renderInterval) {
+      clearInterval(renderInterval);
+      renderInterval = null;
+    }
     unmountNode(rendered);
-    renderer.destroy();
+    actualRenderer.destroy();
+    if (exitResolver) {
+      exitResolver();
+    }
   };
 
-  return { rendered, unmount };
+  // Handle Ctrl+C if auto-created
+  if (autoCreated) {
+    const handleExit = () => {
+      unmount();
+      process.exit(0);
+    };
+
+    process.on("SIGINT", handleExit);
+    process.on("SIGTERM", handleExit);
+
+    // Enable stdin for keyboard input
+    if (process.stdin.isTTY) {
+      process.stdin.setRawMode(true);
+      process.stdin.resume();
+
+      const handleKeypress = (data: Buffer) => {
+        const key = data.toString();
+        // Ctrl+C or ESC to exit
+        if (key === "\u0003" || key === "\u001b") {
+          process.stdin.removeListener("data", handleKeypress);
+          handleExit();
+        }
+      };
+
+      process.stdin.on("data", handleKeypress);
+    }
+  }
+
+  return {
+    rerender: () => actualRenderer.render(),
+    unmount,
+    waitUntilExit: () => exitPromise,
+  };
 }
 
 /**
