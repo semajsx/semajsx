@@ -3,9 +3,9 @@
   "rules": {
     "no-unused-vars": "warn",
     "no-debugger": "warn",
-    "no-console": "off",
+    "no-console": "warn",
     "no-warning-comments": "warn",
     "english-only/no-non-english-comments": "error"
   },
-  "ignore": ["dist", "node_modules", "coverage", "*.config.ts", "examples"]
+  "ignore": ["dist", "node_modules", "coverage", "*.tsbuildinfo", "playwright-report", "test-results"]
 }

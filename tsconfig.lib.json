@@ -5,8 +5,9 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "jsxImportSource": "semajsx"
   },
-  "include": ["src/**/*"],
-  "exclude": []
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.d.ts"]
 }
