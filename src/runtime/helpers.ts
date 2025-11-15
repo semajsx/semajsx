@@ -31,7 +31,7 @@ export function when(
 /**
  * Async resource helper for Promise<VNode>
  *
- * Renders a fallback (or null) while the promise is pending, then renders
+ * Renders pending content (or null) while the promise is pending, then renders
  * the resolved VNode. Handle errors in the promise itself using .catch().
  *
  * @example
@@ -43,7 +43,7 @@ export function when(
  * );
  *
  * @example
- * // With optional fallback
+ * // With optional pending content
  * const content = resource(
  *   fetchData().then(data => <text>{data}</text>),
  *   <text>Loading...</text>
@@ -51,9 +51,9 @@ export function when(
  */
 export function resource(
   promise: Promise<VNode>,
-  fallback?: VNode
+  pending?: VNode
 ): Signal<VNode | null> {
-  const content = signal<VNode | null>(fallback || null);
+  const content = signal<VNode | null>(pending || null);
 
   promise
     .then(result => {
@@ -83,9 +83,9 @@ export function resource(
  */
 export function stream(
   iterator: AsyncIterable<VNode>,
-  fallback?: VNode
+  pending?: VNode
 ): Signal<VNode | null> {
-  const content = signal<VNode | null>(fallback || null);
+  const content = signal<VNode | null>(pending || null);
 
   (async () => {
     try {

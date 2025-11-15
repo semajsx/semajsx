@@ -194,12 +194,12 @@ function renderComponent(vnode: VNode): RenderedNode {
 
   // Handle async component (Promise<VNode>)
   if (isPromise(result)) {
-    const fallback: VNode = {
+    const pending: VNode = {
       type: '#text',
       props: { nodeValue: '' },
       children: [],
     };
-    const resultSignal = resource(result, fallback);
+    const resultSignal = resource(result, pending);
     const signalVNode: VNode = {
       type: '#signal',
       props: { signal: resultSignal },
@@ -216,12 +216,12 @@ function renderComponent(vnode: VNode): RenderedNode {
 
   // Handle async generator component (AsyncIterableIterator<VNode>)
   if (isAsyncIterator(result)) {
-    const fallback: VNode = {
+    const pending: VNode = {
       type: '#text',
       props: { nodeValue: '' },
       children: [],
     };
-    const resultSignal = stream(result, fallback);
+    const resultSignal = stream(result, pending);
     const signalVNode: VNode = {
       type: '#signal',
       props: { signal: resultSignal },
