@@ -1,31 +1,93 @@
 {
   "name": "semajsx",
-  "version": "0.0.1",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
+  "version": "0.1.0",
+  "description": "A signal-based reactive JSX runtime for building modern web applications",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./jsx-runtime": {
+      "import": "./dist/jsx-runtime.js",
+      "types": "./dist/jsx-runtime.d.ts"
+    },
+    "./jsx-dev-runtime": {
+      "import": "./dist/jsx-dev-runtime.js",
+      "types": "./dist/jsx-dev-runtime.d.ts"
+    },
+    "./signal": {
+      "import": "./dist/signal/index.js",
+      "types": "./dist/signal/index.d.ts"
+    },
+    "./terminal": {
+      "import": "./dist/terminal/index.js",
+      "types": "./dist/terminal/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
   ],
   "scripts": {
-    "build": "bun run --filter='./packages/*' build",
-    "test": "vitest --config vitest.config.ts",
-    "test:unit": "vitest --config packages/sema/vitest.unit.config.ts",
-    "test:all": "bun run test:unit -- --run && bun run test -- --run",
-    "typecheck": "bun run --filter='./packages/*' typecheck",
-    "lint": "bun run --filter='./packages/sema' lint",
-    "format": "bun run --filter='./packages/sema' format"
+    "dev": "tsdown --watch",
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "typecheck:examples": "tsc --noEmit -p examples/bun-html",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "oxlint src tests",
+    "lint:fix": "oxlint --fix src tests",
+    "test": "vitest",
+    "test:unit": "vitest --config vitest.unit.config.ts",
+    "test:unit:run": "vitest run --config vitest.unit.config.ts",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage --config vitest.unit.config.ts",
+    "test:terminal": "vitest run tests/terminal --config vitest.unit.config.ts",
+    "example:dev": "cd examples/basic && npm run dev",
+    "example:build": "cd examples/basic && npm run build",
+    "example:bun": "bun --port=0 examples/bun-html/server.ts",
+    "example:terminal": "bun examples/terminal-counter/simple.tsx",
+    "prepare": "husky"
   },
+  "keywords": [
+    "jsx",
+    "signal",
+    "reactive",
+    "ui",
+    "framework",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
   "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
     "@prettier/plugin-oxc": "^0.0.4",
-    "@semajsx/config": "workspace:*",
-    "@types/bun": "^1.2.19",
-    "@types/node": "^24.1.0",
-    "@vitest/browser": "^3.2.4",
-    "oxlint": "^1.9.0",
-    "playwright": "^1.54.2",
+    "@types/bun": "latest",
+    "@types/node": "^22.0.0",
+    "@vitest/browser": "^4.0.8",
+    "@vitest/browser-playwright": "^4.0.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
+    "oxlint": "^1.28.0",
+    "playwright": "^1.56.1",
     "prettier": "^3.6.2",
-    "tsdown": "^0.13.2",
-    "typescript": "^5.9.2",
-    "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "^3.2.4"
+    "tsdown": "^0.16.4",
+    "typescript": "^5.6.0",
+    "vitest": "^4.0.8"
+  },
+  "packageManager": "bun@1.2",
+  "private": true,
+  "dependencies": {
+    "ansi-escapes": "^7.2.0",
+    "chalk": "^5.6.2",
+    "cli-boxes": "^4.0.1",
+    "slice-ansi": "^7.1.2",
+    "string-width": "^8.1.0",
+    "wrap-ansi": "^9.0.2",
+    "yoga-layout-prebuilt": "^1.10.0"
   }
 }
