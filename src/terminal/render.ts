@@ -517,7 +517,7 @@ function unmountNode(node: RenderedTerminalNode): void {
 export function print(vnode: VNode, options: PrintOptions = {}): void {
   const { stream = process.stdout } = options;
 
-  // Create a custom stream wrapper that doesn't use raw mode
+  // Save raw mode state
   const wasRawMode = process.stdin.isTTY && process.stdin.isRaw;
 
   // Create renderer
@@ -541,12 +541,30 @@ export function print(vnode: VNode, options: PrintOptions = {}): void {
   // Render once
   renderer.render();
 
-  // Clean up immediately (this outputs the final result and shows cursor)
-  unmountNode(rendered);
+  // Clean up subscriptions only (don't remove nodes from tree)
+  // This keeps the output visible after destroy
+  cleanupSubscriptions(rendered);
+
+  // Destroy renderer (outputs final result and shows cursor)
   renderer.destroy();
 
   // Restore raw mode if it was enabled
   if (process.stdin.isTTY && process.stdin.setRawMode && wasRawMode) {
     process.stdin.setRawMode(true);
+  }
+}
+
+/**
+ * Clean up subscriptions without removing nodes from tree
+ */
+function cleanupSubscriptions(node: RenderedTerminalNode): void {
+  // Cleanup subscriptions
+  for (const unsub of node.subscriptions) {
+    unsub();
+  }
+
+  // Recursively cleanup children
+  for (const child of node.children) {
+    cleanupSubscriptions(child);
   }
 }
