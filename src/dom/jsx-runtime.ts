@@ -6,14 +6,33 @@
 import { h } from "../runtime/vnode";
 import { Fragment } from "../runtime/types";
 import type { VNode, JSXChildren } from "../runtime/types";
+import type { Signal } from "../signal/types";
 
 export { Fragment };
 
 /**
- * HTML attribute types
+ * Helper type to allow Signal values for any attribute
  */
+type SignalOr<T> = T | Signal<T>;
 
-export interface HTMLAttributes {
+/**
+ * Makes all properties in T accept Signal values
+ * Excludes event handlers (functions) and children
+ */
+type WithSignals<T> = {
+  [K in keyof T]: K extends `on${string}`
+    ? T[K] // Event handlers don't need Signal wrapper
+    : K extends "children"
+      ? T[K] // Children handled separately
+      : T[K] extends (...args: any[]) => any
+        ? T[K] // Other functions don't need Signal wrapper
+        : SignalOr<T[K]>;
+};
+
+/**
+ * HTML attribute types (base definitions without Signal support)
+ */
+interface BaseHTMLAttributes {
   // Standard attributes
   id?: string;
   className?: string;
@@ -131,14 +150,25 @@ export interface HTMLAttributes {
   ondragover?: (event: DragEvent) => void;
   ondrop?: (event: DragEvent) => void;
 
-  // Data attributes
-  [dataAttribute: `data-${string}`]: string | number | boolean | undefined;
-
   // Children
   children?: JSXChildren;
 }
 
-export interface AnchorHTMLAttributes extends HTMLAttributes {
+/**
+ * HTML attributes with Signal support
+ * All non-function properties can accept Signal values
+ */
+export type HTMLAttributes = WithSignals<BaseHTMLAttributes> & {
+  // Data attributes support both plain values and Signals
+  [dataAttribute: `data-${string}`]:
+    | string
+    | number
+    | boolean
+    | Signal<string | number | boolean>
+    | undefined;
+};
+
+interface BaseAnchorHTMLAttributes extends BaseHTMLAttributes {
   href?: string;
   target?: "_blank" | "_self" | "_parent" | "_top";
   rel?: string;
@@ -155,7 +185,9 @@ export interface AnchorHTMLAttributes extends HTMLAttributes {
     | "unsafe-url";
 }
 
-export interface ButtonHTMLAttributes extends HTMLAttributes {
+export type AnchorHTMLAttributes = WithSignals<BaseAnchorHTMLAttributes>;
+
+interface BaseButtonHTMLAttributes extends BaseHTMLAttributes {
   disabled?: boolean;
   type?: "button" | "submit" | "reset";
   value?: string;
@@ -168,7 +200,9 @@ export interface ButtonHTMLAttributes extends HTMLAttributes {
   formTarget?: string;
 }
 
-export interface InputHTMLAttributes extends HTMLAttributes {
+export type ButtonHTMLAttributes = WithSignals<BaseButtonHTMLAttributes>;
+
+interface BaseInputHTMLAttributes extends BaseHTMLAttributes {
   accept?: string;
   alt?: string;
   autoComplete?: string;
@@ -199,7 +233,9 @@ export interface InputHTMLAttributes extends HTMLAttributes {
   value?: string | number;
 }
 
-export interface TextareaHTMLAttributes extends HTMLAttributes {
+export type InputHTMLAttributes = WithSignals<BaseInputHTMLAttributes>;
+
+interface BaseTextareaHTMLAttributes extends BaseHTMLAttributes {
   autoComplete?: string;
   autoFocus?: boolean;
   cols?: number;
@@ -216,7 +252,9 @@ export interface TextareaHTMLAttributes extends HTMLAttributes {
   wrap?: "hard" | "soft" | "off";
 }
 
-export interface SelectHTMLAttributes extends HTMLAttributes {
+export type TextareaHTMLAttributes = WithSignals<BaseTextareaHTMLAttributes>;
+
+interface BaseSelectHTMLAttributes extends BaseHTMLAttributes {
   autoComplete?: string;
   autoFocus?: boolean;
   disabled?: boolean;
@@ -228,20 +266,26 @@ export interface SelectHTMLAttributes extends HTMLAttributes {
   value?: string | string[];
 }
 
-export interface OptionHTMLAttributes extends HTMLAttributes {
+export type SelectHTMLAttributes = WithSignals<BaseSelectHTMLAttributes>;
+
+interface BaseOptionHTMLAttributes extends BaseHTMLAttributes {
   disabled?: boolean;
   label?: string;
   selected?: boolean;
   value?: string | number;
 }
 
-export interface LabelHTMLAttributes extends HTMLAttributes {
+export type OptionHTMLAttributes = WithSignals<BaseOptionHTMLAttributes>;
+
+interface BaseLabelHTMLAttributes extends BaseHTMLAttributes {
   for?: string;
   htmlFor?: string;
   form?: string;
 }
 
-export interface FormHTMLAttributes extends HTMLAttributes {
+export type LabelHTMLAttributes = WithSignals<BaseLabelHTMLAttributes>;
+
+interface BaseFormHTMLAttributes extends BaseHTMLAttributes {
   acceptCharset?: string;
   action?: string;
   autoComplete?: string;
@@ -252,7 +296,9 @@ export interface FormHTMLAttributes extends HTMLAttributes {
   target?: "_blank" | "_self" | "_parent" | "_top";
 }
 
-export interface ImgHTMLAttributes extends HTMLAttributes {
+export type FormHTMLAttributes = WithSignals<BaseFormHTMLAttributes>;
+
+interface BaseImgHTMLAttributes extends BaseHTMLAttributes {
   alt?: string;
   crossOrigin?: "anonymous" | "use-credentials" | "";
   decoding?: "async" | "auto" | "sync";
@@ -266,7 +312,9 @@ export interface ImgHTMLAttributes extends HTMLAttributes {
   width?: number | string;
 }
 
-export interface VideoHTMLAttributes extends HTMLAttributes {
+export type ImgHTMLAttributes = WithSignals<BaseImgHTMLAttributes>;
+
+interface BaseVideoHTMLAttributes extends BaseHTMLAttributes {
   autoPlay?: boolean;
   controls?: boolean;
   crossOrigin?: "anonymous" | "use-credentials" | "";
@@ -280,7 +328,9 @@ export interface VideoHTMLAttributes extends HTMLAttributes {
   width?: number | string;
 }
 
-export interface AudioHTMLAttributes extends HTMLAttributes {
+export type VideoHTMLAttributes = WithSignals<BaseVideoHTMLAttributes>;
+
+interface BaseAudioHTMLAttributes extends BaseHTMLAttributes {
   autoPlay?: boolean;
   controls?: boolean;
   crossOrigin?: "anonymous" | "use-credentials" | "";
@@ -290,12 +340,16 @@ export interface AudioHTMLAttributes extends HTMLAttributes {
   src?: string;
 }
 
-export interface CanvasHTMLAttributes extends HTMLAttributes {
+export type AudioHTMLAttributes = WithSignals<BaseAudioHTMLAttributes>;
+
+interface BaseCanvasHTMLAttributes extends BaseHTMLAttributes {
   height?: number | string;
   width?: number | string;
 }
 
-export interface IframeHTMLAttributes extends HTMLAttributes {
+export type CanvasHTMLAttributes = WithSignals<BaseCanvasHTMLAttributes>;
+
+interface BaseIframeHTMLAttributes extends BaseHTMLAttributes {
   allow?: string;
   allowFullScreen?: boolean;
   height?: number | string;
@@ -308,18 +362,24 @@ export interface IframeHTMLAttributes extends HTMLAttributes {
   width?: number | string;
 }
 
-export interface TableHTMLAttributes extends HTMLAttributes {
+export type IframeHTMLAttributes = WithSignals<BaseIframeHTMLAttributes>;
+
+interface BaseTableHTMLAttributes extends BaseHTMLAttributes {
   cellPadding?: number | string;
   cellSpacing?: number | string;
 }
 
-export interface TdHTMLAttributes extends HTMLAttributes {
+export type TableHTMLAttributes = WithSignals<BaseTableHTMLAttributes>;
+
+interface BaseTdHTMLAttributes extends BaseHTMLAttributes {
   colSpan?: number;
   headers?: string;
   rowSpan?: number;
 }
 
-export interface ThHTMLAttributes extends HTMLAttributes {
+export type TdHTMLAttributes = WithSignals<BaseTdHTMLAttributes>;
+
+interface BaseThHTMLAttributes extends BaseHTMLAttributes {
   abbr?: string;
   colSpan?: number;
   headers?: string;
@@ -327,13 +387,17 @@ export interface ThHTMLAttributes extends HTMLAttributes {
   scope?: "col" | "row" | "colgroup" | "rowgroup";
 }
 
-export interface StyleHTMLAttributes extends HTMLAttributes {
+export type ThHTMLAttributes = WithSignals<BaseThHTMLAttributes>;
+
+interface BaseStyleHTMLAttributes extends BaseHTMLAttributes {
   media?: string;
   scoped?: boolean;
   type?: string;
 }
 
-export interface ScriptHTMLAttributes extends HTMLAttributes {
+export type StyleHTMLAttributes = WithSignals<BaseStyleHTMLAttributes>;
+
+interface BaseScriptHTMLAttributes extends BaseHTMLAttributes {
   async?: boolean;
   crossOrigin?: "anonymous" | "use-credentials" | "";
   defer?: boolean;
@@ -344,7 +408,9 @@ export interface ScriptHTMLAttributes extends HTMLAttributes {
   type?: string;
 }
 
-export interface LinkHTMLAttributes extends HTMLAttributes {
+export type ScriptHTMLAttributes = WithSignals<BaseScriptHTMLAttributes>;
+
+interface BaseLinkHTMLAttributes extends BaseHTMLAttributes {
   as?: string;
   crossOrigin?: "anonymous" | "use-credentials" | "";
   href?: string;
@@ -357,12 +423,16 @@ export interface LinkHTMLAttributes extends HTMLAttributes {
   type?: string;
 }
 
-export interface MetaHTMLAttributes extends HTMLAttributes {
+export type LinkHTMLAttributes = WithSignals<BaseLinkHTMLAttributes>;
+
+interface BaseMetaHTMLAttributes extends BaseHTMLAttributes {
   charSet?: string;
   content?: string;
   httpEquiv?: string;
   name?: string;
 }
+
+export type MetaHTMLAttributes = WithSignals<BaseMetaHTMLAttributes>;
 
 /**
  * JSX namespace for DOM elements
