@@ -14,7 +14,7 @@ const port = server.port;
 
 // Beautiful terminal output using the print function
 print(
-  <box flexDirection="column" padding={1}>
+  <box flexDirection="column">
     <box border="round" borderColor="green" padding={1} marginBottom={1}>
       <text bold color="green">
         ✓ Server started successfully!
@@ -23,17 +23,17 @@ print(
 
     <box flexDirection="column" paddingLeft={1}>
       <box flexDirection="row" marginBottom={1}>
-        <text bold>Local: </text>
+        <text bold>Local:</text>
         <text color="cyan">{url}</text>
       </box>
 
       <box flexDirection="row" marginBottom={1}>
-        <text bold>Host: </text>
+        <text bold>Host:</text>
         <text color="cyan">{hostname}</text>
       </box>
 
       <box flexDirection="row">
-        <text bold>Port: </text>
+        <text bold>Port:</text>
         <text color="yellow">{port}</text>
       </box>
     </box>
