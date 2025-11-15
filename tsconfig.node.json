@@ -23,14 +23,19 @@
     // Build options
     "skipLibCheck": true,
     "sourceMap": true,
+    "noEmit": true,
 
-    // JSX options (must be overridden in specific configs)
+    // JSX options
     "jsx": "react-jsx",
 
-    // Path aliases (minimal at base level)
+    // Path aliases
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "semajsx": ["./src/index.ts"],
+      "semajsx/*": ["./src/*"],
+      "@/*": ["./src/*"]
     }
-  }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["src/**/*.ts", "src/**/*.tsx"]
 }
