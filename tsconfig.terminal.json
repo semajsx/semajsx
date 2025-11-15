@@ -22,8 +22,7 @@
     "examples/terminal-print/**/*.tsx",
     "examples/shared/**/*.ts",
     "examples/shared/**/*.tsx",
-    "examples/type-tests/**/*.ts",
-    "examples/type-tests/**/*.tsx",
+    "examples/type-tests/terminal.tsx",
     "tests/terminal/**/*.ts",
     "tests/terminal/**/*.tsx"
   ]
