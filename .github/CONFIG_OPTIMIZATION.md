@@ -132,34 +132,31 @@ alias: {
 
 ### Before
 ```
-14 TypeScript configuration files:
+12 TypeScript configuration files:
 - tsconfig.json (root)
 - tsconfig.base.json
 - tsconfig.lib.json
-- tsconfig.build.json
+- tsconfig.build.json (REDUNDANT - nearly identical to lib)
 - tsconfig.test.json
 - 6 example tsconfig.json files (each 50-60 lines)
-- 3 type-test files
 
 Total: ~400 lines of configuration
 ```
 
 ### After
 ```
-15 TypeScript configuration files:
+11 TypeScript configuration files:
 - tsconfig.json (root)
-- tsconfig.base.json (enhanced)
-- tsconfig.examples.base.json (NEW - shared)
-- tsconfig.lib.json
-- tsconfig.build.json
+- tsconfig.base.json (enhanced with strict options)
+- tsconfig.examples.base.json (NEW - shared for all examples)
+- tsconfig.lib.json (merged with tsconfig.build.json, used by tsdown)
 - tsconfig.test.json
 - 6 example tsconfig.json files (each 3-7 lines)
-- 3 type-test files
 
-Total: ~150 lines of configuration
+Total: ~120 lines of configuration
 ```
 
-**Net Result:** 62% reduction in configuration code, +1 file but much clearer structure.
+**Net Result:** 70% reduction in configuration code, clearer hierarchy, fewer files.
 
 ---
 
@@ -237,13 +234,45 @@ No changes needed - `tsdown.config.ts` has all aliases configured.
 
 ---
 
+## Additional Simplification (Completed)
+
+### Merged tsconfig Files
+
+**Removed `tsconfig.build.json`:**
+- Was nearly identical to `tsconfig.lib.json` (only difference: `composite` flag)
+- Updated `tsdown.config.ts` to use `tsconfig.lib.json` instead
+- Reduces total count from 12 to 11 configuration files
+- `tsconfig.lib.json` now serves dual purpose: project references AND build config
+
+**Final Configuration Hierarchy:**
+
+```
+Root Level:
+├── tsconfig.json                    # Project references (IDE integration)
+├── tsconfig.base.json              # Shared base settings
+├── tsconfig.lib.json               # Library build (used by tsc AND tsdown)
+├── tsconfig.test.json              # Test-specific settings
+└── tsconfig.examples.base.json     # Shared example settings
+
+Example Level (inherit from examples.base):
+├── examples/bun-server/tsconfig.json       (3 lines)
+├── examples/vite-counter/tsconfig.json     (7 lines - Vite-specific)
+├── examples/performance-test/tsconfig.json (3 lines)
+├── examples/terminal-counter/tsconfig.json (3 lines)
+├── examples/terminal-print/tsconfig.json   (3 lines)
+└── examples/shared/tsconfig.json           (3 lines)
+```
+
+**Each file now has a unique, essential purpose. Further consolidation would reduce flexibility.**
+
+---
+
 ## Future Improvements (Optional)
 
 ### Could Consider:
-1. **Merge `tsconfig.lib.json` and `tsconfig.build.json`** - They're nearly identical
-2. **Use `vite-tsconfig-paths`** in Vitest - Auto-load paths from tsconfig
-3. **Enable treeshaking** in tsdown - Reduce bundle sizes
-4. **Add more browsers** to browser tests - Firefox, WebKit
+1. **Use `vite-tsconfig-paths`** in Vitest - Auto-load paths from tsconfig (reduces duplication)
+2. **Enable treeshaking** in tsdown - Reduce bundle sizes
+3. **Add more browsers** to browser tests - Firefox, WebKit for cross-browser coverage
 
 These are lower priority and optional.
 
