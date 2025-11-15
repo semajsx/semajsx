@@ -1,6 +1,6 @@
 /** @jsxImportSource ../../src */
-import { signal, computed } from '../../src/signal';
-import { TerminalRenderer, render } from '../../src/terminal';
+import { signal } from '../../src/signal';
+import { TerminalRenderer, render, when } from '../../src/terminal';
 
 // Simple counter with JSX
 const count = signal(0);
@@ -12,13 +12,11 @@ setInterval(() => {
 }, 1000);
 
 // Conditional exit hint - hidden on exit
-const exitHint = computed([showExitHint], show =>
-  show ? (
-    <text dim marginTop={1} color="yellow">
-      Press Ctrl+C or ESC to exit
-    </text>
-  ) : null
-);
+const exitHint = when(showExitHint, (
+  <text dim marginTop={1} color="yellow">
+    Press Ctrl+C or ESC to exit
+  </text>
+));
 
 // Build UI using JSX
 const app = (

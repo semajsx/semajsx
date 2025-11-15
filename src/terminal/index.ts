@@ -10,3 +10,6 @@ export { render } from './render';
 export type { TerminalNode, TerminalElement, TerminalText, TerminalStyle } from './types';
 export * from './operations';
 export * from './properties';
+
+// Re-export helpers for convenience
+export { when } from '../runtime/helpers';
