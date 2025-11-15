@@ -1,4 +1,3 @@
-/** @jsxImportSource semajsx/dom */
 import { signal, computed, batch } from "semajsx";
 import { render } from "semajsx/dom";
 

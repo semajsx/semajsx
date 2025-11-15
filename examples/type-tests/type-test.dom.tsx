@@ -1,5 +1,3 @@
-/** @jsxImportSource semajsx/dom */
-
 /**
  * Test file for DOM TypeScript definitions
  * This file should have full type checking for HTML elements

@@ -1,5 +1,3 @@
-/** @jsxImportSource semajsx/terminal */
-
 /**
  * Test file for Terminal TypeScript definitions
  * This file should have full type checking for terminal elements

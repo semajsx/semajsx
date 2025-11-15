@@ -1,4 +1,3 @@
-/** @jsxImportSource ../../src */
 import { signal } from "@/signal";
 import { render } from "@/terminal";
 
