@@ -12,7 +12,12 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "semajsx": ["../../src/index.ts"]
+      "semajsx": ["../../src/index.ts"],
+      "@/*": ["../../src/*"],
+      "@/signal/*": ["../../src/signal/*"],
+      "@/runtime/*": ["../../src/runtime/*"],
+      "@/dom/*": ["../../src/dom/*"],
+      "@/terminal/*": ["../../src/terminal/*"]
     }
   },
   "references": [{ "path": "../../tsconfig.lib.json" }],
