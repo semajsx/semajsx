@@ -1,4 +1,4 @@
-import { startServer } from "../shared/server.tsx";
+import { startServer } from "../shared/server";
 import app from "./index.html";
 
 startServer(app, {
