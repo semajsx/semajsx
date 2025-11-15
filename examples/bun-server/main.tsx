@@ -1,3 +1,4 @@
+/** @jsxImportSource semajsx */
 import { render, signal, computed } from "semajsx";
 
 function App() {
