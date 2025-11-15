@@ -36,6 +36,13 @@ export function render(
 
   if (rendered.node) {
     appendChild(root, rendered.node);
+  } else if (rendered.children.length > 0) {
+    // Fragment case - append all fragment children
+    for (const child of rendered.children) {
+      if (child.node) {
+        appendChild(root, child.node);
+      }
+    }
   }
 
   // Initial render
