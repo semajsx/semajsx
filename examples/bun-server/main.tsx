@@ -1,4 +1,4 @@
-/** @jsxImportSource semajsx */
+/** @jsxImportSource semajsx/dom */
 import { computed, render, signal } from "semajsx";
 
 function App() {

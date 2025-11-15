@@ -23,9 +23,29 @@
       "import": "./dist/signal/index.js",
       "types": "./dist/signal/index.d.ts"
     },
+    "./dom": {
+      "import": "./dist/dom/index.js",
+      "types": "./dist/dom/index.d.ts"
+    },
+    "./dom/jsx-runtime": {
+      "import": "./dist/dom/jsx-runtime.js",
+      "types": "./dist/dom/jsx-runtime.d.ts"
+    },
+    "./dom/jsx-dev-runtime": {
+      "import": "./dist/dom/jsx-dev-runtime.js",
+      "types": "./dist/dom/jsx-dev-runtime.d.ts"
+    },
     "./terminal": {
       "import": "./dist/terminal/index.js",
       "types": "./dist/terminal/index.d.ts"
+    },
+    "./terminal/jsx-runtime": {
+      "import": "./dist/terminal/jsx-runtime.js",
+      "types": "./dist/terminal/jsx-runtime.d.ts"
+    },
+    "./terminal/jsx-dev-runtime": {
+      "import": "./dist/terminal/jsx-dev-runtime.js",
+      "types": "./dist/terminal/jsx-dev-runtime.d.ts"
     }
   },
   "files": [
