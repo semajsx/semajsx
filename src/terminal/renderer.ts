@@ -1,6 +1,4 @@
 import Yoga from "yoga-layout-prebuilt";
-import chalk, { type ChalkInstance } from "chalk";
-import cliBoxes from "cli-boxes";
 import ansiEscapes from "ansi-escapes";
 import stringWidth from "string-width";
 import sliceAnsi from "slice-ansi";
@@ -10,61 +8,12 @@ import type {
   TerminalText,
   TerminalRoot,
 } from "./types";
-import { collectText } from "./operations";
-
-/**
- * Get a chalk color function by name
- */
-function getChalkColor(colorName: string): ChalkInstance {
-  const colors: Record<string, ChalkInstance> = {
-    black: chalk.black,
-    red: chalk.red,
-    green: chalk.green,
-    yellow: chalk.yellow,
-    blue: chalk.blue,
-    magenta: chalk.magenta,
-    cyan: chalk.cyan,
-    white: chalk.white,
-    gray: chalk.gray,
-    grey: chalk.grey,
-    blackBright: chalk.blackBright,
-    redBright: chalk.redBright,
-    greenBright: chalk.greenBright,
-    yellowBright: chalk.yellowBright,
-    blueBright: chalk.blueBright,
-    magentaBright: chalk.magentaBright,
-    cyanBright: chalk.cyanBright,
-    whiteBright: chalk.whiteBright,
-  };
-  return colors[colorName] || chalk;
-}
-
-/**
- * Get a chalk background color function by name
- */
-function getChalkBgColor(colorName: string): ChalkInstance {
-  const bgColors: Record<string, ChalkInstance> = {
-    black: chalk.bgBlack,
-    red: chalk.bgRed,
-    green: chalk.bgGreen,
-    yellow: chalk.bgYellow,
-    blue: chalk.bgBlue,
-    magenta: chalk.bgMagenta,
-    cyan: chalk.bgCyan,
-    white: chalk.bgWhite,
-    gray: chalk.bgGray,
-    grey: chalk.bgGrey,
-    blackBright: chalk.bgBlackBright,
-    redBright: chalk.bgRedBright,
-    greenBright: chalk.bgGreenBright,
-    yellowBright: chalk.bgYellowBright,
-    blueBright: chalk.bgBlueBright,
-    magentaBright: chalk.bgMagentaBright,
-    cyanBright: chalk.bgCyanBright,
-    whiteBright: chalk.bgWhiteBright,
-  };
-  return bgColors[colorName] || chalk;
-}
+import {
+  renderBorder,
+  renderBackground,
+  renderTextNode,
+  renderTextElement,
+} from "./components";
 
 /**
  * Terminal renderer instance
@@ -190,125 +139,41 @@ export class TerminalRenderer {
    * Render a text node
    */
   private renderText(node: TerminalText): void {
-    const { content, x = 0, y = 0, width = 0 } = node;
+    const { y = 0, x = 0 } = node;
 
     if (y >= this.buffer.length || x < 0) return;
 
-    let text = content;
-    const maxWidth = width || (this.root.stream.columns || 80) - x;
-
-    // Truncate if needed
-    if (stringWidth(text) > maxWidth) {
-      text = sliceAnsi(text, 0, maxWidth);
-    }
-
-    // Write to buffer at position
-    this.writeAt(x, y, text);
+    renderTextNode(
+      node,
+      this.writeAt.bind(this),
+      this.root.stream.columns || 80,
+    );
   }
 
   /**
    * Render an element node
    */
   private renderElement(node: TerminalElement): void {
-    const { style, x = 0, y = 0, tagName } = node;
+    const { style, tagName } = node;
 
     // Render border if specified
     if (style.border && style.border !== "none") {
-      this.renderBorder(node);
+      renderBorder(node, this.writeAt.bind(this));
     }
 
     // Render background
     if (style.backgroundColor) {
-      this.renderBackground(node);
+      renderBackground(node, this.writeAt.bind(this));
     }
 
     // For text elements, collect and render all text content at once
     if (tagName === "text") {
-      const text = collectText(node);
-      if (text) {
-        // Apply text styling
-        let styledText = text;
-        if (style.color) {
-          styledText = getChalkColor(style.color)(styledText);
-        }
-        if (style.bold) {
-          styledText = chalk.bold(styledText);
-        }
-        if (style.italic) {
-          styledText = chalk.italic(styledText);
-        }
-        if (style.underline) {
-          styledText = chalk.underline(styledText);
-        }
-        if (style.strikethrough) {
-          styledText = chalk.strikethrough(styledText);
-        }
-        if (style.dim) {
-          styledText = chalk.dim(styledText);
-        }
-
-        this.writeAt(x, y, styledText);
-      }
+      renderTextElement(node, this.writeAt.bind(this));
     } else {
       // For other elements, render children normally
       for (const child of node.children) {
         this.renderNode(child);
       }
-    }
-  }
-
-  /**
-   * Render a border around an element
-   */
-  private renderBorder(node: TerminalElement): void {
-    const { style, x = 0, y = 0, width = 0, height = 0 } = node;
-    const boxStyle = style.border || "single";
-
-    if (boxStyle === "none") return;
-
-    const box = cliBoxes[boxStyle] || cliBoxes.single;
-    let borderChar = chalk;
-
-    if (style.borderColor) {
-      borderChar = getChalkColor(style.borderColor);
-    }
-
-    // Top border
-    const topLine = borderChar(
-      box.topLeft + box.top.repeat(Math.max(0, width - 2)) + box.topRight,
-    );
-    this.writeAt(x, y, topLine);
-
-    // Side borders
-    for (let i = 1; i < height - 1; i++) {
-      this.writeAt(x, y + i, borderChar(box.left));
-      this.writeAt(x + width - 1, y + i, borderChar(box.right));
-    }
-
-    // Bottom border
-    if (height > 1) {
-      const bottomLine = borderChar(
-        box.bottomLeft +
-          box.bottom.repeat(Math.max(0, width - 2)) +
-          box.bottomRight,
-      );
-      this.writeAt(x, y + height - 1, bottomLine);
-    }
-  }
-
-  /**
-   * Render background color
-   */
-  private renderBackground(node: TerminalElement): void {
-    const { style, x = 0, y = 0, width = 0, height = 0 } = node;
-
-    if (!style.backgroundColor) return;
-
-    const bg = getChalkBgColor(style.backgroundColor);
-
-    for (let i = 0; i < height; i++) {
-      const line = bg(" ".repeat(width));
-      this.writeAt(x, y + i, line);
     }
   }
 
