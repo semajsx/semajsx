@@ -72,7 +72,8 @@ export type TextAttributes = TerminalAttributes;
  * JSX namespace for Terminal elements
  */
 export namespace JSX {
-  export type Element = VNode | Promise<VNode> | AsyncGenerator<VNode>;
+  // Support sync and async components
+  export type Element = VNode | Promise<VNode> | AsyncIterableIterator<VNode>;
 
   export interface ElementChildrenAttribute {
     children: {};
@@ -80,10 +81,6 @@ export namespace JSX {
 
   export interface IntrinsicAttributes {
     key?: string | number;
-  }
-
-  export interface ElementType {
-    (props: any): Element | null;
   }
 
   export interface IntrinsicElements {

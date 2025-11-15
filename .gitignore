@@ -48,6 +48,12 @@ web_modules/
 # TypeScript cache
 *.tsbuildinfo
 
+# TypeScript compiled output in src (from tsc -b)
+src/**/*.js
+src/**/*.d.ts
+src/**/*.js.map
+src/**/*.d.ts.map
+
 # TypeScript compiled output in examples
 examples/**/*.js
 examples/**/*.d.ts
