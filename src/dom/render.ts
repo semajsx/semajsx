@@ -212,7 +212,7 @@ function tryReuseNode(
     // Update attributes
     // Remove old attributes
     for (let i = oldElement.attributes.length - 1; i >= 0; i--) {
-      const attr = oldElement.attributes[i];
+      const attr = oldElement.attributes[i]!;
       if (!newElement.hasAttribute(attr.name)) {
         oldElement.removeAttribute(attr.name);
       }
@@ -220,7 +220,7 @@ function tryReuseNode(
 
     // Set new attributes
     for (let i = 0; i < newElement.attributes.length; i++) {
-      const attr = newElement.attributes[i];
+      const attr = newElement.attributes[i]!;
       if (oldElement.getAttribute(attr.name) !== attr.value) {
         oldElement.setAttribute(attr.name, attr.value);
       }
@@ -300,7 +300,7 @@ function reconcileKeyedChildren(
 
   // Process new children
   for (let i = 0; i < newChildren.length; i++) {
-    const newChild = newChildren[i];
+    const newChild = newChildren[i]!;
     const newKey = newChild.vnode.key;
     let oldChild: RenderedNode | undefined;
     let reused = false;
@@ -320,19 +320,19 @@ function reconcileKeyedChildren(
     }
 
     // If we found a matching old child, try to update it
-    if (oldChild && reused && oldChild.dom && newChild.dom) {
+    if (oldChild && reused && oldChild.dom && newChild!.dom) {
       const sameType =
-        oldChild.vnode.type === newChild.vnode.type ||
+        oldChild.vnode.type === newChild!.vnode.type ||
         (oldChild.dom.nodeType === Node.TEXT_NODE &&
-          newChild.dom.nodeType === Node.TEXT_NODE);
+          newChild!.dom.nodeType === Node.TEXT_NODE);
 
       if (sameType) {
         // Try to reuse the node
         const nodeReused = tryReuseNode(
           oldChild.dom,
-          newChild.dom,
+          newChild!.dom,
           oldChild,
-          newChild,
+          newChild!,
         );
 
         if (nodeReused) {
@@ -347,12 +347,12 @@ function reconcileKeyedChildren(
     }
 
     // Can't reuse, insert the new child
-    if (newChild.dom) {
+    if (newChild!.dom) {
       const currentNode = parent.childNodes[i];
       if (currentNode) {
-        parent.insertBefore(newChild.dom, currentNode);
+        parent.insertBefore(newChild!.dom, currentNode);
       } else {
-        parent.appendChild(newChild.dom);
+        parent.appendChild(newChild!.dom);
       }
     }
   }
@@ -367,7 +367,7 @@ function reconcileKeyedChildren(
 
   // Remove excess keyless children
   for (let i = keylessIndex; i < oldKeylessChildren.length; i++) {
-    const oldChild = oldKeylessChildren[i];
+    const oldChild = oldKeylessChildren[i]!;
     if (oldChild.dom) {
       removeChild(oldChild.dom);
       unmount(oldChild);

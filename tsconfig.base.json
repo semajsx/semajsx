@@ -23,6 +23,7 @@
     // Build options
     "skipLibCheck": true,
     "sourceMap": true,
+    "typeRoots": ["./node_modules/@types"],
 
     // JSX options (must be overridden in specific configs)
     "jsx": "react-jsx",

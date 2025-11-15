@@ -1,4 +1,4 @@
-import { startServer } from "../shared/server";
+import { startServer } from "../shared/server.cli";
 import app from "./index.html";
 
 startServer(app, {

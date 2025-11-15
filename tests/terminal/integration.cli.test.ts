@@ -12,7 +12,7 @@ class MockStream extends Writable {
   public columns: number = 80;
   public rows: number = 24;
 
-  _write(chunk: any, encoding: string, callback: () => void): void {
+  override _write(chunk: any, _encoding: string, callback: () => void): void {
     this.output.push(chunk.toString());
     callback();
   }

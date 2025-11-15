@@ -4,8 +4,8 @@ This directory contains TypeScript type checking tests for SemaJSX.
 
 ## Files
 
-- `dom.tsx` - Type tests for DOM rendering APIs
-- `terminal.tsx` - Type tests for Terminal rendering APIs
+- `type-test.dom.tsx` - Type tests for DOM rendering APIs
+- `type-test.cli.tsx` - Type tests for Terminal rendering APIs
 
 ## Purpose
 
@@ -21,12 +21,12 @@ These files verify that:
 Type tests are verified during the type checking process:
 
 ```bash
-# Check types for all examples
-bun run typecheck:examples
+# Check types for all rendering targets
+bun run typecheck
 
 # Or check manually
-tsc --noEmit examples/type-tests/dom.tsx
-tsc --noEmit examples/type-tests/terminal.tsx
+tsc --noEmit -p tsconfig.dom.json
+tsc --noEmit -p tsconfig.cli.json
 ```
 
 ## What Are Type Tests?
