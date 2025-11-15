@@ -201,7 +201,7 @@ export class TerminalRenderer {
    * Render an element node
    */
   private renderElement(node: TerminalElement): void {
-    const { style, x = 0, y = 0, width = 0, height = 0, tagName } = node;
+    const { style, x = 0, y = 0, tagName } = node;
 
     // Render border if specified
     if (style.border && style.border !== 'none') {

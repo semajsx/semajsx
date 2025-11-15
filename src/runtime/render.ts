@@ -1,4 +1,4 @@
-import type { VNode, RenderedNode, Component } from './types';
+import type { VNode, RenderedNode } from './types';
 import { Fragment } from './types';
 import { isSignal } from '../signal';
 import { isVNode } from './vnode';
@@ -7,7 +7,6 @@ import { setProperty, setSignalProperty } from '../dom/properties';
 import {
   createElement,
   createTextNode,
-  createComment,
   appendChild,
   removeChild,
   replaceNode,

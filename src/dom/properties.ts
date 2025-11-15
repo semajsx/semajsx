@@ -11,7 +11,6 @@ export function setProperty(element: Element, key: string, value: unknown): void
 
   // Handle events
   if (key.startsWith('on') && typeof value === 'function') {
-    const eventName = key.slice(2).toLowerCase();
     // Set event handler as property on element
     const elementWithEvents = element as unknown as Record<string, unknown>;
     elementWithEvents[key.toLowerCase()] = value;

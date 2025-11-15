@@ -1,17 +1,10 @@
-import type { VNode, Component } from '../runtime/types';
+import type { VNode } from '../runtime/types';
 import { Fragment } from '../runtime/types';
 import { isSignal } from '../signal';
 import { isVNode } from '../runtime/vnode';
 import { resource, stream } from '../runtime/helpers';
 import { setProperty, setSignalProperty } from './properties';
-import {
-  createElement,
-  createTextNode,
-  createComment,
-  appendChild,
-  removeChild,
-  replaceNode,
-} from './operations';
+import { createElement, createTextNode, appendChild, removeChild, replaceNode } from './operations';
 import { TerminalRenderer } from './renderer';
 import type { TerminalNode } from './types';
 

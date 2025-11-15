@@ -56,7 +56,8 @@ export function computed(deps: any, compute: any): Signal<any> {
   value = Array.isArray(deps) ? compute(...initialValues) : compute(initialValues[0]);
 
   // Subscribe to all dependencies
-  const unsubscribers = depsArray.map(dep => dep.subscribe(recompute));
+  // Note: unsubscribers are not currently used as we don't have a dispose mechanism
+  const _unsubscribers = depsArray.map(dep => dep.subscribe(recompute));
 
   return {
     get value() {

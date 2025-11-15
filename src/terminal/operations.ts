@@ -1,13 +1,7 @@
 import Yoga from 'yoga-layout-prebuilt';
 import stringWidth from 'string-width';
 import wrapAnsi from 'wrap-ansi';
-import type {
-  TerminalNode,
-  TerminalElement,
-  TerminalText,
-  TerminalRoot,
-  TerminalStyle,
-} from './types';
+import type { TerminalNode, TerminalElement, TerminalText, TerminalStyle } from './types';
 
 /**
  * Create a terminal element
@@ -51,7 +45,7 @@ export function createTextNode(text: string): TerminalText {
 /**
  * Create a comment (no-op in terminal, returns text node)
  */
-export function createComment(text: string): TerminalText {
+export function createComment(_text: string): TerminalText {
   return createTextNode('');
 }
 

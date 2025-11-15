@@ -1,5 +1,5 @@
 import type { Signal } from '../signal';
-import type { TerminalNode, TerminalElement, TerminalStyle } from './types';
+import type { TerminalNode, TerminalStyle } from './types';
 import { applyStyle } from './operations';
 
 /**

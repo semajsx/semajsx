@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import {
   createElement,
   createTextNode,
@@ -8,7 +8,6 @@ import {
   setText,
   applyStyle,
 } from '../../src/terminal/operations';
-import type { TerminalElement, TerminalText, TerminalNode } from '../../src/terminal/types';
 
 describe('Terminal Operations', () => {
   describe('createElement', () => {

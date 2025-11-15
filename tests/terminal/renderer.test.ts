@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { TerminalRenderer } from '../../src/terminal/renderer';
 import { createElement, createTextNode, appendChild } from '../../src/terminal/operations';
 import { Writable } from 'stream';
@@ -82,7 +82,6 @@ describe('TerminalRenderer', () => {
       appendChild(root, text);
       renderer.render();
 
-      const firstOutputCount = mockStream.output.length;
       mockStream.clear();
 
       // Render again without changes
