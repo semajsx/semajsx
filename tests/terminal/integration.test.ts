@@ -153,10 +153,7 @@ describe('Terminal Integration', () => {
       }
 
       function App() {
-        return h('box', { flexDirection: 'column' }, [
-          h(Header, {}),
-          h(Body, {}),
-        ]);
+        return h('box', { flexDirection: 'column' }, [h(Header, {}), h(Body, {})]);
       }
 
       const app = h(App, {});
@@ -197,14 +194,10 @@ describe('Terminal Integration', () => {
     });
 
     it('should respect flexbox layout', () => {
-      const app = h(
-        'box',
-        { flexDirection: 'row' },
-        [
-          h('box', { width: 20 }, [h('text', {}, ['Left'])]),
-          h('box', { width: 20 }, [h('text', {}, ['Right'])]),
-        ]
-      );
+      const app = h('box', { flexDirection: 'row' }, [
+        h('box', { width: 20 }, [h('text', {}, ['Left'])]),
+        h('box', { width: 20 }, [h('text', {}, ['Right'])]),
+      ]);
 
       const { rendered } = render(app, renderer);
 
@@ -233,11 +226,7 @@ describe('Terminal Integration', () => {
 
     it('should handle deeply nested structures', () => {
       const app = h('box', {}, [
-        h('box', {}, [
-          h('box', {}, [
-            h('box', {}, [h('text', {}, ['Deep'])]),
-          ]),
-        ]),
+        h('box', {}, [h('box', {}, [h('box', {}, [h('text', {}, ['Deep'])])])]),
       ]);
 
       expect(() => render(app, renderer)).not.toThrow();

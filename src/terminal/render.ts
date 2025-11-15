@@ -125,7 +125,7 @@ function renderSignalNode(vnode: VNode): RenderedTerminalNode {
   const subscriptions: Array<() => void> = [];
 
   // Subscribe to signal changes
-  const unsubscribe = signal.subscribe((value) => {
+  const unsubscribe = signal.subscribe(value => {
     const newRendered = renderValueToNode(value);
 
     // Replace old node with new one
@@ -185,7 +185,7 @@ function renderValueToNode(value: unknown): RenderedTerminalNode {
  * Render a fragment
  */
 function renderFragment(vnode: VNode): RenderedTerminalNode {
-  const children = vnode.children.map((child) => renderNode(child));
+  const children = vnode.children.map(child => renderNode(child));
 
   // Fragment has no node of its own
   return {
@@ -304,7 +304,7 @@ function renderElement(vnode: VNode): RenderedTerminalNode {
   }
 
   // Render children
-  const children = vnode.children.map((child) => renderNode(child));
+  const children = vnode.children.map(child => renderNode(child));
 
   for (const child of children) {
     if (child.node) {

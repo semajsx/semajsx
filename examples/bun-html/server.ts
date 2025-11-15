@@ -1,8 +1,8 @@
-import app from "./index.html";
+import app from './index.html';
 
 const server = Bun.serve({
   routes: {
-    "/": app,
+    '/': app,
   },
 });
 

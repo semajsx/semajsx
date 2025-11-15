@@ -49,10 +49,7 @@ export function when(
  *   <text>Loading...</text>
  * );
  */
-export function resource(
-  promise: Promise<VNode>,
-  pending?: VNode
-): Signal<VNode | null> {
+export function resource(promise: Promise<VNode>, pending?: VNode): Signal<VNode | null> {
   const content = signal<VNode | null>(pending || null);
 
   promise
@@ -81,10 +78,7 @@ export function resource(
  *
  * const content = stream(generateContent());
  */
-export function stream(
-  iterator: AsyncIterable<VNode>,
-  pending?: VNode
-): Signal<VNode | null> {
+export function stream(iterator: AsyncIterable<VNode>, pending?: VNode): Signal<VNode | null> {
   const content = signal<VNode | null>(pending || null);
 
   (async () => {

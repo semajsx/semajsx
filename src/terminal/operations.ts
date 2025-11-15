@@ -1,7 +1,13 @@
 import Yoga from 'yoga-layout-prebuilt';
 import stringWidth from 'string-width';
 import wrapAnsi from 'wrap-ansi';
-import type { TerminalNode, TerminalElement, TerminalText, TerminalRoot, TerminalStyle } from './types';
+import type {
+  TerminalNode,
+  TerminalElement,
+  TerminalText,
+  TerminalRoot,
+  TerminalStyle,
+} from './types';
 
 /**
  * Create a terminal element

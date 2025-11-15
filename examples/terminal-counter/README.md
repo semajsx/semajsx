@@ -75,6 +75,7 @@ setInterval(() => {
 Container element with flexbox layout support.
 
 **Props:**
+
 - `flexDirection`: 'row' | 'column' | 'row-reverse' | 'column-reverse'
 - `justifyContent`: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around'
 - `alignItems`: 'flex-start' | 'center' | 'flex-end' | 'stretch'
@@ -88,6 +89,7 @@ Container element with flexbox layout support.
 Text element with styling support.
 
 **Props:**
+
 - `color`: chalk color name ('red', 'green', 'blue', etc.)
 - `backgroundColor`: chalk color name
 - `bold`, `italic`, `underline`, `strikethrough`, `dim`: boolean

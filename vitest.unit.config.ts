@@ -10,12 +10,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       include: ['src/**/*.ts'],
-      exclude: [
-        'src/**/*.d.ts',
-        'src/**/types.ts',
-        'src/jsx-runtime.ts',
-        'src/jsx-dev-runtime.ts',
-      ],
+      exclude: ['src/**/*.d.ts', 'src/**/types.ts', 'src/jsx-runtime.ts', 'src/jsx-dev-runtime.ts'],
     },
   },
 });

@@ -23,10 +23,7 @@ describe('render', () => {
   });
 
   it('should render nested elements', () => {
-    const vnode = h('div', null,
-      h('h1', null, 'Title'),
-      h('p', null, 'Content')
-    );
+    const vnode = h('div', null, h('h1', null, 'Title'), h('p', null, 'Content'));
     render(vnode, container);
 
     expect(container.querySelector('h1')?.textContent).toBe('Title');
@@ -58,9 +55,7 @@ describe('render', () => {
 
   it('should render signal VNode', () => {
     const show = signal(true);
-    const content = computed([show], s =>
-      s ? h('p', null, 'Visible') : h('p', null, 'Hidden')
-    );
+    const content = computed([show], s => (s ? h('p', null, 'Visible') : h('p', null, 'Hidden')));
     const vnode = h('div', null, content);
     render(vnode, container);
 
@@ -84,9 +79,15 @@ describe('render', () => {
 
   it('should handle event handlers', () => {
     let clicked = false;
-    const vnode = h('button', {
-      onclick: () => { clicked = true; }
-    }, 'Click me');
+    const vnode = h(
+      'button',
+      {
+        onclick: () => {
+          clicked = true;
+        },
+      },
+      'Click me'
+    );
     render(vnode, container);
 
     const button = container.querySelector('button');
@@ -107,11 +108,10 @@ describe('render', () => {
   });
 
   it('should render fragment', () => {
-    const vnode = h('div', null,
-      h(Symbol.for('semajsx.fragment'), null,
-        h('span', null, 'One'),
-        h('span', null, 'Two')
-      )
+    const vnode = h(
+      'div',
+      null,
+      h(Symbol.for('semajsx.fragment'), null, h('span', null, 'One'), h('span', null, 'Two'))
     );
     render(vnode, container);
 

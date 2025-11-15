@@ -12,7 +12,7 @@ function Counter() {
       <div class="count">Doubled: {doubled}</div>
       <button onclick={() => count.value++}>Increment</button>
       <button onclick={() => count.value--}>Decrement</button>
-      <button onclick={() => count.value = 0}>Reset</button>
+      <button onclick={() => (count.value = 0)}>Reset</button>
     </div>
   );
 }
@@ -33,7 +33,9 @@ function InputExample() {
           text.value = (e.target as HTMLInputElement).value;
         }}
       />
-      <p>You typed: <strong>{text}</strong></p>
+      <p>
+        You typed: <strong>{text}</strong>
+      </p>
       <p>Length: {length}</p>
     </div>
   );
@@ -50,9 +52,7 @@ function ConditionalExample() {
     <div class="card">
       <h1>Conditional Rendering</h1>
       {content}
-      <button onclick={() => show.value = !show.value}>
-        Toggle Content
-      </button>
+      <button onclick={() => (show.value = !show.value)}>Toggle Content</button>
     </div>
   );
 }

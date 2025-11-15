@@ -12,18 +12,11 @@ function Counter() {
   }, 1000);
 
   return (
-    <box
-      flexDirection="column"
-      padding={2}
-      border="round"
-      borderColor="cyan"
-    >
+    <box flexDirection="column" padding={2} border="round" borderColor="cyan">
       <text bold color="green">
         Terminal Counter
       </text>
-      <text marginTop={1}>
-        Count: {count}
-      </text>
+      <text marginTop={1}>Count: {count}</text>
       <text dim marginTop={1}>
         Updates every second...
       </text>

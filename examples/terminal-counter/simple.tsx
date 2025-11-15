@@ -12,11 +12,12 @@ setInterval(() => {
 }, 1000);
 
 // Conditional exit hint - hidden on exit
-const exitHint = when(showExitHint, (
+const exitHint = when(
+  showExitHint,
   <text dim marginTop={1} color="yellow">
     Press Ctrl+C or ESC to exit
   </text>
-));
+);
 
 // Build UI using JSX
 const app = (
@@ -48,7 +49,7 @@ setInterval(() => {
 
 // Handle keyboard input in raw mode
 if (process.stdin.isTTY) {
-  process.stdin.on('data', (data) => {
+  process.stdin.on('data', data => {
     const key = data.toString();
 
     // Ctrl+C (\u0003) or ESC (\u001b) to exit

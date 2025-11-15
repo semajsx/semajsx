@@ -332,9 +332,7 @@ export class TerminalRenderer {
     }
 
     // Get only the lines with content
-    const contentLines = lastNonEmptyIndex >= 0
-      ? this.buffer.slice(0, lastNonEmptyIndex + 1)
-      : [];
+    const contentLines = lastNonEmptyIndex >= 0 ? this.buffer.slice(0, lastNonEmptyIndex + 1) : [];
     const output = contentLines.join('\n');
 
     // Only update if changed

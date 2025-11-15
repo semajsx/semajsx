@@ -124,16 +124,12 @@ Use computed signals for conditional rendering:
 ```tsx
 function App() {
   const show = signal(true);
-  const content = computed(() =>
-    show.value ? <p>Visible</p> : <p>Hidden</p>
-  );
+  const content = computed(() => (show.value ? <p>Visible</p> : <p>Hidden</p>));
 
   return (
     <div>
       {content}
-      <button onclick={() => show.value = !show.value}>
-        Toggle
-      </button>
+      <button onclick={() => (show.value = !show.value)}>Toggle</button>
     </div>
   );
 }
@@ -148,15 +144,15 @@ function App() {
 const count = signal(0);
 
 // Read value (with tracking)
-count.value
+count.value;
 
 // Update value
-count.value = 10
-count.set(10)
-count.update(prev => prev + 1)
+count.value = 10;
+count.set(10);
+count.update(prev => prev + 1);
 
 // Read without tracking
-count.peek()
+count.peek();
 
 // Subscribe to changes
 const unsubscribe = count.subscribe(value => {

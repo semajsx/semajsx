@@ -5,7 +5,5 @@
     "types": ["vitest/globals", "node"]
   },
   "include": ["tests/**/*"],
-  "references": [
-    { "path": "./tsconfig.lib.json" }
-  ]
+  "references": [{ "path": "./tsconfig.lib.json" }]
 }

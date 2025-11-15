@@ -89,10 +89,10 @@ Special handling for signals in children:
 
 ```tsx
 const count = signal(0);
-const view = computed(() => count.value > 5 ? <div>High</div> : <div>Low</div>);
+const view = computed(() => (count.value > 5 ? <div>High</div> : <div>Low</div>));
 
 // The signal wrapper tracks changes and replaces DOM nodes
-<div>{view}</div>
+<div>{view}</div>;
 ```
 
 ## Code Organization
@@ -134,6 +134,7 @@ npm publish
 ```
 
 Exports:
+
 - `semajsx` - Main entry with all features
 - `semajsx/jsx-runtime` - JSX transformation (production)
 - `semajsx/jsx-dev-runtime` - JSX transformation (development)
