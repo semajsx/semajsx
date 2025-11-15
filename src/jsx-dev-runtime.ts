@@ -2,6 +2,8 @@
  * JSX automatic runtime (development)
  */
 
+/// <reference path="./jsx.d.ts" />
+
 import { h } from "./runtime/vnode";
 import { Fragment } from "./runtime/types";
 
