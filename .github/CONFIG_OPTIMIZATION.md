@@ -151,7 +151,7 @@ Total: ~400 lines of configuration across many files
 - tsconfig.base.json (enhanced with strict options)
 - tsconfig.lib.json (library build config, used by tsdown)
 - tsconfig.dom.json (ALL DOM examples + tests via include)
-- tsconfig.terminal.json (ALL Terminal examples + tests via include)
+- tsconfig.cli.json (ALL Terminal examples + tests via include)
 
 Total: ~100 lines of configuration
 ```
@@ -254,7 +254,7 @@ No changes needed - `tsdown.config.ts` has all aliases configured.
 
 **Created:**
 - `tsconfig.dom.json` - Includes all DOM examples + DOM tests
-- `tsconfig.terminal.json` - Includes all Terminal examples + Terminal tests
+- `tsconfig.cli.json` - Includes all Terminal examples + Terminal tests
 
 **Benefits:**
 - No need to create `tsconfig.json` for each new example
@@ -269,10 +269,55 @@ Root (Minimal):
 ├── tsconfig.base.json      # Shared strict settings
 ├── tsconfig.lib.json       # Library build (tsdown)
 ├── tsconfig.dom.json       # All DOM code (examples + tests)
-└── tsconfig.terminal.json  # All Terminal code (examples + tests)
+└── tsconfig.cli.json  # All Terminal code (examples + tests)
 ```
 
 **This is the minimal viable structure - each file has unique purpose.**
+
+### Phase 3: File Extension Convention
+
+**Final Innovation:** Use file extensions to automatically determine rendering target!
+
+**Convention Adopted:**
+- **`.dom.tsx` / `.dom.ts`** - DOM/browser rendering
+  - Automatically included in `tsconfig.dom.json`
+  - Auto-configured with `jsxImportSource: "semajsx/dom"`
+
+- **`.cli.tsx` / `.cli.ts`** - Terminal/CLI rendering
+  - Automatically included in `tsconfig.cli.json`
+  - Auto-configured with `jsxImportSource: "semajsx/terminal"`
+
+- **`.dom.test.ts`** - Test files for DOM/signal system
+  - Automatically included in `tsconfig.dom.json`
+
+- **`.cli.test.ts`** - Test files for Terminal rendering
+  - Automatically included in `tsconfig.cli.json`
+
+**Updated tsconfig patterns:**
+```json
+// tsconfig.dom.json
+{
+  "include": ["**/*.dom.ts", "**/*.dom.tsx", "**/*.dom.test.ts"]
+}
+
+// tsconfig.cli.json
+{
+  "include": ["**/*.cli.ts", "**/*.cli.tsx", "**/*.cli.test.ts"]
+}
+```
+
+**Benefits:**
+- ✅ File name shows rendering target at a glance
+- ✅ No manual tsconfig updates when adding files
+- ✅ No `/** @jsxImportSource */` pragma needed
+- ✅ Impossible to use wrong JSX runtime
+- ✅ IDE autocomplete shows correct components
+- ✅ Scalable to future targets (`.native.tsx`, `.pdf.tsx`, etc.)
+
+**Examples:**
+- `examples/vite-counter/src/main.dom.tsx`
+- `examples/terminal-counter/simple.cli.tsx`
+- `examples/bun-server/server.cli.tsx`
 
 ---
 

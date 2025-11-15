@@ -68,9 +68,9 @@
     "test:terminal": "vitest run tests/terminal --config vitest.unit.config.ts",
     "example:dev": "cd examples/vite-counter && vite",
     "example:build": "cd examples/vite-counter && npm run build",
-    "example:bun": "bun --port=0 examples/bun-server/server.tsx",
-    "example:perf": "bun --port=0 examples/performance-test/server.tsx",
-    "example:terminal": "bun examples/terminal-counter/simple.tsx",
+    "example:bun": "bun --port=0 examples/bun-server/server.cli.tsx",
+    "example:perf": "bun --port=0 examples/performance-test/server.cli.tsx",
+    "example:terminal": "bun examples/terminal-counter/simple.cli.tsx",
     "prepare": "husky"
   },
   "keywords": [

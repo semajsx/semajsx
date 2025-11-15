@@ -25,11 +25,24 @@ pnpm add semajsx
 
 ### 1. Configure TypeScript
 
+For **DOM rendering**:
+
 ```json
 {
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "semajsx"
+    "jsxImportSource": "semajsx/dom"
+  }
+}
+```
+
+Or for **Terminal rendering**:
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "semajsx/terminal"
   }
 }
 ```

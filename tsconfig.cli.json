@@ -16,14 +16,8 @@
     }
   },
   "include": [
-    "examples/terminal-counter/**/*.ts",
-    "examples/terminal-counter/**/*.tsx",
-    "examples/terminal-print/**/*.ts",
-    "examples/terminal-print/**/*.tsx",
-    "examples/shared/**/*.ts",
-    "examples/shared/**/*.tsx",
-    "examples/type-tests/terminal.tsx",
-    "tests/terminal/**/*.ts",
-    "tests/terminal/**/*.tsx"
+    "**/*.cli.ts",
+    "**/*.cli.tsx",
+    "**/*.cli.test.ts"
   ]
 }

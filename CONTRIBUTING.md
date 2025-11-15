@@ -93,6 +93,26 @@ We use:
 
 Code is automatically formatted on commit via Husky hooks.
 
+### File Naming Convention
+
+**Use file extensions to distinguish rendering targets:**
+
+- **`.dom.tsx`** - DOM/browser rendering files
+  - Example: `App.dom.tsx`, `Counter.dom.tsx`
+  - Automatically configured with `jsxImportSource: "semajsx/dom"`
+
+- **`.cli.tsx`** - Terminal/CLI rendering files
+  - Example: `Server.cli.tsx`, `Dashboard.cli.tsx`
+  - Automatically configured with `jsxImportSource: "semajsx/terminal"`
+
+- **`.ts` / `.tsx`** - Library code (no JSX or platform-agnostic)
+  - Example: `utils.ts`, `types.ts`
+
+**Why?**
+- Visual clarity - file extension shows rendering target
+- Automatic configuration - no pragma needed
+- Prevents errors - can't accidentally use wrong runtime
+
 ## Making Changes
 
 ### 1. Create a Branch

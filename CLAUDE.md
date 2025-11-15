@@ -6,6 +6,34 @@ This file provides guidance to Claude Code when working with this repository.
 
 SemaJSX is a lightweight, signal-based reactive JSX runtime for building modern web applications. It uses fine-grained reactivity with signals for efficient updates without virtual DOM diffing.
 
+## File Naming Convention
+
+**IMPORTANT:** This project uses file extensions to distinguish between rendering targets:
+
+- **`.dom.tsx` / `.dom.ts`** - Files for DOM (browser) rendering
+  - Automatically use `jsxImportSource: "semajsx/dom"`
+  - Included in `tsconfig.dom.json`
+  - Example: `app.dom.tsx`, `component.dom.tsx`
+
+- **`.cli.tsx` / `.cli.ts`** - Files for Terminal/CLI rendering
+  - Automatically use `jsxImportSource: "semajsx/terminal"`
+  - Included in `tsconfig.cli.json`
+  - Example: `server.cli.tsx`, `ui.cli.tsx`
+
+- **`.dom.test.ts`** - Test files for DOM/signal system
+  - Included in `tsconfig.dom.json`
+  - Example: `signal.dom.test.ts`, `computed.dom.test.ts`
+
+- **`.cli.test.ts`** - Test files for Terminal rendering
+  - Included in `tsconfig.cli.json`
+  - Example: `renderer.cli.test.ts`, `operations.cli.test.ts`
+
+**Why this convention?**
+- No need for `/** @jsxImportSource */` pragma in every file
+- Clear visual distinction between rendering targets
+- TypeScript automatically applies correct configuration
+- Prevents accidentally using wrong JSX runtime
+
 ## Architecture
 
 ### Single Package Structure

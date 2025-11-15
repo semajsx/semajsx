@@ -16,16 +16,8 @@
     }
   },
   "include": [
-    "examples/bun-server/**/*.ts",
-    "examples/bun-server/**/*.tsx",
-    "examples/vite-counter/**/*.ts",
-    "examples/vite-counter/**/*.tsx",
-    "examples/performance-test/**/*.ts",
-    "examples/performance-test/**/*.tsx",
-    "examples/type-tests/dom.tsx",
-    "tests/runtime/**/*.ts",
-    "tests/runtime/**/*.tsx",
-    "tests/signal/**/*.ts",
-    "tests/signal/**/*.tsx"
+    "**/*.dom.ts",
+    "**/*.dom.tsx",
+    "**/*.dom.test.ts"
   ]
 }
