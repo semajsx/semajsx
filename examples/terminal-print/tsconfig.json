@@ -1,7 +1,14 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "jsx": "react-jsx",
-    "jsxImportSource": "semajsx/terminal"
-  }
+    "jsxImportSource": "../../src/terminal",
+    "paths": {
+      "semajsx": ["../../src/index.ts"],
+      "semajsx/*": ["../../src/*"],
+      "@/*": ["../../src/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
 }
