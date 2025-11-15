@@ -13,15 +13,23 @@ export default {
         },
       },
       create(context) {
-        const NON_ASCII_REGEX = /[^\x00-\x7F]/;
+        // Check for non-ASCII characters (char codes > 127)
+        const hasNonASCII = (text) => {
+          for (let i = 0; i < text.length; i++) {
+            if (text.charCodeAt(i) > 127) {
+              return true;
+            }
+          }
+          return false;
+        };
 
         return {
-          Program(node) {
+          Program(_node) {
             const comments = context.getSourceCode().getAllComments();
 
             for (const comment of comments) {
               const text = comment.value;
-              if (NON_ASCII_REGEX.test(text)) {
+              if (hasNonASCII(text)) {
                 context.report({
                   node: comment,
                   message: 'Comments must be in English (no non-ASCII characters allowed)',
