@@ -80,6 +80,7 @@ export interface PrintOptions {
 
 /**
  * Render a VNode tree to the terminal
+ * Supports sync VNodes, async VNodes (Promise), and streaming VNodes (AsyncIterableIterator)
  *
  * @example
  * // Simple usage (ink-style)
@@ -104,22 +105,55 @@ export interface PrintOptions {
  * render(<App />, { fps: 30 });
  */
 export function render(
-  vnode: VNode,
+  element: VNode | Promise<VNode> | AsyncIterableIterator<VNode>,
   options: RenderOptions = {},
 ): RenderResult {
   const {
     renderer,
     autoRender = true,
     fps = 60,
-    stream = process.stdout,
+    stream: outputStream = process.stdout,
   } = options;
 
   // Auto-create renderer if not provided (ink-style API)
   const autoCreated = !renderer;
-  const actualRenderer = renderer || new TerminalRenderer(stream);
+  const actualRenderer = renderer || new TerminalRenderer(outputStream);
 
   const root = actualRenderer.getRoot();
-  const rendered = renderNode(vnode);
+
+  // Handle async element (Promise<VNode>)
+  let rendered: RenderedTerminalNode;
+  if (isPromise(element)) {
+    const pending: VNode = {
+      type: "#text",
+      props: { nodeValue: "" },
+      children: [],
+    };
+    const resultSignal = resource(element, pending);
+    const signalVNode: VNode = {
+      type: "#signal",
+      props: { signal: resultSignal },
+      children: [],
+    };
+    rendered = renderNode(signalVNode);
+  } else if (isAsyncIterator(element)) {
+    // Handle async generator (AsyncIterableIterator<VNode>)
+    const pending: VNode = {
+      type: "#text",
+      props: { nodeValue: "" },
+      children: [],
+    };
+    const resultSignal = stream(element, pending);
+    const signalVNode: VNode = {
+      type: "#signal",
+      props: { signal: resultSignal },
+      children: [],
+    };
+    rendered = renderNode(signalVNode);
+  } else {
+    // Handle sync VNode
+    rendered = renderNode(element);
+  }
 
   if (rendered.node) {
     appendChild(root, rendered.node);
@@ -489,6 +523,7 @@ function unmountNode(node: RenderedTerminalNode): void {
 
 /**
  * Print a VNode tree to the terminal once (no auto-rendering).
+ * Supports sync VNodes, async VNodes (Promise), and streaming VNodes (AsyncIterableIterator)
  *
  * This is a convenience function for one-time rendering scenarios like:
  * - Server startup messages
@@ -514,18 +549,50 @@ function unmountNode(node: RenderedTerminalNode): void {
  * // Print to stderr
  * print(<text color="red">Error occurred</text>, { stream: process.stderr });
  */
-export function print(vnode: VNode, options: PrintOptions = {}): void {
-  const { stream = process.stdout } = options;
+export function print(
+  element: VNode | Promise<VNode> | AsyncIterableIterator<VNode>,
+  options: PrintOptions = {},
+): void {
+  const { stream: outputStream = process.stdout } = options;
 
   // Save raw mode state
   const wasRawMode = process.stdin.isTTY && process.stdin.isRaw;
 
   // Create renderer
-  const renderer = new TerminalRenderer(stream);
+  const renderer = new TerminalRenderer(outputStream);
   const root = renderer.getRoot();
 
-  // Render the vnode
-  const rendered = renderNode(vnode);
+  // Render the element
+  let rendered: RenderedTerminalNode;
+  if (isPromise(element)) {
+    const pending: VNode = {
+      type: "#text",
+      props: { nodeValue: "" },
+      children: [],
+    };
+    const resultSignal = resource(element, pending);
+    const signalVNode: VNode = {
+      type: "#signal",
+      props: { signal: resultSignal },
+      children: [],
+    };
+    rendered = renderNode(signalVNode);
+  } else if (isAsyncIterator(element)) {
+    const pending: VNode = {
+      type: "#text",
+      props: { nodeValue: "" },
+      children: [],
+    };
+    const resultSignal = stream(element, pending);
+    const signalVNode: VNode = {
+      type: "#signal",
+      props: { signal: resultSignal },
+      children: [],
+    };
+    rendered = renderNode(signalVNode);
+  } else {
+    rendered = renderNode(element);
+  }
 
   if (rendered.node) {
     appendChild(root, rendered.node);

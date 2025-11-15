@@ -1,5 +1,5 @@
 /**
- * DOM utilities
+ * DOM utilities and rendering
  */
 
 export {
@@ -14,3 +14,5 @@ export {
 } from "./operations";
 
 export { setProperty, setSignalProperty } from "./properties";
+
+export { render, unmount } from "./render";

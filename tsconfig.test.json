@@ -2,7 +2,18 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "types": ["vitest/globals", "node"]
+    "types": ["vitest/globals", "node"],
+    "jsxImportSource": "semajsx/dom",
+    "paths": {
+      "@/*": ["src/*"],
+      "semajsx": ["src/index.ts"],
+      "semajsx/dom": ["src/dom/index.ts"],
+      "semajsx/dom/jsx-runtime": ["src/dom/jsx-runtime.ts"],
+      "semajsx/dom/jsx-dev-runtime": ["src/dom/jsx-dev-runtime.ts"],
+      "semajsx/terminal": ["src/terminal/index.ts"],
+      "semajsx/terminal/jsx-runtime": ["src/terminal/jsx-runtime.ts"],
+      "semajsx/terminal/jsx-dev-runtime": ["src/terminal/jsx-dev-runtime.ts"]
+    }
   },
   "include": ["tests/**/*"],
   "references": [{ "path": "./tsconfig.lib.json" }]

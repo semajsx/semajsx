@@ -1,22 +1,67 @@
-import type { VNode, RenderedNode } from "./types";
-import { Fragment } from "./types";
+import type { VNode, RenderedNode } from "../runtime/types";
+import { Fragment } from "../runtime/types";
 import { isSignal } from "../signal";
-import { isVNode } from "./vnode";
-import { resource, stream } from "./helpers";
-import { setProperty, setSignalProperty } from "../dom/properties";
+import { isVNode } from "../runtime/vnode";
+import { resource, stream } from "../runtime/helpers";
+import { setProperty, setSignalProperty } from "./properties";
 import {
   createElement,
   createTextNode,
   appendChild,
   removeChild,
   replaceNode,
-} from "../dom/operations";
+} from "./operations";
 
 /**
  * Render a VNode tree to the DOM
+ * Supports sync VNodes, async VNodes (Promise), and streaming VNodes (AsyncIterableIterator)
  */
-export function render(vnode: VNode, container: Element): RenderedNode {
-  const rendered = renderNode(vnode);
+export function render(
+  element: VNode | Promise<VNode> | AsyncIterableIterator<VNode>,
+  container: Element,
+): RenderedNode {
+  // Handle async element (Promise<VNode>)
+  if (isPromise(element)) {
+    const pending: VNode = {
+      type: "#text",
+      props: { nodeValue: "" },
+      children: [],
+    };
+    const resultSignal = resource(element, pending);
+    const signalVNode: VNode = {
+      type: "#signal",
+      props: { signal: resultSignal },
+      children: [],
+    };
+    const rendered = renderNode(signalVNode);
+    if (rendered.dom) {
+      appendChild(container, rendered.dom);
+    }
+    return rendered;
+  }
+
+  // Handle async generator (AsyncIterableIterator<VNode>)
+  if (isAsyncIterator(element)) {
+    const pending: VNode = {
+      type: "#text",
+      props: { nodeValue: "" },
+      children: [],
+    };
+    const resultSignal = stream(element, pending);
+    const signalVNode: VNode = {
+      type: "#signal",
+      props: { signal: resultSignal },
+      children: [],
+    };
+    const rendered = renderNode(signalVNode);
+    if (rendered.dom) {
+      appendChild(container, rendered.dom);
+    }
+    return rendered;
+  }
+
+  // Handle sync VNode
+  const rendered = renderNode(element);
 
   if (rendered.dom) {
     appendChild(container, rendered.dom);

@@ -20,6 +20,8 @@ export type Component<P = any> =
 
 export type JSXChild =
   | VNode
+  | Promise<VNode>
+  | AsyncIterableIterator<VNode>
   | Signal<JSXChild>
   | string
   | number

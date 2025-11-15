@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { render } from "@/index";
+import { render } from "@/dom/render";
 
 describe("Async Components", () => {
   let container: HTMLDivElement;

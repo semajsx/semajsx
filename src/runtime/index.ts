@@ -1,9 +1,8 @@
 /**
- * Runtime exports
+ * Runtime exports - shared across DOM and Terminal
  */
 
 export { h, createTextVNode, createFragment, isVNode } from "./vnode";
-export { render, unmount } from "./render";
 export { Fragment } from "./types";
 
 export type {

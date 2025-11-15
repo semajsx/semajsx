@@ -1,4 +1,4 @@
-/** @jsxImportSource semajsx */
+/** @jsxImportSource semajsx/terminal */
 import { print } from "semajsx/terminal";
 import app from "./index.html";
 

@@ -1,4 +1,3 @@
-/** @jsxImportSource semajsx */
 import { print } from "semajsx/terminal";
 
 // Example 1: Simple success message
