@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "composite": true,
     "jsx": "react-jsx",
     "jsxImportSource": "semajsx",
     "baseUrl": ".",
@@ -18,6 +17,5 @@
       "@/terminal/*": ["../../src/terminal/*"]
     }
   },
-  "references": [{ "path": "../../tsconfig.lib.json" }],
   "include": ["**/*.ts", "**/*.tsx"]
 }

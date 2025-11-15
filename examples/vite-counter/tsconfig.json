@@ -1,7 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "composite": true,
     "useDefineForClassFields": true,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -24,6 +23,5 @@
       "@/terminal/*": ["../../src/terminal/*"]
     }
   },
-  "references": [{ "path": "../../tsconfig.lib.json" }],
   "include": ["src", "vite.config.ts"]
 }

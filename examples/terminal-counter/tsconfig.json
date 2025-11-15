@@ -1,12 +1,14 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "composite": true,
     "baseUrl": ".",
     "jsx": "react-jsx",
-    "jsxImportSource": "../../src",
+    "jsxImportSource": "semajsx",
     "paths": {
       "semajsx": ["../../src/index.ts"],
+      "semajsx/jsx-runtime": ["../../src/jsx-runtime.ts"],
+      "semajsx/jsx-dev-runtime": ["../../src/jsx-dev-runtime.ts"],
+      "semajsx/signal": ["../../src/signal/index.ts"],
       "semajsx/terminal": ["../../src/terminal/index.ts"],
       "@/*": ["../../src/*"],
       "@/signal/*": ["../../src/signal/*"],
@@ -15,6 +17,5 @@
       "@/terminal/*": ["../../src/terminal/*"]
     }
   },
-  "references": [{ "path": "../../tsconfig.lib.json" }],
-  "include": ["**/*.ts", "**/*.tsx", "../../src/terminal/jsx.d.ts"]
+  "include": ["**/*.ts", "**/*.tsx"]
 }

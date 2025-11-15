@@ -2,12 +2,29 @@
  * JSX automatic runtime (production)
  */
 
-/// <reference path="./jsx.d.ts" />
-
 import { h } from "./runtime/vnode";
 import { Fragment } from "./runtime/types";
+import type { VNode } from "./runtime/types";
 
 export { Fragment };
+
+// Export JSX namespace for TypeScript's automatic JSX transform
+// When using jsxImportSource, TypeScript looks for this exported namespace
+export namespace JSX {
+  export type Element = VNode;
+
+  export interface ElementChildrenAttribute {
+    children: {};
+  }
+
+  export interface IntrinsicAttributes {
+    key?: string | number;
+  }
+
+  export interface IntrinsicElements {
+    [elemName: string]: any;
+  }
+}
 
 export function jsx(type: any, props: any, key?: any): any {
   const { children, ...restProps } = props || {};
