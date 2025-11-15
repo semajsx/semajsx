@@ -7,7 +7,7 @@ import {
   replaceNode,
   setText,
   applyStyle,
-} from "../../src/terminal/operations";
+} from "@/terminal/operations";
 
 describe("Terminal Operations", () => {
   describe("createElement", () => {

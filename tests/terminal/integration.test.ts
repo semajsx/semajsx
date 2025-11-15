@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { signal } from "../../src/signal";
-import { h } from "../../src/runtime/vnode";
-import { TerminalRenderer, render } from "../../src/terminal";
+import { signal } from "@/signal";
+import { h } from "@/runtime/vnode";
+import { TerminalRenderer, render } from "@/terminal";
 import { Writable } from "stream";
 
 /**

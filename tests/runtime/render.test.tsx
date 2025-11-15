@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { computed, signal } from "../../src/signal";
-import { render, unmount } from "../../src/runtime/render";
-import { h } from "../../src/runtime/vnode";
-import { Fragment } from "../../src/jsx-runtime";
+import { computed, signal } from "@/signal";
+import { render, unmount } from "@/runtime/render";
+import { h } from "@/runtime/vnode";
+import { Fragment } from "@/jsx-runtime";
 
 describe("render", () => {
   let container: HTMLDivElement;

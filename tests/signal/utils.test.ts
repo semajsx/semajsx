@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { signal } from "../../src/signal/signal";
-import { isSignal, unwrap, peek } from "../../src/signal/utils";
+import { signal } from "@/signal/signal";
+import { isSignal, unwrap, peek } from "@/signal/utils";
 
 describe("signal utils", () => {
   describe("isSignal", () => {

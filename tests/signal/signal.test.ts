@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { signal } from "../../src/signal/signal";
+import { signal } from "@/signal/signal";
 
 describe("signal", () => {
   it("should create a signal with initial value", () => {

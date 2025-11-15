@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { signal } from "../../src/signal/signal";
-import { computed } from "../../src/signal/computed";
+import { signal } from "@/signal/signal";
+import { computed } from "@/signal/computed";
 
 describe("computed", () => {
   it("should create computed from single dependency", () => {

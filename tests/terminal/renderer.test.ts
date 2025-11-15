@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { TerminalRenderer } from "../../src/terminal/renderer";
+import { TerminalRenderer } from "@/terminal/renderer";
 import {
   createElement,
   createTextNode,
   appendChild,
-} from "../../src/terminal/operations";
+} from "@/terminal/operations";
 import { Writable } from "stream";
 
 /**
