@@ -1,4 +1,4 @@
-import { defineConfig } from 'tsup';
+import { defineConfig } from 'tsdown';
 
 export default defineConfig({
   entry: {
@@ -9,12 +9,11 @@ export default defineConfig({
     'terminal/index': 'src/terminal/index.ts',
   },
   format: ['esm'],
-  dts: {
-    resolve: true,
-  },
+  dts: true,
   clean: true,
   sourcemap: true,
   splitting: false,
-  treeshake: true,
+  treeshake: false,
   tsconfig: 'tsconfig.build.json',
+  platform: 'neutral',
 });
