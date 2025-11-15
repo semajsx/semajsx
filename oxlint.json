@@ -1,8 +1,11 @@
 {
+  "jsPlugins": ["./oxlint-plugin-english.js"],
   "rules": {
     "no-unused-vars": "warn",
     "no-debugger": "warn",
-    "no-console": "off"
+    "no-console": "off",
+    "no-warning-comments": "warn",
+    "english-only/no-non-english-comments": "error"
   },
   "ignore": ["dist", "node_modules", "coverage", "*.config.ts", "examples"]
 }
