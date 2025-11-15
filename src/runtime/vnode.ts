@@ -1,7 +1,7 @@
-import type { JSXChildren, VNode, VNodeType } from './types';
-import type { Signal } from '../signal';
-import { Fragment } from './types';
-import { isSignal } from '../signal';
+import type { JSXChildren, VNode, VNodeType } from "./types";
+import type { Signal } from "../signal";
+import { Fragment } from "./types";
+import { isSignal } from "../signal";
 
 /**
  * Create a VNode (Virtual Node)
@@ -24,7 +24,7 @@ export function h(
  */
 export function createTextVNode(text: string | number): VNode {
   return {
-    type: '#text',
+    type: "#text",
     props: { nodeValue: String(text) },
     children: [],
   };
@@ -35,7 +35,7 @@ export function createTextVNode(text: string | number): VNode {
  */
 export function createSignalVNode(signal: Signal<unknown>): VNode {
   return {
-    type: '#signal',
+    type: "#signal",
     props: { signal },
     children: [],
   };
@@ -48,7 +48,7 @@ function normalizeChildren(children: JSXChildren[]): VNode[] {
   const result: VNode[] = [];
 
   for (const child of children) {
-    if (child == null || typeof child === 'boolean') {
+    if (child == null || typeof child === "boolean") {
       // Skip nullish and boolean values
       continue;
     }
@@ -56,7 +56,7 @@ function normalizeChildren(children: JSXChildren[]): VNode[] {
     if (Array.isArray(child)) {
       // Recursively flatten arrays
       result.push(...normalizeChildren(child));
-    } else if (typeof child === 'string' || typeof child === 'number') {
+    } else if (typeof child === "string" || typeof child === "number") {
       // Convert primitives to text nodes
       result.push(createTextVNode(child));
     } else if (isSignal(child)) {
@@ -67,7 +67,7 @@ function normalizeChildren(children: JSXChildren[]): VNode[] {
       result.push(child);
     } else {
       // Unknown type, skip
-      console.warn('Unknown child type:', typeof child);
+      console.warn("Unknown child type:", typeof child);
     }
   }
 
@@ -80,10 +80,10 @@ function normalizeChildren(children: JSXChildren[]): VNode[] {
 export function isVNode(value: unknown): value is VNode {
   return (
     value != null &&
-    typeof value === 'object' &&
-    'type' in value &&
-    'props' in value &&
-    'children' in value
+    typeof value === "object" &&
+    "type" in value &&
+    "props" in value &&
+    "children" in value
   );
 }
 

@@ -37,7 +37,7 @@ pnpm add semajsx
 ### 2. Write Your First Component
 
 ```tsx
-import { render, signal, computed } from 'semajsx';
+import { render, signal, computed } from "semajsx";
 
 function Counter() {
   const count = signal(0);
@@ -52,7 +52,7 @@ function Counter() {
   );
 }
 
-render(<Counter />, document.getElementById('root')!);
+render(<Counter />, document.getElementById("root")!);
 ```
 
 ## Core Concepts
@@ -62,7 +62,7 @@ render(<Counter />, document.getElementById('root')!);
 Signals are reactive primitives that automatically track dependencies and trigger updates.
 
 ```tsx
-import { signal, computed, effect } from 'semajsx';
+import { signal, computed, effect } from "semajsx";
 
 // Create a signal
 const count = signal(0);
@@ -78,7 +78,7 @@ const doubled = computed(() => count.value * 2);
 
 // Create effects
 effect(() => {
-  console.log('Count changed:', count.value);
+  console.log("Count changed:", count.value);
 });
 ```
 
@@ -149,14 +149,14 @@ count.value;
 // Update value
 count.value = 10;
 count.set(10);
-count.update(prev => prev + 1);
+count.update((prev) => prev + 1);
 
 // Read without tracking
 count.peek();
 
 // Subscribe to changes
-const unsubscribe = count.subscribe(value => {
-  console.log('New value:', value);
+const unsubscribe = count.subscribe((value) => {
+  console.log("New value:", value);
 });
 ```
 
@@ -177,7 +177,7 @@ const count = signal(0);
 
 // Effect runs immediately and when dependencies change
 effect(() => {
-  console.log('Count is:', count.value);
+  console.log("Count is:", count.value);
 });
 
 // Effect with cleanup
@@ -193,7 +193,7 @@ effect(() => {
 ### Batching Updates
 
 ```typescript
-import { batch } from 'semajsx';
+import { batch } from "semajsx";
 
 const a = signal(1);
 const b = signal(2);
@@ -208,7 +208,7 @@ batch(() => {
 ### Utilities
 
 ```typescript
-import { isSignal, unwrap, untrack, peek } from 'semajsx';
+import { isSignal, unwrap, untrack, peek } from "semajsx";
 
 // Check if value is a signal
 if (isSignal(value)) {

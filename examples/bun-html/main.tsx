@@ -1,11 +1,11 @@
-import { render, signal, computed } from 'semajsx';
+import { render, signal, computed } from "semajsx";
 
 function App() {
   const count = signal(0);
   const doubled = computed([count], (v: number) => v * 2);
 
   return (
-    <div style={{ fontFamily: 'system-ui', padding: '24px' }}>
+    <div style={{ fontFamily: "system-ui", padding: "24px" }}>
       <h1>SemaJSX + Bun</h1>
       <p>Count: {count}</p>
       <p>Doubled: {doubled}</p>
@@ -23,7 +23,7 @@ function App() {
   );
 }
 
-const root = document.getElementById('root');
+const root = document.getElementById("root");
 if (root) {
   render(<App />, root);
 }

@@ -1,7 +1,7 @@
-import type { VNode } from './types';
-import type { Signal } from '../signal';
-import { signal, computed } from '../signal';
-import { isVNode } from './vnode';
+import type { VNode } from "./types";
+import type { Signal } from "../signal";
+import { signal, computed } from "../signal";
+import { isVNode } from "./vnode";
 
 /**
  * Conditional rendering helper
@@ -18,9 +18,9 @@ import { isVNode } from './vnode';
  */
 export function when(
   condition: Signal<boolean>,
-  content: VNode | (() => VNode)
+  content: VNode | (() => VNode),
 ): Signal<VNode | null> {
-  return computed([condition], show => {
+  return computed([condition], (show) => {
     if (!show) return null;
     // Check if content is a VNode (not a function)
     // This handles the case where VNode.type is a function (component)
@@ -49,15 +49,18 @@ export function when(
  *   <text>Loading...</text>
  * );
  */
-export function resource(promise: Promise<VNode>, pending?: VNode): Signal<VNode | null> {
+export function resource(
+  promise: Promise<VNode>,
+  pending?: VNode,
+): Signal<VNode | null> {
   const content = signal<VNode | null>(pending || null);
 
   promise
-    .then(result => {
+    .then((result) => {
       content.value = result;
     })
-    .catch(err => {
-      console.error('Unhandled promise rejection in resource():', err);
+    .catch((err) => {
+      console.error("Unhandled promise rejection in resource():", err);
     });
 
   return content;
@@ -78,7 +81,10 @@ export function resource(promise: Promise<VNode>, pending?: VNode): Signal<VNode
  *
  * const content = stream(generateContent());
  */
-export function stream(iterator: AsyncIterable<VNode>, pending?: VNode): Signal<VNode | null> {
+export function stream(
+  iterator: AsyncIterable<VNode>,
+  pending?: VNode,
+): Signal<VNode | null> {
   const content = signal<VNode | null>(pending || null);
 
   (async () => {
@@ -87,7 +93,7 @@ export function stream(iterator: AsyncIterable<VNode>, pending?: VNode): Signal<
         content.value = vnode;
       }
     } catch (err) {
-      console.error('Error in stream():', err);
+      console.error("Error in stream():", err);
     }
   })();
 

@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, signal, computed } from '../../src';
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { render, signal, computed } from "../../src";
 
-describe('JSX integration', () => {
+describe("JSX integration", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
-    container = document.createElement('div');
+    container = document.createElement("div");
     document.body.appendChild(container);
   });
 
@@ -13,25 +13,25 @@ describe('JSX integration', () => {
     document.body.removeChild(container);
   });
 
-  it('should render JSX element', () => {
+  it("should render JSX element", () => {
     const vnode = <div class="test">Hello JSX</div>;
     render(vnode, container);
 
     expect(container.innerHTML).toContain('<div class="test">Hello JSX</div>');
   });
 
-  it('should render JSX with signal', () => {
+  it("should render JSX with signal", () => {
     const count = signal(42);
     const vnode = <div>Count: {count}</div>;
     render(vnode, container);
 
-    expect(container.textContent).toContain('Count: 42');
+    expect(container.textContent).toContain("Count: 42");
 
     count.value = 100;
-    expect(container.textContent).toContain('Count: 100');
+    expect(container.textContent).toContain("Count: 100");
   });
 
-  it('should render JSX component', () => {
+  it("should render JSX component", () => {
     function Greeting({ name }: { name: string }) {
       return <h1>Hello, {name}!</h1>;
     }
@@ -39,12 +39,12 @@ describe('JSX integration', () => {
     const vnode = <Greeting name="Vitest" />;
     render(vnode, container);
 
-    expect(container.textContent).toBe('Hello, Vitest!');
+    expect(container.textContent).toBe("Hello, Vitest!");
   });
 
-  it('should render JSX with computed', () => {
+  it("should render JSX with computed", () => {
     const count = signal(5);
-    const doubled = computed([count], c => c * 2);
+    const doubled = computed([count], (c) => c * 2);
 
     const vnode = (
       <div>
@@ -54,28 +54,30 @@ describe('JSX integration', () => {
     );
     render(vnode, container);
 
-    expect(container.textContent).toContain('Count: 5');
-    expect(container.textContent).toContain('Doubled: 10');
+    expect(container.textContent).toContain("Count: 5");
+    expect(container.textContent).toContain("Doubled: 10");
 
     count.value = 10;
-    expect(container.textContent).toContain('Count: 10');
-    expect(container.textContent).toContain('Doubled: 20');
+    expect(container.textContent).toContain("Count: 10");
+    expect(container.textContent).toContain("Doubled: 20");
   });
 
-  it('should render conditional JSX', () => {
+  it("should render conditional JSX", () => {
     const show = signal(true);
-    const content = computed([show], s => (s ? <p>Visible</p> : <p>Hidden</p>));
+    const content = computed([show], (s) =>
+      s ? <p>Visible</p> : <p>Hidden</p>,
+    );
 
     const vnode = <div>{content}</div>;
     render(vnode, container);
 
-    expect(container.textContent).toContain('Visible');
+    expect(container.textContent).toContain("Visible");
 
     show.value = false;
-    expect(container.textContent).toContain('Hidden');
+    expect(container.textContent).toContain("Hidden");
   });
 
-  it('should handle nested components', () => {
+  it("should handle nested components", () => {
     function Button({ label }: { label: string }) {
       return <button>{label}</button>;
     }
@@ -92,7 +94,7 @@ describe('JSX integration', () => {
     const vnode = <Panel title="My Panel" />;
     render(vnode, container);
 
-    expect(container.querySelector('h2')?.textContent).toBe('My Panel');
-    expect(container.querySelector('button')?.textContent).toBe('Click me');
+    expect(container.querySelector("h2")?.textContent).toBe("My Panel");
+    expect(container.querySelector("button")?.textContent).toBe("Click me");
   });
 });

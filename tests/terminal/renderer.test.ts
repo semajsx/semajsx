@@ -1,7 +1,11 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { TerminalRenderer } from '../../src/terminal/renderer';
-import { createElement, createTextNode, appendChild } from '../../src/terminal/operations';
-import { Writable } from 'stream';
+import { describe, it, expect, beforeEach } from "vitest";
+import { TerminalRenderer } from "../../src/terminal/renderer";
+import {
+  createElement,
+  createTextNode,
+  appendChild,
+} from "../../src/terminal/operations";
+import { Writable } from "stream";
 
 /**
  * Mock writable stream for testing
@@ -21,7 +25,7 @@ class MockStream extends Writable {
   }
 }
 
-describe('TerminalRenderer', () => {
+describe("TerminalRenderer", () => {
   let mockStream: MockStream;
   let renderer: TerminalRenderer;
 
@@ -30,16 +34,16 @@ describe('TerminalRenderer', () => {
     renderer = new TerminalRenderer(mockStream as any);
   });
 
-  describe('constructor', () => {
-    it('should create a renderer with root node', () => {
+  describe("constructor", () => {
+    it("should create a renderer with root node", () => {
       const root = renderer.getRoot();
 
       expect(root).toBeDefined();
-      expect(root.type).toBe('root');
+      expect(root.type).toBe("root");
       expect(root.stream).toBe(mockStream);
     });
 
-    it('should set root dimensions from stream', () => {
+    it("should set root dimensions from stream", () => {
       const customStream = new MockStream();
       customStream.columns = 120;
       customStream.rows = 40;
@@ -52,10 +56,10 @@ describe('TerminalRenderer', () => {
     });
   });
 
-  describe('render', () => {
-    it('should render simple text', () => {
+  describe("render", () => {
+    it("should render simple text", () => {
       const root = renderer.getRoot();
-      const text = createTextNode('Hello World');
+      const text = createTextNode("Hello World");
 
       appendChild(root, text);
       renderer.render();
@@ -63,10 +67,10 @@ describe('TerminalRenderer', () => {
       expect(mockStream.output.length).toBeGreaterThan(0);
     });
 
-    it('should render element with children', () => {
+    it("should render element with children", () => {
       const root = renderer.getRoot();
-      const box = createElement('box');
-      const text = createTextNode('Test');
+      const box = createElement("box");
+      const text = createTextNode("Test");
 
       appendChild(box, text);
       appendChild(root, box);
@@ -75,9 +79,9 @@ describe('TerminalRenderer', () => {
       expect(mockStream.output.length).toBeGreaterThan(0);
     });
 
-    it('should only update when content changes', () => {
+    it("should only update when content changes", () => {
       const root = renderer.getRoot();
-      const text = createTextNode('Hello');
+      const text = createTextNode("Hello");
 
       appendChild(root, text);
       renderer.render();
@@ -92,19 +96,21 @@ describe('TerminalRenderer', () => {
     });
   });
 
-  describe('clear', () => {
-    it('should clear the terminal', () => {
+  describe("clear", () => {
+    it("should clear the terminal", () => {
       renderer.clear();
 
       expect(mockStream.output.length).toBeGreaterThan(0);
       // Check for ANSI escape sequences (could be various clear codes)
-      const hasEscapeSequence = mockStream.output.some(o => o.includes('\x1B'));
+      const hasEscapeSequence = mockStream.output.some((o) =>
+        o.includes("\x1B"),
+      );
       expect(hasEscapeSequence).toBe(true);
     });
   });
 
-  describe('destroy', () => {
-    it('should cleanup resources', () => {
+  describe("destroy", () => {
+    it("should cleanup resources", () => {
       const root = renderer.getRoot();
 
       expect(root.yogaNode).toBeDefined();
@@ -116,11 +122,11 @@ describe('TerminalRenderer', () => {
     });
   });
 
-  describe('layout calculation', () => {
-    it('should calculate layout for nested elements', () => {
+  describe("layout calculation", () => {
+    it("should calculate layout for nested elements", () => {
       const root = renderer.getRoot();
-      const parent = createElement('box');
-      const child = createElement('box');
+      const parent = createElement("box");
+      const child = createElement("box");
 
       appendChild(parent, child);
       appendChild(root, parent);
@@ -134,11 +140,11 @@ describe('TerminalRenderer', () => {
       expect(child.y).toBeDefined();
     });
 
-    it('should respect flexbox layout', () => {
+    it("should respect flexbox layout", () => {
       const root = renderer.getRoot();
-      const parent = createElement('box');
-      const child1 = createElement('box');
-      const child2 = createElement('box');
+      const parent = createElement("box");
+      const child1 = createElement("box");
+      const child2 = createElement("box");
 
       // Set up flexbox layout - ROW direction
       if (parent.yogaNode) {
@@ -165,7 +171,11 @@ describe('TerminalRenderer', () => {
       expect(child1.x).toBeDefined();
       expect(child2.x).toBeDefined();
       // In row layout, child2 should be positioned after child1
-      if (child1.x !== undefined && child2.x !== undefined && child1.width !== undefined) {
+      if (
+        child1.x !== undefined &&
+        child2.x !== undefined &&
+        child1.width !== undefined
+      ) {
         expect(child2.x).toBeGreaterThanOrEqual(child1.x);
       }
     });

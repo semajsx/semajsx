@@ -1,19 +1,24 @@
-import Yoga from 'yoga-layout-prebuilt';
+import Yoga from "yoga-layout-prebuilt";
 
 export type YogaNodeType = ReturnType<typeof Yoga.Node.create>;
 
 /**
  * Terminal node types
  */
-export type TerminalNodeType = 'element' | 'text' | 'root';
+export type TerminalNodeType = "element" | "text" | "root";
 
 /**
  * Style properties for terminal elements
  */
 export interface TerminalStyle {
-  flexDirection?: 'row' | 'column' | 'row-reverse' | 'column-reverse';
-  justifyContent?: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around';
-  alignItems?: 'flex-start' | 'center' | 'flex-end' | 'stretch';
+  flexDirection?: "row" | "column" | "row-reverse" | "column-reverse";
+  justifyContent?:
+    | "flex-start"
+    | "center"
+    | "flex-end"
+    | "space-between"
+    | "space-around";
+  alignItems?: "flex-start" | "center" | "flex-end" | "stretch";
   flexGrow?: number;
   flexShrink?: number;
   flexBasis?: number | string;
@@ -33,7 +38,7 @@ export interface TerminalStyle {
   paddingRight?: number;
   paddingTop?: number;
   paddingBottom?: number;
-  border?: 'single' | 'double' | 'round' | 'bold' | 'none';
+  border?: "single" | "double" | "round" | "bold" | "none";
   borderColor?: string;
   color?: string;
   backgroundColor?: string;
@@ -62,7 +67,7 @@ export interface TerminalNodeBase {
  * Terminal element node
  */
 export interface TerminalElement extends TerminalNodeBase {
-  type: 'element';
+  type: "element";
   tagName: string;
   style: TerminalStyle;
   props: Record<string, any>;
@@ -72,7 +77,7 @@ export interface TerminalElement extends TerminalNodeBase {
  * Terminal text node
  */
 export interface TerminalText extends TerminalNodeBase {
-  type: 'text';
+  type: "text";
   content: string;
 }
 
@@ -80,7 +85,7 @@ export interface TerminalText extends TerminalNodeBase {
  * Terminal root node
  */
 export interface TerminalRoot extends TerminalNodeBase {
-  type: 'root';
+  type: "root";
   stream: NodeJS.WriteStream;
 }
 

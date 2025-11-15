@@ -1,6 +1,6 @@
-import { signal } from '../../src/signal';
-import { h } from '../../src/runtime/vnode';
-import { TerminalRenderer, render } from '../../src/terminal';
+import { signal } from "../../src/signal";
+import { h } from "../../src/runtime/vnode";
+import { TerminalRenderer, render } from "../../src/terminal";
 
 // Counter component
 function Counter() {
@@ -49,7 +49,7 @@ setInterval(() => {
 }, 100);
 
 // Cleanup on exit
-process.on('SIGINT', () => {
+process.on("SIGINT", () => {
   unmount();
   process.exit(0);
 });

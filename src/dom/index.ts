@@ -11,6 +11,6 @@ export {
   insertBefore,
   replaceNode,
   setText,
-} from './operations';
+} from "./operations";
 
-export { setProperty, setSignalProperty } from './properties';
+export { setProperty, setSignalProperty } from "./properties";

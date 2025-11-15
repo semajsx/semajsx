@@ -1,12 +1,18 @@
-import type { VNode } from '../runtime/types';
-import { Fragment } from '../runtime/types';
-import { isSignal } from '../signal';
-import { isVNode } from '../runtime/vnode';
-import { resource, stream } from '../runtime/helpers';
-import { setProperty, setSignalProperty } from './properties';
-import { createElement, createTextNode, appendChild, removeChild, replaceNode } from './operations';
-import { TerminalRenderer } from './renderer';
-import type { TerminalNode } from './types';
+import type { VNode } from "../runtime/types";
+import { Fragment } from "../runtime/types";
+import { isSignal } from "../signal";
+import { isVNode } from "../runtime/vnode";
+import { resource, stream } from "../runtime/helpers";
+import { setProperty, setSignalProperty } from "./properties";
+import {
+  createElement,
+  createTextNode,
+  appendChild,
+  removeChild,
+  replaceNode,
+} from "./operations";
+import { TerminalRenderer } from "./renderer";
+import type { TerminalNode } from "./types";
 
 /**
  * Rendered node in terminal
@@ -23,7 +29,7 @@ interface RenderedTerminalNode {
  */
 export function render(
   vnode: VNode,
-  renderer: TerminalRenderer
+  renderer: TerminalRenderer,
 ): { rendered: RenderedTerminalNode; unmount: () => void } {
   const root = renderer.getRoot();
   const rendered = renderNode(vnode);
@@ -58,12 +64,12 @@ function renderNode(vnode: VNode): RenderedTerminalNode {
   const { type } = vnode;
 
   // Text node
-  if (type === '#text') {
+  if (type === "#text") {
     return renderTextNode(vnode);
   }
 
   // Signal VNode
-  if (type === '#signal') {
+  if (type === "#signal") {
     return renderSignalNode(vnode);
   }
 
@@ -73,12 +79,12 @@ function renderNode(vnode: VNode): RenderedTerminalNode {
   }
 
   // Component
-  if (typeof type === 'function') {
+  if (typeof type === "function") {
     return renderComponent(vnode);
   }
 
   // Element
-  if (typeof type === 'string') {
+  if (typeof type === "string") {
     return renderElement(vnode);
   }
 
@@ -89,7 +95,7 @@ function renderNode(vnode: VNode): RenderedTerminalNode {
  * Render a text node
  */
 function renderTextNode(vnode: VNode): RenderedTerminalNode {
-  const text = vnode.props?.nodeValue || '';
+  const text = vnode.props?.nodeValue || "";
   const node = createTextNode(text);
 
   return {
@@ -107,7 +113,7 @@ function renderSignalNode(vnode: VNode): RenderedTerminalNode {
   const signal = vnode.props?.signal;
 
   if (!isSignal(signal)) {
-    throw new Error('Signal VNode must have a signal prop');
+    throw new Error("Signal VNode must have a signal prop");
   }
 
   // Get initial value and render it
@@ -118,7 +124,7 @@ function renderSignalNode(vnode: VNode): RenderedTerminalNode {
   const subscriptions: Array<() => void> = [];
 
   // Subscribe to signal changes
-  const unsubscribe = signal.subscribe(value => {
+  const unsubscribe = signal.subscribe((value) => {
     const newRendered = renderValueToNode(value);
 
     // Replace old node with new one
@@ -154,13 +160,13 @@ function renderValueToNode(value: unknown): RenderedTerminalNode {
   // Convert value to VNode
   if (isVNode(value)) {
     newVNode = value;
-  } else if (typeof value === 'string' || typeof value === 'number') {
+  } else if (typeof value === "string" || typeof value === "number") {
     newVNode = {
-      type: '#text',
+      type: "#text",
       props: { nodeValue: String(value) },
       children: [],
     };
-  } else if (value == null || typeof value === 'boolean') {
+  } else if (value == null || typeof value === "boolean") {
     // Render empty Fragment for null/undefined/boolean (renders nothing)
     newVNode = {
       type: Fragment,
@@ -178,7 +184,7 @@ function renderValueToNode(value: unknown): RenderedTerminalNode {
  * Render a fragment
  */
 function renderFragment(vnode: VNode): RenderedTerminalNode {
-  const children = vnode.children.map(child => renderNode(child));
+  const children = vnode.children.map((child) => renderNode(child));
 
   // Fragment has no node of its own
   return {
@@ -193,22 +199,22 @@ function renderFragment(vnode: VNode): RenderedTerminalNode {
  * Check if a value is a Promise
  */
 function isPromise<T>(value: any): value is Promise<T> {
-  return value && typeof value.then === 'function';
+  return value && typeof value.then === "function";
 }
 
 /**
  * Check if a value is an AsyncIterator
  */
 function isAsyncIterator<T>(value: any): value is AsyncIterableIterator<T> {
-  return value && typeof value[Symbol.asyncIterator] === 'function';
+  return value && typeof value[Symbol.asyncIterator] === "function";
 }
 
 /**
  * Render a component
  */
 function renderComponent(vnode: VNode): RenderedTerminalNode {
-  if (typeof vnode.type !== 'function') {
-    throw new Error('Component vnode must have a function type');
+  if (typeof vnode.type !== "function") {
+    throw new Error("Component vnode must have a function type");
   }
 
   const Component = vnode.type;
@@ -220,13 +226,13 @@ function renderComponent(vnode: VNode): RenderedTerminalNode {
   // Handle async component (Promise<VNode>)
   if (isPromise(result)) {
     const pending: VNode = {
-      type: '#text',
-      props: { nodeValue: '' },
+      type: "#text",
+      props: { nodeValue: "" },
       children: [],
     };
     const resultSignal = resource(result, pending);
     const signalVNode: VNode = {
-      type: '#signal',
+      type: "#signal",
       props: { signal: resultSignal },
       children: [],
     };
@@ -242,13 +248,13 @@ function renderComponent(vnode: VNode): RenderedTerminalNode {
   // Handle async generator component (AsyncIterableIterator<VNode>)
   if (isAsyncIterator(result)) {
     const pending: VNode = {
-      type: '#text',
-      props: { nodeValue: '' },
+      type: "#text",
+      props: { nodeValue: "" },
       children: [],
     };
     const resultSignal = stream(result, pending);
     const signalVNode: VNode = {
-      type: '#signal',
+      type: "#signal",
       props: { signal: resultSignal },
       children: [],
     };
@@ -276,8 +282,8 @@ function renderComponent(vnode: VNode): RenderedTerminalNode {
  * Render an element
  */
 function renderElement(vnode: VNode): RenderedTerminalNode {
-  if (typeof vnode.type !== 'string') {
-    throw new Error('Element vnode must have a string type');
+  if (typeof vnode.type !== "string") {
+    throw new Error("Element vnode must have a string type");
   }
 
   const element = createElement(vnode.type);
@@ -286,7 +292,7 @@ function renderElement(vnode: VNode): RenderedTerminalNode {
   // Apply props
   const props = vnode.props || {};
   for (const [key, value] of Object.entries(props)) {
-    if (key === 'key' || key === 'children') continue;
+    if (key === "key" || key === "children") continue;
 
     if (isSignal(value)) {
       const unsub = setSignalProperty(element, key, value);
@@ -297,7 +303,7 @@ function renderElement(vnode: VNode): RenderedTerminalNode {
   }
 
   // Render children
-  const children = vnode.children.map(child => renderNode(child));
+  const children = vnode.children.map((child) => renderNode(child));
 
   for (const child of children) {
     if (child.node) {

@@ -3,13 +3,13 @@
  */
 
 export default {
-  name: 'english-only',
+  name: "english-only",
   rules: {
-    'no-non-english-comments': {
+    "no-non-english-comments": {
       meta: {
-        type: 'suggestion',
+        type: "suggestion",
         docs: {
-          description: 'Disallow non-English characters in comments',
+          description: "Disallow non-English characters in comments",
         },
       },
       create(context) {
@@ -32,7 +32,8 @@ export default {
               if (hasNonASCII(text)) {
                 context.report({
                   node: comment,
-                  message: 'Comments must be in English (no non-ASCII characters allowed)',
+                  message:
+                    "Comments must be in English (no non-ASCII characters allowed)",
                 });
               }
             }

@@ -1,4 +1,4 @@
-import type { Signal, MaybeSignal } from './types';
+import type { Signal, MaybeSignal } from "./types";
 
 /**
  * Check if a value is a signal
@@ -6,10 +6,10 @@ import type { Signal, MaybeSignal } from './types';
 export function isSignal<T = unknown>(value: unknown): value is Signal<T> {
   return (
     value != null &&
-    typeof value === 'object' &&
-    'value' in value &&
-    'subscribe' in value &&
-    typeof value.subscribe === 'function'
+    typeof value === "object" &&
+    "value" in value &&
+    "subscribe" in value &&
+    typeof value.subscribe === "function"
   );
 }
 

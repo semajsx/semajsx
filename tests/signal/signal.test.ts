@@ -1,36 +1,36 @@
-import { describe, it, expect, vi } from 'vitest';
-import { signal } from '../../src/signal/signal';
+import { describe, it, expect, vi } from "vitest";
+import { signal } from "../../src/signal/signal";
 
-describe('signal', () => {
-  it('should create a signal with initial value', () => {
+describe("signal", () => {
+  it("should create a signal with initial value", () => {
     const s = signal(42);
     expect(s.value).toBe(42);
   });
 
-  it('should update value', () => {
+  it("should update value", () => {
     const s = signal(0);
     s.value = 10;
     expect(s.value).toBe(10);
   });
 
-  it('should use set() method', () => {
+  it("should use set() method", () => {
     const s = signal(0);
     s.set(20);
     expect(s.value).toBe(20);
   });
 
-  it('should use update() method', () => {
+  it("should use update() method", () => {
     const s = signal(5);
-    s.update(v => v * 2);
+    s.update((v) => v * 2);
     expect(s.value).toBe(10);
   });
 
-  it('should peek without subscribing', () => {
+  it("should peek without subscribing", () => {
     const s = signal(100);
     expect(s.peek()).toBe(100);
   });
 
-  it('should notify subscribers on change', () => {
+  it("should notify subscribers on change", () => {
     const s = signal(0);
     const listener = vi.fn();
 
@@ -40,7 +40,7 @@ describe('signal', () => {
     expect(listener).toHaveBeenCalledWith(1);
   });
 
-  it('should not notify if value is same', () => {
+  it("should not notify if value is same", () => {
     const s = signal(5);
     const listener = vi.fn();
 
@@ -50,7 +50,7 @@ describe('signal', () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
-  it('should unsubscribe', () => {
+  it("should unsubscribe", () => {
     const s = signal(0);
     const listener = vi.fn();
 
@@ -61,7 +61,7 @@ describe('signal', () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
-  it('should handle multiple subscribers', () => {
+  it("should handle multiple subscribers", () => {
     const s = signal(0);
     const listener1 = vi.fn();
     const listener2 = vi.fn();
@@ -75,7 +75,7 @@ describe('signal', () => {
     expect(listener2).toHaveBeenCalledWith(1);
   });
 
-  it('should work with objects', () => {
+  it("should work with objects", () => {
     const s = signal({ count: 0 });
     const listener = vi.fn();
 
@@ -86,7 +86,7 @@ describe('signal', () => {
     expect(s.value).toEqual({ count: 1 });
   });
 
-  it('should work with arrays', () => {
+  it("should work with arrays", () => {
     const s = signal([1, 2, 3]);
     const listener = vi.fn();
 

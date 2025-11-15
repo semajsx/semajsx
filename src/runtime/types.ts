@@ -1,4 +1,4 @@
-import type { Signal } from '../signal';
+import type { Signal } from "../signal";
 
 /**
  * VNode types
@@ -18,14 +18,21 @@ export type Component<P = any> =
   | ((props: P) => Promise<VNode>)
   | ((props: P) => AsyncIterableIterator<VNode>);
 
-export type JSXChild = VNode | Signal<JSXChild> | string | number | boolean | null | undefined;
+export type JSXChild =
+  | VNode
+  | Signal<JSXChild>
+  | string
+  | number
+  | boolean
+  | null
+  | undefined;
 
 export type JSXChildren = JSXChild | JSXChild[];
 
 /**
  * Special types
  */
-export const Fragment = Symbol.for('semajsx.fragment');
+export const Fragment = Symbol.for("semajsx.fragment");
 
 /**
  * Rendered node tracking

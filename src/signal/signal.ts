@@ -1,4 +1,4 @@
-import type { WritableSignal } from './types';
+import type { WritableSignal } from "./types";
 
 /**
  * Create a writable signal

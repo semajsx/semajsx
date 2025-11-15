@@ -1,7 +1,12 @@
-import Yoga from 'yoga-layout-prebuilt';
-import stringWidth from 'string-width';
-import wrapAnsi from 'wrap-ansi';
-import type { TerminalNode, TerminalElement, TerminalText, TerminalStyle } from './types';
+import Yoga from "yoga-layout-prebuilt";
+import stringWidth from "string-width";
+import wrapAnsi from "wrap-ansi";
+import type {
+  TerminalNode,
+  TerminalElement,
+  TerminalText,
+  TerminalStyle,
+} from "./types";
 
 /**
  * Create a terminal element
@@ -10,7 +15,7 @@ export function createElement(tagName: string): TerminalElement {
   const yogaNode = Yoga.Node.create();
 
   const element: TerminalElement = {
-    type: 'element',
+    type: "element",
     tagName,
     style: {},
     props: {},
@@ -21,7 +26,7 @@ export function createElement(tagName: string): TerminalElement {
 
   // Set measure function for text containers
   // Text elements need to measure their text content
-  if (tagName === 'text') {
+  if (tagName === "text") {
     yogaNode.setMeasureFunc(measureTextNode.bind(null, element));
   }
 
@@ -34,7 +39,7 @@ export function createElement(tagName: string): TerminalElement {
  */
 export function createTextNode(text: string): TerminalText {
   return {
-    type: 'text',
+    type: "text",
     content: text,
     yogaNode: undefined,
     parent: null,
@@ -46,7 +51,7 @@ export function createTextNode(text: string): TerminalText {
  * Create a comment (no-op in terminal, returns text node)
  */
 export function createComment(_text: string): TerminalText {
-  return createTextNode('');
+  return createTextNode("");
 }
 
 /**
@@ -61,7 +66,10 @@ export function appendChild(parent: TerminalNode, child: TerminalNode): void {
   parent.children.push(child);
 
   if (parent.yogaNode && child.yogaNode) {
-    parent.yogaNode.insertChild(child.yogaNode, parent.yogaNode.getChildCount());
+    parent.yogaNode.insertChild(
+      child.yogaNode,
+      parent.yogaNode.getChildCount(),
+    );
   }
 }
 
@@ -91,7 +99,7 @@ export function removeChild(node: TerminalNode): void {
 export function insertBefore(
   parent: TerminalNode,
   newNode: TerminalNode,
-  refNode: TerminalNode | null
+  refNode: TerminalNode | null,
 ): void {
   if (newNode.parent) {
     removeChild(newNode);
@@ -117,7 +125,10 @@ export function insertBefore(
 /**
  * Replace a node with another node
  */
-export function replaceNode(oldNode: TerminalNode, newNode: TerminalNode): void {
+export function replaceNode(
+  oldNode: TerminalNode,
+  newNode: TerminalNode,
+): void {
   const parent = oldNode.parent;
   if (!parent) return;
 
@@ -129,7 +140,7 @@ export function replaceNode(oldNode: TerminalNode, newNode: TerminalNode): void 
  * Set text content of a text node
  */
 export function setText(node: TerminalNode, text: string): void {
-  if (node.type === 'text') {
+  if (node.type === "text") {
     if (node.content === text) {
       return;
     }
@@ -146,7 +157,10 @@ export function setText(node: TerminalNode, text: string): void {
 /**
  * Apply yoga layout styles
  */
-export function applyStyle(element: TerminalElement, style: Partial<TerminalStyle>): void {
+export function applyStyle(
+  element: TerminalElement,
+  style: Partial<TerminalStyle>,
+): void {
   const { yogaNode } = element;
   if (!yogaNode) return;
 
@@ -157,28 +171,28 @@ export function applyStyle(element: TerminalElement, style: Partial<TerminalStyl
     const direction = {
       row: Yoga.FLEX_DIRECTION_ROW,
       column: Yoga.FLEX_DIRECTION_COLUMN,
-      'row-reverse': Yoga.FLEX_DIRECTION_ROW_REVERSE,
-      'column-reverse': Yoga.FLEX_DIRECTION_COLUMN_REVERSE,
+      "row-reverse": Yoga.FLEX_DIRECTION_ROW_REVERSE,
+      "column-reverse": Yoga.FLEX_DIRECTION_COLUMN_REVERSE,
     }[style.flexDirection];
     yogaNode.setFlexDirection(direction);
   }
 
   if (style.justifyContent) {
     const justify = {
-      'flex-start': Yoga.JUSTIFY_FLEX_START,
+      "flex-start": Yoga.JUSTIFY_FLEX_START,
       center: Yoga.JUSTIFY_CENTER,
-      'flex-end': Yoga.JUSTIFY_FLEX_END,
-      'space-between': Yoga.JUSTIFY_SPACE_BETWEEN,
-      'space-around': Yoga.JUSTIFY_SPACE_AROUND,
+      "flex-end": Yoga.JUSTIFY_FLEX_END,
+      "space-between": Yoga.JUSTIFY_SPACE_BETWEEN,
+      "space-around": Yoga.JUSTIFY_SPACE_AROUND,
     }[style.justifyContent];
     yogaNode.setJustifyContent(justify);
   }
 
   if (style.alignItems) {
     const align = {
-      'flex-start': Yoga.ALIGN_FLEX_START,
+      "flex-start": Yoga.ALIGN_FLEX_START,
       center: Yoga.ALIGN_CENTER,
-      'flex-end': Yoga.ALIGN_FLEX_END,
+      "flex-end": Yoga.ALIGN_FLEX_END,
       stretch: Yoga.ALIGN_STRETCH,
     }[style.alignItems];
     yogaNode.setAlignItems(align);
@@ -194,21 +208,21 @@ export function applyStyle(element: TerminalElement, style: Partial<TerminalStyl
 
   // Dimensions
   if (style.width !== undefined) {
-    if (typeof style.width === 'number') {
+    if (typeof style.width === "number") {
       yogaNode.setWidth(style.width);
-    } else if (style.width === 'auto') {
+    } else if (style.width === "auto") {
       yogaNode.setWidthAuto();
-    } else if (style.width.endsWith('%')) {
+    } else if (style.width.endsWith("%")) {
       yogaNode.setWidthPercent(parseFloat(style.width));
     }
   }
 
   if (style.height !== undefined) {
-    if (typeof style.height === 'number') {
+    if (typeof style.height === "number") {
       yogaNode.setHeight(style.height);
-    } else if (style.height === 'auto') {
+    } else if (style.height === "auto") {
       yogaNode.setHeightAuto();
-    } else if (style.height.endsWith('%')) {
+    } else if (style.height.endsWith("%")) {
       yogaNode.setHeightPercent(parseFloat(style.height));
     }
   }
@@ -259,11 +273,11 @@ export function applyStyle(element: TerminalElement, style: Partial<TerminalStyl
  * Similar to Ink's squashTextNodes
  */
 export function collectText(node: TerminalNode): string {
-  if (node.type === 'text') {
+  if (node.type === "text") {
     return node.content;
   }
 
-  let text = '';
+  let text = "";
   for (const child of node.children) {
     text += collectText(child);
   }
@@ -275,7 +289,10 @@ export function collectText(node: TerminalNode): string {
  * Measure text node for Yoga layout
  * This is called by Yoga when calculating layout
  */
-function measureTextNode(node: TerminalElement, width: number): { width: number; height: number } {
+function measureTextNode(
+  node: TerminalElement,
+  width: number,
+): { width: number; height: number } {
   // Collect all text from children
   const text = collectText(node);
 
@@ -284,7 +301,7 @@ function measureTextNode(node: TerminalElement, width: number): { width: number;
   }
 
   const textWidth = stringWidth(text);
-  const lines = text.split('\n');
+  const lines = text.split("\n");
   const height = lines.length;
 
   // Text fits within width, no wrapping needed
@@ -298,9 +315,14 @@ function measureTextNode(node: TerminalElement, width: number): { width: number;
   }
 
   // Wrap text if it exceeds width
-  const wrappedText = wrapAnsi(text, Math.floor(width), { hard: true, trim: false });
-  const wrappedLines = wrappedText.split('\n');
-  const wrappedWidth = Math.max(...wrappedLines.map(line => stringWidth(line)));
+  const wrappedText = wrapAnsi(text, Math.floor(width), {
+    hard: true,
+    trim: false,
+  });
+  const wrappedLines = wrappedText.split("\n");
+  const wrappedWidth = Math.max(
+    ...wrappedLines.map((line) => stringWidth(line)),
+  );
 
   return { width: wrappedWidth, height: wrappedLines.length };
 }

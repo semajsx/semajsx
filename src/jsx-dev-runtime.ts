@@ -2,8 +2,8 @@
  * JSX automatic runtime (development)
  */
 
-import { h } from './runtime/vnode';
-import { Fragment } from './runtime/types';
+import { h } from "./runtime/vnode";
+import { Fragment } from "./runtime/types";
 
 export { Fragment };
 
@@ -13,7 +13,7 @@ export function jsxDEV(
   key?: any,
   _isStaticChildren?: boolean,
   _source?: any,
-  _self?: any
+  _self?: any,
 ): any {
   const { children, ...restProps } = props || {};
 

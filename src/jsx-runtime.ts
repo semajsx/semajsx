@@ -2,9 +2,9 @@
  * JSX automatic runtime (production)
  */
 
-import { h } from './runtime/vnode';
-import { Fragment } from './runtime/types';
-import type { VNode } from './runtime/types';
+import { h } from "./runtime/vnode";
+import { Fragment } from "./runtime/types";
+import type { VNode } from "./runtime/types";
 
 // Global JSX namespace for TypeScript
 declare global {

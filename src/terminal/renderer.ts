@@ -1,11 +1,16 @@
-import Yoga from 'yoga-layout-prebuilt';
-import chalk, { type ChalkInstance } from 'chalk';
-import cliBoxes from 'cli-boxes';
-import ansiEscapes from 'ansi-escapes';
-import stringWidth from 'string-width';
-import sliceAnsi from 'slice-ansi';
-import type { TerminalNode, TerminalElement, TerminalText, TerminalRoot } from './types';
-import { collectText } from './operations';
+import Yoga from "yoga-layout-prebuilt";
+import chalk, { type ChalkInstance } from "chalk";
+import cliBoxes from "cli-boxes";
+import ansiEscapes from "ansi-escapes";
+import stringWidth from "string-width";
+import sliceAnsi from "slice-ansi";
+import type {
+  TerminalNode,
+  TerminalElement,
+  TerminalText,
+  TerminalRoot,
+} from "./types";
+import { collectText } from "./operations";
 
 /**
  * Get a chalk color function by name
@@ -67,13 +72,13 @@ function getChalkBgColor(colorName: string): ChalkInstance {
 export class TerminalRenderer {
   private root: TerminalRoot;
   private buffer: string[] = [];
-  private previousOutput: string = '';
+  private previousOutput: string = "";
   private lastOutputHeight: number = 0;
   private wasRawMode: boolean = false;
 
   constructor(stream: NodeJS.WriteStream = process.stdout) {
     this.root = {
-      type: 'root',
+      type: "root",
       stream,
       parent: null,
       children: [],
@@ -119,7 +124,7 @@ export class TerminalRenderer {
       this.root.yogaNode.calculateLayout(
         this.root.stream.columns || 80,
         this.root.stream.rows || 24,
-        Yoga.DIRECTION_LTR
+        Yoga.DIRECTION_LTR,
       );
     }
 
@@ -130,7 +135,7 @@ export class TerminalRenderer {
     this.buffer = [];
     const height = this.root.stream.rows || 24;
     for (let i = 0; i < height; i++) {
-      this.buffer[i] = '';
+      this.buffer[i] = "";
     }
 
     // Render children
@@ -145,7 +150,11 @@ export class TerminalRenderer {
   /**
    * Update positions of nodes based on yoga layout
    */
-  private updatePositions(node: TerminalNode, parentX: number, parentY: number): void {
+  private updatePositions(
+    node: TerminalNode,
+    parentX: number,
+    parentY: number,
+  ): void {
     if (node.yogaNode) {
       node.x = Math.round(parentX + node.yogaNode.getComputedLeft());
       node.y = Math.round(parentY + node.yogaNode.getComputedTop());
@@ -170,9 +179,9 @@ export class TerminalRenderer {
    * Render a single node
    */
   private renderNode(node: TerminalNode): void {
-    if (node.type === 'text') {
+    if (node.type === "text") {
       this.renderText(node);
-    } else if (node.type === 'element') {
+    } else if (node.type === "element") {
       this.renderElement(node);
     }
   }
@@ -204,7 +213,7 @@ export class TerminalRenderer {
     const { style, x = 0, y = 0, tagName } = node;
 
     // Render border if specified
-    if (style.border && style.border !== 'none') {
+    if (style.border && style.border !== "none") {
       this.renderBorder(node);
     }
 
@@ -214,7 +223,7 @@ export class TerminalRenderer {
     }
 
     // For text elements, collect and render all text content at once
-    if (tagName === 'text') {
+    if (tagName === "text") {
       const text = collectText(node);
       if (text) {
         // Apply text styling
@@ -253,9 +262,9 @@ export class TerminalRenderer {
    */
   private renderBorder(node: TerminalElement): void {
     const { style, x = 0, y = 0, width = 0, height = 0 } = node;
-    const boxStyle = style.border || 'single';
+    const boxStyle = style.border || "single";
 
-    if (boxStyle === 'none') return;
+    if (boxStyle === "none") return;
 
     const box = cliBoxes[boxStyle] || cliBoxes.single;
     let borderChar = chalk;
@@ -265,7 +274,9 @@ export class TerminalRenderer {
     }
 
     // Top border
-    const topLine = borderChar(box.topLeft + box.top.repeat(Math.max(0, width - 2)) + box.topRight);
+    const topLine = borderChar(
+      box.topLeft + box.top.repeat(Math.max(0, width - 2)) + box.topRight,
+    );
     this.writeAt(x, y, topLine);
 
     // Side borders
@@ -277,7 +288,9 @@ export class TerminalRenderer {
     // Bottom border
     if (height > 1) {
       const bottomLine = borderChar(
-        box.bottomLeft + box.bottom.repeat(Math.max(0, width - 2)) + box.bottomRight
+        box.bottomLeft +
+          box.bottom.repeat(Math.max(0, width - 2)) +
+          box.bottomRight,
       );
       this.writeAt(x, y + height - 1, bottomLine);
     }
@@ -294,7 +307,7 @@ export class TerminalRenderer {
     const bg = getChalkBgColor(style.backgroundColor);
 
     for (let i = 0; i < height; i++) {
-      const line = bg(' '.repeat(width));
+      const line = bg(" ".repeat(width));
       this.writeAt(x, y + i, line);
     }
   }
@@ -305,13 +318,13 @@ export class TerminalRenderer {
   private writeAt(x: number, y: number, text: string): void {
     if (y < 0 || y >= this.buffer.length) return;
 
-    const row = this.buffer[y] || '';
+    const row = this.buffer[y] || "";
     const width = stringWidth(text);
     const rowWidth = stringWidth(row);
 
     // Pad row if needed
     if (rowWidth < x) {
-      this.buffer[y] = row + ' '.repeat(x - rowWidth) + text;
+      this.buffer[y] = row + " ".repeat(x - rowWidth) + text;
     } else {
       // Replace characters at position
       this.buffer[y] = sliceAnsi(row, 0, x) + text + sliceAnsi(row, x + width);
@@ -325,15 +338,16 @@ export class TerminalRenderer {
     // Remove trailing empty lines from buffer (only output actual content)
     let lastNonEmptyIndex = -1;
     for (let i = this.buffer.length - 1; i >= 0; i--) {
-      if (this.buffer[i].trim() !== '') {
+      if (this.buffer[i].trim() !== "") {
         lastNonEmptyIndex = i;
         break;
       }
     }
 
     // Get only the lines with content
-    const contentLines = lastNonEmptyIndex >= 0 ? this.buffer.slice(0, lastNonEmptyIndex + 1) : [];
-    const output = contentLines.join('\n');
+    const contentLines =
+      lastNonEmptyIndex >= 0 ? this.buffer.slice(0, lastNonEmptyIndex + 1) : [];
+    const output = contentLines.join("\n");
 
     // Only update if changed
     if (output !== this.previousOutput) {
@@ -360,7 +374,7 @@ export class TerminalRenderer {
       this.root.stream.write(ansiEscapes.eraseLines(this.lastOutputHeight));
       this.lastOutputHeight = 0;
     }
-    this.previousOutput = '';
+    this.previousOutput = "";
   }
 
   /**
@@ -371,7 +385,7 @@ export class TerminalRenderer {
     this.render();
 
     // Move cursor to line after output
-    this.root.stream.write('\n');
+    this.root.stream.write("\n");
 
     // Show cursor again on cleanup
     this.root.stream.write(ansiEscapes.cursorShow);

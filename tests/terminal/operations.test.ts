@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 import {
   createElement,
   createTextNode,
@@ -7,55 +7,55 @@ import {
   replaceNode,
   setText,
   applyStyle,
-} from '../../src/terminal/operations';
+} from "../../src/terminal/operations";
 
-describe('Terminal Operations', () => {
-  describe('createElement', () => {
-    it('should create an element with correct type', () => {
-      const element = createElement('box');
+describe("Terminal Operations", () => {
+  describe("createElement", () => {
+    it("should create an element with correct type", () => {
+      const element = createElement("box");
 
-      expect(element.type).toBe('element');
-      expect(element.tagName).toBe('box');
+      expect(element.type).toBe("element");
+      expect(element.tagName).toBe("box");
       expect(element.parent).toBeNull();
       expect(element.children).toEqual([]);
     });
 
-    it('should create element with yoga node', () => {
-      const element = createElement('text');
+    it("should create element with yoga node", () => {
+      const element = createElement("text");
 
       expect(element.yogaNode).toBeDefined();
     });
 
-    it('should initialize empty style and props', () => {
-      const element = createElement('box');
+    it("should initialize empty style and props", () => {
+      const element = createElement("box");
 
       expect(element.style).toEqual({});
       expect(element.props).toEqual({});
     });
   });
 
-  describe('createTextNode', () => {
-    it('should create a text node with correct content', () => {
-      const text = createTextNode('Hello World');
+  describe("createTextNode", () => {
+    it("should create a text node with correct content", () => {
+      const text = createTextNode("Hello World");
 
-      expect(text.type).toBe('text');
-      expect(text.content).toBe('Hello World');
+      expect(text.type).toBe("text");
+      expect(text.content).toBe("Hello World");
       expect(text.parent).toBeNull();
       expect(text.children).toEqual([]);
     });
 
-    it('should create text node without yoga node', () => {
-      const text = createTextNode('test');
+    it("should create text node without yoga node", () => {
+      const text = createTextNode("test");
 
       // Text nodes don't have yoga nodes - they are pure data containers
       expect(text.yogaNode).toBeUndefined();
     });
   });
 
-  describe('appendChild', () => {
-    it('should append child to parent', () => {
-      const parent = createElement('box');
-      const child = createElement('text');
+  describe("appendChild", () => {
+    it("should append child to parent", () => {
+      const parent = createElement("box");
+      const child = createElement("text");
 
       appendChild(parent, child);
 
@@ -63,10 +63,10 @@ describe('Terminal Operations', () => {
       expect(child.parent).toBe(parent);
     });
 
-    it('should append multiple children', () => {
-      const parent = createElement('box');
-      const child1 = createElement('text');
-      const child2 = createElement('text');
+    it("should append multiple children", () => {
+      const parent = createElement("box");
+      const child1 = createElement("text");
+      const child2 = createElement("text");
 
       appendChild(parent, child1);
       appendChild(parent, child2);
@@ -76,19 +76,19 @@ describe('Terminal Operations', () => {
       expect(parent.children[1]).toBe(child2);
     });
 
-    it('should update yoga node hierarchy', () => {
-      const parent = createElement('box');
-      const child = createElement('text');
+    it("should update yoga node hierarchy", () => {
+      const parent = createElement("box");
+      const child = createElement("text");
 
       appendChild(parent, child);
 
       expect(parent.yogaNode?.getChildCount()).toBe(1);
     });
 
-    it('should remove child from previous parent', () => {
-      const parent1 = createElement('box');
-      const parent2 = createElement('box');
-      const child = createElement('text');
+    it("should remove child from previous parent", () => {
+      const parent1 = createElement("box");
+      const parent2 = createElement("box");
+      const child = createElement("text");
 
       appendChild(parent1, child);
       appendChild(parent2, child);
@@ -99,10 +99,10 @@ describe('Terminal Operations', () => {
     });
   });
 
-  describe('removeChild', () => {
-    it('should remove child from parent', () => {
-      const parent = createElement('box');
-      const child = createElement('text');
+  describe("removeChild", () => {
+    it("should remove child from parent", () => {
+      const parent = createElement("box");
+      const child = createElement("text");
 
       appendChild(parent, child);
       removeChild(child);
@@ -111,15 +111,15 @@ describe('Terminal Operations', () => {
       expect(child.parent).toBeNull();
     });
 
-    it('should handle removing child with no parent', () => {
-      const child = createElement('text');
+    it("should handle removing child with no parent", () => {
+      const child = createElement("text");
 
       expect(() => removeChild(child)).not.toThrow();
     });
 
-    it('should update yoga node hierarchy', () => {
-      const parent = createElement('box');
-      const child = createElement('text');
+    it("should update yoga node hierarchy", () => {
+      const parent = createElement("box");
+      const child = createElement("text");
 
       appendChild(parent, child);
       removeChild(child);
@@ -128,11 +128,11 @@ describe('Terminal Operations', () => {
     });
   });
 
-  describe('replaceNode', () => {
-    it('should replace old node with new node', () => {
-      const parent = createElement('box');
-      const oldNode = createElement('text');
-      const newNode = createElement('text');
+  describe("replaceNode", () => {
+    it("should replace old node with new node", () => {
+      const parent = createElement("box");
+      const oldNode = createElement("text");
+      const newNode = createElement("text");
 
       appendChild(parent, oldNode);
       replaceNode(oldNode, newNode);
@@ -143,12 +143,12 @@ describe('Terminal Operations', () => {
       expect(newNode.parent).toBe(parent);
     });
 
-    it('should maintain order when replacing', () => {
-      const parent = createElement('box');
-      const child1 = createElement('text');
-      const child2 = createElement('text');
-      const child3 = createElement('text');
-      const newChild = createElement('text');
+    it("should maintain order when replacing", () => {
+      const parent = createElement("box");
+      const child1 = createElement("text");
+      const child2 = createElement("text");
+      const child3 = createElement("text");
+      const newChild = createElement("text");
 
       appendChild(parent, child1);
       appendChild(parent, child2);
@@ -162,52 +162,52 @@ describe('Terminal Operations', () => {
     });
   });
 
-  describe('setText', () => {
-    it('should set text content on text node', () => {
-      const text = createTextNode('initial');
+  describe("setText", () => {
+    it("should set text content on text node", () => {
+      const text = createTextNode("initial");
 
-      setText(text, 'updated');
+      setText(text, "updated");
 
-      expect(text.content).toBe('updated');
+      expect(text.content).toBe("updated");
     });
 
-    it('should not affect element nodes', () => {
-      const element = createElement('box');
+    it("should not affect element nodes", () => {
+      const element = createElement("box");
 
-      setText(element, 'test');
+      setText(element, "test");
 
       // Should not throw or change element
-      expect(element.type).toBe('element');
+      expect(element.type).toBe("element");
     });
   });
 
-  describe('applyStyle', () => {
-    it('should apply flexDirection style', () => {
-      const element = createElement('box');
+  describe("applyStyle", () => {
+    it("should apply flexDirection style", () => {
+      const element = createElement("box");
 
-      applyStyle(element, { flexDirection: 'column' });
+      applyStyle(element, { flexDirection: "column" });
 
-      expect(element.style.flexDirection).toBe('column');
+      expect(element.style.flexDirection).toBe("column");
     });
 
-    it('should apply multiple styles', () => {
-      const element = createElement('box');
+    it("should apply multiple styles", () => {
+      const element = createElement("box");
 
       applyStyle(element, {
-        flexDirection: 'row',
+        flexDirection: "row",
         padding: 2,
         margin: 1,
-        border: 'round',
+        border: "round",
       });
 
-      expect(element.style.flexDirection).toBe('row');
+      expect(element.style.flexDirection).toBe("row");
       expect(element.style.padding).toBe(2);
       expect(element.style.margin).toBe(1);
-      expect(element.style.border).toBe('round');
+      expect(element.style.border).toBe("round");
     });
 
-    it('should apply width and height', () => {
-      const element = createElement('box');
+    it("should apply width and height", () => {
+      const element = createElement("box");
 
       applyStyle(element, {
         width: 100,
@@ -218,8 +218,8 @@ describe('Terminal Operations', () => {
       expect(element.style.height).toBe(50);
     });
 
-    it('should merge with existing styles', () => {
-      const element = createElement('box');
+    it("should merge with existing styles", () => {
+      const element = createElement("box");
 
       applyStyle(element, { padding: 2 });
       applyStyle(element, { margin: 1 });
@@ -228,17 +228,17 @@ describe('Terminal Operations', () => {
       expect(element.style.margin).toBe(1);
     });
 
-    it('should apply color styles', () => {
-      const element = createElement('text');
+    it("should apply color styles", () => {
+      const element = createElement("text");
 
       applyStyle(element, {
-        color: 'green',
-        backgroundColor: 'blue',
+        color: "green",
+        backgroundColor: "blue",
         bold: true,
       });
 
-      expect(element.style.color).toBe('green');
-      expect(element.style.backgroundColor).toBe('blue');
+      expect(element.style.color).toBe("green");
+      expect(element.style.backgroundColor).toBe("blue");
       expect(element.style.bold).toBe(true);
     });
   });

@@ -1,14 +1,17 @@
 export default {
-  extends: ['@commitlint/config-conventional'],
+  extends: ["@commitlint/config-conventional"],
   plugins: [
     {
       rules: {
-        'no-non-english': parsed => {
+        "no-non-english": (parsed) => {
           const { header } = parsed;
           // Check for non-ASCII characters (Chinese, Japanese, etc.)
           const nonAsciiRegex = /[^\x00-\x7F]/;
           if (nonAsciiRegex.test(header)) {
-            return [false, 'Commit message must be in English (no non-ASCII characters allowed)'];
+            return [
+              false,
+              "Commit message must be in English (no non-ASCII characters allowed)",
+            ];
           }
           return [true];
         },
@@ -16,28 +19,28 @@ export default {
     },
   ],
   rules: {
-    'no-non-english': [2, 'always'],
-    'type-enum': [
+    "no-non-english": [2, "always"],
+    "type-enum": [
       2,
-      'always',
+      "always",
       [
-        'feat', // New feature
-        'fix', // Bug fix
-        'docs', // Documentation changes
-        'style', // Code style changes
-        'refactor', // Refactoring
-        'perf', // Performance improvements
-        'test', // Adding or updating tests
-        'chore', // Build process or tooling changes
-        'revert', // Reverting changes
-        'build', // Build system changes
-        'ci', // CI configuration changes
+        "feat", // New feature
+        "fix", // Bug fix
+        "docs", // Documentation changes
+        "style", // Code style changes
+        "refactor", // Refactoring
+        "perf", // Performance improvements
+        "test", // Adding or updating tests
+        "chore", // Build process or tooling changes
+        "revert", // Reverting changes
+        "build", // Build system changes
+        "ci", // CI configuration changes
       ],
     ],
-    'type-case': [2, 'always', 'lower-case'],
-    'type-empty': [2, 'never'],
-    'subject-empty': [2, 'never'],
-    'subject-full-stop': [2, 'never', '.'],
-    'header-max-length': [2, 'always', 100],
+    "type-case": [2, "always", "lower-case"],
+    "type-empty": [2, "never"],
+    "subject-empty": [2, "never"],
+    "subject-full-stop": [2, "never", "."],
+    "header-max-length": [2, "always", 100],
   },
 };

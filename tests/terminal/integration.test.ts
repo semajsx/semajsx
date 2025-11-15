@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { signal } from '../../src/signal';
-import { h } from '../../src/runtime/vnode';
-import { TerminalRenderer, render } from '../../src/terminal';
-import { Writable } from 'stream';
+import { describe, it, expect, beforeEach } from "vitest";
+import { signal } from "../../src/signal";
+import { h } from "../../src/runtime/vnode";
+import { TerminalRenderer, render } from "../../src/terminal";
+import { Writable } from "stream";
 
 /**
  * Mock writable stream for testing
@@ -22,11 +22,11 @@ class MockStream extends Writable {
   }
 
   getLastOutput(): string {
-    return this.output[this.output.length - 1] || '';
+    return this.output[this.output.length - 1] || "";
   }
 }
 
-describe('Terminal Integration', () => {
+describe("Terminal Integration", () => {
   let mockStream: MockStream;
   let renderer: TerminalRenderer;
 
@@ -35,20 +35,20 @@ describe('Terminal Integration', () => {
     renderer = new TerminalRenderer(mockStream as any);
   });
 
-  describe('render with h()', () => {
-    it('should render simple element tree', () => {
-      const app = h('box', {}, [h('text', {}, ['Hello World'])]);
+  describe("render with h()", () => {
+    it("should render simple element tree", () => {
+      const app = h("box", {}, [h("text", {}, ["Hello World"])]);
 
       render(app, renderer);
 
       expect(mockStream.output.length).toBeGreaterThan(0);
     });
 
-    it('should render nested elements', () => {
-      const app = h('box', { flexDirection: 'column' }, [
-        h('text', {}, ['Line 1']),
-        h('text', {}, ['Line 2']),
-        h('text', {}, ['Line 3']),
+    it("should render nested elements", () => {
+      const app = h("box", { flexDirection: "column" }, [
+        h("text", {}, ["Line 1"]),
+        h("text", {}, ["Line 2"]),
+        h("text", {}, ["Line 3"]),
       ]);
 
       render(app, renderer);
@@ -56,40 +56,40 @@ describe('Terminal Integration', () => {
       expect(mockStream.output.length).toBeGreaterThan(0);
     });
 
-    it('should apply styles', () => {
+    it("should apply styles", () => {
       const app = h(
-        'box',
+        "box",
         {
           padding: 2,
-          border: 'round',
-          flexDirection: 'column',
+          border: "round",
+          flexDirection: "column",
         },
-        [h('text', { color: 'green', bold: true }, ['Styled Text'])]
+        [h("text", { color: "green", bold: true }, ["Styled Text"])],
       );
 
       const { rendered } = render(app, renderer);
 
       expect(rendered.node).toBeDefined();
-      if (rendered.node?.type === 'element') {
+      if (rendered.node?.type === "element") {
         expect(rendered.node.style.padding).toBe(2);
-        expect(rendered.node.style.border).toBe('round');
+        expect(rendered.node.style.border).toBe("round");
       }
     });
   });
 
-  describe('render with signals', () => {
-    it('should render signal values', () => {
+  describe("render with signals", () => {
+    it("should render signal values", () => {
       const count = signal(0);
-      const app = h('box', {}, [h('text', {}, ['Count: ', count])]);
+      const app = h("box", {}, [h("text", {}, ["Count: ", count])]);
 
       render(app, renderer);
 
       expect(mockStream.output.length).toBeGreaterThan(0);
     });
 
-    it('should update when signal changes', () => {
+    it("should update when signal changes", () => {
       const count = signal(0);
-      const app = h('box', {}, [h('text', {}, ['Count: ', count])]);
+      const app = h("box", {}, [h("text", {}, ["Count: ", count])]);
 
       const { rendered } = render(app, renderer);
 
@@ -104,9 +104,9 @@ describe('Terminal Integration', () => {
       expect(count.value).toBe(42);
     });
 
-    it('should handle computed signals', () => {
+    it("should handle computed signals", () => {
       const count = signal(5);
-      const app = h('box', {}, [h('text', {}, ['Value: ', count])]);
+      const app = h("box", {}, [h("text", {}, ["Value: ", count])]);
 
       render(app, renderer);
 
@@ -116,12 +116,12 @@ describe('Terminal Integration', () => {
     });
   });
 
-  describe('component rendering', () => {
-    it('should render functional components', () => {
+  describe("component rendering", () => {
+    it("should render functional components", () => {
       function Counter({ initial = 0 }: { initial?: number }) {
         const count = signal(initial);
 
-        return h('box', {}, [h('text', {}, ['Count: ', count])]);
+        return h("box", {}, [h("text", {}, ["Count: ", count])]);
       }
 
       const app = h(Counter, { initial: 5 });
@@ -131,29 +131,32 @@ describe('Terminal Integration', () => {
       expect(mockStream.output.length).toBeGreaterThan(0);
     });
 
-    it('should pass props to components', () => {
+    it("should pass props to components", () => {
       function Greeting({ name }: { name: string }) {
-        return h('text', {}, ['Hello, ', name, '!']);
+        return h("text", {}, ["Hello, ", name, "!"]);
       }
 
-      const app = h(Greeting, { name: 'World' });
+      const app = h(Greeting, { name: "World" });
 
       const { rendered } = render(app, renderer);
 
       expect(rendered.node).toBeDefined();
     });
 
-    it('should render nested components', () => {
+    it("should render nested components", () => {
       function Header() {
-        return h('text', { bold: true }, ['Header']);
+        return h("text", { bold: true }, ["Header"]);
       }
 
       function Body() {
-        return h('text', {}, ['Body content']);
+        return h("text", {}, ["Body content"]);
       }
 
       function App() {
-        return h('box', { flexDirection: 'column' }, [h(Header, {}), h(Body, {})]);
+        return h("box", { flexDirection: "column" }, [
+          h(Header, {}),
+          h(Body, {}),
+        ]);
       }
 
       const app = h(App, {});
@@ -164,10 +167,10 @@ describe('Terminal Integration', () => {
     });
   });
 
-  describe('unmount', () => {
-    it('should cleanup subscriptions on unmount', () => {
+  describe("unmount", () => {
+    it("should cleanup subscriptions on unmount", () => {
       const count = signal(0);
-      const app = h('box', {}, [h('text', {}, ['Count: ', count])]);
+      const app = h("box", {}, [h("text", {}, ["Count: ", count])]);
 
       const { rendered, unmount } = render(app, renderer);
 
@@ -181,9 +184,9 @@ describe('Terminal Integration', () => {
     });
   });
 
-  describe('layout and positioning', () => {
-    it('should calculate positions for elements', () => {
-      const app = h('box', { padding: 2 }, [h('text', {}, ['Content'])]);
+  describe("layout and positioning", () => {
+    it("should calculate positions for elements", () => {
+      const app = h("box", { padding: 2 }, [h("text", {}, ["Content"])]);
 
       const { rendered } = render(app, renderer);
 
@@ -193,10 +196,10 @@ describe('Terminal Integration', () => {
       }
     });
 
-    it('should respect flexbox layout', () => {
-      const app = h('box', { flexDirection: 'row' }, [
-        h('box', { width: 20 }, [h('text', {}, ['Left'])]),
-        h('box', { width: 20 }, [h('text', {}, ['Right'])]),
+    it("should respect flexbox layout", () => {
+      const app = h("box", { flexDirection: "row" }, [
+        h("box", { width: 20 }, [h("text", {}, ["Left"])]),
+        h("box", { width: 20 }, [h("text", {}, ["Right"])]),
       ]);
 
       const { rendered } = render(app, renderer);
@@ -210,23 +213,23 @@ describe('Terminal Integration', () => {
     });
   });
 
-  describe('edge cases', () => {
-    it('should handle empty content', () => {
-      const app = h('box', {});
+  describe("edge cases", () => {
+    it("should handle empty content", () => {
+      const app = h("box", {});
 
       expect(() => render(app, renderer)).not.toThrow();
     });
 
-    it('should handle null/undefined in children', () => {
+    it("should handle null/undefined in children", () => {
       const show = signal(false);
-      const app = h('box', {}, [show.value && h('text', {}, ['Conditional'])]);
+      const app = h("box", {}, [show.value && h("text", {}, ["Conditional"])]);
 
       expect(() => render(app, renderer)).not.toThrow();
     });
 
-    it('should handle deeply nested structures', () => {
-      const app = h('box', {}, [
-        h('box', {}, [h('box', {}, [h('box', {}, [h('text', {}, ['Deep'])])])]),
+    it("should handle deeply nested structures", () => {
+      const app = h("box", {}, [
+        h("box", {}, [h("box", {}, [h("box", {}, [h("text", {}, ["Deep"])])])]),
       ]);
 
       expect(() => render(app, renderer)).not.toThrow();

@@ -25,7 +25,7 @@ bun examples/terminal-counter/simple.ts
 ### 1. Create a Signal
 
 ```typescript
-import { signal } from 'semajsx/signal';
+import { signal } from "semajsx/signal";
 
 const count = signal(0);
 
@@ -38,21 +38,21 @@ setInterval(() => {
 ### 2. Build the UI
 
 ```typescript
-import { h } from 'semajsx';
-import { TerminalRenderer, render } from 'semajsx/terminal';
+import { h } from "semajsx";
+import { TerminalRenderer, render } from "semajsx/terminal";
 
 const app = h(
-  'box',
+  "box",
   {
-    flexDirection: 'column',
+    flexDirection: "column",
     padding: 2,
-    border: 'round',
-    borderColor: 'cyan',
+    border: "round",
+    borderColor: "cyan",
   },
   [
-    h('text', { bold: true, color: 'green' }, ['Terminal Counter']),
-    h('text', { marginTop: 1 }, ['Count: ', count]),
-  ]
+    h("text", { bold: true, color: "green" }, ["Terminal Counter"]),
+    h("text", { marginTop: 1 }, ["Count: ", count]),
+  ],
 );
 ```
 
