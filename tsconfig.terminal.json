@@ -1,0 +1,30 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "jsxImportSource": "semajsx/terminal",
+    "baseUrl": ".",
+    "paths": {
+      "semajsx": ["./src/index.ts"],
+      "semajsx/jsx-runtime": ["./src/jsx-runtime.ts"],
+      "semajsx/jsx-dev-runtime": ["./src/jsx-dev-runtime.ts"],
+      "semajsx/signal": ["./src/signal/index.ts"],
+      "semajsx/terminal": ["./src/terminal/index.ts"],
+      "semajsx/terminal/jsx-runtime": ["./src/terminal/jsx-runtime.ts"],
+      "semajsx/terminal/jsx-dev-runtime": ["./src/terminal/jsx-dev-runtime.ts"],
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "examples/terminal-counter/**/*.ts",
+    "examples/terminal-counter/**/*.tsx",
+    "examples/terminal-print/**/*.ts",
+    "examples/terminal-print/**/*.tsx",
+    "examples/shared/**/*.ts",
+    "examples/shared/**/*.tsx",
+    "examples/type-tests/**/*.ts",
+    "examples/type-tests/**/*.tsx",
+    "tests/terminal/**/*.ts",
+    "tests/terminal/**/*.tsx"
+  ]
+}

@@ -2,6 +2,7 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
+    "jsxImportSource": "semajsx/dom",
     "baseUrl": ".",
     "paths": {
       "semajsx": ["./src/index.ts"],
@@ -11,11 +12,19 @@
       "semajsx/dom": ["./src/dom/index.ts"],
       "semajsx/dom/jsx-runtime": ["./src/dom/jsx-runtime.ts"],
       "semajsx/dom/jsx-dev-runtime": ["./src/dom/jsx-dev-runtime.ts"],
-      "semajsx/terminal": ["./src/terminal/index.ts"],
-      "semajsx/terminal/jsx-runtime": ["./src/terminal/jsx-runtime.ts"],
-      "semajsx/terminal/jsx-dev-runtime": ["./src/terminal/jsx-dev-runtime.ts"],
       "@/*": ["./src/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx"]
+  "include": [
+    "examples/bun-server/**/*.ts",
+    "examples/bun-server/**/*.tsx",
+    "examples/vite-counter/**/*.ts",
+    "examples/vite-counter/**/*.tsx",
+    "examples/performance-test/**/*.ts",
+    "examples/performance-test/**/*.tsx",
+    "tests/runtime/**/*.ts",
+    "tests/runtime/**/*.tsx",
+    "tests/signal/**/*.ts",
+    "tests/signal/**/*.tsx"
+  ]
 }

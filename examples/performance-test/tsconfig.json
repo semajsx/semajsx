@@ -1,6 +1,0 @@
-{
-  "extends": "../../tsconfig.examples.base.json",
-  "compilerOptions": {
-    "jsxImportSource": "semajsx/dom"
-  }
-}
