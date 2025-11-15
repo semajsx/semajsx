@@ -66,6 +66,8 @@ export function computed(deps: any, compute: any): Signal<any> {
 
   // Subscribe to all dependencies
   // Note: unsubscribers are not currently used as we don't have a dispose mechanism
+  // Keeping for future dispose mechanism
+  // @ts-ignore - TS6133: variable is declared but never used
   const _unsubscribers = depsArray.map((dep) => dep.subscribe(recompute));
 
   return {

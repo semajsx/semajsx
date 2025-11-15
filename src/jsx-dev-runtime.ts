@@ -3,9 +3,8 @@
  */
 
 import { h } from "./runtime/vnode";
-import { Fragment } from "./runtime/types";
 
-export { Fragment };
+export { Fragment } from "./jsx-runtime";
 
 export function jsxDEV(
   type: any,

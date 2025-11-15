@@ -1,9 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "jsx": "react-jsx",
     "jsxImportSource": "semajsx",
+    "baseUrl": ".",
     "paths": {
       "semajsx": ["../../src/index.ts"],
       "semajsx/*": ["../../src/*"],
