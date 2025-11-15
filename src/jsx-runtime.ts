@@ -4,6 +4,17 @@
 
 import { h } from './runtime/vnode';
 import { Fragment } from './runtime/types';
+import type { VNode } from './runtime/types';
+
+// Global JSX namespace for TypeScript
+declare global {
+  namespace JSX {
+    type Element = VNode;
+    interface ElementChildrenAttribute { children: {} }
+    interface IntrinsicAttributes { key?: string | number }
+    interface IntrinsicElements { [elemName: string]: any }
+  }
+}
 
 export { Fragment };
 
