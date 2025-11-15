@@ -1,16 +1,16 @@
-import type { VNode, RenderedNode } from "./types";
-import { Fragment } from "./types";
+import type { VNode, RenderedNode } from "../runtime/types";
+import { Fragment } from "../runtime/types";
 import { isSignal } from "../signal";
-import { isVNode } from "./vnode";
-import { resource, stream } from "./helpers";
-import { setProperty, setSignalProperty } from "../dom/properties";
+import { isVNode } from "../runtime/vnode";
+import { resource, stream } from "../runtime/helpers";
+import { setProperty, setSignalProperty } from "./properties";
 import {
   createElement,
   createTextNode,
   appendChild,
   removeChild,
   replaceNode,
-} from "../dom/operations";
+} from "./operations";
 
 /**
  * Render a VNode tree to the DOM

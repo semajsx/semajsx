@@ -1,5 +1,6 @@
 /** @jsxImportSource semajsx/dom */
-import { render, signal, computed } from "semajsx";
+import { signal, computed } from "semajsx";
+import { render } from "semajsx/dom";
 
 // Counter component
 function Counter() {

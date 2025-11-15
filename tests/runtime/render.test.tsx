@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { computed, signal } from "@/signal";
-import { render, unmount } from "@/runtime/render";
+import { render, unmount } from "@/dom/render";
 import { h } from "@/runtime/vnode";
 import { Fragment } from "@/jsx-runtime";
 
