@@ -1,35 +1,9 @@
-import chalk, { type ChalkInstance } from "chalk";
+import chalk from "chalk";
 import stringWidth from "string-width";
 import sliceAnsi from "slice-ansi";
 import type { TerminalElement, TerminalText } from "../types";
 import { collectText } from "../operations";
-
-/**
- * Get a chalk color function by name
- */
-function getChalkColor(colorName: string): ChalkInstance {
-  const colors: Record<string, ChalkInstance> = {
-    black: chalk.black,
-    red: chalk.red,
-    green: chalk.green,
-    yellow: chalk.yellow,
-    blue: chalk.blue,
-    magenta: chalk.magenta,
-    cyan: chalk.cyan,
-    white: chalk.white,
-    gray: chalk.gray,
-    grey: chalk.grey,
-    blackBright: chalk.blackBright,
-    redBright: chalk.redBright,
-    greenBright: chalk.greenBright,
-    yellowBright: chalk.yellowBright,
-    blueBright: chalk.blueBright,
-    magentaBright: chalk.magentaBright,
-    cyanBright: chalk.cyanBright,
-    whiteBright: chalk.whiteBright,
-  };
-  return colors[colorName] || chalk;
-}
+import { getChalkColor } from "./colors";
 
 /**
  * Render a text node

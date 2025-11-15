@@ -7,3 +7,4 @@
 
 export { renderBorder, renderBackground } from "./box";
 export { renderTextNode, renderTextElement } from "./text";
+export { getChalkColor, getChalkBgColor } from "./colors";
