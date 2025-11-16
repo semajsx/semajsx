@@ -1,5 +1,6 @@
 /** @jsxImportSource semajsx */
 import { signal, type WritableSignal } from "@/signal";
+import { createFragment } from "@/runtime/vnode";
 
 /**
  * Global exiting signal for terminal rendering
@@ -58,11 +59,21 @@ export interface ExitHintProps {
  * - The exit hint is hidden from final output
  */
 export function ExitHint({ children }: ExitHintProps) {
-  // During exit, hide the children (return empty Fragment)
+  // During exit, hide the children
   if (globalExitingSignal.value) {
-    return <></>;
+    return null;
   }
 
-  // During normal rendering, show the children
-  return <>{children}</>;
+  // Children is an array of VNodes, handle different cases
+  if (!children || children.length === 0) {
+    return null;
+  }
+
+  // Single child: return directly without wrapper
+  if (children.length === 1) {
+    return children[0];
+  }
+
+  // Multiple children: must wrap in Fragment
+  return createFragment(children);
 }
