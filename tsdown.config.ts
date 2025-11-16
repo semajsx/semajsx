@@ -19,7 +19,7 @@ export default defineConfig({
   sourcemap: true,
   splitting: false,
   treeshake: false,
-  tsconfig: "tsconfig.build.json",
+  tsconfig: "tsconfig.lib.json",
   platform: "neutral",
   esbuildOptions(options) {
     options.alias = {

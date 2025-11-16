@@ -23,11 +23,7 @@
     // Build options
     "skipLibCheck": true,
     "sourceMap": true,
-    "composite": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "declaration": true,
-    "declarationMap": true,
+    "noEmit": true,
 
     // JSX options
     "jsx": "react-jsx",
@@ -40,6 +36,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/**/*.d.ts"]
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["src/**/*.ts", "src/**/*.tsx"]
 }

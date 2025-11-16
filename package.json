@@ -54,8 +54,7 @@
   "scripts": {
     "dev": "tsdown --watch",
     "build": "tsdown",
-    "typecheck": "tsc --noEmit",
-    "typecheck:examples": "tsc --noEmit -p examples/bun-server",
+    "typecheck": "tsc --noEmit -p tsconfig.lib.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "oxlint src tests",
@@ -81,7 +80,7 @@
     "framework",
     "typescript"
   ],
-  "author": "",
+  "author": "lidessen",
   "license": "MIT",
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",

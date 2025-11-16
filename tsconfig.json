@@ -2,9 +2,6 @@
   "files": [],
   "references": [
     { "path": "./tsconfig.lib.json" },
-    { "path": "./tsconfig.test.json" },
-    { "path": "./examples/vite-counter" },
-    { "path": "./examples/bun-server" },
-    { "path": "./examples/terminal-counter" }
+    { "path": "./tsconfig.node.json" }
   ]
 }

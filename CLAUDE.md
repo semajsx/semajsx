@@ -17,10 +17,13 @@ semajsx/
 ├── src/
 │   ├── signal/          # Signal reactivity system
 │   ├── runtime/         # VNode and rendering engine
-│   ├── dom/             # DOM operations
-│   ├── jsx-runtime.ts   # JSX transformation
+│   ├── dom/             # DOM rendering and operations
+│   ├── terminal/        # Terminal rendering (Ink-like API)
+│   ├── jsx-runtime.ts   # JSX transformation (production)
+│   ├── jsx-dev-runtime.ts # JSX transformation (development)
 │   └── index.ts         # Main entry point
 ├── examples/            # Example applications
+├── tests/               # Unit and integration tests
 └── package.json         # Single package.json
 ```
 
@@ -29,18 +32,30 @@ semajsx/
 1. **Signal System** (`src/signal/`)
    - `signal.ts` - Writable reactive signals
    - `computed.ts` - Derived computed values
-   - `effect.ts` - Side effect system
    - `batch.ts` - Batched updates
-   - `utils.ts` - Utility functions
+   - `utils.ts` - Utility functions (isSignal, unwrap, peek)
+   - `types.ts` - Type definitions
 
 2. **Runtime** (`src/runtime/`)
    - `vnode.ts` - VNode creation and normalization
-   - `render.ts` - Rendering engine with signal support
+   - `helpers.ts` - Runtime helpers (when, resource, stream)
    - `types.ts` - Core type definitions
 
-3. **DOM** (`src/dom/`)
+3. **DOM Rendering** (`src/dom/`)
    - `operations.ts` - Low-level DOM manipulation
    - `properties.ts` - Property setting with signal support
+   - `render.ts` - DOM rendering engine
+   - `jsx-runtime.ts` - JSX runtime for DOM
+   - `jsx-dev-runtime.ts` - JSX dev runtime for DOM
+
+4. **Terminal Rendering** (`src/terminal/`)
+   - `operations.ts` - Terminal-specific operations
+   - `properties.ts` - Terminal property handling
+   - `render.ts` - Terminal rendering engine
+   - `renderer.ts` - Layout engine with Yoga
+   - `jsx-runtime.ts` - JSX runtime for terminal
+   - `components/` - Built-in components (Box, Text)
+   - `utils/` - Terminal utilities (colors, ANSI codes)
 
 ## Development Commands
 
@@ -57,14 +72,36 @@ bun run dev
 bun run typecheck
 ```
 
+### Testing
+
+```bash
+# Run all tests
+bun run test
+
+# Run unit tests only (Node environment)
+bun run test:unit
+
+# Run with coverage
+bun run test:coverage
+
+# Run terminal tests
+bun run test:terminal
+```
+
 ### Examples
 
 ```bash
-# Run the basic example
+# Vite counter (DOM, development server)
 bun run example:dev
 
-# Build example
-bun run example:build
+# Bun server example
+bun run example:bun
+
+# Performance optimizations demo
+bun run example:perf
+
+# Terminal rendering example
+bun run example:terminal
 ```
 
 ## Key Concepts
@@ -79,9 +116,23 @@ bun run example:build
 
 1. JSX is transformed to `h()` function calls
 2. `h()` creates VNodes
-3. VNodes are rendered to actual DOM nodes
+3. VNodes are rendered to actual nodes (DOM or Terminal)
 4. Signals in VNodes are automatically subscribed
-5. When signals change, only affected DOM nodes update
+5. When signals change, only affected nodes update
+
+### Dual Rendering Targets
+
+SemaJSX supports two rendering targets:
+
+- **DOM Rendering** - Standard web browser rendering
+  - Import from `semajsx/dom` or main `semajsx` entry
+  - Full DOM API support with fine-grained reactivity
+
+- **Terminal Rendering** - CLI applications with Ink-like API
+  - Import from `semajsx/terminal`
+  - Flexbox layout with Yoga
+  - Built-in components: `<Box>`, `<Text>`
+  - ANSI color support with chalk
 
 ### Signal VNodes
 
@@ -107,9 +158,12 @@ const view = computed(() =>
 ## Key Files
 
 - `src/signal/signal.ts` - Core signal implementation with auto-tracking
-- `src/runtime/render.ts` - Main rendering logic
 - `src/runtime/vnode.ts` - VNode creation and children normalization
-- `src/dom/properties.ts` - Property setting with signal reactivity
+- `src/runtime/helpers.ts` - Runtime helper functions (when, resource, stream)
+- `src/dom/render.ts` - DOM rendering logic with signal reactivity
+- `src/dom/properties.ts` - DOM property setting with signal support
+- `src/terminal/render.ts` - Terminal rendering logic
+- `src/terminal/renderer.ts` - Terminal layout engine with Yoga
 
 ## Development Guidelines
 
@@ -120,11 +174,21 @@ const view = computed(() =>
 
 ## Testing
 
-Currently testing is done through examples. Future work includes:
+The project uses **Vitest** with two test configurations:
 
-- Unit tests for signal system
-- Integration tests for rendering
-- Browser tests with Playwright
+1. **Unit Tests** (`vitest.unit.config.ts`)
+   - Node environment for signal system and runtime tests
+   - Fast execution without browser overhead
+   - Run with: `bun run test:unit`
+
+2. **Browser Tests** (`vitest.config.ts`)
+   - Playwright/Chromium for DOM rendering tests
+   - Run with: `bun run test`
+
+Test Structure:
+- `tests/signal/` - Signal system tests (signal, computed, batch)
+- `tests/runtime/` - Runtime tests (VNode, helpers)
+- `tests/terminal/` - Terminal rendering tests
 
 ## Publishing
 
@@ -141,3 +205,9 @@ Exports:
 - `semajsx/jsx-runtime` - JSX transformation (production)
 - `semajsx/jsx-dev-runtime` - JSX transformation (development)
 - `semajsx/signal` - Signal system only
+- `semajsx/dom` - DOM rendering utilities
+- `semajsx/dom/jsx-runtime` - DOM JSX runtime (production)
+- `semajsx/dom/jsx-dev-runtime` - DOM JSX dev runtime
+- `semajsx/terminal` - Terminal rendering system
+- `semajsx/terminal/jsx-runtime` - Terminal JSX runtime (production)
+- `semajsx/terminal/jsx-dev-runtime` - Terminal JSX dev runtime

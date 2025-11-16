@@ -230,37 +230,84 @@ const peeked = peek(maybeSignal);
 ```
 semajsx/
 ├── src/
-│   ├── signal/          # Signal system
-│   │   ├── signal.ts    # Core signal implementation
-│   │   ├── computed.ts  # Computed signals
-│   │   ├── effect.ts    # Effect system
-│   │   ├── batch.ts     # Batching utilities
-│   │   └── utils.ts     # Signal utilities
+│   ├── signal/               # Signal reactivity system
+│   │   ├── signal.ts         # Core signal implementation
+│   │   ├── computed.ts       # Computed signals
+│   │   ├── batch.ts          # Batching utilities
+│   │   ├── utils.ts          # Signal utilities (isSignal, unwrap, peek)
+│   │   └── types.ts          # Type definitions
 │   │
-│   ├── runtime/         # Rendering runtime
-│   │   ├── vnode.ts     # VNode creation
-│   │   ├── render.ts    # Rendering engine
-│   │   └── types.ts     # Type definitions
+│   ├── runtime/              # Core runtime (platform-agnostic)
+│   │   ├── vnode.ts          # VNode creation and normalization
+│   │   ├── helpers.ts        # Runtime helpers (when, resource, stream)
+│   │   └── types.ts          # Type definitions
 │   │
-│   ├── dom/             # DOM operations
-│   │   ├── operations.ts # DOM manipulation
-│   │   └── properties.ts # Property handling
+│   ├── dom/                  # DOM rendering (browser)
+│   │   ├── render.ts         # DOM rendering engine
+│   │   ├── operations.ts     # DOM manipulation
+│   │   ├── properties.ts     # Property handling with signals
+│   │   ├── jsx-runtime.ts    # JSX runtime (production)
+│   │   └── jsx-dev-runtime.ts # JSX runtime (development)
 │   │
-│   ├── jsx-runtime.ts   # JSX transformation (production)
-│   ├── jsx-dev-runtime.ts # JSX transformation (dev)
-│   └── index.ts         # Main entry point
+│   ├── terminal/             # Terminal rendering (CLI apps)
+│   │   ├── render.ts         # Terminal rendering engine
+│   │   ├── renderer.ts       # Layout engine with Yoga
+│   │   ├── operations.ts     # Terminal operations
+│   │   ├── properties.ts     # Property handling
+│   │   ├── components/       # Built-in components (Box, Text)
+│   │   ├── utils/            # Terminal utilities (colors, ANSI)
+│   │   ├── jsx-runtime.ts    # Terminal JSX runtime (production)
+│   │   └── jsx-dev-runtime.ts # Terminal JSX runtime (development)
+│   │
+│   ├── jsx-runtime.ts        # Main JSX transformation (production)
+│   ├── jsx-dev-runtime.ts    # Main JSX transformation (development)
+│   └── index.ts              # Main entry point
 │
-└── examples/            # Example applications
-    └── basic/           # Basic counter example
+├── examples/                 # Example applications
+│   ├── bun-server/           # Bun server with HMR
+│   ├── vite-counter/         # Vite counter app
+│   ├── performance-test/     # Performance optimizations
+│   ├── terminal-counter/     # Terminal apps with Ink-like API
+│   ├── terminal-print/       # One-off terminal output
+│   ├── shared/               # Shared utilities
+│   └── type-tests/           # TypeScript type tests
+│
+└── tests/                    # Unit and integration tests
+    ├── signal/               # Signal system tests
+    ├── runtime/              # Runtime tests
+    └── terminal/             # Terminal rendering tests
 ```
 
 ## Examples
 
-Check out the `examples/` directory for more examples:
+Check out the `examples/` directory for comprehensive examples:
 
-- **Basic Counter** - Simple counter with signals
-- **Input Binding** - Two-way data binding
-- **Conditional Rendering** - Dynamic content rendering
+### DOM Examples
+
+- **bun-server** - Bun HTTP server with HMR and counter app
+- **vite-counter** - Vite-based counter with multiple reactive patterns
+- **performance-test** - Performance optimizations (batching, keyed lists, node pooling)
+
+### Terminal Examples
+
+- **terminal-counter** - Interactive terminal apps with Ink-like API
+- **terminal-print** - One-off styled terminal output
+
+### Running Examples
+
+```bash
+# Vite counter (DOM)
+bun run example:dev
+
+# Bun server
+bun run example:bun
+
+# Performance test
+bun run example:perf
+
+# Terminal counter
+bun run example:terminal
+```
 
 ## Development
 
@@ -311,8 +358,8 @@ bun run example:dev
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before submitting a Pull Request.
 
 ## License
 
-MIT © 2024
+MIT © 2025
