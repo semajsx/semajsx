@@ -1,5 +1,7 @@
 /** @jsxImportSource semajsx */
-import { signal, type WritableSignal } from "@/signal";
+import { signal, computed, type WritableSignal } from "@/signal";
+import { when } from "@/runtime/helpers";
+import { Fragment } from "@/runtime/types";
 import type { VNode } from "@/runtime/types";
 
 /**
@@ -37,8 +39,8 @@ export interface ExitHintProps {
  * This is useful for hiding "Press Ctrl+C to exit" messages in the final
  * terminal output, keeping only the actual content visible.
  *
- * The component automatically detects when unmount() is called and returns
- * null for its children during the final render.
+ * The component automatically detects when unmount() is called and reactively
+ * hides its children during the final render using signal-based reactivity.
  *
  * @example
  * ```tsx
@@ -59,13 +61,22 @@ export interface ExitHintProps {
  * - The counter remains visible
  * - The exit hint is hidden from final output
  */
-export function ExitHint({ children }: ExitHintProps) {
-  // During exit, hide the children
-  if (globalExitingSignal.value) {
-    return null;
-  }
+export function ExitHint({ children }: ExitHintProps): VNode {
+  // Create inverted signal: show when NOT exiting
+  const shouldShow = computed(globalExitingSignal, (isExiting) => !isExiting);
 
-  // During normal rendering, return children directly (like React)
-  // Now that children prop is normalized in renderComponent, we can return it directly
-  return children;
+  // Wrap children as a single VNode
+  const content: VNode = Array.isArray(children)
+    ? { type: Fragment, props: null, children }
+    : children || { type: Fragment, props: null, children: [] };
+
+  // Use when() helper for reactive conditional rendering
+  const result = when(shouldShow, content);
+
+  // Return signal VNode - will automatically subscribe to globalExitingSignal
+  return {
+    type: "#signal",
+    props: { signal: result },
+    children: [],
+  };
 }
