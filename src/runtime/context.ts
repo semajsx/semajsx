@@ -4,56 +4,62 @@
 
 import { h } from "./vnode";
 import { Fragment } from "./types";
-import type { Context, ProviderProps, ComponentAPI } from "./types";
-
-// Context counter for unique IDs
-let contextCounter = 0;
+import type { Context, ContextProvide, ContextProps, ComponentAPI } from "./types";
 
 // Context map type - stores context values for current render environment
 export type ContextMap = Map<symbol, any>;
 
 /**
- * Create a new Context
+ * Create a new Context (returns a typed Symbol)
  *
- * @param defaultValue - The default value for the context
- * @returns Context object with Provider component
+ * @param name - Optional name for debugging (defaults to "anonymous")
+ * @returns Context symbol
  *
  * @example
  * ```typescript
- * const ThemeContext = createContext({ mode: 'light' });
+ * const ThemeContext = context<Theme>();
+ * const UserContext = context<User>('user'); // With debug name
  *
- * function App() {
- *   return (
- *     <ThemeContext.Provider value={{ mode: 'dark' }}>
- *       <Content />
- *     </ThemeContext.Provider>
- *   );
- * }
+ * <Context provide={[ThemeContext, theme]}>
+ *   <App />
+ * </Context>
  * ```
  */
-export function createContext<T>(defaultValue: T): Context<T> {
-  const id = Symbol(`context-${contextCounter++}`);
-
-  // Provider is a regular component that returns Fragment
-  const Provider = (props: ProviderProps<T>) => {
-    const children = Array.isArray(props.children)
-      ? props.children
-      : props.children
-        ? [props.children]
-        : [];
-    return h(Fragment, null, ...children);
-  };
-
-  // Mark as Provider for renderer to detect
-  (Provider as any).__isContextProvider = true;
-  (Provider as any).__contextId = id;
-
-  return {
-    id,
-    defaultValue,
-    Provider,
-  };
+export function context<T>(name?: string): Context<T> {
+  const debugName = name || "anonymous";
+  return Symbol(debugName) as Context<T>;
 }
+
+/**
+ * Context component - provides context values to child components
+ *
+ * @example
+ * ```typescript
+ * // Single context
+ * <Context provide={[ThemeContext, theme]}>
+ *   <App />
+ * </Context>
+ *
+ * // Multiple contexts
+ * <Context provide={[
+ *   [ThemeContext, theme],
+ *   [UserContext, user]
+ * ]}>
+ *   <App />
+ * </Context>
+ * ```
+ */
+export function Context(props: ContextProps) {
+  const children = Array.isArray(props.children)
+    ? props.children
+    : props.children
+      ? [props.children]
+      : [];
+  return h(Fragment, null, ...children);
+}
+
+// Mark as special context provider component
+(Context as any).__isContextProvider = true;
 
 /**
  * Create ComponentAPI instance for a component
@@ -63,10 +69,8 @@ export function createContext<T>(defaultValue: T): Context<T> {
  */
 export function createComponentAPI(contextMap: ContextMap): ComponentAPI {
   return {
-    inject<T>(context: Context<T>): T {
-      return contextMap.has(context.id)
-        ? contextMap.get(context.id)
-        : context.defaultValue;
+    inject<T>(context: Context<T>): T | undefined {
+      return contextMap.get(context);
     },
   };
 }

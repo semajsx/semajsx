@@ -20,9 +20,9 @@ export interface ComponentAPI {
   /**
    * Inject a context value
    * @param context - The context to inject
-   * @returns The current value of the context
+   * @returns The current value of the context, or undefined if not provided
    */
-  inject<T>(context: Context<T>): T;
+  inject<T>(context: Context<T>): T | undefined;
 }
 
 /**
@@ -71,18 +71,21 @@ export interface RenderedNode {
  */
 
 /**
- * Context object
+ * Context - a typed Symbol for identifying context
  */
-export interface Context<T> {
-  id: symbol;
-  defaultValue: T;
-  Provider: Component<ProviderProps<T>>;
-}
+export type Context<T> = symbol & { __type?: T };
 
 /**
- * Provider component props
+ * Context provide entry: [Context, value]
  */
-export interface ProviderProps<T> {
-  value: T;
+export type ContextProvide<T = any> = [Context<T>, T];
+
+/**
+ * Context component props - supports single or multiple context provides
+ */
+export interface ContextProps {
+  // Single context: [ThemeContext, theme]
+  // Multiple contexts: [[ThemeContext, theme], [UserContext, user]]
+  provide: ContextProvide | ContextProvide[];
   children?: JSXChildren;
 }

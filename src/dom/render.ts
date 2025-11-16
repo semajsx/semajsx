@@ -466,14 +466,29 @@ function renderComponent(vnode: VNode, parentContext: ContextMap): RenderedNode 
   // Prepare current component's context
   let currentContext = parentContext;
 
-  // Check if this is a Provider
-  const isProvider = (Component as any).__isContextProvider;
-  const contextId = (Component as any).__contextId;
+  // Check if this is a Context Provider
+  const isContextProvider = (Component as any).__isContextProvider;
 
-  if (isProvider && contextId) {
-    // Provider: create new context map with overridden value
+  if (isContextProvider) {
+    // Context Provider: create new context map with provided values
     currentContext = new Map(parentContext);
-    currentContext.set(contextId, (props as any).value);
+    const provide = (props as any).provide;
+
+    if (provide) {
+      // Check if it's a single provide [Context, value] or multiple [[Context, value], ...]
+      const isSingle = provide.length === 2 && typeof provide[0] === "symbol";
+
+      if (isSingle) {
+        // Single: [Context, value]
+        const [context, value] = provide;
+        currentContext.set(context, value);
+      } else {
+        // Multiple: [[Context, value], ...]
+        for (const [context, value] of provide) {
+          currentContext.set(context, value);
+        }
+      }
+    }
   }
 
   // Create ComponentAPI

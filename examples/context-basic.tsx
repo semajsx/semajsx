@@ -2,18 +2,19 @@
  * Context API Example: Basic Usage
  *
  * This example demonstrates the basic usage of Context API:
- * - Creating a context
- * - Providing values with Provider
+ * - Creating contexts with context<T>()
+ * - Providing values with <Context provide={...}>
  * - Consuming values with ctx.inject()
  * - Nested providers (overriding values)
+ * - Multiple contexts at once
  */
 
-import { createContext } from "../src/runtime";
+import { context, Context } from "../src/runtime";
 import type { ComponentAPI } from "../src/runtime/types";
 
-// Create contexts
-const ThemeContext = createContext("light");
-const LanguageContext = createContext("en");
+// Create contexts (just typed Symbols)
+const ThemeContext = context<string>("theme");
+const LanguageContext = context<string>("language");
 
 // App component
 function App() {
@@ -21,21 +22,22 @@ function App() {
     <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
       <h1>Context API - Basic Example</h1>
 
-      {/* Provide theme and language context */}
-      <ThemeContext.Provider value="dark">
-        <LanguageContext.Provider value="zh">
-          <Section title="Section 1" />
+      {/* Provide multiple contexts at once */}
+      <Context provide={[
+        [ThemeContext, "dark"],
+        [LanguageContext, "zh"]
+      ]}>
+        <Section title="Section 1" />
 
-          {/* Nested provider - overrides theme */}
-          <ThemeContext.Provider value="light">
-            <Section title="Section 2 (overridden theme)" />
-          </ThemeContext.Provider>
+        {/* Nested provider - overrides theme only */}
+        <Context provide={[ThemeContext, "light"]}>
+          <Section title="Section 2 (overridden theme)" />
+        </Context>
 
-          <Section title="Section 3" />
-        </LanguageContext.Provider>
-      </ThemeContext.Provider>
+        <Section title="Section 3" />
+      </Context>
 
-      {/* Outside providers - uses default values */}
+      {/* Outside providers - uses default values (via ??) */}
       <Section title="Section 4 (default context)" />
     </div>
   );
@@ -43,8 +45,9 @@ function App() {
 
 // Section component - consumes context
 function Section(props: { title: string }, ctx: ComponentAPI) {
-  const theme = ctx.inject(ThemeContext);
-  const language = ctx.inject(LanguageContext);
+  // Use ?? to provide default values
+  const theme = ctx.inject(ThemeContext) ?? "light";
+  const language = ctx.inject(LanguageContext) ?? "en";
 
   const bgColor = theme === "dark" ? "#333" : "#fff";
   const textColor = theme === "dark" ? "#fff" : "#000";
@@ -69,8 +72,8 @@ function Section(props: { title: string }, ctx: ComponentAPI) {
 
 // Details component - also consumes context
 function Details(props: any, ctx: ComponentAPI) {
-  const theme = ctx.inject(ThemeContext);
-  const language = ctx.inject(LanguageContext);
+  const theme = ctx.inject(ThemeContext) ?? "light";
+  const language = ctx.inject(LanguageContext) ?? "en";
 
   const greetings: Record<string, string> = {
     en: "Hello",

@@ -1,12 +1,12 @@
 /**
- * Context API Example: Theme System
+ * Context API Example: Reactive Theme System
  *
- * This example demonstrates how to use Context API to manage theme state
- * across components without prop drilling.
+ * This example demonstrates how to use Context API with Signals
+ * for reactive theme management across components.
  */
 
 import { signal } from "../src/signal";
-import { createContext } from "../src/runtime";
+import { context, Context } from "../src/runtime";
 import type { ComponentAPI } from "../src/runtime/types";
 
 // Define theme type
@@ -15,12 +15,10 @@ interface Theme {
   primaryColor: string;
 }
 
-// Create theme context with default value
-const ThemeContext = createContext<ReturnType<typeof signal<Theme>>>(
-  signal({ mode: "light", primaryColor: "#007bff" })
-);
+// Create theme context
+const ThemeContext = context<ReturnType<typeof signal<Theme>>>("theme");
 
-// App component - provides theme
+// App component - provides theme Signal
 function App() {
   // Create a reactive theme signal
   const themeSignal = signal<Theme>({
@@ -37,9 +35,9 @@ function App() {
   };
 
   return (
-    <ThemeContext.Provider value={themeSignal}>
+    <Context provide={[ThemeContext, themeSignal]}>
       <div style={{ padding: "20px" }}>
-        <h1>Context API - Theme Example</h1>
+        <h1>Context API - Reactive Theme Example</h1>
 
         <button onClick={toggleTheme}>Toggle Theme</button>
 
@@ -47,13 +45,18 @@ function App() {
         <Content />
         <Sidebar />
       </div>
-    </ThemeContext.Provider>
+    </Context>
   );
 }
 
-// Header component - uses theme context
+// Header component - uses theme Signal from context
 function Header(props: any, ctx: ComponentAPI) {
   const themeSignal = ctx.inject(ThemeContext);
+
+  // Handle case where context might not be provided
+  if (!themeSignal) {
+    return <header>No theme available</header>;
+  }
 
   return (
     <header
@@ -70,9 +73,13 @@ function Header(props: any, ctx: ComponentAPI) {
   );
 }
 
-// Content component - uses theme context
+// Content component - uses theme Signal from context
 function Content(props: any, ctx: ComponentAPI) {
   const themeSignal = ctx.inject(ThemeContext);
+
+  if (!themeSignal) {
+    return <main>No theme available</main>;
+  }
 
   return (
     <main
@@ -96,6 +103,10 @@ function Content(props: any, ctx: ComponentAPI) {
 function NestedComponent(props: any, ctx: ComponentAPI) {
   const themeSignal = ctx.inject(ThemeContext);
 
+  if (!themeSignal) {
+    return <div>No theme available</div>;
+  }
+
   return (
     <div
       style={{
@@ -106,6 +117,7 @@ function NestedComponent(props: any, ctx: ComponentAPI) {
     >
       <p>Nested Component (also uses context)</p>
       <p>No prop drilling needed!</p>
+      <p>Theme updates automatically via Signal!</p>
     </div>
   );
 }

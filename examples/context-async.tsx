@@ -6,8 +6,7 @@
  * even after await.
  */
 
-import { signal } from "../src/signal";
-import { createContext } from "../src/runtime";
+import { context, Context } from "../src/runtime";
 import type { ComponentAPI } from "../src/runtime/types";
 
 // User context
@@ -16,7 +15,7 @@ interface User {
   name: string;
 }
 
-const UserContext = createContext<User | null>(null);
+const UserContext = context<User>("user");
 
 // Config context
 interface Config {
@@ -24,10 +23,7 @@ interface Config {
   timeout: number;
 }
 
-const ConfigContext = createContext<Config>({
-  apiUrl: "https://api.example.com",
-  timeout: 5000,
-});
+const ConfigContext = context<Config>("config");
 
 // Simulate API fetch
 async function fetchUserData(userId: number, apiUrl: string): Promise<any> {
@@ -53,14 +49,15 @@ function App() {
   };
 
   return (
-    <UserContext.Provider value={currentUser}>
-      <ConfigContext.Provider value={config}>
-        <div style={{ padding: "20px" }}>
-          <h1>Context API - Async Component Example</h1>
-          <UserProfile />
-        </div>
-      </ConfigContext.Provider>
-    </UserContext.Provider>
+    <Context provide={[
+      [UserContext, currentUser],
+      [ConfigContext, config]
+    ]}>
+      <div style={{ padding: "20px" }}>
+        <h1>Context API - Async Component Example</h1>
+        <UserProfile />
+      </div>
+    </Context>
   );
 }
 
@@ -72,6 +69,10 @@ async function UserProfile(props: any, ctx: ComponentAPI) {
 
   if (!user) {
     return <div>No user logged in</div>;
+  }
+
+  if (!config) {
+    return <div>No config available</div>;
   }
 
   console.log(`UserProfile rendering for: ${user.name}`);
