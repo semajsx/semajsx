@@ -4,6 +4,7 @@
 
 export { h, createTextVNode, createFragment, isVNode } from "./vnode";
 export { Fragment } from "./types";
+export { createContext } from "./context";
 
 export type {
   VNode,
@@ -11,4 +12,7 @@ export type {
   RenderedNode,
   JSXChild,
   JSXChildren,
+  Context,
+  ComponentAPI,
+  ProviderProps,
 } from "./types";

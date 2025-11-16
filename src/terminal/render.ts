@@ -14,6 +14,10 @@ import {
 import { TerminalRenderer } from "./renderer";
 import type { TerminalNode } from "./types";
 import { getExitingSignal, resetExitingSignal } from "./components/ExitHint";
+import {
+  createComponentAPI,
+  type ContextMap,
+} from "../runtime/context";
 
 /**
  * Rendered node in terminal
@@ -125,6 +129,9 @@ export function render(
 
   const root = actualRenderer.getRoot();
 
+  // Initialize empty context map for root render
+  const initialContext: ContextMap = new Map();
+
   // Handle async element (Promise<VNode>)
   let rendered: RenderedTerminalNode;
   if (isPromise(element)) {
@@ -136,10 +143,10 @@ export function render(
     const resultSignal = resource(element, pending);
     const signalVNode: VNode = {
       type: "#signal",
-      props: { signal: resultSignal },
+      props: { signal: resultSignal, context: initialContext },
       children: [],
     };
-    rendered = renderNode(signalVNode);
+    rendered = renderNode(signalVNode, initialContext);
   } else if (isAsyncIterator(element)) {
     // Handle async generator (AsyncIterableIterator<VNode>)
     const pending: VNode = {
@@ -150,13 +157,13 @@ export function render(
     const resultSignal = stream(element, pending);
     const signalVNode: VNode = {
       type: "#signal",
-      props: { signal: resultSignal },
+      props: { signal: resultSignal, context: initialContext },
       children: [],
     };
-    rendered = renderNode(signalVNode);
+    rendered = renderNode(signalVNode, initialContext);
   } else {
     // Handle sync VNode
-    rendered = renderNode(element);
+    rendered = renderNode(element, initialContext);
   }
 
   if (rendered.node) {
@@ -250,7 +257,7 @@ export function render(
 /**
  * Render a single VNode to a terminal node
  */
-function renderNode(vnode: VNode): RenderedTerminalNode {
+function renderNode(vnode: VNode, parentContext: ContextMap): RenderedTerminalNode {
   const { type } = vnode;
 
   // Text node
@@ -260,22 +267,22 @@ function renderNode(vnode: VNode): RenderedTerminalNode {
 
   // Signal VNode
   if (type === "#signal") {
-    return renderSignalNode(vnode);
+    return renderSignalNode(vnode, parentContext);
   }
 
   // Fragment
   if (type === Fragment) {
-    return renderFragment(vnode);
+    return renderFragment(vnode, parentContext);
   }
 
   // Component
   if (typeof type === "function") {
-    return renderComponent(vnode);
+    return renderComponent(vnode, parentContext);
   }
 
   // Element
   if (typeof type === "string") {
-    return renderElement(vnode);
+    return renderElement(vnode, parentContext);
   }
 
   throw new Error(`Unknown VNode type: ${String(type)}`);
@@ -299,8 +306,10 @@ function renderTextNode(vnode: VNode): RenderedTerminalNode {
 /**
  * Render a signal VNode
  */
-function renderSignalNode(vnode: VNode): RenderedTerminalNode {
+function renderSignalNode(vnode: VNode, parentContext: ContextMap): RenderedTerminalNode {
   const signal = vnode.props?.signal;
+  // Use captured context if available (for async components), otherwise parent context
+  const contextForSignal = vnode.props?.context || parentContext;
 
   if (!isSignal(signal)) {
     throw new Error("Signal VNode must have a signal prop");
@@ -308,14 +317,14 @@ function renderSignalNode(vnode: VNode): RenderedTerminalNode {
 
   // Get initial value and render it
   const initialValue = signal.peek();
-  let currentRendered = renderValueToNode(initialValue);
+  let currentRendered = renderValueToNode(initialValue, contextForSignal);
   let currentNode = currentRendered.node;
 
   const subscriptions: Array<() => void> = [];
 
   // Subscribe to signal changes
   const unsubscribe = signal.subscribe((value) => {
-    const newRendered = renderValueToNode(value);
+    const newRendered = renderValueToNode(value, contextForSignal);
 
     // Replace old node with new one
     if (currentNode && newRendered.node) {
@@ -344,7 +353,7 @@ function renderSignalNode(vnode: VNode): RenderedTerminalNode {
 /**
  * Helper to convert a signal value to a rendered node
  */
-function renderValueToNode(value: unknown): RenderedTerminalNode {
+function renderValueToNode(value: unknown, context: ContextMap): RenderedTerminalNode {
   let newVNode: VNode;
 
   // Convert value to VNode
@@ -367,14 +376,14 @@ function renderValueToNode(value: unknown): RenderedTerminalNode {
     throw new Error(`Invalid signal value type: ${typeof value}`);
   }
 
-  return renderNode(newVNode);
+  return renderNode(newVNode, context);
 }
 
 /**
  * Render a fragment
  */
-function renderFragment(vnode: VNode): RenderedTerminalNode {
-  const children = vnode.children.map((child) => renderNode(child));
+function renderFragment(vnode: VNode, parentContext: ContextMap): RenderedTerminalNode {
+  const children = vnode.children.map((child) => renderNode(child, parentContext));
 
   // Fragment has no node of its own
   return {
@@ -402,7 +411,7 @@ function isAsyncIterator<T>(value: any): value is AsyncIterableIterator<T> {
 /**
  * Render a component
  */
-function renderComponent(vnode: VNode): RenderedTerminalNode {
+function renderComponent(vnode: VNode, parentContext: ContextMap): RenderedTerminalNode {
   if (typeof vnode.type !== "function") {
     throw new Error("Component vnode must have a function type");
   }
@@ -424,8 +433,24 @@ function renderComponent(vnode: VNode): RenderedTerminalNode {
 
   const props = { ...vnode.props, children: childrenProp };
 
-  // Call component function
-  const result = Component(props);
+  // Prepare current component's context
+  let currentContext = parentContext;
+
+  // Check if this is a Provider
+  const isProvider = (Component as any).__isContextProvider;
+  const contextId = (Component as any).__contextId;
+
+  if (isProvider && contextId) {
+    // Provider: create new context map with overridden value
+    currentContext = new Map(parentContext);
+    currentContext.set(contextId, (props as any).value);
+  }
+
+  // Create ComponentAPI
+  const ctx = createComponentAPI(currentContext);
+
+  // Call component function with props and ctx
+  const result = Component(props, ctx);
 
   // Handle async component (Promise<VNode>)
   if (isPromise(result)) {
@@ -437,10 +462,10 @@ function renderComponent(vnode: VNode): RenderedTerminalNode {
     const resultSignal = resource(result, pending);
     const signalVNode: VNode = {
       type: "#signal",
-      props: { signal: resultSignal },
+      props: { signal: resultSignal, context: currentContext },
       children: [],
     };
-    const rendered = renderNode(signalVNode);
+    const rendered = renderNode(signalVNode, currentContext);
     return {
       vnode,
       node: rendered.node,
@@ -459,10 +484,10 @@ function renderComponent(vnode: VNode): RenderedTerminalNode {
     const resultSignal = stream(result, pending);
     const signalVNode: VNode = {
       type: "#signal",
-      props: { signal: resultSignal },
+      props: { signal: resultSignal, context: currentContext },
       children: [],
     };
-    const rendered = renderNode(signalVNode);
+    const rendered = renderNode(signalVNode, currentContext);
     return {
       vnode,
       node: rendered.node,
@@ -475,10 +500,10 @@ function renderComponent(vnode: VNode): RenderedTerminalNode {
   if (isSignal(result)) {
     const signalVNode: VNode = {
       type: "#signal",
-      props: { signal: result },
+      props: { signal: result, context: currentContext },
       children: [],
     };
-    const rendered = renderNode(signalVNode);
+    const rendered = renderNode(signalVNode, currentContext);
     return {
       vnode,
       node: rendered.node,
@@ -488,7 +513,7 @@ function renderComponent(vnode: VNode): RenderedTerminalNode {
   }
 
   // Handle normal sync component (VNode)
-  const rendered = renderNode(result);
+  const rendered = renderNode(result, currentContext);
 
   return {
     vnode,
@@ -501,7 +526,7 @@ function renderComponent(vnode: VNode): RenderedTerminalNode {
 /**
  * Render an element
  */
-function renderElement(vnode: VNode): RenderedTerminalNode {
+function renderElement(vnode: VNode, parentContext: ContextMap): RenderedTerminalNode {
   if (typeof vnode.type !== "string") {
     throw new Error("Element vnode must have a string type");
   }
@@ -522,8 +547,8 @@ function renderElement(vnode: VNode): RenderedTerminalNode {
     }
   }
 
-  // Render children
-  const children = vnode.children.map((child) => renderNode(child));
+  // Render children with same context
+  const children = vnode.children.map((child) => renderNode(child, parentContext));
 
   for (const child of children) {
     if (child.node) {
@@ -607,6 +632,9 @@ export function print(
   const renderer = new TerminalRenderer(outputStream);
   const root = renderer.getRoot();
 
+  // Initialize empty context map for root render
+  const initialContext: ContextMap = new Map();
+
   // Render the element
   let rendered: RenderedTerminalNode;
   if (isPromise(element)) {
@@ -618,10 +646,10 @@ export function print(
     const resultSignal = resource(element, pending);
     const signalVNode: VNode = {
       type: "#signal",
-      props: { signal: resultSignal },
+      props: { signal: resultSignal, context: initialContext },
       children: [],
     };
-    rendered = renderNode(signalVNode);
+    rendered = renderNode(signalVNode, initialContext);
   } else if (isAsyncIterator(element)) {
     const pending: VNode = {
       type: "#text",
@@ -631,12 +659,12 @@ export function print(
     const resultSignal = stream(element, pending);
     const signalVNode: VNode = {
       type: "#signal",
-      props: { signal: resultSignal },
+      props: { signal: resultSignal, context: initialContext },
       children: [],
     };
-    rendered = renderNode(signalVNode);
+    rendered = renderNode(signalVNode, initialContext);
   } else {
-    rendered = renderNode(element);
+    rendered = renderNode(element, initialContext);
   }
 
   if (rendered.node) {
