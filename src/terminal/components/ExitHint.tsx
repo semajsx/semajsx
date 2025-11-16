@@ -1,6 +1,5 @@
+/** @jsxImportSource semajsx */
 import { signal, type WritableSignal } from "@/signal";
-import { h } from "@/runtime/vnode";
-import { Fragment } from "@/runtime/types";
 
 /**
  * Global exiting signal for terminal rendering
@@ -61,10 +60,9 @@ export interface ExitHintProps {
 export function ExitHint({ children }: ExitHintProps) {
   // During exit, hide the children (return empty Fragment)
   if (globalExitingSignal.value) {
-    return h(Fragment, {});
+    return <></>;
   }
 
   // During normal rendering, show the children
-  // Wrap in Fragment to ensure valid VNode
-  return h(Fragment, {}, children);
+  return <>{children}</>;
 }
