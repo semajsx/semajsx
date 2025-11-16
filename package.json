@@ -80,6 +80,7 @@
     "example:bun": "bun --conditions=development --port=0 examples/bun-server/server.tsx",
     "example:perf": "bun --conditions=development --port=0 examples/performance-test/server.tsx",
     "example:terminal": "bun --conditions=development examples/terminal-counter/simple.tsx",
+    "example:terminal-print": "bun --conditions=development examples/terminal-print/simple-print.tsx",
     "prepare": "husky"
   },
   "keywords": [
