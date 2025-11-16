@@ -1,5 +1,6 @@
 /** @jsxImportSource semajsx */
 import { signal, type WritableSignal } from "@/signal";
+import type { VNode } from "@/runtime/types";
 
 /**
  * Global exiting signal for terminal rendering
@@ -25,8 +26,9 @@ export function resetExitingSignal(): void {
 export interface ExitHintProps {
   /**
    * Content to show during normal rendering, hidden during exit
+   * After normalization: single VNode, array of VNodes, or undefined
    */
-  children?: any;
+  children?: VNode | VNode[];
 }
 
 /**
