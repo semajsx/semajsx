@@ -213,7 +213,7 @@ function tryReuseNode(
     // Remove old attributes
     for (let i = oldElement.attributes.length - 1; i >= 0; i--) {
       const attr = oldElement.attributes[i];
-      if (!newElement.hasAttribute(attr.name)) {
+      if (attr && !newElement.hasAttribute(attr.name)) {
         oldElement.removeAttribute(attr.name);
       }
     }
@@ -221,7 +221,7 @@ function tryReuseNode(
     // Set new attributes
     for (let i = 0; i < newElement.attributes.length; i++) {
       const attr = newElement.attributes[i];
-      if (oldElement.getAttribute(attr.name) !== attr.value) {
+      if (attr && oldElement.getAttribute(attr.name) !== attr.value) {
         oldElement.setAttribute(attr.name, attr.value);
       }
     }
@@ -301,6 +301,8 @@ function reconcileKeyedChildren(
   // Process new children
   for (let i = 0; i < newChildren.length; i++) {
     const newChild = newChildren[i];
+    if (!newChild) continue;
+
     const newKey = newChild.vnode.key;
     let oldChild: RenderedNode | undefined;
     let reused = false;
@@ -368,7 +370,7 @@ function reconcileKeyedChildren(
   // Remove excess keyless children
   for (let i = keylessIndex; i < oldKeylessChildren.length; i++) {
     const oldChild = oldKeylessChildren[i];
-    if (oldChild.dom) {
+    if (oldChild && oldChild.dom) {
       removeChild(oldChild.dom);
       unmount(oldChild);
     }

@@ -203,7 +203,8 @@ export class TerminalRenderer {
     // Remove trailing empty lines from buffer (only output actual content)
     let lastNonEmptyIndex = -1;
     for (let i = this.buffer.length - 1; i >= 0; i--) {
-      if (this.buffer[i].trim() !== "") {
+      const line = this.buffer[i];
+      if (line && line.trim() !== "") {
         lastNonEmptyIndex = i;
         break;
       }
