@@ -190,7 +190,9 @@ export function render(
       clearInterval(renderInterval);
       renderInterval = null;
     }
-    unmountNode(rendered);
+    // Clean up subscriptions only (preserve output on exit)
+    // This keeps the final rendered output visible in the terminal
+    cleanupSubscriptions(rendered);
     actualRenderer.destroy();
     if (exitResolver) {
       exitResolver();
