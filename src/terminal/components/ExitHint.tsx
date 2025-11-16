@@ -2,6 +2,7 @@
 import { signal, computed, type WritableSignal } from "@/signal";
 import { when } from "@/runtime/helpers";
 import { Fragment } from "@/runtime/types";
+import { createSignalVNode } from "@/runtime/vnode";
 import type { VNode } from "@/runtime/types";
 
 /**
@@ -70,13 +71,6 @@ export function ExitHint({ children }: ExitHintProps): VNode {
     ? { type: Fragment, props: null, children }
     : children || { type: Fragment, props: null, children: [] };
 
-  // Use when() helper for reactive conditional rendering
-  const result = when(shouldShow, content);
-
-  // Return signal VNode - will automatically subscribe to globalExitingSignal
-  return {
-    type: "#signal",
-    props: { signal: result },
-    children: [],
-  };
+  // Return signal VNode directly - simpler and clearer than JSX wrapper
+  return createSignalVNode(when(shouldShow, content));
 }
