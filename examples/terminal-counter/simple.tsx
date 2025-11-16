@@ -1,6 +1,6 @@
 /** @jsxImportSource ../../src */
 import { signal } from "@/signal";
-import { render } from "@/terminal";
+import { render, ExitHint } from "@/terminal";
 
 // Simple counter with JSX
 const count = signal(0);
@@ -20,9 +20,11 @@ const app = (
     <text dim marginTop={1}>
       Updates every second...
     </text>
-    <text dim marginTop={1} color="yellow">
-      Press Ctrl+C or ESC to exit
-    </text>
+    <ExitHint>
+      <text dim marginTop={1} color="yellow">
+        Press Ctrl+C or ESC to exit
+      </text>
+    </ExitHint>
   </box>
 );
 

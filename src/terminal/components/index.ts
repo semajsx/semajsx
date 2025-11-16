@@ -7,3 +7,5 @@
 
 export { renderBorder, renderBackground } from "./box";
 export { renderTextNode, renderTextElement } from "./text";
+export { ExitHint } from "./ExitHint";
+export type { ExitHintProps } from "./ExitHint";
