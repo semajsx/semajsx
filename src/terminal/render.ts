@@ -471,6 +471,22 @@ function renderComponent(vnode: VNode): RenderedTerminalNode {
     };
   }
 
+  // Handle signal component (Signal<VNode>)
+  if (isSignal(result)) {
+    const signalVNode: VNode = {
+      type: "#signal",
+      props: { signal: result },
+      children: [],
+    };
+    const rendered = renderNode(signalVNode);
+    return {
+      vnode,
+      node: rendered.node,
+      subscriptions: rendered.subscriptions,
+      children: [rendered],
+    };
+  }
+
   // Handle normal sync component (VNode)
   const rendered = renderNode(result);
 

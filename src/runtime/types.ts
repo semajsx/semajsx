@@ -16,7 +16,8 @@ export interface VNode {
 export type Component<P = any> =
   | ((props: P) => VNode)
   | ((props: P) => Promise<VNode>)
-  | ((props: P) => AsyncIterableIterator<VNode>);
+  | ((props: P) => AsyncIterableIterator<VNode>)
+  | ((props: P) => Signal<VNode>);
 
 export type JSXChild =
   | VNode

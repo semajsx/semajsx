@@ -1,8 +1,7 @@
 /** @jsxImportSource semajsx */
-import { signal, computed, type WritableSignal } from "@/signal";
+import { signal, computed, type WritableSignal, type Signal } from "@/signal";
 import { when } from "@/runtime/helpers";
 import { Fragment } from "@/runtime/types";
-import { createSignalVNode } from "@/runtime/vnode";
 import type { VNode } from "@/runtime/types";
 
 /**
@@ -62,7 +61,7 @@ export interface ExitHintProps {
  * - The counter remains visible
  * - The exit hint is hidden from final output
  */
-export function ExitHint({ children }: ExitHintProps): VNode {
+export function ExitHint({ children }: ExitHintProps): Signal<VNode | null> {
   // Create inverted signal: show when NOT exiting
   const shouldShow = computed(globalExitingSignal, (isExiting) => !isExiting);
 
@@ -71,6 +70,6 @@ export function ExitHint({ children }: ExitHintProps): VNode {
     ? { type: Fragment, props: null, children }
     : children || { type: Fragment, props: null, children: [] };
 
-  // Return signal VNode directly - simpler and clearer than JSX wrapper
-  return createSignalVNode(when(shouldShow, content));
+  // Return signal directly - renderComponent now handles Signal<VNode>
+  return when(shouldShow, content);
 }
