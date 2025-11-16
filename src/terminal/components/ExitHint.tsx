@@ -1,5 +1,5 @@
-/** @jsxImportSource semajsx */
-import { signal, type Signal } from "@/signal";
+import { signal, type WritableSignal } from "@/signal";
+import { h } from "@/runtime/vnode";
 import { Fragment } from "@/runtime/types";
 
 /**
@@ -12,7 +12,7 @@ const globalExitingSignal = signal(false);
  * Get the global exiting signal
  * Used internally by render() to coordinate with ExitHint component
  */
-export function getExitingSignal(): Signal<boolean> {
+export function getExitingSignal(): WritableSignal<boolean> {
   return globalExitingSignal;
 }
 
@@ -61,10 +61,10 @@ export interface ExitHintProps {
 export function ExitHint({ children }: ExitHintProps) {
   // During exit, hide the children (return empty Fragment)
   if (globalExitingSignal.value) {
-    return <Fragment />;
+    return h(Fragment, {});
   }
 
   // During normal rendering, show the children
   // Wrap in Fragment to ensure valid VNode
-  return <Fragment>{children}</Fragment>;
+  return h(Fragment, {}, children);
 }
