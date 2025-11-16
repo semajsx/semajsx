@@ -408,7 +408,21 @@ function renderComponent(vnode: VNode): RenderedTerminalNode {
   }
 
   const Component = vnode.type;
-  const props = { ...vnode.props, children: vnode.children };
+
+  // Normalize children prop like React does:
+  // - No children: undefined
+  // - Single child: the child itself
+  // - Multiple children: array of children
+  let childrenProp: any;
+  if (vnode.children.length === 0) {
+    childrenProp = undefined;
+  } else if (vnode.children.length === 1) {
+    childrenProp = vnode.children[0];
+  } else {
+    childrenProp = vnode.children;
+  }
+
+  const props = { ...vnode.props, children: childrenProp };
 
   // Call component function
   const result = Component(props);

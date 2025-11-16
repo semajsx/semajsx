@@ -1,6 +1,5 @@
 /** @jsxImportSource semajsx */
 import { signal, type WritableSignal } from "@/signal";
-import { createFragment } from "@/runtime/vnode";
 
 /**
  * Global exiting signal for terminal rendering
@@ -64,16 +63,7 @@ export function ExitHint({ children }: ExitHintProps) {
     return null;
   }
 
-  // Children is an array of VNodes, handle different cases
-  if (!children || children.length === 0) {
-    return null;
-  }
-
-  // Single child: return directly without wrapper
-  if (children.length === 1) {
-    return children[0];
-  }
-
-  // Multiple children: must wrap in Fragment
-  return createFragment(children);
+  // During normal rendering, return children directly (like React)
+  // Now that children prop is normalized in renderComponent, we can return it directly
+  return children;
 }
