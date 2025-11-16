@@ -13,6 +13,7 @@ import {
 } from "./operations";
 import { TerminalRenderer } from "./renderer";
 import type { TerminalNode } from "./types";
+import { getExitingSignal, resetExitingSignal } from "./components/ExitHint";
 
 /**
  * Rendered node in terminal
@@ -115,6 +116,9 @@ export function render(
     stream: outputStream = process.stdout,
   } = options;
 
+  // Reset exiting signal for new render
+  resetExitingSignal();
+
   // Auto-create renderer if not provided (ink-style API)
   const autoCreated = !renderer;
   const actualRenderer = renderer || new TerminalRenderer(outputStream);
@@ -186,11 +190,22 @@ export function render(
 
   // Unmount function
   const unmount = () => {
+    // Mark as exiting to hide ExitHint components
+    getExitingSignal().value = true;
+
+    // Trigger one final render to apply ExitHint changes
+    // This removes exit prompts from the final output
+    actualRenderer.render();
+
+    // Stop auto-rendering
     if (renderInterval) {
       clearInterval(renderInterval);
       renderInterval = null;
     }
-    unmountNode(rendered);
+
+    // Clean up subscriptions only (preserve output on exit)
+    // This keeps the final rendered output visible in the terminal
+    cleanupSubscriptions(rendered);
     actualRenderer.destroy();
     if (exitResolver) {
       exitResolver();
@@ -393,7 +408,21 @@ function renderComponent(vnode: VNode): RenderedTerminalNode {
   }
 
   const Component = vnode.type;
-  const props = { ...vnode.props, children: vnode.children };
+
+  // Normalize children prop like React does:
+  // - No children: undefined
+  // - Single child: the child itself
+  // - Multiple children: array of children
+  let childrenProp: any;
+  if (vnode.children.length === 0) {
+    childrenProp = undefined;
+  } else if (vnode.children.length === 1) {
+    childrenProp = vnode.children[0];
+  } else {
+    childrenProp = vnode.children;
+  }
+
+  const props = { ...vnode.props, children: childrenProp };
 
   // Call component function
   const result = Component(props);

@@ -16,6 +16,7 @@ export type {
 } from "./types";
 export * from "./operations";
 export * from "./properties";
+export * from "./rendering";
 export * from "./components";
 export * from "./utils";
 

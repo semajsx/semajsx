@@ -1,9 +1,9 @@
 /**
- * Terminal components for rendering different element types
+ * Terminal user components
  *
- * This module provides specialized rendering functions for different
- * terminal elements like boxes, text, etc.
+ * User-facing components for building terminal UIs.
+ * These are JSX components that users can import and use in their applications.
  */
 
-export { renderBorder, renderBackground } from "./box";
-export { renderTextNode, renderTextElement } from "./text";
+export { ExitHint } from "./ExitHint";
+export type { ExitHintProps } from "./ExitHint";

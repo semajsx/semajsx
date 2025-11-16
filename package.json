@@ -8,42 +8,52 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "development": "./src/index.ts",
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
     "./jsx-runtime": {
+      "development": "./src/jsx-runtime.ts",
       "import": "./dist/jsx-runtime.js",
       "types": "./dist/jsx-runtime.d.ts"
     },
     "./jsx-dev-runtime": {
+      "development": "./src/jsx-dev-runtime.ts",
       "import": "./dist/jsx-dev-runtime.js",
       "types": "./dist/jsx-dev-runtime.d.ts"
     },
     "./signal": {
+      "development": "./src/signal/index.ts",
       "import": "./dist/signal/index.js",
       "types": "./dist/signal/index.d.ts"
     },
     "./dom": {
+      "development": "./src/dom/index.ts",
       "import": "./dist/dom/index.js",
       "types": "./dist/dom/index.d.ts"
     },
     "./dom/jsx-runtime": {
+      "development": "./src/dom/jsx-runtime.ts",
       "import": "./dist/dom/jsx-runtime.js",
       "types": "./dist/dom/jsx-runtime.d.ts"
     },
     "./dom/jsx-dev-runtime": {
+      "development": "./src/dom/jsx-dev-runtime.ts",
       "import": "./dist/dom/jsx-dev-runtime.js",
       "types": "./dist/dom/jsx-dev-runtime.d.ts"
     },
     "./terminal": {
+      "development": "./src/terminal/index.ts",
       "import": "./dist/terminal/index.js",
       "types": "./dist/terminal/index.d.ts"
     },
     "./terminal/jsx-runtime": {
+      "development": "./src/terminal/jsx-runtime.ts",
       "import": "./dist/terminal/jsx-runtime.js",
       "types": "./dist/terminal/jsx-runtime.d.ts"
     },
     "./terminal/jsx-dev-runtime": {
+      "development": "./src/terminal/jsx-dev-runtime.ts",
       "import": "./dist/terminal/jsx-dev-runtime.js",
       "types": "./dist/terminal/jsx-dev-runtime.d.ts"
     }
@@ -67,9 +77,10 @@
     "test:terminal": "vitest run tests/terminal --config vitest.unit.config.ts",
     "example:dev": "cd examples/vite-counter && vite",
     "example:build": "cd examples/vite-counter && npm run build",
-    "example:bun": "bun --port=0 examples/bun-server/server.tsx",
-    "example:perf": "bun --port=0 examples/performance-test/server.tsx",
-    "example:terminal": "bun examples/terminal-counter/simple.tsx",
+    "example:bun": "bun --conditions=development --port=0 examples/bun-server/server.tsx",
+    "example:perf": "bun --conditions=development --port=0 examples/performance-test/server.tsx",
+    "example:terminal": "bun --conditions=development examples/terminal-counter/simple.tsx",
+    "example:terminal-print": "bun --conditions=development examples/terminal-print/simple-print.tsx",
     "prepare": "husky"
   },
   "keywords": [
