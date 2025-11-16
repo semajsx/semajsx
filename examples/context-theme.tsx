@@ -1,3 +1,5 @@
+/** @jsxImportSource ../src/dom */
+
 /**
  * Context API Example: Reactive Theme System
  *

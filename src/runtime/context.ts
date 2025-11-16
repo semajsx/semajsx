@@ -4,7 +4,7 @@
 
 import { h } from "./vnode";
 import { Fragment } from "./types";
-import type { Context, ContextProvide, ContextProps, ComponentAPI } from "./types";
+import type { Context, ContextProps, ComponentAPI } from "./types";
 
 // Context map type - stores context values for current render environment
 export type ContextMap = Map<symbol, any>;
