@@ -13,7 +13,7 @@ import {
   renderBackground,
   renderTextNode,
   renderTextElement,
-} from "./components";
+} from "./rendering";
 
 /**
  * Terminal renderer instance
