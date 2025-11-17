@@ -1,6 +1,6 @@
 import type { VNode } from "../runtime/types";
 import { resource, stream } from "../runtime/helpers";
-import { setProperty, setSignalProperty } from "./properties";
+import { setProperty, setSignalProperty, setRef } from "./properties";
 import {
   appendChild,
   createElement,
@@ -28,6 +28,7 @@ const domStrategy: RenderStrategy<Node> = {
   replaceNode,
   setProperty,
   setSignalProperty,
+  setRef,
   tryReuseNode,
 };
 

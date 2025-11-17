@@ -1,4 +1,4 @@
-import type { Signal } from "../signal";
+import type { Signal, WritableSignal } from "../signal";
 
 /**
  * Special VNode type for fragment support
@@ -6,10 +6,19 @@ import type { Signal } from "../signal";
 export const Fragment = Symbol.for("semajsx.fragment");
 
 /**
+ * Special VNode type for portal support
+ */
+export const Portal = Symbol.for("semajsx.portal");
+
+/**
  * VNode types
  * - The runtime VNode tree always resolves to these `type` values
  */
-export type VNodeType = string | Component<any> | typeof Fragment;
+export type VNodeType =
+  | string
+  | Component<any>
+  | typeof Fragment
+  | typeof Portal;
 
 /**
  * VNode: The basic unit of the runtime render tree
@@ -69,6 +78,16 @@ export interface RenderedNode {
   subscriptions: Array<() => void>;
   children: RenderedNode[];
 }
+
+/**
+ * Ref types
+ */
+
+/**
+ * Ref - can be a WritableSignal or a callback function
+ * This allows both reactive refs and imperative refs
+ */
+export type Ref<T> = WritableSignal<T | null> | ((instance: T | null) => void);
 
 /**
  * Context types

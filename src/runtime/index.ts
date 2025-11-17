@@ -3,7 +3,7 @@
  */
 
 export { createFragment, createTextVNode, h, isVNode } from "./vnode";
-export { Fragment } from "./types";
+export { Fragment, Portal } from "./types";
 export { Context, context } from "./context";
 
 export type {
@@ -13,6 +13,7 @@ export type {
   ContextProps,
   ContextProvide,
   JSXNode,
+  Ref,
   RenderedNode,
   VNode,
 } from "./types";

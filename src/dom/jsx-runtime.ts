@@ -10,6 +10,7 @@ import type {
   VNode,
   WithKey,
   WithSignals,
+  Ref,
 } from "../runtime/types";
 import type { Signal } from "../signal/types";
 
@@ -20,6 +21,9 @@ export { Fragment };
  * HTML attribute types (base definitions without Signal support)
  */
 interface BaseHTMLAttributes {
+  // Ref - special prop for element references
+  ref?: Ref<Element>;
+
   // Standard attributes
   id?: string;
   className?: string;

@@ -1,5 +1,5 @@
-import type { VNode } from "./types";
-import { Fragment } from "./types";
+import type { VNode, Ref } from "./types";
+import { Fragment, Portal } from "./types";
 import { isSignal } from "../signal";
 import { isVNode } from "./vnode";
 import { resource, stream } from "./helpers";
@@ -56,6 +56,12 @@ export interface RenderStrategy<TNode> {
   setSignalProperty(node: TNode, key: string, signal: any): () => void;
 
   /**
+   * Optional: Set a ref on a node (returns cleanup function)
+   * This is only used for DOM rendering
+   */
+  setRef?(node: TNode, ref: Ref<TNode>): () => void;
+
+  /**
    * Optional: Try to reuse an existing node instead of replacing it
    * Returns true if the node was successfully reused
    * This is used for DOM optimization but not needed for terminal
@@ -110,6 +116,11 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
     // Fragment
     if (type === Fragment) {
       return renderFragment(vnode, parentContext);
+    }
+
+    // Portal
+    if (type === Portal) {
+      return renderPortal(vnode, parentContext);
     }
 
     // Component
@@ -268,6 +279,48 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
   }
 
   /**
+   * Render a portal
+   * Portal renders its children into a different container
+   */
+  function renderPortal(
+    vnode: VNode,
+    parentContext: ContextMap,
+  ): RenderedNode<TNode> {
+    const container = vnode.props?.container;
+
+    if (!container) {
+      throw new Error("Portal must have a container prop");
+    }
+
+    // Render children with same context
+    const children = vnode.children.map((child) =>
+      renderNode(child, parentContext),
+    );
+
+    // Append children to the portal container
+    for (const child of children) {
+      if (child.node) {
+        strategy.appendChild(container, child.node);
+      } else if (child.children.length > 0) {
+        // Fragment case - append all fragment children
+        for (const fragChild of child.children) {
+          if (fragChild.node) {
+            strategy.appendChild(container, fragChild.node);
+          }
+        }
+      }
+    }
+
+    // Portal has no node in the parent tree
+    return {
+      vnode,
+      node: null,
+      subscriptions: [],
+      children,
+    };
+  }
+
+  /**
    * Render a component
    */
   function renderComponent(
@@ -408,6 +461,15 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
     const props = vnode.props || {};
     for (const [key, value] of Object.entries(props)) {
       if (key === "key" || key === "children") continue;
+
+      // Handle ref separately
+      if (key === "ref") {
+        if (strategy.setRef && value != null) {
+          const cleanup = strategy.setRef(element, value as Ref<TNode>);
+          subscriptions.push(cleanup);
+        }
+        continue;
+      }
 
       if (isSignal(value)) {
         const unsub = strategy.setSignalProperty(element, key, value);

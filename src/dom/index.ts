@@ -13,6 +13,9 @@ export {
   setText,
 } from "./operations";
 
-export { setProperty, setSignalProperty } from "./properties";
+export { setProperty, setSignalProperty, setRef } from "./properties";
 
 export { render, unmount } from "./render";
+
+export { createPortal, PortalComponent } from "./portal";
+export type { PortalProps } from "./portal";
