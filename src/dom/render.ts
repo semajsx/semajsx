@@ -11,6 +11,8 @@ import {
 import { type ContextMap } from "../runtime/context";
 import {
   createRenderer,
+  isAsyncIterator,
+  isPromise,
   type RenderedNode,
   type RenderStrategy,
 } from "../runtime/render-core";
@@ -31,20 +33,6 @@ const domStrategy: RenderStrategy<Node> = {
 
 // Create DOM renderer with optimization
 const { renderNode, unmount: unmountCore } = createRenderer(domStrategy);
-
-/**
- * Check if a value is a Promise
- */
-function isPromise<T>(value: any): value is Promise<T> {
-  return value && typeof value.then === "function";
-}
-
-/**
- * Check if a value is an AsyncIterator
- */
-function isAsyncIterator<T>(value: any): value is AsyncIterableIterator<T> {
-  return value && typeof value[Symbol.asyncIterator] === "function";
-}
 
 /**
  * Render a VNode tree to the DOM

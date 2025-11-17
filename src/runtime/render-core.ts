@@ -71,14 +71,16 @@ export interface RenderStrategy<TNode> {
 /**
  * Check if a value is a Promise
  */
-function isPromise<T>(value: any): value is Promise<T> {
+export function isPromise<T>(value: any): value is Promise<T> {
   return value && typeof value.then === "function";
 }
 
 /**
  * Check if a value is an AsyncIterator
  */
-function isAsyncIterator<T>(value: any): value is AsyncIterableIterator<T> {
+export function isAsyncIterator<T>(
+  value: any,
+): value is AsyncIterableIterator<T> {
   return value && typeof value[Symbol.asyncIterator] === "function";
 }
 
