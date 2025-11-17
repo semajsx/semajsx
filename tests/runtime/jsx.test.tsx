@@ -1,5 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { signal, computed } from "@/index";
+/** @jsxImportSource semajsx/dom */
+
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { computed, signal } from "@/index";
 import { render } from "@/dom/render";
 
 describe("JSX integration", () => {

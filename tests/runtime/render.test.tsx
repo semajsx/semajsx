@@ -1,8 +1,9 @@
+/** @jsxImportSource semajsx/dom */
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { computed, signal } from "@/signal";
 import { render, unmount } from "@/dom/render";
 import { h } from "@/runtime/vnode";
-import { Fragment } from "@/jsx-runtime";
 
 describe("render", () => {
   let container: HTMLDivElement;
@@ -116,17 +117,18 @@ describe("render", () => {
   });
 
   it("should render fragment", () => {
-    const vnode = h(
-      "div",
-      null,
-      h(Fragment, null, h("span", null, "One"), h("span", null, "Two")),
+    const vnode = (
+      <div>
+        <span>One</span>
+        <span>Two</span>
+      </div>
     );
     render(vnode, container);
 
     const spans = container.querySelectorAll("span");
     expect(spans.length).toBe(2);
-    expect(spans[0].textContent).toBe("One");
-    expect(spans[1].textContent).toBe("Two");
+    expect(spans[0]?.textContent).toBe("One");
+    expect(spans[1]?.textContent).toBe("Two");
   });
 
   it("should unmount and cleanup subscriptions", () => {

@@ -3,38 +3,18 @@
  * Use with: @jsxImportSource semajsx/dom
  */
 
-import { h } from "../runtime/vnode";
 import { Fragment } from "../runtime/types";
-import type { VNode, JSXChildren } from "../runtime/types";
+import type {
+  Component,
+  JSXNode,
+  VNode,
+  WithKey,
+  WithSignals,
+} from "../runtime/types";
 import type { Signal } from "../signal/types";
 
+export { jsx, jsxs } from "../runtime/jsx";
 export { Fragment };
-
-/**
- * Helper type to allow Signal values for any attribute
- */
-type SignalOr<T> = T | Signal<T>;
-
-/**
- * Makes all properties in T accept Signal values
- * Excludes event handlers (functions) and children
- */
-type WithSignals<T> = {
-  [K in keyof T]: K extends `on${string}`
-    ? T[K] // Event handlers don't need Signal wrapper
-    : K extends "children"
-      ? T[K] // Children handled separately
-      : T[K] extends (...args: any[]) => any
-        ? T[K] // Other functions don't need Signal wrapper
-        : SignalOr<T[K]>;
-};
-
-/**
- * Adds key property to element attributes for list reconciliation
- */
-type WithKey<T> = T & {
-  key?: string | number;
-};
 
 /**
  * HTML attribute types (base definitions without Signal support)
@@ -158,7 +138,7 @@ interface BaseHTMLAttributes {
   ondrop?: (event: DragEvent) => void;
 
   // Children
-  children?: JSXChildren;
+  children?: JSXNode;
 }
 
 /**
@@ -192,7 +172,9 @@ interface BaseAnchorHTMLAttributes extends BaseHTMLAttributes {
     | "unsafe-url";
 }
 
-export type AnchorHTMLAttributes = WithKey<WithSignals<BaseAnchorHTMLAttributes>>;
+export type AnchorHTMLAttributes = WithKey<
+  WithSignals<BaseAnchorHTMLAttributes>
+>;
 
 interface BaseButtonHTMLAttributes extends BaseHTMLAttributes {
   disabled?: boolean;
@@ -207,7 +189,9 @@ interface BaseButtonHTMLAttributes extends BaseHTMLAttributes {
   formTarget?: string;
 }
 
-export type ButtonHTMLAttributes = WithKey<WithSignals<BaseButtonHTMLAttributes>>;
+export type ButtonHTMLAttributes = WithKey<
+  WithSignals<BaseButtonHTMLAttributes>
+>;
 
 interface BaseInputHTMLAttributes extends BaseHTMLAttributes {
   accept?: string;
@@ -259,7 +243,9 @@ interface BaseTextareaHTMLAttributes extends BaseHTMLAttributes {
   wrap?: "hard" | "soft" | "off";
 }
 
-export type TextareaHTMLAttributes = WithKey<WithSignals<BaseTextareaHTMLAttributes>>;
+export type TextareaHTMLAttributes = WithKey<
+  WithSignals<BaseTextareaHTMLAttributes>
+>;
 
 interface BaseSelectHTMLAttributes extends BaseHTMLAttributes {
   autoComplete?: string;
@@ -273,7 +259,9 @@ interface BaseSelectHTMLAttributes extends BaseHTMLAttributes {
   value?: string | string[];
 }
 
-export type SelectHTMLAttributes = WithKey<WithSignals<BaseSelectHTMLAttributes>>;
+export type SelectHTMLAttributes = WithKey<
+  WithSignals<BaseSelectHTMLAttributes>
+>;
 
 interface BaseOptionHTMLAttributes extends BaseHTMLAttributes {
   disabled?: boolean;
@@ -282,7 +270,9 @@ interface BaseOptionHTMLAttributes extends BaseHTMLAttributes {
   value?: string | number;
 }
 
-export type OptionHTMLAttributes = WithKey<WithSignals<BaseOptionHTMLAttributes>>;
+export type OptionHTMLAttributes = WithKey<
+  WithSignals<BaseOptionHTMLAttributes>
+>;
 
 interface BaseLabelHTMLAttributes extends BaseHTMLAttributes {
   for?: string;
@@ -354,7 +344,9 @@ interface BaseCanvasHTMLAttributes extends BaseHTMLAttributes {
   width?: number | string;
 }
 
-export type CanvasHTMLAttributes = WithKey<WithSignals<BaseCanvasHTMLAttributes>>;
+export type CanvasHTMLAttributes = WithKey<
+  WithSignals<BaseCanvasHTMLAttributes>
+>;
 
 interface BaseIframeHTMLAttributes extends BaseHTMLAttributes {
   allow?: string;
@@ -369,7 +361,9 @@ interface BaseIframeHTMLAttributes extends BaseHTMLAttributes {
   width?: number | string;
 }
 
-export type IframeHTMLAttributes = WithKey<WithSignals<BaseIframeHTMLAttributes>>;
+export type IframeHTMLAttributes = WithKey<
+  WithSignals<BaseIframeHTMLAttributes>
+>;
 
 interface BaseTableHTMLAttributes extends BaseHTMLAttributes {
   cellPadding?: number | string;
@@ -415,7 +409,9 @@ interface BaseScriptHTMLAttributes extends BaseHTMLAttributes {
   type?: string;
 }
 
-export type ScriptHTMLAttributes = WithKey<WithSignals<BaseScriptHTMLAttributes>>;
+export type ScriptHTMLAttributes = WithKey<
+  WithSignals<BaseScriptHTMLAttributes>
+>;
 
 interface BaseLinkHTMLAttributes extends BaseHTMLAttributes {
   as?: string;
@@ -445,8 +441,10 @@ export type MetaHTMLAttributes = WithKey<WithSignals<BaseMetaHTMLAttributes>>;
  * JSX namespace for DOM elements
  */
 export namespace JSX {
-  // Support sync and async components
-  export type Element = VNode | Promise<VNode> | AsyncIterableIterator<VNode>;
+  // JSX factory returns sync VNodes
+  export type Element = VNode;
+
+  export type ElementType = keyof IntrinsicElements | Component<any>;
 
   export interface ElementChildrenAttribute {
     children: {};
@@ -567,33 +565,4 @@ export namespace JSX {
     slot: HTMLAttributes;
     template: HTMLAttributes;
   }
-}
-
-export function jsx(type: any, props: any, key?: any): any {
-  const { children, ...restProps } = props || {};
-
-  if (key !== undefined) {
-    restProps.key = key;
-  }
-
-  if (children !== undefined) {
-    return h(type, restProps, children);
-  }
-
-  return h(type, restProps);
-}
-
-export function jsxs(type: any, props: any, key?: any): any {
-  const { children, ...restProps } = props || {};
-
-  if (key !== undefined) {
-    restProps.key = key;
-  }
-
-  if (children !== undefined) {
-    const childArray = Array.isArray(children) ? children : [children];
-    return h(type, restProps, ...childArray);
-  }
-
-  return h(type, restProps);
 }

@@ -3,25 +3,12 @@
  * Use with: @jsxImportSource semajsx/terminal
  */
 
-import { h } from "../runtime/vnode";
 import { Fragment } from "../runtime/types";
-import type { VNode, JSXChildren } from "../runtime/types";
+import type { Component, JSXNode, VNode, WithSignals } from "../runtime/types";
 import type { TerminalStyle } from "./types";
-import type { Signal } from "../signal/types";
 
+export { jsx, jsxs } from "../runtime/jsx";
 export { Fragment };
-
-/**
- * Helper type to allow Signal values for any attribute
- */
-type SignalOr<T> = T | Signal<T>;
-
-/**
- * Makes all properties in T accept Signal values
- */
-type WithSignals<T> = {
-  [K in keyof T]: K extends "children" ? T[K] : SignalOr<T[K]>;
-};
 
 /**
  * Base terminal element attributes (without Signal support)
@@ -29,7 +16,7 @@ type WithSignals<T> = {
 interface BaseTerminalAttributes extends TerminalStyle {
   // Special props
   key?: string | number;
-  children?: JSXChildren;
+  children?: JSXNode;
 }
 
 /**
@@ -72,8 +59,9 @@ export type TextAttributes = TerminalAttributes;
  * JSX namespace for Terminal elements
  */
 export namespace JSX {
-  // Support sync and async components
-  export type Element = VNode | Promise<VNode> | AsyncIterableIterator<VNode>;
+  export type Element = VNode;
+
+  export type ElementType = keyof IntrinsicElements | Component<any>;
 
   export interface ElementChildrenAttribute {
     children: {};
@@ -136,33 +124,4 @@ export namespace JSX {
      */
     text: TextAttributes;
   }
-}
-
-export function jsx(type: any, props: any, key?: any): any {
-  const { children, ...restProps } = props || {};
-
-  if (key !== undefined) {
-    restProps.key = key;
-  }
-
-  if (children !== undefined) {
-    return h(type, restProps, children);
-  }
-
-  return h(type, restProps);
-}
-
-export function jsxs(type: any, props: any, key?: any): any {
-  const { children, ...restProps } = props || {};
-
-  if (key !== undefined) {
-    restProps.key = key;
-  }
-
-  if (children !== undefined) {
-    const childArray = Array.isArray(children) ? children : [children];
-    return h(type, restProps, ...childArray);
-  }
-
-  return h(type, restProps);
 }

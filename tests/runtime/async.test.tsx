@@ -1,4 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+/** @jsxImportSource semajsx/dom */
+
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { render } from "@/dom/render";
 
 describe("Async Components", () => {
@@ -85,9 +87,9 @@ describe("Async Components", () => {
 
       const items = container.querySelectorAll("li");
       expect(items.length).toBe(3);
-      expect(items[0].textContent).toBe("Item 1");
-      expect(items[1].textContent).toBe("Item 2");
-      expect(items[2].textContent).toBe("Item 3");
+      expect(items[0]?.textContent).toBe("Item 1");
+      expect(items[1]?.textContent).toBe("Item 2");
+      expect(items[2]?.textContent).toBe("Item 3");
     });
   });
 
