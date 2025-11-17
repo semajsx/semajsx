@@ -149,12 +149,24 @@ export function render(
   // Initial render
   actualRenderer.render();
 
+  // Rendering lock to prevent overlapping renders (race condition fix)
+  let isRendering = false;
+  const safeRender = () => {
+    if (isRendering) return;
+    isRendering = true;
+    try {
+      actualRenderer.render();
+    } finally {
+      isRendering = false;
+    }
+  };
+
   // Auto re-render on signal changes (like ink)
   let renderInterval: NodeJS.Timeout | null = null;
   if (autoRender) {
     const interval = Math.floor(1000 / fps);
     renderInterval = setInterval(() => {
-      actualRenderer.render();
+      safeRender();
     }, interval);
   }
 
@@ -163,6 +175,46 @@ export function render(
   const exitPromise = new Promise<void>((resolve) => {
     exitResolver = resolve;
   });
+
+  // Track original terminal state for cleanup
+  const originalRawMode = process.stdin.isTTY && process.stdin.isRaw;
+  let handleExit: (() => void) | null = null;
+  let handleKeypress: ((data: Buffer) => void) | null = null;
+
+  // Cleanup function to restore terminal state
+  const cleanup = () => {
+    // Stop auto-rendering
+    if (renderInterval) {
+      clearInterval(renderInterval);
+      renderInterval = null;
+    }
+
+    // Remove event listeners
+    if (handleExit) {
+      process.removeListener("SIGINT", handleExit);
+      process.removeListener("SIGTERM", handleExit);
+    }
+    if (handleKeypress) {
+      process.stdin.removeListener("data", handleKeypress);
+    }
+
+    // Restore original terminal state
+    if (process.stdin.isTTY && process.stdin.setRawMode) {
+      try {
+        process.stdin.setRawMode(originalRawMode || false);
+      } catch (err) {
+        // Terminal may already be closed, ignore error
+      }
+    }
+
+    // Clean up subscriptions only (preserve output on exit)
+    cleanupSubscriptions(rendered);
+    actualRenderer.destroy();
+
+    if (exitResolver) {
+      exitResolver();
+    }
+  };
 
   // Unmount function
   const unmount = () => {
@@ -173,51 +225,47 @@ export function render(
     // This removes exit prompts from the final output
     actualRenderer.render();
 
-    // Stop auto-rendering
-    if (renderInterval) {
-      clearInterval(renderInterval);
-      renderInterval = null;
-    }
-
-    // Clean up subscriptions only (preserve output on exit)
-    // This keeps the final rendered output visible in the terminal
-    cleanupSubscriptions(rendered);
-    actualRenderer.destroy();
-    if (exitResolver) {
-      exitResolver();
-    }
+    cleanup();
   };
 
   // Handle Ctrl+C if auto-created
   if (autoCreated) {
-    const handleExit = () => {
+    handleExit = () => {
       unmount();
       process.exit(0);
     };
 
-    process.on("SIGINT", handleExit);
-    process.on("SIGTERM", handleExit);
+    // Install signal handlers with error recovery
+    try {
+      process.on("SIGINT", handleExit);
+      process.on("SIGTERM", handleExit);
 
-    // Enable stdin for keyboard input
-    if (process.stdin.isTTY) {
-      process.stdin.setRawMode(true);
-      process.stdin.resume();
+      // Enable stdin for keyboard input
+      if (process.stdin.isTTY) {
+        process.stdin.setRawMode(true);
+        process.stdin.resume();
 
-      const handleKeypress = (data: Buffer) => {
-        const key = data.toString();
-        // Ctrl+C or ESC to exit
-        if (key === "\u0003" || key === "\u001b") {
-          process.stdin.removeListener("data", handleKeypress);
-          handleExit();
-        }
-      };
+        handleKeypress = (data: Buffer) => {
+          const key = data.toString();
+          // Ctrl+C or ESC to exit
+          if (key === "\u0003" || key === "\u001b") {
+            if (handleExit) {
+              handleExit();
+            }
+          }
+        };
 
-      process.stdin.on("data", handleKeypress);
+        process.stdin.on("data", handleKeypress);
+      }
+    } catch (err) {
+      // If setup fails, clean up and rethrow
+      cleanup();
+      throw err;
     }
   }
 
   return {
-    rerender: () => actualRenderer.render(),
+    rerender: safeRender,
     unmount,
     waitUntilExit: () => exitPromise,
   };
