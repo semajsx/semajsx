@@ -2,18 +2,17 @@
  * Runtime exports - shared across DOM and Terminal
  */
 
-export { h, createTextVNode, createFragment, isVNode } from "./vnode";
+export { createFragment, createTextVNode, h, isVNode } from "./vnode";
 export { Fragment } from "./types";
-export { context, Context } from "./context";
+export { Context, context } from "./context";
 
 export type {
-  VNode,
   Component,
-  RenderedNode,
-  JSXChild,
-  JSXChildren,
-  Context as ContextType,
   ComponentAPI,
-  ContextProvide,
+  Context as ContextType,
   ContextProps,
+  ContextProvide,
+  JSXNode,
+  RenderedNode,
+  VNode,
 } from "./types";

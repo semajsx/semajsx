@@ -6,8 +6,5 @@
 export * from "./signal";
 export * from "./runtime";
 
-// Re-export for convenience
-export { jsx, jsxs, Fragment } from "./jsx-runtime";
-
 // Helpers
-export { when, resource, stream } from "./runtime/helpers";
+export { resource, stream, when } from "./runtime/helpers";

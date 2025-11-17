@@ -1,4 +1,4 @@
-/** @jsxImportSource ../src/dom */
+/** @jsxImportSource semajsx/dom */
 
 /**
  * Context API Example: Async Components
@@ -8,7 +8,7 @@
  * even after await.
  */
 
-import { context, Context } from "../src/runtime";
+import { Context, context } from "../src/runtime";
 import type { ComponentAPI } from "../src/runtime/types";
 
 // User context
@@ -51,10 +51,12 @@ function App() {
   };
 
   return (
-    <Context provide={[
-      [UserContext, currentUser],
-      [ConfigContext, config]
-    ]}>
+    <Context
+      provide={[
+        [UserContext, currentUser],
+        [ConfigContext, config],
+      ]}
+    >
       <div style={{ padding: "20px" }}>
         <h1>Context API - Async Component Example</h1>
         <UserProfile />
@@ -64,7 +66,7 @@ function App() {
 }
 
 // Async component - context is safely captured
-async function UserProfile(props: any, ctx: ComponentAPI) {
+async function UserProfile(_props: any, ctx: ComponentAPI) {
   // Context is captured immediately when component is called
   const user = ctx.inject(UserContext);
   const config = ctx.inject(ConfigContext);

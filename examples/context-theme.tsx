@@ -1,4 +1,4 @@
-/** @jsxImportSource ../src/dom */
+/** @jsxImportSource semajsx/dom */
 
 /**
  * Context API Example: Reactive Theme System
@@ -8,7 +8,7 @@
  */
 
 import { signal } from "../src/signal";
-import { context, Context } from "../src/runtime";
+import { Context, context } from "../src/runtime";
 import type { ComponentAPI } from "../src/runtime/types";
 
 // Define theme type

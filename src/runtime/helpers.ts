@@ -1,7 +1,6 @@
-import type { VNode } from "./types";
+import type { JSXNode } from "./types";
 import type { Signal } from "../signal";
-import { signal, computed } from "../signal";
-import { isVNode } from "./vnode";
+import { computed, signal } from "../signal";
 
 /**
  * Conditional rendering helper
@@ -18,13 +17,11 @@ import { isVNode } from "./vnode";
  */
 export function when(
   condition: Signal<boolean>,
-  content: VNode | (() => VNode),
-): Signal<VNode | null> {
+  content: JSXNode | (() => JSXNode),
+): Signal<JSXNode | null> {
   return computed([condition], (show) => {
     if (!show) return null;
-    // Check if content is a VNode (not a function)
-    // This handles the case where VNode.type is a function (component)
-    return isVNode(content) ? content : content();
+    return typeof content === "function" ? content() : content;
   });
 }
 
@@ -50,10 +47,10 @@ export function when(
  * );
  */
 export function resource(
-  promise: Promise<VNode>,
-  pending?: VNode,
-): Signal<VNode | null> {
-  const content = signal<VNode | null>(pending || null);
+  promise: Promise<JSXNode>,
+  pending?: JSXNode,
+): Signal<JSXNode | null> {
+  const content = signal<JSXNode | null>(pending || null);
 
   promise
     .then((result) => {
@@ -82,10 +79,10 @@ export function resource(
  * const content = stream(generateContent());
  */
 export function stream(
-  iterator: AsyncIterable<VNode>,
-  pending?: VNode,
-): Signal<VNode | null> {
-  const content = signal<VNode | null>(pending || null);
+  iterator: AsyncIterable<JSXNode>,
+  pending?: JSXNode,
+): Signal<JSXNode | null> {
+  const content = signal<JSXNode | null>(pending || null);
 
   (async () => {
     try {

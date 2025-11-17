@@ -1,20 +1,21 @@
-import type { VNode, RenderedNode } from "../runtime/types";
+import type { RenderedNode, VNode } from "../runtime/types";
 import { Fragment } from "../runtime/types";
 import { isSignal } from "../signal";
 import { isVNode } from "../runtime/vnode";
 import { resource, stream } from "../runtime/helpers";
 import { setProperty, setSignalProperty } from "./properties";
 import {
+  appendChild,
   createElement,
   createTextNode,
-  appendChild,
   removeChild,
   replaceNode,
 } from "./operations";
+import { type ContextMap, createComponentAPI } from "../runtime/context";
 import {
-  createComponentAPI,
-  type ContextMap,
-} from "../runtime/context";
+  normalizeChildrenProp,
+  normalizeComponentResult,
+} from "../runtime/component";
 
 /**
  * Render a VNode tree to the DOM
@@ -129,7 +130,10 @@ function renderTextNode(vnode: VNode): RenderedNode {
 /**
  * Render a signal VNode
  */
-function renderSignalNode(vnode: VNode, parentContext: ContextMap): RenderedNode {
+function renderSignalNode(
+  vnode: VNode,
+  parentContext: ContextMap,
+): RenderedNode {
   const signal = vnode.props?.signal;
   // Use captured context if available (for async components), otherwise parent context
   const contextForSignal = vnode.props?.context || parentContext;
@@ -427,7 +431,9 @@ function renderValueToNode(value: unknown, context: ContextMap): RenderedNode {
  * Render a fragment
  */
 function renderFragment(vnode: VNode, parentContext: ContextMap): RenderedNode {
-  const children = vnode.children.map((child) => renderNode(child, parentContext));
+  const children = vnode.children.map((child) =>
+    renderNode(child, parentContext),
+  );
 
   // Fragment has no DOM node of its own
   return {
@@ -455,13 +461,19 @@ function isAsyncIterator<T>(value: any): value is AsyncIterableIterator<T> {
 /**
  * Render a component
  */
-function renderComponent(vnode: VNode, parentContext: ContextMap): RenderedNode {
+function renderComponent(
+  vnode: VNode,
+  parentContext: ContextMap,
+): RenderedNode {
   if (typeof vnode.type !== "function") {
     throw new Error("Component vnode must have a function type");
   }
 
   const Component = vnode.type;
-  const props = { ...vnode.props, children: vnode.children };
+  const props = {
+    ...vnode.props,
+    children: normalizeChildrenProp(vnode.children),
+  };
 
   // Prepare current component's context
   let currentContext = parentContext;
@@ -557,8 +569,9 @@ function renderComponent(vnode: VNode, parentContext: ContextMap): RenderedNode 
     };
   }
 
-  // Handle normal sync component (VNode)
-  const rendered = renderNode(result, currentContext);
+  // Normalize result to a VNode for rendering
+  const normalizedResult = normalizeComponentResult(result);
+  const rendered = renderNode(normalizedResult, currentContext);
 
   return {
     vnode,
@@ -593,7 +606,9 @@ function renderElement(vnode: VNode, parentContext: ContextMap): RenderedNode {
   }
 
   // Render children with same context
-  const children = vnode.children.map((child) => renderNode(child, parentContext));
+  const children = vnode.children.map((child) =>
+    renderNode(child, parentContext),
+  );
 
   for (const child of children) {
     if (child.dom) {

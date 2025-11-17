@@ -1,4 +1,4 @@
-/** @jsxImportSource ../src/dom */
+/** @jsxImportSource semajsx/dom */
 
 /**
  * Context API Example: Basic Usage
@@ -11,7 +11,7 @@
  * - Multiple contexts at once
  */
 
-import { context, Context } from "../src/runtime";
+import { Context, context } from "../src/runtime";
 import type { ComponentAPI } from "../src/runtime/types";
 
 // Create contexts (just typed Symbols)
@@ -25,10 +25,12 @@ function App() {
       <h1>Context API - Basic Example</h1>
 
       {/* Provide multiple contexts at once */}
-      <Context provide={[
-        [ThemeContext, "dark"],
-        [LanguageContext, "zh"]
-      ]}>
+      <Context
+        provide={[
+          [ThemeContext, "dark"],
+          [LanguageContext, "zh"],
+        ]}
+      >
         <Section title="Section 1" />
 
         {/* Nested provider - overrides theme only */}

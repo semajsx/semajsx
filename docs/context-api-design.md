@@ -20,17 +20,19 @@ Context provides a way to pass data through the component tree without having to
 Context is created with the `context<T>()` function, which returns a typed Symbol:
 
 ```typescript
-import { context } from 'semajsx/runtime';
+import { context } from "semajsx/runtime";
 
 // Create context (returns typed Symbol)
 const ThemeContext = context<Theme>();
-const UserContext = context<User>('user'); // with debug name
+const UserContext = context<User>("user"); // with debug name
 ```
 
 **Parameters:**
+
 - `name?: string` - Optional debug name (defaults to "anonymous")
 
 **Returns:**
+
 - `Context<T>` - A typed Symbol for identifying the context
 
 ### Providing Context
@@ -56,6 +58,7 @@ import { Context } from 'semajsx/runtime';
 ```
 
 **Props:**
+
 - `provide` - Either `[Context, value]` or array of `[[Context, value], ...]`
 - `children` - Child components
 
@@ -74,6 +77,7 @@ function MyComponent(props, ctx) {
 ```
 
 **ComponentAPI:**
+
 ```typescript
 interface ComponentAPI {
   inject<T>(context: Context<T>): T | undefined;
@@ -81,35 +85,38 @@ interface ComponentAPI {
 ```
 
 **Returns:**
+
 - The context value if provided
 - `undefined` if not provided
 
 **Users control defaults** with the nullish coalescing operator `??`:
 
 ```typescript
-const theme = ctx.inject(ThemeContext) ?? { mode: 'light' };
+const theme = ctx.inject(ThemeContext) ?? { mode: "light" };
 ```
 
 ## Complete Example
 
 ```typescript
-import { context, Context } from 'semajsx/runtime';
-import { signal } from 'semajsx/signal';
+import { context, Context } from "semajsx/runtime";
+import { signal } from "semajsx/signal";
 
 // Create contexts
-const ThemeContext = context<Theme>('theme');
-const UserContext = context<User>('user');
+const ThemeContext = context<Theme>("theme");
+const UserContext = context<User>("user");
 
 // App provides multiple contexts
 function App() {
-  const theme = signal({ mode: 'light' });
-  const user = { id: 1, name: 'Alice' };
+  const theme = signal({ mode: "light" });
+  const user = { id: 1, name: "Alice" };
 
   return (
-    <Context provide={[
-      [ThemeContext, theme],
-      [UserContext, user]
-    ]}>
+    <Context
+      provide={[
+        [ThemeContext, theme],
+        [UserContext, user],
+      ]}
+    >
       <Header />
       <Content />
     </Context>
@@ -118,11 +125,11 @@ function App() {
 
 // Component injects contexts
 function Header(props, ctx) {
-  const theme = ctx.inject(ThemeContext) ?? signal({ mode: 'light' });
+  const theme = ctx.inject(ThemeContext) ?? signal({ mode: "light" });
   const user = ctx.inject(UserContext);
 
   return (
-    <header style={{ color: theme.value.mode === 'dark' ? '#fff' : '#000' }}>
+    <header style={{ color: theme.value.mode === "dark" ? "#fff" : "#000" }}>
       Welcome, {user?.name}!
     </header>
   );
@@ -162,7 +169,7 @@ Users control defaults explicitly with `??`:
 ```typescript
 function MyComponent(props, ctx) {
   // User decides the default value
-  const theme = ctx.inject(ThemeContext) ?? { mode: 'light' };
+  const theme = ctx.inject(ThemeContext) ?? { mode: "light" };
 
   // Or check if provided
   const user = ctx.inject(UserContext);
@@ -177,15 +184,15 @@ function MyComponent(props, ctx) {
 Context values can be Signals for reactive updates:
 
 ```typescript
-const ThemeContext = context<Signal<Theme>>('theme');
+const ThemeContext = context<Signal<Theme>>("theme");
 
 function App() {
-  const themeSignal = signal({ mode: 'light' });
+  const themeSignal = signal({ mode: "light" });
 
   const toggleTheme = () => {
     themeSignal.value = {
       ...themeSignal.value,
-      mode: themeSignal.value.mode === 'light' ? 'dark' : 'light'
+      mode: themeSignal.value.mode === "light" ? "dark" : "light",
     };
   };
 
@@ -204,9 +211,11 @@ function ThemedComponent(props, ctx) {
 
   // Signal auto-updates in JSX
   return (
-    <div style={{
-      background: themeSignal.value.mode === 'dark' ? '#333' : '#fff'
-    }}>
+    <div
+      style={{
+        background: themeSignal.value.mode === "dark" ? "#333" : "#fff",
+      }}
+    >
       Theme: {themeSignal.value.mode}
     </div>
   );
@@ -218,7 +227,7 @@ function ThemedComponent(props, ctx) {
 Context is captured in function parameters, making it safe for async components:
 
 ```typescript
-const UserContext = context<User>('user');
+const UserContext = context<User>("user");
 
 async function AsyncProfile(props, ctx) {
   // Context captured immediately
@@ -227,7 +236,7 @@ async function AsyncProfile(props, ctx) {
   if (!user) return <div>No user</div>;
 
   // Safe to await - user is captured
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   const data = await fetchUserData(user.id);
 
   // user is still the same value from when component was called
@@ -240,7 +249,7 @@ async function AsyncProfile(props, ctx) {
 Nested `<Context>` components override parent values:
 
 ```typescript
-const ThemeContext = context<string>('theme');
+const ThemeContext = context<string>("theme");
 
 function App() {
   return (
@@ -278,15 +287,7 @@ export interface ComponentAPI {
 }
 
 // Component type with optional second parameter
-export type Component<P = any> =
-  | ((props: P) => VNode)
-  | ((props: P, ctx: ComponentAPI) => VNode)
-  | ((props: P) => Promise<VNode>)
-  | ((props: P, ctx: ComponentAPI) => Promise<VNode>)
-  | ((props: P) => AsyncIterableIterator<VNode>)
-  | ((props: P, ctx: ComponentAPI) => AsyncIterableIterator<VNode>)
-  | ((props: P) => Signal<VNode>)
-  | ((props: P, ctx: ComponentAPI) => Signal<VNode>);
+export type Component<P = any> = (props: P, ctx?: ComponentAPI) => JSXNode;
 ```
 
 ## Implementation
@@ -302,9 +303,11 @@ export function context<T>(name?: string): Context<T> {
 }
 
 export function Context(props: ContextProps) {
-  const children = Array.isArray(props.children)
-    ? props.children
-    : props.children ? [props.children] : [];
+  const children = props.children
+    ? Array.isArray(props.children)
+      ? props.children
+      : [props.children]
+    : [];
   return h(Fragment, null, ...children);
 }
 
@@ -455,7 +458,7 @@ interface ComponentAPI {
 Using `Map` for constant-time lookup:
 
 ```typescript
-ctx.inject(ThemeContext) // O(1) via Map.get()
+ctx.inject(ThemeContext); // O(1) via Map.get()
 ```
 
 ### No Unnecessary Re-renders
@@ -479,16 +482,16 @@ function ThemedComponent(props, ctx) {
 
 ## Comparison with React
 
-| Feature | React Context | SemaJSX Context |
-|---------|---------------|-----------------|
-| Create | `createContext(default)` | `context<T>()` |
-| Provide | `<Ctx.Provider value={v}>` | `<Context provide={[Ctx, v]}>` |
-| Multiple | Nested Providers | Single `provide` array |
-| Consume | `useContext(Ctx)` | `ctx.inject(Ctx)` |
-| Default | In `createContext` | User controls with `??` |
-| Async-safe | ❌ Hook rules | ✅ Parameters |
-| Global state | ✅ Uses | ❌ None |
-| API count | 2 (create, use) | 2 (context, inject) |
+| Feature      | React Context              | SemaJSX Context                |
+| ------------ | -------------------------- | ------------------------------ |
+| Create       | `createContext(default)`   | `context<T>()`                 |
+| Provide      | `<Ctx.Provider value={v}>` | `<Context provide={[Ctx, v]}>` |
+| Multiple     | Nested Providers           | Single `provide` array         |
+| Consume      | `useContext(Ctx)`          | `ctx.inject(Ctx)`              |
+| Default      | In `createContext`         | User controls with `??`        |
+| Async-safe   | ❌ Hook rules              | ✅ Parameters                  |
+| Global state | ✅ Uses                    | ❌ None                        |
+| API count    | 2 (create, use)            | 2 (context, inject)            |
 
 ## Migration Guide
 
@@ -528,8 +531,8 @@ function MyComponent(props, ctx) {
 
 ```typescript
 // ✅ Good
-const ThemeContext = context<Theme>('theme');
-const UserContext = context<User>('user');
+const ThemeContext = context<Theme>("theme");
+const UserContext = context<User>("user");
 
 // ⚠️ Works but harder to debug
 const ThemeContext = context<Theme>();
@@ -539,10 +542,10 @@ const ThemeContext = context<Theme>();
 
 ```typescript
 // ✅ Good - explicit default
-const theme = ctx.inject(ThemeContext) ?? { mode: 'light' };
+const theme = ctx.inject(ThemeContext) ?? { mode: "light" };
 
 // ⚠️ Less clear
-const theme = ctx.inject(ThemeContext) || { mode: 'light' };
+const theme = ctx.inject(ThemeContext) || { mode: "light" };
 ```
 
 ### 3. Check for Undefined
@@ -561,10 +564,10 @@ function MyComponent(props, ctx) {
 
 ```typescript
 // ✅ Good - reactive theme
-const ThemeContext = context<Signal<Theme>>('theme');
+const ThemeContext = context<Signal<Theme>>("theme");
 
 function App() {
-  const theme = signal({ mode: 'light' });
+  const theme = signal({ mode: "light" });
   return <Context provide={[ThemeContext, theme]}>...</Context>;
 }
 ```
@@ -573,11 +576,13 @@ function App() {
 
 ```typescript
 // ✅ Good - provide together
-<Context provide={[
-  [ThemeContext, theme],
-  [LocaleContext, locale],
-  [UserContext, user]
-]}>
+<Context
+  provide={[
+    [ThemeContext, theme],
+    [LocaleContext, locale],
+    [UserContext, user],
+  ]}
+>
   <App />
 </Context>
 ```

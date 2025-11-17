@@ -1,4 +1,4 @@
-import type { JSXChildren, VNode, VNodeType } from "./types";
+import type { JSXNode, VNode, VNodeType } from "./types";
 import type { Signal } from "../signal";
 import { Fragment } from "./types";
 import { isSignal } from "../signal";
@@ -9,7 +9,7 @@ import { isSignal } from "../signal";
 export function h(
   type: VNodeType,
   props: Record<string, any> | null,
-  ...children: JSXChildren[]
+  ...children: JSXNode[]
 ): VNode {
   return {
     type,
@@ -44,7 +44,7 @@ export function createSignalVNode(signal: Signal<unknown>): VNode {
 /**
  * Normalize children into an array of VNodes
  */
-function normalizeChildren(children: JSXChildren[]): VNode[] {
+function normalizeChildren(children: JSXNode[]): VNode[] {
   const result: VNode[] = [];
 
   for (const child of children) {
@@ -90,6 +90,6 @@ export function isVNode(value: unknown): value is VNode {
 /**
  * Create a Fragment
  */
-export function createFragment(children: JSXChildren[]): VNode {
+export function createFragment(children: JSXNode[]): VNode {
   return h(Fragment, null, ...children);
 }

@@ -1,8 +1,8 @@
-import { describe, it, expect } from "vitest";
-import { context, Context } from "../../src/runtime/context";
-import { h } from "../../src/runtime/vnode";
-import { Fragment } from "../../src/runtime/types";
-import type { ComponentAPI } from "../../src/runtime/types";
+import { describe, expect, it } from "vitest";
+import { Context, context } from "@/runtime/context";
+import { h } from "@/runtime/vnode";
+import { Fragment } from "@/runtime/types";
+import type { ComponentAPI } from "@/runtime/types";
 
 describe("Context API", () => {
   it("should create a context (Symbol)", () => {
@@ -28,7 +28,10 @@ describe("Context API", () => {
     const child1 = h("div", {}, "child1");
     const child2 = h("span", {}, "child2");
 
-    const result = Context({ provide: [TestContext, "test"], children: [child1, child2] });
+    const result = Context({
+      provide: [TestContext, "test"],
+      children: [child1, child2],
+    });
 
     expect(result.type).toBe(Fragment);
     expect(result.children).toHaveLength(2);
