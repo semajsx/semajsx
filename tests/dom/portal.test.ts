@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { signal } from "@/signal";
 import { h } from "@/runtime/vnode";
 import { render } from "@/dom/render";
@@ -74,7 +74,7 @@ describe("Portal functionality", () => {
     document.body.removeChild(target2);
   });
 
-  it("should support reactive content in portals", () => {
+  it("should support reactive content in portals", async () => {
     const count = signal(0);
     const vnode = h("div", {}, [
       h("p", {}, "Main"),
@@ -92,7 +92,7 @@ describe("Portal functionality", () => {
     expect(portalTarget.textContent).toBe("Count: 5");
   });
 
-  it("should clean up portal content on unmount", () => {
+  it("should clean up portal content on unmount", async () => {
     const vnode = createPortal(
       h("div", { className: "portal-content" }, "Portal"),
       portalTarget,

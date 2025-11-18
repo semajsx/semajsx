@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { signal } from "@/signal";
 import { h } from "@/runtime/vnode";
 import { render } from "@/dom/render";
@@ -21,7 +21,7 @@ describe("Ref functionality", () => {
     expect(divRef.value?.textContent).toBe("Hello");
   });
 
-  it("should set ref with callback", () => {
+  it("should set ref with callback", async () => {
     let capturedElement: HTMLDivElement | null = null;
     const refCallback = (el: HTMLDivElement | null) => {
       capturedElement = el;
@@ -32,10 +32,10 @@ describe("Ref functionality", () => {
     render(vnode, container);
 
     expect(capturedElement).toBeInstanceOf(HTMLDivElement);
-    expect(capturedElement?.textContent).toBe("Hello");
+    expect(capturedElement!.textContent).toBe("Hello");
   });
 
-  it("should clear ref on unmount with signal", () => {
+  it("should clear ref on unmount with signal", async () => {
     const divRef = signal<HTMLDivElement | null>(null);
     const vnode = h("div", { ref: divRef }, "Hello");
 
@@ -50,7 +50,7 @@ describe("Ref functionality", () => {
     expect(divRef.value).toBe(null);
   });
 
-  it("should call ref callback with null on unmount", () => {
+  it("should call ref callback with null on unmount", async () => {
     const calls: Array<HTMLDivElement | null> = [];
     const refCallback = (el: HTMLDivElement | null) => {
       calls.push(el);

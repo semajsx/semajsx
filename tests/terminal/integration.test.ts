@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { signal } from "@/signal";
 import { h } from "@/runtime/vnode";
-import { TerminalRenderer, render } from "@/terminal";
+import { render, TerminalRenderer } from "@/terminal";
 import { Writable } from "stream";
 
 /**
@@ -12,7 +12,7 @@ class MockStream extends Writable {
   public columns: number = 80;
   public rows: number = 24;
 
-  _write(chunk: any, encoding: string, callback: () => void): void {
+  override _write(chunk: any, _encoding: string, callback: () => void): void {
     this.output.push(chunk.toString());
     callback();
   }
