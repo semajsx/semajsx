@@ -1,4 +1,6 @@
 import type { Signal } from "../signal";
+import type { Ref } from "../runtime/types";
+import { isSignal } from "../signal";
 
 /**
  * Set a property on an element
@@ -92,4 +94,33 @@ export function setSignalProperty<T = unknown>(
   return signal.subscribe((value: T) => {
     setProperty(element, key, value);
   });
+}
+
+/**
+ * Set a ref on an element
+ * - Supports both Signal refs and callback refs
+ * - Returns a cleanup function to clear the ref
+ */
+export function setRef(
+  element: Node,
+  ref: Ref<any>,
+): () => void {
+  // Signal ref
+  if (isSignal(ref)) {
+    ref.set(element);
+    return () => {
+      ref.set(null);
+    };
+  }
+
+  // Callback ref
+  if (typeof ref === "function") {
+    ref(element);
+    return () => {
+      ref(null);
+    };
+  }
+
+  // Invalid ref type
+  return () => {};
 }
