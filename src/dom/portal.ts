@@ -1,4 +1,4 @@
-import type { VNode, JSXNode } from "../runtime/types";
+import type { JSXNode, VNode } from "../runtime/types";
 import { Portal } from "../runtime/types";
 import { h } from "../runtime/vnode";
 
@@ -27,12 +27,9 @@ export interface PortalProps {
  * };
  * ```
  */
-export function createPortal(
-  children: JSXNode,
-  container: Element,
-): VNode {
+export function createPortal(children: JSXNode, container: Element): VNode {
   // Use h() to create Portal VNode with proper normalization
-  return h(Portal as any, { container }, children);
+  return h(Portal, { container }, children);
 }
 
 /**
