@@ -1,8 +1,14 @@
 /** @jsxImportSource semajsx/dom */
 
 import { createViteRouter, type DocumentTemplate } from "semajsx/server";
-import { logger } from "semajsx/terminal/logger";
+import { logger, createLogger } from "semajsx/terminal/logger";
 import { App } from "./App";
+
+// Create a startup logger without timestamps and level indicators
+const startupLogger = createLogger({
+  timestamp: false,
+  showLevel: false,
+});
 
 /**
  * SSR Islands Server with Vite
@@ -157,30 +163,35 @@ const server = Bun.serve({
   },
 });
 
-logger.blank();
-logger.success("SemaJSX SSR Islands Server (Vite-powered!)");
-logger.blank();
-logger.info(`Server running at: http://localhost:${server.port}`);
-logger.blank();
-logger
+// Display startup info (without timestamps)
+startupLogger.blank();
+startupLogger.success("🏝️  SemaJSX SSR Islands Server (Vite-powered!)");
+startupLogger.blank();
+startupLogger.info(`Server running at: http://localhost:${server.port}`);
+startupLogger.blank();
+startupLogger
   .group("Features", { borderColor: "green" })
-  .info("Vite dev server for instant module transformation")
-  .info("No bundling - modules loaded on demand")
-  .info("Shared dependencies - semajsx loaded once")
-  .info("Fast HMR-ready setup")
-  .info("Browser caching for dependencies")
+  .info("✓ Vite dev server for instant module transformation")
+  .info("✓ No bundling - modules loaded on demand")
+  .info("✓ Shared dependencies - semajsx loaded once")
+  .info("✓ Fast HMR-ready setup")
+  .info("✓ Browser caching for dependencies")
   .groupEnd();
-logger.blank();
-logger
+startupLogger.blank();
+startupLogger
   .group("Dev Tools", { borderColor: "cyan" })
-  .info("Check Network tab to see module loading")
-  .info("Notice how semajsx is loaded separately and cached")
-  .info("Islands share the same semajsx dependency!")
+  .info("• Check Network tab to see module loading")
+  .info("• Notice how semajsx is loaded separately and cached")
+  .info("• Islands share the same semajsx dependency!")
   .groupEnd();
-logger.blank();
+startupLogger.blank();
 
-// Cleanup on exit
+// Cleanup on exit (with flag to prevent double execution)
+let isShuttingDown = false;
 process.on("SIGINT", async () => {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
   logger.blank();
   logger.warn("Shutting down...");
   await router.close();
