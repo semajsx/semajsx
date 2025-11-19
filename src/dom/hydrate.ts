@@ -133,6 +133,14 @@ function hydrateNode(
 
   // Handle DOM elements
   if (typeof vnodeTyped.type === "string") {
+    // Skip validation for text nodes - they can legitimately be text in the DOM
+    // This happens when signal values or other dynamic content renders as text
+    if (domNode.nodeType === Node.TEXT_NODE) {
+      // Text node in place of element - possible mismatch, but might be intentional
+      // Skip hydration for this node
+      return;
+    }
+
     if (domNode.nodeType !== Node.ELEMENT_NODE) {
       console.warn("[Hydrate] Expected element, got:", domNode.nodeType);
       return;
@@ -242,9 +250,32 @@ function hydrateSignalNode(
   domNode: Node,
   parentElement: Element,
 ): void {
-  // Get current signal value and hydrate it
+  // Get current signal value
   const currentValue = signal.value;
-  hydrateNode(currentValue, domNode, parentElement);
+
+  // For simple values (string, number), the server renders them as text nodes
+  // We can validate the content but don't need complex hydration
+  if (
+    typeof currentValue === "string" ||
+    typeof currentValue === "number" ||
+    currentValue == null
+  ) {
+    if (domNode.nodeType === Node.TEXT_NODE) {
+      const expectedText = String(currentValue ?? "");
+      if (domNode.textContent !== expectedText) {
+        console.warn(
+          "[Hydrate] Signal text mismatch:",
+          domNode.textContent,
+          "->",
+          expectedText,
+        );
+        domNode.textContent = expectedText;
+      }
+    }
+  } else {
+    // For complex values (VNodes, etc.), do full hydration
+    hydrateNode(currentValue, domNode, parentElement);
+  }
 
   // Set up reactivity to handle signal changes
   // When signal changes, we need to replace the DOM node
@@ -295,6 +326,21 @@ function renderNode(vnode: any, parentElement: Element): Node | null {
 
   if (typeof vnode === "object" && "type" in vnode) {
     const vnodeTyped = vnode as VNode;
+
+    // Handle special VNode types
+    if (vnodeTyped.type === "#text") {
+      return document.createTextNode(
+        String(vnodeTyped.props?.nodeValue || ""),
+      );
+    }
+
+    if (vnodeTyped.type === "#signal") {
+      const signal = vnodeTyped.props?.signal;
+      if (signal && isSignal(signal)) {
+        return renderNode(signal.value, parentElement);
+      }
+      return document.createTextNode("");
+    }
 
     if (vnodeTyped.type === Fragment) {
       const fragment = document.createDocumentFragment();
