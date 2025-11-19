@@ -1,0 +1,46 @@
+{
+  "name": "@semajsx/core",
+  "version": "0.1.0",
+  "description": "Core runtime for SemaJSX - VNode system and rendering primitives",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "vnode",
+    "runtime",
+    "jsx",
+    "rendering"
+  ],
+  "author": "lidessen",
+  "license": "MIT",
+  "dependencies": {
+    "@semajsx/signal": "workspace:*",
+    "@semajsx/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@semajsx/configs": "workspace:*",
+    "tsdown": "^0.16.4",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.8"
+  }
+}

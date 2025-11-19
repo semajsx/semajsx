@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Library Package",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    // Add DOM for library packages that may use DOM APIs
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+
+    // JSX support
+    "jsx": "react-jsx",
+
+    // Build options for library packages
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "coverage",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.d.ts"
+  ]
+}

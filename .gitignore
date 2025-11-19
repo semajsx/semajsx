@@ -48,17 +48,15 @@ web_modules/
 # TypeScript cache
 *.tsbuildinfo
 
-# TypeScript compiled output in src (from tsc -b)
-src/**/*.js
-src/**/*.d.ts
-src/**/*.js.map
-src/**/*.d.ts.map
+# Monorepo build outputs
+packages/*/dist
+apps/*/dist
 
-# TypeScript compiled output in examples
-examples/**/*.js
-examples/**/*.d.ts
-examples/**/*.js.map
-examples/**/*.d.ts.map
+# Turbo
+.turbo
+
+# TypeScript build info
+*.tsbuildinfo
 
 # Optional npm cache directory
 .npm

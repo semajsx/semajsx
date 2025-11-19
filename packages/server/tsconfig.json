@@ -1,0 +1,16 @@
+{
+  "extends": "@semajsx/configs/tsconfig.lib.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "paths": {
+      "@semajsx/core": ["../core/src/index.ts"],
+      "@semajsx/dom": ["../dom/src/index.ts"],
+      "@semajsx/logger": ["../logger/src/index.ts"],
+      "@semajsx/signal": ["../signal/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "dist", "coverage"]
+}

@@ -8,50 +8,79 @@ SemaJSX is a lightweight, signal-based reactive JSX runtime for building modern 
 
 ## Architecture
 
-### Single Package Structure
+### Monorepo Structure
 
-This project uses a **single-package architecture** (not a monorepo):
+This project uses a **monorepo architecture** powered by PNPM workspaces and PNPM workspaces:
 
 ```
 semajsx/
-├── src/
-│   ├── signal/          # Signal reactivity system
-│   ├── runtime/         # VNode and rendering engine
-│   ├── dom/             # DOM rendering and operations
-│   ├── terminal/        # Terminal rendering (Ink-like API)
-│   ├── server/          # SSR and Island architecture
-│   ├── client/          # Client-side hydration
-│   ├── shared/          # Shared types and utilities
-│   ├── jsx-runtime.ts   # JSX transformation (production)
-│   ├── jsx-dev-runtime.ts # JSX transformation (development)
-│   └── index.ts         # Main entry point
-├── examples/            # Example applications
-├── tests/               # Unit and integration tests
-└── package.json         # Single package.json
+├── packages/
+│   ├── semajsx/              # Main package (currently contains all code)
+│   │   ├── src/
+│   │   │   ├── signal/       # Signal reactivity system
+│   │   │   ├── runtime/      # VNode and rendering engine
+│   │   │   ├── dom/          # DOM rendering and operations
+│   │   │   ├── terminal/     # Terminal rendering (Ink-like API)
+│   │   │   ├── server/       # SSR and Island architecture
+│   │   │   ├── client/       # Client-side hydration
+│   │   │   ├── shared/       # Shared types and utilities
+│   │   │   ├── jsx-runtime.ts
+│   │   │   ├── jsx-dev-runtime.ts
+│   │   │   └── index.ts
+│   │   ├── tests/            # Tests
+│   │   ├── examples/         # Examples
+│   │   └── package.json
+│   │
+│   └── configs/              # Shared TypeScript configurations (internal)
+│       ├── tsconfig.base.json    # Base config
+│       ├── tsconfig.lib.json     # Library packages config
+│       ├── tsconfig.app.json     # Application config
+│       ├── tsconfig.test.json    # Test files config
+│       └── package.json
+│
+├── package.json              # Root workspace configuration
+├── pnpm-workspace.yaml       # PNPM workspace definition
+├── pnpm-workspace.yaml                # PNPM workspaces configuration
+└── MONOREPO_ARCHITECTURE.md  # Detailed architecture documentation
 ```
 
-### Core Modules
+**Future Package Structure** (to be implemented):
 
-1. **Signal System** (`src/signal/`)
+The monorepo will eventually be split into these packages:
+
+- `@semajsx/core` - Runtime core (VNode, helpers)
+- `@semajsx/signal` - Signal reactivity system
+- `@semajsx/dom` - DOM rendering
+- `@semajsx/terminal` - Terminal rendering
+- `@semajsx/server` - SSR and Island architecture
+- `@semajsx/logger` - Logging utilities
+- `@semajsx/utils` - Shared utilities
+- `semajsx` - Main umbrella package (re-exports all packages)
+
+See [MONOREPO_ARCHITECTURE.md](./MONOREPO_ARCHITECTURE.md) for detailed migration plans.
+
+### Core Modules (in packages/semajsx/src)
+
+1. **Signal System** (`signal/`)
    - `signal.ts` - Writable reactive signals
    - `computed.ts` - Derived computed values
    - `batch.ts` - Batched updates
    - `utils.ts` - Utility functions (isSignal, unwrap, peek)
    - `types.ts` - Type definitions
 
-2. **Runtime** (`src/runtime/`)
+2. **Runtime** (`runtime/`)
    - `vnode.ts` - VNode creation and normalization
    - `helpers.ts` - Runtime helpers (when, resource, stream)
    - `types.ts` - Core type definitions
 
-3. **DOM Rendering** (`src/dom/`)
+3. **DOM Rendering** (`dom/`)
    - `operations.ts` - Low-level DOM manipulation
    - `properties.ts` - Property setting with signal support
    - `render.ts` - DOM rendering engine
    - `jsx-runtime.ts` - JSX runtime for DOM
    - `jsx-dev-runtime.ts` - JSX dev runtime for DOM
 
-4. **Terminal Rendering** (`src/terminal/`)
+4. **Terminal Rendering** (`terminal/`)
    - `operations.ts` - Terminal-specific operations
    - `properties.ts` - Terminal property handling
    - `render.ts` - Terminal rendering engine
@@ -60,7 +89,7 @@ semajsx/
    - `components/` - Built-in components (Box, Text)
    - `utils/` - Terminal utilities (colors, ANSI codes)
 
-5. **SSR & Island Architecture** (`src/server/`, `src/client/`)
+5. **SSR & Island Architecture** (`server/`, `client/`)
    - `server/island.ts` - Island component annotation
    - `server/render.ts` - Server-side rendering to HTML
    - `server/collector.ts` - Runtime island discovery
@@ -70,55 +99,79 @@ semajsx/
 
 ## Development Commands
 
-### Building
+### Monorepo Commands (Root Level)
 
 ```bash
-# Build for production
-bun run build
+# Install dependencies for all packages
+pnpm install
+
+# Build all packages
+pnpm build
+
+# Run dev mode for all packages
+pnpm dev
+
+# Run tests in all packages
+pnpm test
+
+# Type check all packages
+pnpm typecheck
+
+# Lint all packages
+pnpm lint
+
+# Format all files
+pnpm format
+
+# Clean all build outputs and node_modules
+pnpm clean
+```
+
+### Package-Specific Commands
+
+Navigate to a specific package to run its commands:
+
+```bash
+# Example: Work on semajsx package
+cd packages/semajsx
+
+# Build this package only
+pnpm build
 
 # Watch mode for development
-bun run dev
+pnpm dev
 
-# Type checking (all files including examples and tests)
-bun run typecheck
+# Run tests for this package
+pnpm test
+pnpm test:unit
 
-# Type checking (library code only)
-bun run typecheck:lib
+# Type checking
+pnpm typecheck
 ```
 
-### Testing
+### Examples (in packages/semajsx)
 
 ```bash
-# Run all tests
-bun run test
+cd packages/semajsx
 
-# Run unit tests only (Node environment)
-bun run test:unit
-
-# Run with coverage
-bun run test:coverage
-
-# Run terminal tests
-bun run test:terminal
-```
-
-### Examples
-
-```bash
 # Vite counter (DOM, development server)
-bun run example:dev
+pnpm example:dev
 
 # Bun server example
-bun run example:bun
+pnpm example:bun
 
 # Performance optimizations demo
-bun run example:perf
+pnpm example:perf
 
 # SSR Islands architecture demo
-bun run example:ssr
+pnpm example:ssr
 
 # Terminal rendering example
-bun run example:terminal
+pnpm example:terminal
+
+# Logger examples
+pnpm example:logger
+pnpm example:logger:showcase
 ```
 
 ## Key Concepts
@@ -153,78 +206,7 @@ SemaJSX supports two rendering targets:
 
 ### SSR Island Architecture
 
-SemaJSX implements a modern **Island Architecture** for server-side rendering with Vite integration:
-
-- **Runtime Discovery** - Islands are discovered during SSR rendering, no build-time analysis required
-- **Manual Annotation** - Components are explicitly marked as islands using `island()` function
-- **Vite-Powered** - Uses Vite for on-demand module transformation
-- **Shared Dependencies** - All islands share the same dependencies (e.g., semajsx/dom)
-- **Selective Hydration** - Only island components are hydrated on the client
-- **Performance** - Static content loads instantly, dependencies are cached
-
-**Island Workflow:**
-
-```tsx
-// 1. Mark component as an island
-import { island } from "semajsx/server";
-
-export const Counter = island(
-  function Counter({ initial = 0 }) {
-    const count = signal(initial);
-    return <button onClick={() => count.value++}>{count}</button>;
-  },
-  import.meta.url, // Component module path
-);
-
-// 2. Use in your app (mix static and interactive)
-function App() {
-  return (
-    <div>
-      <h1>Static Content</h1>
-      <Counter initial={0} /> {/* Island - will hydrate */}
-      <p>More static content</p>
-    </div>
-  );
-}
-
-// 3. Create server with Vite router
-import { createViteRouter } from "semajsx/server";
-
-const router = await createViteRouter(
-  {
-    "/": () => <App />,
-  },
-  { dev: true },
-);
-
-// 4. Handle requests
-const result = await router.get("/"); // { html, islands, scripts }
-const entryPoint = await router.getIslandEntryPoint("island-0");
-const module = await router.handleModuleRequest("/@fs/path/to/module");
-```
-
-**Benefits:**
-
-- **Fast Initial Load** - Static HTML loads instantly
-- **Minimal JavaScript** - Only interactive components load JS, shared dependencies
-- **SEO Friendly** - Full server-side rendering
-- **Runtime Flexibility** - No build-time configuration needed
-- **Natural DX** - Simple `island()` wrapper for marking components
-- **Browser Caching** - Shared modules can be cached long-term
-
-### Signal VNodes
-
-Special handling for signals in children:
-
-```tsx
-const count = signal(0);
-const view = computed(() =>
-  count.value > 5 ? <div>High</div> : <div>Low</div>,
-);
-
-// The signal wrapper tracks changes and replaces DOM nodes
-<div>{view}</div>;
-```
+See [MONOREPO_ARCHITECTURE.md](./MONOREPO_ARCHITECTURE.md) for details on the Island Architecture.
 
 ## Code Organization
 
@@ -232,21 +214,7 @@ const view = computed(() =>
 - **Dependency injection** - DOM operations are isolated
 - **Type safety** - Full TypeScript coverage
 - **Small modules** - Each module has a single responsibility
-
-## Key Files
-
-- `src/signal/signal.ts` - Core signal implementation with auto-tracking
-- `src/runtime/vnode.ts` - VNode creation and children normalization
-- `src/runtime/helpers.ts` - Runtime helper functions (when, resource, stream)
-- `src/dom/render.ts` - DOM rendering logic with signal reactivity
-- `src/dom/properties.ts` - DOM property setting with signal support
-- `src/server/island.ts` - Island component annotation for SSR
-- `src/server/render.ts` - Server-side rendering to HTML strings
-- `src/server/vite-router.ts` - Vite-powered router with SSR
-- `src/server/vite-builder.ts` - Vite integration for module transformation
-- `src/client/hydrate.ts` - Client-side island hydration
-- `src/terminal/render.ts` - Terminal rendering logic
-- `src/terminal/renderer.ts` - Terminal layout engine with Yoga
+- **Monorepo** - Clear package boundaries and dependencies
 
 ## Development Guidelines
 
@@ -265,6 +233,10 @@ const view = computed(() =>
    - Use `unknown` instead of `any` when the type is genuinely unknown
    - If type assertion is absolutely necessary, use specific types (e.g., `as HTMLElement`)
    - Document why a type assertion is needed if it must be used
+7. **Workspace management**:
+   - Use workspace protocol (`workspace:*`) for internal dependencies
+   - Always run `pnpm install` from the root directory
+   - Use `pnpm -F <package-name>` to run commands in specific packages from root
 
 ## Code Quality
 
@@ -272,31 +244,34 @@ const view = computed(() =>
 
 The project uses strict TypeScript configuration with comprehensive type checking:
 
-- **Full Coverage**: `bun run typecheck` checks ALL TypeScript files including `src/`, `tests/`, and `examples/`
-- **Build-Only**: `bun run typecheck:lib` checks only library code in `src/` for build validation
-- **Strict Mode**: Enabled with additional checks:
-  - `noUncheckedIndexedAccess`: Array/object access safety
-  - `noImplicitOverride`: Explicit override declarations
-  - `noUnusedLocals` / `noUnusedParameters`: No unused code
-  - `noFallthroughCasesInSwitch`: Complete switch statements
+- **Shared Configs**: All packages extend from `@semajsx/configs`
+- **Full Coverage**: Type checking includes all packages
+- **Strict Mode**: Enabled with additional checks
+
+Run type checking:
+
+```bash
+# Check all packages
+pnpm typecheck
+
+# Check specific package
+cd packages/semajsx && pnpm typecheck
+```
 
 ### Linting & Formatting
 
 The project uses **oxlint** (fast Rust-based linter) and **Prettier**:
 
-- **Lint All Files**: `bun run lint` checks `src/`, `tests/`, and `examples/`
-- **Auto-Fix**: `bun run lint:fix` automatically fixes issues
-- **Format**: `bun run format` formats all files with Prettier
+- **Lint All Packages**: `pnpm lint` from root
+- **Auto-Fix**: `pnpm lint:fix`
+- **Format**: `pnpm format` formats all files with Prettier
 
-**Enforced Rules**:
-- `@typescript-eslint/no-explicit-any` (error): Prevents `any` type usage
-- `@typescript-eslint/no-unsafe-*` (warnings): Warns about unsafe type operations
-- `english-only/no-non-english-comments` (error): English-only comments required
-- Console/debugger statements (warnings): Clean production code
+Configuration files are at the root level and apply to all packages.
 
 ### Git Hooks
 
 Pre-commit hooks automatically run on staged files:
+
 - **Format**: Prettier on all staged files
 - **Lint**: oxlint with auto-fix on TypeScript files
 - **Commit Messages**: Conventional commits enforced (English only)
@@ -305,23 +280,19 @@ Pre-commit hooks automatically run on staged files:
 
 **IMPORTANT: Always let Git hooks run. Never use `--no-verify` flag.**
 
-The project has pre-commit hooks that ensure code quality. These hooks:
-- Automatically format code with Prettier
-- Run linting and auto-fix issues
-- Validate commit message format
+The project has pre-commit hooks that ensure code quality.
 
 ✅ **Good - Let hooks run:**
+
 ```bash
 git add .
 git commit -m "feat: add new feature"
-# Hooks will run automatically
 ```
 
 ❌ **Bad - Don't skip hooks:**
+
 ```bash
-# DON'T DO THIS
-git commit --no-verify -m "skip hooks"
-git commit -n -m "skip hooks"
+git commit --no-verify -m "skip hooks"  # DON'T DO THIS
 ```
 
 **Commit Message Format:**
@@ -330,190 +301,63 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
 <type>: <description>
-
-[optional body]
-
-[optional footer]
 ```
 
 **Types:**
+
 - `feat:` - New feature
 - `fix:` - Bug fix
 - `refactor:` - Code refactoring
 - `test:` - Adding or updating tests
 - `docs:` - Documentation changes
-- `chore:` - Maintenance tasks
+- `chore:` - Maintenance tasks (including monorepo setup)
 - `style:` - Code style changes (formatting)
 - `perf:` - Performance improvements
 
-**Examples:**
-```bash
-git commit -m "feat: add signal batching support"
-git commit -m "fix: resolve memory leak in effect cleanup"
-git commit -m "refactor: convert test files to use JSX syntax"
-git commit -m "test: add integration tests for portal component"
-```
-
 ## Testing
 
-The project uses **Vitest** with two test configurations:
+The project uses **Vitest** with two test configurations in `packages/semajsx`:
 
 1. **Unit Tests** (`vitest.unit.config.ts`)
    - Node environment for signal system and runtime tests
    - Fast execution without browser overhead
-   - Run with: `bun run test:unit`
+   - Run with: `pnpm test:unit`
 
 2. **Browser Tests** (`vitest.config.ts`)
    - Playwright/Chromium for DOM rendering tests
-   - Run with: `bun run test`
+   - Run with: `pnpm test`
 
-### Test Structure
-
-- `tests/signal/` - Signal system tests (signal, computed, batch)
-- `tests/runtime/` - Runtime tests (VNode, helpers, context)
-- `tests/dom/` - DOM-specific tests (ref, portal, signal-array)
-- `tests/server/` - SSR and island tests (render, island, collector)
-- `tests/terminal/` - Terminal rendering tests
-
-### Writing Tests
+### Test Guidelines
 
 **IMPORTANT: Always use JSX syntax in tests, never use `h()` function calls directly.**
 
-✅ **Good - Use JSX:**
-```tsx
-/** @jsxImportSource semajsx/dom */
+See CLAUDE.md.backup for detailed testing examples and guidelines.
 
-it("should render a component", () => {
-  const Greeting = ({ name }: { name: string }) => {
-    return <h1>Hello, {name}!</h1>;
-  };
+## Adding New Packages
 
-  const vnode = <Greeting name="World" />;
-  render(vnode, container);
+When adding a new package to the monorepo:
 
-  expect(container.textContent).toBe("Hello, World!");
-});
-```
-
-❌ **Bad - Don't use h():**
-```tsx
-// DON'T DO THIS
-import { h } from "@/runtime/vnode";
-
-it("should render a component", () => {
-  const Greeting = ({ name }: { name: string }) => {
-    return h("h1", null, `Hello, ${name}!`);
-  };
-
-  const vnode = h(Greeting, { name: "World" });  // Wrong!
-  render(vnode, container);
-});
-```
-
-### Test File Guidelines
-
-1. **File Extension**: Use `.tsx` for test files that use JSX (most test files)
-2. **JSX Import Source**: Always add the appropriate `@jsxImportSource` directive:
-   - For DOM tests: `/** @jsxImportSource semajsx/dom */`
-   - For Terminal tests: `/** @jsxImportSource semajsx/terminal */`
-
-3. **Component Usage**: Use JSX component syntax `<Component prop={value} />` instead of function calls `Component({ prop: value })`
-
-4. **Element Creation**: Use JSX tags `<div>content</div>` instead of `h("div", null, "content")`
-
-5. **Render API**: Use destructured `unmount` from render result for cleanup
-   ```tsx
-   const { unmount } = render(<App />, container);
-   unmount(); // Cleanup when needed
-   ```
-
-### Test Examples
-
-**DOM Component Test:**
-```tsx
-/** @jsxImportSource semajsx/dom */
-
-import { signal } from "@/signal";
-import { render } from "@/dom/render";
-
-it("should handle reactive components", () => {
-  const Counter = ({ initial = 0 }) => {
-    const count = signal(initial);
-    return <button onClick={() => count.value++}>{count}</button>;
-  };
-
-  const vnode = <Counter initial={5} />;
-  render(vnode, container);
-
-  expect(container.textContent).toBe("5");
-});
-```
-
-**Terminal Component Test:**
-```tsx
-/** @jsxImportSource semajsx/terminal */
-
-import { render } from "@/terminal";
-
-it("should render terminal component", () => {
-  const app = (
-    <box flexDirection="column">
-      <text color="green" bold={true}>
-        Styled Text
-      </text>
-    </box>
-  );
-
-  render(app, { renderer });
-  expect(mockStream.output.length).toBeGreaterThan(0);
-});
-```
-
-**Island Component Test:**
-```tsx
-/** @jsxImportSource semajsx/dom */
-
-import { island } from "@/server/island";
-import { renderToString } from "@/server/render";
-
-it("should render island as placeholder", () => {
-  const Counter = island(
-    ({ initial = 0 }) => <button>Count: {initial}</button>,
-    "/Counter.tsx"
-  );
-
-  const app = (
-    <div>
-      <h1>App</h1>
-      <Counter initial={5} />
-    </div>
-  );
-
-  const result = renderToString(app);
-  expect(result.islands).toHaveLength(1);
-});
-```
+1. Create package directory: `packages/<name>/`
+2. Create `package.json` with appropriate name (`@semajsx/<name>`)
+3. Create `tsconfig.json` extending `@semajsx/configs`
+4. Add package reference to root `tsconfig.json`
+5. Add to `pnpm-workspace.yaml` pipeline if needed
+6. Run `pnpm install` from root to set up workspace links
 
 ## Publishing
 
-The package is configured to publish to npm:
+Currently, only the `semajsx` package is published to npm. In the future, individual packages will be published separately.
+
+For now:
 
 ```bash
-bun run build
+cd packages/semajsx
+pnpm build
 npm publish
 ```
 
-Exports:
+## Useful Resources
 
-- `semajsx` - Main entry with all features
-- `semajsx/jsx-runtime` - JSX transformation (production)
-- `semajsx/jsx-dev-runtime` - JSX transformation (development)
-- `semajsx/signal` - Signal system only
-- `semajsx/dom` - DOM rendering utilities
-- `semajsx/dom/jsx-runtime` - DOM JSX runtime (production)
-- `semajsx/dom/jsx-dev-runtime` - DOM JSX dev runtime
-- `semajsx/server` - SSR and Island architecture (island, renderToString, createViteRouter)
-- `semajsx/client` - Client-side hydration utilities
-- `semajsx/terminal` - Terminal rendering system
-- `semajsx/terminal/jsx-runtime` - Terminal JSX runtime (production)
-- `semajsx/terminal/jsx-dev-runtime` - Terminal JSX dev runtime
+- [MONOREPO_ARCHITECTURE.md](./MONOREPO_ARCHITECTURE.md) - Detailed architecture and migration plan
+- [PNPM workspaces Documentation](https://turbo.build/repo/docs)
+- [PNPM Workspaces](https://pnpm.io/workspaces)
