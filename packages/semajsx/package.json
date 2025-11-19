@@ -1,0 +1,132 @@
+{
+  "name": "semajsx",
+  "version": "0.1.0",
+  "description": "A signal-based reactive JSX runtime for building modern web applications",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./jsx-runtime": {
+      "development": "./src/jsx-runtime.ts",
+      "import": "./dist/jsx-runtime.js",
+      "types": "./dist/jsx-runtime.d.ts"
+    },
+    "./jsx-dev-runtime": {
+      "development": "./src/jsx-dev-runtime.ts",
+      "import": "./dist/jsx-dev-runtime.js",
+      "types": "./dist/jsx-dev-runtime.d.ts"
+    },
+    "./signal": {
+      "development": "./src/signal/index.ts",
+      "import": "./dist/signal/index.js",
+      "types": "./dist/signal/index.d.ts"
+    },
+    "./dom": {
+      "development": "./src/dom/index.ts",
+      "import": "./dist/dom/index.js",
+      "types": "./dist/dom/index.d.ts"
+    },
+    "./dom/jsx-runtime": {
+      "development": "./src/dom/jsx-runtime.ts",
+      "import": "./dist/dom/jsx-runtime.js",
+      "types": "./dist/dom/jsx-runtime.d.ts"
+    },
+    "./dom/jsx-dev-runtime": {
+      "development": "./src/dom/jsx-dev-runtime.ts",
+      "import": "./dist/dom/jsx-dev-runtime.js",
+      "types": "./dist/dom/jsx-dev-runtime.d.ts"
+    },
+    "./terminal": {
+      "development": "./src/terminal/index.ts",
+      "import": "./dist/terminal/index.js",
+      "types": "./dist/terminal/index.d.ts"
+    },
+    "./terminal/jsx-runtime": {
+      "development": "./src/terminal/jsx-runtime.ts",
+      "import": "./dist/terminal/jsx-runtime.js",
+      "types": "./dist/terminal/jsx-runtime.d.ts"
+    },
+    "./terminal/jsx-dev-runtime": {
+      "development": "./src/terminal/jsx-dev-runtime.ts",
+      "import": "./dist/terminal/jsx-dev-runtime.js",
+      "types": "./dist/terminal/jsx-dev-runtime.d.ts"
+    },
+    "./terminal/logger": {
+      "development": "./src/terminal/logger/index.ts",
+      "import": "./dist/terminal/logger/index.js",
+      "types": "./dist/terminal/logger/index.d.ts"
+    },
+    "./server": {
+      "browser": "./src/server/island-noop.ts",
+      "development": "./src/server/index.ts",
+      "import": "./dist/server/index.js",
+      "types": "./dist/server/index.d.ts"
+    },
+    "./client": {
+      "development": "./src/client/index.ts",
+      "import": "./dist/client/index.js",
+      "types": "./dist/client/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:unit": "vitest --config vitest.unit.config.ts",
+    "test:unit:run": "vitest run --config vitest.unit.config.ts",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage --config vitest.unit.config.ts",
+    "test:terminal": "vitest run tests/terminal --config vitest.unit.config.ts",
+    "clean": "rm -rf dist",
+    "example:dev": "cd examples/vite-counter && vite",
+    "example:build": "cd examples/vite-counter && bun run build",
+    "example:bun": "bun --conditions=development --port=0 examples/bun-server/server.tsx",
+    "example:perf": "bun --conditions=development --port=0 examples/performance-test/server.tsx",
+    "example:ssr": "bun --conditions=development examples/ssr-islands/server.tsx",
+    "example:terminal": "bun --conditions=development examples/terminal-counter/simple.tsx",
+    "example:terminal-print": "bun --conditions=development examples/terminal-print/simple-print.tsx",
+    "example:logger": "bun --conditions=development examples/logger/basic.tsx",
+    "example:logger:showcase": "bun --conditions=development examples/logger/showcase.tsx"
+  },
+  "keywords": [
+    "jsx",
+    "signal",
+    "reactive",
+    "ui",
+    "framework",
+    "typescript"
+  ],
+  "author": "lidessen",
+  "license": "MIT",
+  "devDependencies": {
+    "@semajsx/configs": "workspace:*",
+    "@types/bun": "latest",
+    "@types/node": "^22.0.0",
+    "@vitest/browser": "^4.0.8",
+    "@vitest/browser-playwright": "^4.0.8",
+    "playwright": "^1.56.1",
+    "tsdown": "^0.16.4",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.2",
+    "vitest": "^4.0.8"
+  },
+  "dependencies": {
+    "ansi-escapes": "^7.2.0",
+    "chalk": "^5.6.2",
+    "cli-boxes": "^4.0.1",
+    "slice-ansi": "^7.1.2",
+    "string-width": "^8.1.0",
+    "wrap-ansi": "^9.0.2",
+    "yoga-layout-prebuilt": "^1.10.0"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@semajsx/configs",
+  "version": "0.1.0",
+  "description": "Shared TypeScript configurations for SemaJSX monorepo",
+  "private": true,
+  "type": "module",
+  "files": [
+    "*.json"
+  ],
+  "keywords": [
+    "typescript",
+    "config",
+    "tsconfig"
+  ],
+  "author": "lidessen",
+  "license": "MIT"
+}

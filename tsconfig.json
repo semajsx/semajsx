@@ -1,15 +1,16 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "semajsx": ["./src/index.ts"],
-      "semajsx/*": ["./src/*"],
-      "@/*": ["./src/*"]
+      "semajsx": ["./packages/semajsx/src/index.ts"],
+      "semajsx/*": ["./packages/semajsx/src/*"],
+      "@semajsx/*": ["./packages/*/src"]
     }
   },
   "files": [],
   "references": [
-    { "path": "./tsconfig.lib.json" },
-    { "path": "./tsconfig.node.json" }
+    { "path": "./packages/semajsx" },
+    { "path": "./packages/configs" }
   ]
 }
