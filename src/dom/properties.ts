@@ -17,9 +17,22 @@ export function setProperty(
 
   // Handle events
   if (key.startsWith("on") && typeof value === "function") {
-    // Set event handler as property on element
-    const elementWithEvents = element as unknown as Record<string, unknown>;
-    elementWithEvents[key.toLowerCase()] = value;
+    const eventName = key.toLowerCase().substring(2); // "onClick" -> "click"
+
+    // Use addEventListener instead of property assignment for better reliability
+    // especially in hydration scenarios
+    const element_any = element as any;
+
+    // Remove old listener if exists (stored on element)
+    const oldListener = element_any[`__${key}`];
+    if (oldListener) {
+      element.removeEventListener(eventName, oldListener);
+    }
+
+    // Add new listener and store reference for future cleanup
+    element.addEventListener(eventName, value as EventListener);
+    element_any[`__${key}`] = value;
+
     return;
   }
 
@@ -90,7 +103,7 @@ export function setSignalProperty<T = unknown>(
   // Set initial value
   setProperty(element, key, signal.peek());
 
-  // Subscribe to changes
+  // Subscribe to changes and update property
   return signal.subscribe((value: T) => {
     setProperty(element, key, value);
   });
@@ -101,10 +114,7 @@ export function setSignalProperty<T = unknown>(
  * - Supports both Signal refs and callback refs
  * - Returns a cleanup function to clear the ref
  */
-export function setRef(
-  element: Node,
-  ref: Ref<any>,
-): () => void {
+export function setRef(element: Node, ref: Ref<any>): () => void {
   // Signal ref
   if (isSignal(ref)) {
     ref.set(element);

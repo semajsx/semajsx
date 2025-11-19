@@ -26,9 +26,29 @@ export interface RenderStrategy<TNode> {
   createTextNode(text: string): TNode;
 
   /**
+   * Create a comment node (used for markers)
+   */
+  createComment(text: string): TNode;
+
+  /**
    * Create an element node
    */
   createElement(type: string): TNode;
+
+  /**
+   * Get the parent node of a node
+   */
+  getParent(node: TNode): TNode | null;
+
+  /**
+   * Get the next sibling of a node
+   */
+  getNextSibling(node: TNode): TNode | null;
+
+  /**
+   * Insert a node before another node
+   */
+  insertBefore(parent: TNode, newNode: TNode, beforeNode: TNode | null): void;
 
   /**
    * Append child to parent
@@ -94,6 +114,42 @@ export function isAsyncIterator<T>(
  * Core rendering logic - works for both DOM and Terminal
  */
 export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
+  /**
+   * Helper to recursively collect all actual DOM nodes from a rendered node
+   * Handles fragments and signal nodes that may not have their own DOM node
+   */
+  function collectNodes(rendered: RenderedNode<TNode>): TNode[] {
+    const nodes: TNode[] = [];
+
+    // Fragment: no node, only children
+    if (rendered.vnode.type === Fragment) {
+      for (const child of rendered.children) {
+        nodes.push(...collectNodes(child));
+      }
+      return nodes;
+    }
+
+    // Signal marker: include marker node + content children
+    if (rendered.vnode.type === "#signal") {
+      if (rendered.node) {
+        nodes.push(rendered.node); // marker
+      }
+      // Collect content children (after marker)
+      for (const child of rendered.children) {
+        nodes.push(...collectNodes(child));
+      }
+      return nodes;
+    }
+
+    // Regular elements and text nodes: just the node itself
+    // Children are already attached to the node
+    if (rendered.node) {
+      nodes.push(rendered.node);
+    }
+
+    return nodes;
+  }
+
   /**
    * Render a single VNode
    */
@@ -166,10 +222,14 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
       throw new Error("Signal VNode must have a signal prop");
     }
 
+    // Create a comment node as a marker to track the signal's position in the DOM
+    // This is necessary because signal content might be a Fragment (no direct node)
+    // or might be empty initially
+    const marker = strategy.createComment("signal");
+
     // Get initial value and render it
     const initialValue = signal.peek();
     let currentRendered = renderValueToNode(initialValue, contextForSignal);
-    let currentNode = currentRendered.node;
 
     const subscriptions: Array<() => void> = [];
 
@@ -177,40 +237,32 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
     const unsubscribe = signal.subscribe((value) => {
       const newRendered = renderValueToNode(value, contextForSignal);
 
-      // Try to reuse the existing node if possible (DOM optimization)
-      if (currentNode && newRendered.node && strategy.tryReuseNode) {
-        const reused = strategy.tryReuseNode(
-          currentNode,
-          newRendered.node,
-          currentRendered,
-          newRendered,
-        );
+      // Collect actual DOM nodes from old and new rendered trees
+      const oldContentNodes = collectNodes(currentRendered);
+      const newContentNodes = collectNodes(newRendered);
 
-        if (!reused) {
-          // Can't reuse, replace the node
-          strategy.replaceNode(currentNode, newRendered.node);
-          currentNode = newRendered.node;
-
-          // Cleanup old node
-          if (currentRendered) {
-            unmount(currentRendered);
-          }
-        } else {
-          // Node was reused, update the reference
-          currentNode = newRendered.node;
-        }
-      } else {
-        // No reuse optimization, just replace
-        if (currentNode && newRendered.node) {
-          strategy.replaceNode(currentNode, newRendered.node);
-          currentNode = newRendered.node;
-        }
-
-        // Cleanup old node
-        if (currentRendered) {
-          unmount(currentRendered);
-        }
+      // Get the parent from the marker
+      const parent = strategy.getParent(marker);
+      if (!parent) {
+        console.warn("[Signal] Marker not in DOM, cannot update");
+        return;
       }
+
+      // Remove all old content nodes
+      for (const node of oldContentNodes) {
+        strategy.removeChild(node);
+      }
+
+      // Insert new content nodes after the marker
+      let insertAfter = strategy.getNextSibling(marker);
+      for (const node of newContentNodes) {
+        strategy.insertBefore(parent, node, insertAfter);
+        // Update insertAfter to maintain order (insert at the position after the last inserted)
+        insertAfter = strategy.getNextSibling(node);
+      }
+
+      // Cleanup old subscriptions
+      cleanupSubscriptions(currentRendered);
 
       currentRendered = newRendered;
     });
@@ -219,7 +271,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
 
     return {
       vnode,
-      node: currentNode,
+      node: marker,
       subscriptions,
       children: currentRendered ? [currentRendered] : [],
     };
@@ -237,6 +289,15 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
     // Convert value to VNode
     if (isVNode(value)) {
       newVNode = value;
+    } else if (Array.isArray(value)) {
+      // Support arrays - wrap in Fragment automatically
+      // This allows: computed(todos, list => list.map(...))
+      // Without requiring manual Fragment wrapping
+      newVNode = {
+        type: Fragment,
+        props: {},
+        children: value.filter(isVNode), // Filter out non-VNodes
+      };
     } else if (typeof value === "string" || typeof value === "number") {
       newVNode = {
         type: "#text",
@@ -297,17 +358,11 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
       renderNode(child, parentContext),
     );
 
-    // Append children to the portal container
+    // Append all child nodes to the portal container (recursively handles fragments)
     for (const child of children) {
-      if (child.node) {
-        strategy.appendChild(container, child.node);
-      } else if (child.children.length > 0) {
-        // Fragment case - append all fragment children
-        for (const fragChild of child.children) {
-          if (fragChild.node) {
-            strategy.appendChild(container, fragChild.node);
-          }
-        }
+      const nodes = collectNodes(child);
+      for (const node of nodes) {
+        strategy.appendChild(container, node);
       }
     }
 
@@ -484,16 +539,11 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
       renderNode(child, parentContext),
     );
 
+    // Append all child nodes (recursively handles fragments and signal wrappers)
     for (const child of children) {
-      if (child.node) {
-        strategy.appendChild(element, child.node);
-      } else if (child.children.length > 0) {
-        // Fragment case - append all fragment children
-        for (const fragChild of child.children) {
-          if (fragChild.node) {
-            strategy.appendChild(element, fragChild.node);
-          }
-        }
+      const nodes = collectNodes(child);
+      for (const node of nodes) {
+        strategy.appendChild(element, node);
       }
     }
 

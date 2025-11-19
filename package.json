@@ -56,6 +56,17 @@
       "development": "./src/terminal/jsx-dev-runtime.ts",
       "import": "./dist/terminal/jsx-dev-runtime.js",
       "types": "./dist/terminal/jsx-dev-runtime.d.ts"
+    },
+    "./server": {
+      "browser": "./src/server/island-noop.ts",
+      "development": "./src/server/index.ts",
+      "import": "./dist/server/index.js",
+      "types": "./dist/server/index.d.ts"
+    },
+    "./client": {
+      "development": "./src/client/index.ts",
+      "import": "./dist/client/index.js",
+      "types": "./dist/client/index.d.ts"
     }
   },
   "files": [
@@ -79,6 +90,7 @@
     "example:build": "cd examples/vite-counter && npm run build",
     "example:bun": "bun --conditions=development --port=0 examples/bun-server/server.tsx",
     "example:perf": "bun --conditions=development --port=0 examples/performance-test/server.tsx",
+    "example:ssr": "bun --conditions=development examples/ssr-islands/server.tsx",
     "example:terminal": "bun --conditions=development examples/terminal-counter/simple.tsx",
     "example:terminal-print": "bun --conditions=development examples/terminal-print/simple-print.tsx",
     "prepare": "husky"

@@ -37,3 +37,11 @@ export function replaceNode(oldNode: Node, newNode: Node): void {
 export function setText(node: Node, text: string): void {
   node.textContent = text;
 }
+
+export function getParent(node: Node): Node | null {
+  return node.parentNode;
+}
+
+export function getNextSibling(node: Node): Node | null {
+  return node.nextSibling;
+}
