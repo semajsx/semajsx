@@ -28,12 +28,6 @@ export class ViteIslandBuilder {
 
     const builder = this;
 
-    // Resolve semajsx source directory (assume we're in semajsx/src/server/)
-    const semajsxRoot = path.resolve(
-      path.dirname(new URL(import.meta.url).pathname),
-      "../..",
-    );
-
     this.vite = await createServer({
       root: this.options.root,
       server: {
@@ -42,26 +36,8 @@ export class ViteIslandBuilder {
       },
       appType: "custom",
       resolve: {
-        // Help Vite resolve semajsx package from the source
-        alias: {
-          "semajsx/jsx-runtime": path.join(semajsxRoot, "src/jsx-runtime.ts"),
-          "semajsx/jsx-dev-runtime": path.join(
-            semajsxRoot,
-            "src/jsx-dev-runtime.ts",
-          ),
-          "semajsx/dom/jsx-runtime": path.join(
-            semajsxRoot,
-            "src/dom/jsx-runtime.ts",
-          ),
-          "semajsx/dom/jsx-dev-runtime": path.join(
-            semajsxRoot,
-            "src/dom/jsx-dev-runtime.ts",
-          ),
-          "semajsx/dom": path.join(semajsxRoot, "src/dom/index.ts"),
-          "semajsx/signal": path.join(semajsxRoot, "src/signal/index.ts"),
-          "semajsx/server": path.join(semajsxRoot, "src/server/index.ts"),
-          semajsx: path.join(semajsxRoot, "src/index.ts"),
-        },
+        // Ensure Vite respects package.json "exports" field
+        conditions: ["development", "module", "import", "default"],
       },
       optimizeDeps: {
         // Pre-bundle semajsx for faster loading
