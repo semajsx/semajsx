@@ -59,6 +59,11 @@ export class Logger {
   };
   private groupDepth = 0;
   private tags: string[] = [];
+  private groupStack: Array<{
+    title: string;
+    color: string;
+    bordered: boolean;
+  }> = [];
 
   constructor(options: LoggerOptions = {}) {
     this.options = {
@@ -120,7 +125,6 @@ export class Logger {
     if (!this.shouldLog(level)) return;
 
     const config = this.options.levelConfig[level];
-    const indent = "  ".repeat(this.groupDepth);
 
     // Build log parts
     const parts: VNode[] = [];
@@ -183,11 +187,7 @@ export class Logger {
     }
 
     // Render the log
-    const logContent = (
-      <box flexDirection="row" marginLeft={indent.length}>
-        {parts}
-      </box>
-    );
+    const logContent = <box flexDirection="row">{parts}</box>;
 
     if (this.options.bordered && config.borderColor) {
       print(
@@ -247,6 +247,9 @@ export class Logger {
   group(title: string, options: GroupOptions = {}): this {
     const { bordered = false, borderColor = "cyan" } = options;
 
+    // Store group info for groupEnd
+    this.groupStack.push({ title, color: borderColor, bordered });
+
     if (bordered) {
       // Bordered style - box with title
       print(
@@ -282,6 +285,17 @@ export class Logger {
   groupEnd(): this {
     if (this.groupDepth > 0) {
       this.groupDepth--;
+
+      // Pop group info and draw closing line (only for non-bordered groups)
+      const groupInfo = this.groupStack.pop();
+      if (groupInfo && !groupInfo.bordered) {
+        print(
+          <text color={groupInfo.color} dim>
+            {"─".repeat(Math.min(groupInfo.title.length, 50))}
+          </text>,
+          { stream: this.options.stream },
+        );
+      }
     }
     return this;
   }
@@ -293,6 +307,7 @@ export class Logger {
     const newLogger = new Logger(this.options);
     newLogger.groupDepth = this.groupDepth;
     newLogger.tags = [...this.tags, ...tags];
+    newLogger.groupStack = [...this.groupStack];
     return newLogger;
   }
 
