@@ -26,9 +26,29 @@ export interface RenderStrategy<TNode> {
   createTextNode(text: string): TNode;
 
   /**
+   * Create a comment node (used for markers)
+   */
+  createComment(text: string): TNode;
+
+  /**
    * Create an element node
    */
   createElement(type: string): TNode;
+
+  /**
+   * Get the parent node of a node
+   */
+  getParent(node: TNode): TNode | null;
+
+  /**
+   * Get the next sibling of a node
+   */
+  getNextSibling(node: TNode): TNode | null;
+
+  /**
+   * Insert a node before another node
+   */
+  insertBefore(parent: TNode, newNode: TNode, beforeNode: TNode | null): void;
 
   /**
    * Append child to parent
@@ -186,10 +206,10 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
       throw new Error("Signal VNode must have a signal prop");
     }
 
-    // Create an empty text node as a marker to track the signal's position in the DOM
+    // Create a comment node as a marker to track the signal's position in the DOM
     // This is necessary because signal content might be a Fragment (no direct node)
     // or might be empty initially
-    const marker = strategy.createTextNode("");
+    const marker = strategy.createComment("signal");
 
     // Get initial value and render it
     const initialValue = signal.peek();
@@ -205,28 +225,24 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
       const oldContentNodes = collectNodes(currentRendered);
       const newContentNodes = collectNodes(newRendered);
 
-      // Get the parent and next sibling from the marker
-      const parent = (marker as any).parentNode;
+      // Get the parent from the marker
+      const parent = strategy.getParent(marker);
       if (!parent) {
         console.warn("[Signal] Marker not in DOM, cannot update");
         return;
       }
 
-      // Remove all old content nodes (they come after the marker)
+      // Remove all old content nodes
       for (const node of oldContentNodes) {
-        parent.removeChild(node);
+        strategy.removeChild(node);
       }
 
       // Insert new content nodes after the marker
-      let insertBefore = (marker as any).nextSibling;
+      let insertAfter = strategy.getNextSibling(marker);
       for (const node of newContentNodes) {
-        if (insertBefore) {
-          parent.insertBefore(node, insertBefore);
-        } else {
-          parent.appendChild(node);
-        }
-        // Update insertBefore to maintain order
-        insertBefore = (node as any).nextSibling;
+        strategy.insertBefore(parent, node, insertAfter);
+        // Update insertAfter to maintain order (insert at the position after the last inserted)
+        insertAfter = strategy.getNextSibling(node);
       }
 
       // Cleanup old subscriptions

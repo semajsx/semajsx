@@ -341,3 +341,25 @@ export function markNodeAsDirty(node: TerminalNode): void {
     markNodeAsDirty(node.parent);
   }
 }
+
+/**
+ * Get the parent node of a node
+ */
+export function getParent(node: TerminalNode): TerminalNode | null {
+  return node.parent;
+}
+
+/**
+ * Get the next sibling of a node
+ */
+export function getNextSibling(node: TerminalNode): TerminalNode | null {
+  const parent = node.parent;
+  if (!parent) return null;
+
+  const index = parent.children.indexOf(node);
+  if (index === -1 || index === parent.children.length - 1) {
+    return null;
+  }
+
+  return parent.children[index + 1] || null;
+}

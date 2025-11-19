@@ -5,8 +5,12 @@ import {
   appendChild,
   createElement,
   createTextNode,
+  createComment,
   removeChild,
   replaceNode,
+  insertBefore,
+  getParent,
+  getNextSibling,
 } from "./operations";
 import { type ContextMap } from "../runtime/context";
 import {
@@ -22,7 +26,11 @@ import {
  */
 const domStrategy: RenderStrategy<Node> = {
   createTextNode,
+  createComment,
   createElement,
+  getParent,
+  getNextSibling,
+  insertBefore,
   appendChild,
   removeChild,
   replaceNode,

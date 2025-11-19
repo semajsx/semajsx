@@ -4,8 +4,12 @@ import {
   appendChild,
   createElement,
   createTextNode,
+  createComment,
   removeChild,
   replaceNode,
+  insertBefore,
+  getParent,
+  getNextSibling,
 } from "./operations";
 import { TerminalRenderer } from "./renderer";
 import type { TerminalNode } from "./types";
@@ -18,7 +22,11 @@ import { createRenderer, type RenderStrategy } from "../runtime/render-core";
  */
 const terminalStrategy: RenderStrategy<TerminalNode> = {
   createTextNode,
+  createComment,
   createElement,
+  getParent,
+  getNextSibling,
+  insertBefore,
   appendChild,
   removeChild,
   replaceNode,
