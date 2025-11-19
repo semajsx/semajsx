@@ -99,14 +99,18 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
    * Handles fragments and signal nodes that may not have their own DOM node
    */
   function collectNodes(rendered: RenderedNode<TNode>): TNode[] {
-    if (rendered.node) {
-      return [rendered.node];
-    }
-    // No direct node, collect from children (Fragment or Signal wrapper case)
     const nodes: TNode[] = [];
+
+    // If this rendered node has a direct DOM node, include it
+    if (rendered.node) {
+      nodes.push(rendered.node);
+    }
+
+    // Also collect nodes from children (handles Fragments and initial signal content)
     for (const child of rendered.children) {
       nodes.push(...collectNodes(child));
     }
+
     return nodes;
   }
 
@@ -182,10 +186,14 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
       throw new Error("Signal VNode must have a signal prop");
     }
 
+    // Create an empty text node as a marker to track the signal's position in the DOM
+    // This is necessary because signal content might be a Fragment (no direct node)
+    // or might be empty initially
+    const marker = strategy.createTextNode("");
+
     // Get initial value and render it
     const initialValue = signal.peek();
     let currentRendered = renderValueToNode(initialValue, contextForSignal);
-    let currentNode = currentRendered.node;
 
     const subscriptions: Array<() => void> = [];
 
@@ -193,40 +201,36 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
     const unsubscribe = signal.subscribe((value) => {
       const newRendered = renderValueToNode(value, contextForSignal);
 
-      // Try to reuse the existing node if possible (DOM optimization)
-      if (currentNode && newRendered.node && strategy.tryReuseNode) {
-        const reused = strategy.tryReuseNode(
-          currentNode,
-          newRendered.node,
-          currentRendered,
-          newRendered,
-        );
+      // Collect actual DOM nodes from old and new rendered trees
+      const oldContentNodes = collectNodes(currentRendered);
+      const newContentNodes = collectNodes(newRendered);
 
-        if (!reused) {
-          // Can't reuse, replace the node
-          strategy.replaceNode(currentNode, newRendered.node);
-          currentNode = newRendered.node;
-
-          // Cleanup old node
-          if (currentRendered) {
-            unmount(currentRendered);
-          }
-        } else {
-          // Node was reused, update the reference
-          currentNode = newRendered.node;
-        }
-      } else {
-        // No reuse optimization, just replace
-        if (currentNode && newRendered.node) {
-          strategy.replaceNode(currentNode, newRendered.node);
-          currentNode = newRendered.node;
-        }
-
-        // Cleanup old node
-        if (currentRendered) {
-          unmount(currentRendered);
-        }
+      // Get the parent and next sibling from the marker
+      const parent = (marker as any).parentNode;
+      if (!parent) {
+        console.warn("[Signal] Marker not in DOM, cannot update");
+        return;
       }
+
+      // Remove all old content nodes (they come after the marker)
+      for (const node of oldContentNodes) {
+        parent.removeChild(node);
+      }
+
+      // Insert new content nodes after the marker
+      let insertBefore = (marker as any).nextSibling;
+      for (const node of newContentNodes) {
+        if (insertBefore) {
+          parent.insertBefore(node, insertBefore);
+        } else {
+          parent.appendChild(node);
+        }
+        // Update insertBefore to maintain order
+        insertBefore = (node as any).nextSibling;
+      }
+
+      // Cleanup old subscriptions
+      cleanupSubscriptions(currentRendered);
 
       currentRendered = newRendered;
     });
@@ -235,7 +239,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
 
     return {
       vnode,
-      node: currentNode,
+      node: marker,
       subscriptions,
       children: currentRendered ? [currentRendered] : [],
     };
