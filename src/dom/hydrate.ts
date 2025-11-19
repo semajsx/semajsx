@@ -289,20 +289,57 @@ function hydrateSignalNode(
   }
 
   // Set up reactivity to handle signal changes
-  // When signal changes, we need to replace the DOM node
-  let currentNode: Node | null = domNode;
+  // Use an anchor comment node to track position in DOM
+  // This is necessary because arrays render as DocumentFragments which can't be tracked
+  let anchor: Comment;
+  let currentNodes: Node[] = [];
+
+  if (domNode.nodeType === Node.COMMENT_NODE) {
+    // Already a comment (empty signal), use as anchor
+    anchor = domNode as Comment;
+  } else {
+    // Create anchor and insert it before current node
+    anchor = document.createComment("signal-anchor");
+    if (domNode.parentNode) {
+      domNode.parentNode.insertBefore(anchor, domNode);
+    }
+    currentNodes = [domNode];
+  }
 
   signal.subscribe((newValue: any) => {
-    if (!currentNode || !currentNode.parentNode) {
+    const parent = anchor.parentNode;
+    if (!parent) {
       return;
     }
 
-    // Render new content
-    const newNode = renderNode(newValue, parentElement);
+    // Remove old nodes
+    for (const node of currentNodes) {
+      if (node.parentNode) {
+        node.parentNode.removeChild(node);
+      }
+    }
+    currentNodes = [];
 
-    if (newNode && currentNode.parentNode) {
-      currentNode.parentNode.replaceChild(newNode, currentNode);
-      currentNode = newNode;
+    // Render and insert new content after anchor
+    const newNode = renderNode(newValue, parentElement);
+    if (newNode) {
+      if (newNode.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+        // Fragment: insert all children after anchor in correct order
+        const fragment = newNode as DocumentFragment;
+        const children = Array.from(fragment.childNodes);
+
+        // Insert in order by tracking the last inserted node
+        let insertAfter = anchor;
+        for (const child of children) {
+          parent.insertBefore(child, insertAfter.nextSibling);
+          insertAfter = child;
+          currentNodes.push(child);
+        }
+      } else {
+        // Single node: insert after anchor
+        parent.insertBefore(newNode, anchor.nextSibling);
+        currentNodes = [newNode];
+      }
     }
   });
 }
