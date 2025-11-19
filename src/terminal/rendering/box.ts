@@ -28,10 +28,13 @@ export function renderBorder(
   );
   writeAt(x, y, topLine);
 
-  // Side borders
+  // Side borders with spacing
   for (let i = 1; i < height - 1; i++) {
-    writeAt(x, y + i, borderChar(box.left));
-    writeAt(x + width - 1, y + i, borderChar(box.right));
+    // Render left border, middle spaces, and right border as a single line
+    const middleSpaces = " ".repeat(Math.max(0, width - 2));
+    const sideLine =
+      borderChar(box.left) + middleSpaces + borderChar(box.right);
+    writeAt(x, y + i, sideLine);
   }
 
   // Bottom border

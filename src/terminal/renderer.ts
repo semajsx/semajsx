@@ -110,8 +110,26 @@ export class TerminalRenderer {
       node.width = Math.round(node.yogaNode.getComputedWidth());
       node.height = Math.round(node.yogaNode.getComputedHeight());
 
+      // If this element has a border, add border size to width/height
+      // and offset children by 1 to account for border thickness
+      let childOffsetX = node.x || 0;
+      let childOffsetY = node.y || 0;
+
+      if (
+        node.type === "element" &&
+        node.style.border &&
+        node.style.border !== "none"
+      ) {
+        // Expand width and height to include border (1 char on each side)
+        node.width += 2;
+        node.height += 2;
+        // Offset children by 1 to leave room for border
+        childOffsetX += 1;
+        childOffsetY += 1;
+      }
+
       for (const child of node.children) {
-        this.updatePositions(child, node.x || 0, node.y || 0);
+        this.updatePositions(child, childOffsetX, childOffsetY);
       }
     } else {
       // Text nodes don't have yoga nodes - inherit parent position
