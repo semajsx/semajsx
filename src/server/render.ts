@@ -174,9 +174,13 @@ function renderVNodeToHTML(
   if (vnodeTyped.type === "#signal") {
     const signal = vnodeTyped.props?.signal;
     if (signal && isSignal(signal)) {
-      return renderVNodeToHTML(unwrap(signal), context);
+      const unwrapped = unwrap(signal);
+      const rendered = renderVNodeToHTML(unwrapped, context);
+      // If signal renders to empty content, use a comment marker for hydration
+      // This ensures the client can find a DOM node to attach the signal subscription to
+      return rendered || "<!--signal-empty-->";
     }
-    return "";
+    return "<!--signal-empty-->";
   }
 
   // Handle islands - render content AND mark for hydration

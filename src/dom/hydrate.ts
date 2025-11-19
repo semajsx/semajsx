@@ -253,15 +253,26 @@ function hydrateSignalNode(
   // Get current signal value
   const currentValue = signal.value;
 
-  // For simple values (string, number), the server renders them as text nodes
-  // We can validate the content but don't need complex hydration
+  // Handle empty/null signal values - server renders as <!--signal-empty--> comment
   if (
-    typeof currentValue === "string" ||
-    typeof currentValue === "number" ||
-    currentValue == null
+    currentValue == null ||
+    currentValue === false ||
+    (Array.isArray(currentValue) && currentValue.length === 0)
   ) {
+    // Expect a comment node marker
+    if (domNode.nodeType === Node.COMMENT_NODE) {
+      // Comment marker is correct, nothing to validate
+    } else {
+      console.warn(
+        "[Hydrate] Expected comment marker for empty signal, got:",
+        domNode.nodeType,
+      );
+    }
+  }
+  // For simple values (string, number), the server renders them as text nodes
+  else if (typeof currentValue === "string" || typeof currentValue === "number") {
     if (domNode.nodeType === Node.TEXT_NODE) {
-      const expectedText = String(currentValue ?? "");
+      const expectedText = String(currentValue);
       if (domNode.textContent !== expectedText) {
         console.warn(
           "[Hydrate] Signal text mismatch:",
@@ -302,7 +313,7 @@ function hydrateSignalNode(
  */
 function renderNode(vnode: any, parentElement: Element): Node | null {
   if (vnode == null || vnode === false || vnode === true) {
-    return document.createTextNode("");
+    return document.createComment("empty");
   }
 
   if (isSignal(vnode)) {
@@ -314,6 +325,11 @@ function renderNode(vnode: any, parentElement: Element): Node | null {
   }
 
   if (Array.isArray(vnode)) {
+    // Empty array should render as a comment marker
+    if (vnode.length === 0) {
+      return document.createComment("empty");
+    }
+
     const fragment = document.createDocumentFragment();
     for (const child of vnode) {
       const node = renderNode(child, parentElement);
