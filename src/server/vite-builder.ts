@@ -25,6 +25,8 @@ export class ViteIslandBuilder {
       return;
     }
 
+    const builder = this;
+
     this.vite = await createServer({
       root: this.options.root,
       server: {
@@ -36,27 +38,66 @@ export class ViteIslandBuilder {
         // Pre-bundle semajsx for faster loading
         include: ["semajsx", "semajsx/dom", "semajsx/signal"],
       },
+      plugins: [
+        {
+          name: "semajsx-virtual-islands",
+          resolveId(id) {
+            // Handle virtual island modules
+            if (id.startsWith("virtual:island-")) {
+              return "\0" + id; // \0 prefix indicates virtual module
+            }
+          },
+          load(id) {
+            // Provide the code for virtual island modules
+            if (id.startsWith("\0virtual:island-")) {
+              const islandId = id
+                .replace("\0virtual:island-", "")
+                .replace(".js", "");
+              // Get the raw code from the entry points map
+              const rawCode = builder.entryPoints.get(islandId);
+              if (rawCode) {
+                return rawCode;
+              }
+            }
+          },
+        },
+      ],
     });
 
     console.log("[SemaJSX] Vite dev server initialized");
   }
 
   /**
-   * Get or generate island entry point code
+   * Get or generate island entry point code (transformed by Vite)
    */
   async getEntryPoint(island: IslandMetadata): Promise<string> {
-    // Check cache
-    if (this.entryPoints.has(island.id)) {
-      return this.entryPoints.get(island.id)!;
+    // Generate raw entry point code
+    const rawCode = this.generateEntryPoint(island);
+
+    // Store raw code for the plugin to access
+    this.entryPoints.set(island.id, rawCode);
+
+    // If Vite is available, transform the code to resolve bare imports
+    if (this.vite) {
+      try {
+        // Use virtual module ID
+        const virtualId = `virtual:island-${island.id}.js`;
+
+        // Transform through Vite (which will use our plugin)
+        const result = await this.vite.transformRequest(virtualId);
+        if (result) {
+          return result.code;
+        }
+      } catch (error) {
+        console.warn(
+          `[ViteBuilder] Could not transform entry for ${island.id}:`,
+          error,
+        );
+      }
     }
 
-    // Generate entry point
-    const code = this.generateEntryPoint(island);
-
-    // Cache it
-    this.entryPoints.set(island.id, code);
-
-    return code;
+    // Fallback: return raw code
+    return rawCode;
   }
 
   /**
