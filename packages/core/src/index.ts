@@ -4,6 +4,7 @@
 
 export { createFragment, createTextVNode, h, isVNode } from "./vnode";
 export { Fragment, Portal } from "./types";
+export { ISLAND_MARKER } from "./shared/island-marker";
 export {
   Context,
   context,
