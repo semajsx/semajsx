@@ -1,24 +1,5 @@
 /**
- * DOM utilities and rendering
+ * Re-export from @semajsx/dom for backward compatibility
+ * @deprecated Import from '@semajsx/dom' instead
  */
-
-export {
-  createElement,
-  createTextNode,
-  createComment,
-  appendChild,
-  removeChild,
-  insertBefore,
-  replaceNode,
-  setText,
-} from "./operations";
-
-export { setProperty, setSignalProperty, setRef } from "./properties";
-
-export { render } from "./render";
-export type { DOMRenderResult } from "./render";
-
-export { hydrate } from "./hydrate";
-
-export { createPortal, PortalComponent } from "./portal";
-export type { PortalProps } from "./portal";
+export * from "@semajsx/dom";

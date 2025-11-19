@@ -4,8 +4,10 @@
 
 export { createFragment, createTextVNode, h, isVNode } from "./vnode";
 export { Fragment, Portal } from "./types";
-export { Context, context } from "./context";
+export { Context, context, type ContextMap } from "./context";
 export { resource, stream, when } from "./helpers";
+export { jsx, jsxs } from "./jsx";
+export { createRenderer, isAsyncIterator, isPromise } from "./render-core";
 
 export type {
   Component,
@@ -17,4 +19,8 @@ export type {
   Ref,
   RenderedNode,
   VNode,
+  WithKey,
+  WithSignals,
 } from "./types";
+
+export type { RenderStrategy } from "./render-core";

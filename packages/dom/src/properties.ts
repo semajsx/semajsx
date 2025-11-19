@@ -1,5 +1,5 @@
 import type { Signal } from "@semajsx/signal";
-import type { Ref } from "../runtime/types";
+import type { Ref } from "@semajsx/core";
 import { isSignal } from "@semajsx/signal";
 
 /**

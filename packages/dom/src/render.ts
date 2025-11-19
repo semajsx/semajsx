@@ -1,5 +1,14 @@
-import type { VNode } from "../runtime/types";
-import { resource, stream } from "../runtime/helpers";
+import type { VNode } from "@semajsx/core";
+import {
+  resource,
+  stream,
+  createRenderer,
+  isAsyncIterator,
+  isPromise,
+  type RenderedNode,
+  type RenderStrategy,
+  type ContextMap,
+} from "@semajsx/core";
 import { setProperty, setSignalProperty, setRef } from "./properties";
 import {
   appendChild,
@@ -12,14 +21,6 @@ import {
   getParent,
   getNextSibling,
 } from "./operations";
-import { type ContextMap } from "../runtime/context";
-import {
-  createRenderer,
-  isAsyncIterator,
-  isPromise,
-  type RenderedNode,
-  type RenderStrategy,
-} from "../runtime/render-core";
 
 /**
  * Result returned by the render function

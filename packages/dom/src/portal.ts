@@ -1,6 +1,5 @@
-import type { JSXNode, VNode } from "../runtime/types";
-import { Portal } from "../runtime/types";
-import { h } from "../runtime/vnode";
+import type { JSXNode, VNode } from "@semajsx/core";
+import { Portal, h } from "@semajsx/core";
 
 /**
  * Portal props interface

@@ -3,10 +3,10 @@
  * This preserves the existing DOM and only adds event listeners and reactivity
  */
 
-import type { VNode } from "../runtime/types";
-import { Fragment } from "../runtime/types";
+import type { VNode } from "@semajsx/core";
+import { Fragment } from "@semajsx/core";
 import { setProperty } from "./properties";
-import { isSignal } from "@semajsx/signal/utils";
+import { isSignal } from "@semajsx/signal";
 
 /**
  * Hydrate a server-rendered DOM tree with client-side interactivity

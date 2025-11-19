@@ -1,6 +1,6 @@
 import { VNode, VNodeType } from "./types";
 import { h } from "./vnode";
-import { ISLAND_MARKER } from "../shared/island-marker";
+import { ISLAND_MARKER } from "./shared/island-marker";
 
 export function jsx(type: VNodeType, props: any, key?: any): VNode {
   const { children, ...restProps } = props || {};
