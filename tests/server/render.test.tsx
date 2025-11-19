@@ -24,7 +24,7 @@ describe("renderToString", () => {
   });
 
   it("should render islands as placeholders", () => {
-    const Counter = island(function Counter({ initial = 0 }) {
+    const Counter = island(function CounterComponent({ initial = 0 }) {
       const count = signal(initial);
       return <button>{count}</button>;
     }, "/Counter.tsx");
@@ -39,9 +39,9 @@ describe("renderToString", () => {
     const result = renderToString(app);
 
     expect(result.islands).toHaveLength(1);
-    expect(result.islands[0]?.id).toBe("island-0");
+    expect(result.islands[0]?.id).toBe("counter-component-0");
     expect(result.islands[0]?.props).toEqual({ initial: 5 });
-    expect(result.html).toContain('data-island-id="island-0"');
+    expect(result.html).toContain('data-island-id="counter-component-0"');
     expect(result.html).toContain("data-island-props=");
   });
 
@@ -53,7 +53,7 @@ describe("renderToString", () => {
     const result = renderToString(app, { islandBasePath: "/islands" });
 
     expect(result.scripts).toContain('type="module"');
-    expect(result.scripts).toContain('src="/islands/island-0.js"');
+    expect(result.scripts).toContain('src="/islands/anonymous-0.js"');
   });
 
   it("should handle multiple islands", () => {
@@ -71,13 +71,13 @@ describe("renderToString", () => {
     const result = renderToString(app);
 
     expect(result.islands).toHaveLength(3);
-    expect(result.islands[0]?.id).toBe("island-0");
-    expect(result.islands[1]?.id).toBe("island-1");
-    expect(result.islands[2]?.id).toBe("island-2");
+    expect(result.islands[0]?.id).toBe("anonymous-0");
+    expect(result.islands[1]?.id).toBe("anonymous-1");
+    expect(result.islands[2]?.id).toBe("anonymous-2");
 
-    expect(result.scripts).toContain("island-0.js");
-    expect(result.scripts).toContain("island-1.js");
-    expect(result.scripts).toContain("island-2.js");
+    expect(result.scripts).toContain("anonymous-0.js");
+    expect(result.scripts).toContain("anonymous-1.js");
+    expect(result.scripts).toContain("anonymous-2.js");
   });
 
   it("should render nested elements correctly", () => {
@@ -184,7 +184,7 @@ describe("renderToString", () => {
 
     expect(result.html).toContain("<h1>Static Header</h1>");
     expect(result.html).toContain("<p>Some static content</p>");
-    expect(result.html).toContain('data-island-id="island-0"');
+    expect(result.html).toContain('data-island-id="anonymous-0"');
     expect(result.html).toContain("<p>More static content</p>");
     expect(result.html).toContain("Static Footer");
     expect(result.islands).toHaveLength(1);
@@ -197,7 +197,7 @@ describe("renderToString", () => {
 
     const result = renderToString(app, { islandBasePath: "/custom/path" });
 
-    expect(result.scripts).toContain('src="/custom/path/island-0.js"');
+    expect(result.scripts).toContain('src="/custom/path/anonymous-0.js"');
   });
 
   it("should handle array children", () => {
@@ -254,7 +254,7 @@ describe("renderToString", () => {
     expect(result.html).not.toContain("data-island-path");
 
     // But should still have island ID and props
-    expect(result.html).toContain('data-island-id="island-0"');
+    expect(result.html).toContain('data-island-id="anonymous-0"');
     expect(result.html).toContain("data-island-props=");
 
     // Server-side metadata should still have the path

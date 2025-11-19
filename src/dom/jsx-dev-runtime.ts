@@ -4,6 +4,7 @@
  */
 
 import { h } from "../runtime/vnode";
+import { ISLAND_MARKER } from "../shared/island-marker";
 
 export { Fragment } from "./jsx-runtime";
 export type * from "./jsx-runtime";
@@ -20,6 +21,15 @@ export function jsxDEV(
 
   if (key !== undefined) {
     restProps.key = key;
+  }
+
+  // Check if this is an island component
+  // Island components are functions with ISLAND_MARKER symbol
+  if (typeof type === "function" && ISLAND_MARKER in type) {
+    // Call the island wrapper directly with all props
+    const islandProps =
+      children !== undefined ? { ...restProps, children } : restProps;
+    return type(islandProps);
   }
 
   if (children !== undefined) {

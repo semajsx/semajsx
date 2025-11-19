@@ -1,7 +1,7 @@
 /** @jsxImportSource semajsx/dom */
 
 import { describe, expect, it } from "vitest";
-import { Context, context } from "@/runtime/context";
+import { Context, context, createComponentAPI } from "@/runtime/context";
 import { Fragment } from "@/runtime/types";
 import type { ComponentAPI } from "@/runtime/types";
 
@@ -62,7 +62,6 @@ describe("Context API", () => {
     const ThemeContext = context<{ mode: string }>();
     const contextMap = new Map();
 
-    const { createComponentAPI } = require("../../src/runtime/context");
     const ctx: ComponentAPI = createComponentAPI(contextMap);
 
     const value = ctx.inject(ThemeContext);
@@ -74,7 +73,6 @@ describe("Context API", () => {
     const contextMap = new Map();
     contextMap.set(ThemeContext, { mode: "dark" });
 
-    const { createComponentAPI } = require("../../src/runtime/context");
     const ctx: ComponentAPI = createComponentAPI(contextMap);
 
     const value = ctx.inject(ThemeContext);
@@ -89,7 +87,6 @@ describe("Context API", () => {
     contextMap.set(ThemeContext, { mode: "dark" });
     contextMap.set(UserContext, { name: "Alice" });
 
-    const { createComponentAPI } = require("../../src/runtime/context");
     const ctx: ComponentAPI = createComponentAPI(contextMap);
 
     expect(ctx.inject(ThemeContext)).toEqual({ mode: "dark" });
@@ -107,8 +104,6 @@ describe("Context API", () => {
     const childContext = new Map(parentContext);
     childContext.set(ThemeContext, "dark");
 
-    const { createComponentAPI } = require("../../src/runtime/context");
-
     const parentCtx = createComponentAPI(parentContext);
     const childCtx = createComponentAPI(childContext);
 
@@ -120,7 +115,6 @@ describe("Context API", () => {
     const ThemeContext = context<{ mode: string }>();
     const contextMap = new Map();
 
-    const { createComponentAPI } = require("../../src/runtime/context");
     const ctx: ComponentAPI = createComponentAPI(contextMap);
 
     // User provides default value
