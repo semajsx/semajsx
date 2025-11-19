@@ -49,10 +49,10 @@ export type RouteHandler = (params?: Record<string, string>) => VNode;
  * Document template function for rendering complete HTML documents
  */
 export type DocumentTemplate = (props: {
-  /** Page content HTML */
-  children: string;
-  /** Island script tags */
-  scripts: string;
+  /** Page content (JSX node - can be string, VNode, etc.) */
+  children: JSXNode;
+  /** Island script tags (JSX node - can be string, VNode, etc.) */
+  scripts: JSXNode;
   /** Island metadata (for custom processing) */
   islands: IslandMetadata[];
   /** Current route path */

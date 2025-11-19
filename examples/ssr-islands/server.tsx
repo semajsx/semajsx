@@ -25,10 +25,8 @@ const Document: DocumentTemplate = ({ children, scripts, title }) => (
       `}</style>
     </head>
     <body>
-      {/* Page content - rendered as raw HTML */}
-      <div dangerouslySetInnerHTML={{ __html: children }} />
-      {/* Island scripts - rendered as raw HTML */}
-      <div dangerouslySetInnerHTML={{ __html: scripts }} />
+      {children}
+      {scripts}
     </body>
   </html>
 );

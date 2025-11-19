@@ -24,10 +24,8 @@ export const DefaultDocument: DocumentTemplate = ({ children, scripts, title }) 
       {title && <title>{title}</title>}
     </head>
     <body>
-      {/* Render page content as raw HTML */}
-      <div dangerouslySetInnerHTML={{ __html: children }} />
-      {/* Render island scripts as raw HTML */}
-      <div dangerouslySetInnerHTML={{ __html: scripts }} />
+      {children}
+      {scripts}
     </body>
   </html>
 );
@@ -75,7 +73,7 @@ function renderDocumentVNode(vnode: any): string {
 
   const { type, props, children } = vnode;
 
-  // Handle dangerouslySetInnerHTML
+  // Handle dangerouslySetInnerHTML (for raw HTML injection)
   if (props?.dangerouslySetInnerHTML?.__html) {
     return props.dangerouslySetInnerHTML.__html;
   }

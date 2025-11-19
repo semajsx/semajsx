@@ -54,7 +54,10 @@ export class ViteRouter {
       enableCache: config.enableCache ?? true,
       dev: config.dev ?? true,
       root: config.root ?? process.cwd(),
-      buildOptions: config.buildOptions ?? { minify: true, sourcemap: false },
+      buildOptions: {
+        minify: config.buildOptions?.minify ?? true,
+        sourcemap: config.buildOptions?.sourcemap ?? false,
+      },
       document: config.document,
       title: config.title,
       meta: config.meta,
@@ -138,8 +141,17 @@ export class ViteRouter {
       const { renderDocument } = await import("./document");
 
       const documentVNode = this.config.document({
-        children: result.html,
-        scripts: result.scripts,
+        // Wrap HTML strings in VNodes with dangerouslySetInnerHTML for raw HTML injection
+        children: {
+          type: "template",
+          props: { dangerouslySetInnerHTML: { __html: result.html } },
+          children: [],
+        },
+        scripts: {
+          type: "template",
+          props: { dangerouslySetInnerHTML: { __html: result.scripts } },
+          children: [],
+        },
         islands: result.islands,
         path,
         title: this.config.title,
