@@ -56,22 +56,6 @@
       "development": "./src/terminal/jsx-dev-runtime.ts",
       "import": "./dist/terminal/jsx-dev-runtime.js",
       "types": "./dist/terminal/jsx-dev-runtime.d.ts"
-    },
-    "./terminal/logger": {
-      "development": "./src/terminal/logger/index.ts",
-      "import": "./dist/terminal/logger/index.js",
-      "types": "./dist/terminal/logger/index.d.ts"
-    },
-    "./server": {
-      "browser": "./src/server/island-noop.ts",
-      "development": "./src/server/index.ts",
-      "import": "./dist/server/index.js",
-      "types": "./dist/server/index.d.ts"
-    },
-    "./client": {
-      "development": "./src/client/index.ts",
-      "import": "./dist/client/index.js",
-      "types": "./dist/client/index.d.ts"
     }
   },
   "files": [
@@ -123,6 +107,7 @@
   "dependencies": {
     "@semajsx/core": "workspace:*",
     "@semajsx/dom": "workspace:*",
+    "@semajsx/server": "workspace:*",
     "@semajsx/signal": "workspace:*",
     "@semajsx/terminal": "workspace:*",
     "@semajsx/utils": "workspace:*"

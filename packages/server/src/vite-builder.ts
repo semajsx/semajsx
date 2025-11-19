@@ -1,6 +1,6 @@
-import type { IslandMetadata } from "../shared/types";
+import type { IslandMetadata } from "./shared/types";
 import { createServer, type ViteDevServer } from "vite";
-import { logger } from "../terminal/logger";
+import { logger } from "@semajsx/logger";
 
 /**
  * Vite-based island builder

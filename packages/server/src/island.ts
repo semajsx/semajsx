@@ -1,6 +1,6 @@
-import type { Component, JSXNode, VNode } from "../runtime/types";
-import { ISLAND_MARKER } from "../shared/island-marker";
-import type { IslandMarker } from "../shared/types";
+import type { Component, JSXNode, VNode } from "@semajsx/core/types";
+import { ISLAND_MARKER } from "./shared/island-marker";
+import type { IslandMarker } from "./shared/types";
 
 /**
  * Mark a component as an Island that should be hydrated on the client

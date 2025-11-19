@@ -30,4 +30,4 @@ export type {
   RouteHandler,
   RouterConfig,
   DocumentTemplate,
-} from "../shared/types";
+} from "./shared/types";

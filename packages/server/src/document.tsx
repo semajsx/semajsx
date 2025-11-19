@@ -1,6 +1,6 @@
-/** @jsxImportSource ../dom */
+/** @jsxImportSource @semajsx/dom */
 
-import type { DocumentTemplate } from "../shared/types";
+import type { DocumentTemplate } from "./shared/types";
 
 /**
  * Default HTML document template

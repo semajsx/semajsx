@@ -6,7 +6,7 @@
  * avoiding the need to load server-side dependencies like Vite in the browser.
  */
 
-import type { Component } from "../runtime/types";
+import type { Component } from "@semajsx/core/types";
 
 /**
  * No-op island marker for browser environment

@@ -4,7 +4,7 @@ import type {
   SSRResult,
   IslandMetadata,
   DocumentTemplate,
-} from "../shared/types";
+} from "./shared/types";
 import { renderToString } from "./render";
 import {
   createViteIslandBuilder,
