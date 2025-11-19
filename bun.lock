@@ -47,6 +47,19 @@
         "@semajsx/configs": "workspace:*",
       },
     },
+    "packages/logger": {
+      "name": "@semajsx/logger",
+      "version": "0.1.0",
+      "dependencies": {
+        "@semajsx/core": "workspace:*",
+        "@semajsx/terminal": "workspace:*",
+      },
+      "devDependencies": {
+        "@semajsx/configs": "workspace:*",
+        "tsdown": "^0.16.4",
+        "typescript": "^5.8.3",
+      },
+    },
     "packages/semajsx": {
       "name": "semajsx",
       "version": "0.1.0",
@@ -359,6 +372,8 @@
     "@semajsx/core": ["@semajsx/core@workspace:packages/core"],
 
     "@semajsx/dom": ["@semajsx/dom@workspace:packages/dom"],
+
+    "@semajsx/logger": ["@semajsx/logger@workspace:packages/logger"],
 
     "@semajsx/signal": ["@semajsx/signal@workspace:packages/signal"],
 

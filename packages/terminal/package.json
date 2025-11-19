@@ -17,10 +17,6 @@
     "./jsx-dev-runtime": {
       "types": "./dist/jsx-dev-runtime.d.ts",
       "import": "./dist/jsx-dev-runtime.js"
-    },
-    "./logger": {
-      "types": "./dist/logger/index.d.ts",
-      "import": "./dist/logger/index.js"
     }
   },
   "files": [

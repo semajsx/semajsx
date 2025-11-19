@@ -1,0 +1,15 @@
+{
+  "extends": "@semajsx/configs/tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "dist",
+    "rootDir": "src",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@semajsx/core": ["../core/src/index.ts"],
+      "@semajsx/terminal": ["../terminal/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "dist"]
+}

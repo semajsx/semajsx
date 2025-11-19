@@ -1,4 +1,4 @@
-/** @jsxImportSource semajsx/terminal */
+/** @jsxImportSource @semajsx/terminal */
 
 /**
  * Logger - A rich terminal logging utility built on SemaJSX terminal
@@ -12,8 +12,8 @@
  * - JSX content support
  */
 
-import { VNode } from "semajsx/runtime";
-import { print } from "../render";
+import type { VNode } from "@semajsx/core";
+import { print } from "@semajsx/terminal";
 import type {
   GroupOptions,
   LogData,
