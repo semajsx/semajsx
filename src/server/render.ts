@@ -170,6 +170,15 @@ function renderVNodeToHTML(
     return escapeHTML(String(vnodeTyped.props?.nodeValue || ""));
   }
 
+  // Handle signal nodes - unwrap and render the signal's value
+  if (vnodeTyped.type === "#signal") {
+    const signal = vnodeTyped.props?.signal;
+    if (signal && isSignal(signal)) {
+      return renderVNodeToHTML(unwrap(signal), context);
+    }
+    return "";
+  }
+
   // Handle islands - render content AND mark for hydration
   if (isIslandVNode(vnodeTyped)) {
     return renderIsland(vnodeTyped, context);

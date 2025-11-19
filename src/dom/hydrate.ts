@@ -103,6 +103,15 @@ function hydrateNode(
 
   const vnodeTyped = vnode as VNode;
 
+  // Handle signal nodes - special reactive nodes
+  if (vnodeTyped.type === "#signal") {
+    const signal = vnodeTyped.props?.signal;
+    if (signal && isSignal(signal)) {
+      hydrateSignalNode(signal, domNode, parentElement);
+    }
+    return;
+  }
+
   // Handle fragments
   if (vnodeTyped.type === Fragment) {
     let currentDomNode: Node | null = domNode;
