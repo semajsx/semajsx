@@ -1,4 +1,4 @@
-import type { Signal } from "../signal";
+import type { Signal } from "@semajsx/signal";
 import type { TerminalNode, TerminalStyle } from "./types";
 import { applyStyle } from "./operations";
 

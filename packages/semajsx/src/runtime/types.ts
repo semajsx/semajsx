@@ -1,4 +1,4 @@
-import type { Signal, WritableSignal } from "../signal";
+import type { Signal, WritableSignal } from "@semajsx/signal";
 
 /**
  * Special VNode type for fragment support

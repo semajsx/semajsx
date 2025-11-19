@@ -1,10 +1,5 @@
 /**
- * Signal - Reactive primitives for SemaJSX
+ * Re-export from @semajsx/signal for backward compatibility
+ * @deprecated Import from '@semajsx/signal' instead
  */
-
-export { signal } from "./signal";
-export { computed, memo } from "./computed";
-export { batch } from "./batch";
-export { isSignal, unwrap, peek } from "./utils";
-
-export type { Signal, WritableSignal, MaybeSignal, SignalValue } from "./types";
+export * from "@semajsx/signal";

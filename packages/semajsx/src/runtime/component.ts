@@ -1,6 +1,6 @@
 import type { JSXNode, JSXPrimitive, VNode } from "./types";
 import { Fragment } from "./types";
-import { isSignal } from "../signal";
+import { isSignal } from "@semajsx/signal";
 import { createSignalVNode, createTextVNode, isVNode } from "./vnode";
 
 /**

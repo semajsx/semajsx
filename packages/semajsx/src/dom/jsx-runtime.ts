@@ -12,7 +12,7 @@ import type {
   WithKey,
   WithSignals,
 } from "../runtime/types";
-import type { Signal } from "../signal/types";
+import type { Signal } from "@semajsx/signal/types";
 
 export { jsx, jsxs } from "../runtime/jsx";
 export { Fragment };

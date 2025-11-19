@@ -1,7 +1,7 @@
 import type { JSXNode, VNode, VNodeType } from "./types";
-import type { Signal } from "../signal";
+import type { Signal } from "@semajsx/signal";
 import { Fragment } from "./types";
-import { isSignal } from "../signal";
+import { isSignal } from "@semajsx/signal";
 
 /**
  * Create a VNode (Virtual Node)

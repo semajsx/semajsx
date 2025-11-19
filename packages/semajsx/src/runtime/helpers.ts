@@ -1,6 +1,6 @@
 import type { JSXNode } from "./types";
-import type { Signal } from "../signal";
-import { computed, signal } from "../signal";
+import type { Signal } from "@semajsx/signal";
+import { computed, signal } from "@semajsx/signal";
 
 /**
  * Conditional rendering helper

@@ -1,5 +1,5 @@
 /** @jsxImportSource semajsx */
-import { computed, signal, type WritableSignal } from "@/signal";
+import { computed, signal, type WritableSignal } from "@semajsx/signal";
 import { when } from "@/runtime/helpers";
 import type { JSXNode } from "@/runtime/types";
 

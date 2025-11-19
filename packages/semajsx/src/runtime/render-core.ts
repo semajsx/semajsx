@@ -1,6 +1,6 @@
 import type { VNode, Ref } from "./types";
 import { Fragment, Portal } from "./types";
-import { isSignal } from "../signal";
+import { isSignal } from "@semajsx/signal";
 import { isVNode } from "./vnode";
 import { resource, stream } from "./helpers";
 import { type ContextMap, createComponentAPI } from "./context";

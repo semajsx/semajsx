@@ -6,7 +6,7 @@
 import type { VNode } from "../runtime/types";
 import { Fragment } from "../runtime/types";
 import { setProperty } from "./properties";
-import { isSignal } from "../signal/utils";
+import { isSignal } from "@semajsx/signal/utils";
 
 /**
  * Hydrate a server-rendered DOM tree with client-side interactivity

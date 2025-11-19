@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { signal } from "@/signal/signal";
-import { isSignal, unwrap, peek } from "@/signal/utils";
+import { signal, isSignal, unwrap, peek } from "@semajsx/signal";
 
 describe("signal utils", () => {
   describe("isSignal", () => {

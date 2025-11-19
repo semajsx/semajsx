@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { signal } from "@/signal/signal";
+import { signal } from "@semajsx/signal";
 
 // Helper to wait for microtasks (signal updates are batched with queueMicrotask)
 const waitForUpdate = () => new Promise((resolve) => queueMicrotask(resolve));

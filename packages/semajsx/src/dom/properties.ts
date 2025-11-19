@@ -1,6 +1,6 @@
-import type { Signal } from "../signal";
+import type { Signal } from "@semajsx/signal";
 import type { Ref } from "../runtime/types";
-import { isSignal } from "../signal";
+import { isSignal } from "@semajsx/signal";
 
 /**
  * Set a property on an element
