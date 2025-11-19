@@ -1,6 +1,6 @@
 /** @jsxImportSource semajsx/dom */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { createIslandCollector } from "@/server/collector";
 import { island } from "@/server/island";
 import { signal } from "@/signal/signal";
@@ -23,20 +23,20 @@ describe("IslandCollector", () => {
     const islands = collector.collect(app);
 
     expect(islands).toHaveLength(1);
-    expect(islands[0].id).toBe("island-0");
-    expect(islands[0].path).toBe("/path/to/Counter.tsx");
-    expect(islands[0].props).toEqual({ initial: 5 });
+    expect(islands[0]?.id).toBe("island-0");
+    expect(islands[0]?.path).toBe("/path/to/Counter.tsx");
+    expect(islands[0]?.props).toEqual({ initial: 5 });
   });
 
   it("should collect multiple islands", () => {
     const Counter = island(
       (props: { initial: number }) => <button>{props.initial}</button>,
-      "/Counter.tsx"
+      "/Counter.tsx",
     );
 
     const TodoList = island(
-      (props: { items: string[] }) => <ul></ul>,
-      "/TodoList.tsx"
+      (_props: { items: string[] }) => <ul></ul>,
+      "/TodoList.tsx",
     );
 
     const app = (
@@ -51,12 +51,12 @@ describe("IslandCollector", () => {
     const islands = collector.collect(app);
 
     expect(islands).toHaveLength(3);
-    expect(islands[0].id).toBe("island-0");
-    expect(islands[0].path).toBe("/Counter.tsx");
-    expect(islands[1].id).toBe("island-1");
-    expect(islands[1].path).toBe("/TodoList.tsx");
-    expect(islands[2].id).toBe("island-2");
-    expect(islands[2].path).toBe("/Counter.tsx");
+    expect(islands[0]?.id).toBe("island-0");
+    expect(islands[0]?.path).toBe("/Counter.tsx");
+    expect(islands[1]?.id).toBe("island-1");
+    expect(islands[1]?.path).toBe("/TodoList.tsx");
+    expect(islands[2]?.id).toBe("island-2");
+    expect(islands[2]?.path).toBe("/Counter.tsx");
   });
 
   it("should collect islands at same level", () => {
@@ -77,22 +77,22 @@ describe("IslandCollector", () => {
 
     // Should collect both Card and Button at their respective levels
     expect(islands).toHaveLength(2);
-    expect(islands[0].id).toBe("island-0");
-    expect(islands[0].path).toBe("/Card.tsx");
-    expect(islands[1].id).toBe("island-1");
-    expect(islands[1].path).toBe("/Button.tsx");
+    expect(islands[0]?.id).toBe("island-0");
+    expect(islands[0]?.path).toBe("/Card.tsx");
+    expect(islands[1]?.id).toBe("island-1");
+    expect(islands[1]?.path).toBe("/Button.tsx");
   });
 
   it("should serialize props correctly", () => {
     const Component = island(
-      (props: {
+      (_props: {
         num: number;
         str: string;
         bool: boolean;
         arr: number[];
         obj: any;
       }) => <div></div>,
-      "/Component.tsx"
+      "/Component.tsx",
     );
 
     const app = (
@@ -108,7 +108,7 @@ describe("IslandCollector", () => {
     const collector = createIslandCollector();
     const islands = collector.collect(app);
 
-    expect(islands[0].props).toEqual({
+    expect(islands[0]?.props).toEqual({
       num: 42,
       str: "hello",
       bool: true,
@@ -119,8 +119,8 @@ describe("IslandCollector", () => {
 
   it("should skip non-serializable props", () => {
     const Component = island(
-      (props: { onClick?: () => void; valid: string }) => <div></div>,
-      "/Component.tsx"
+      (_props: { onClick?: () => void; valid: string }) => <div></div>,
+      "/Component.tsx",
     );
 
     const app = <Component onClick={() => console.log("click")} valid="test" />;
@@ -129,8 +129,8 @@ describe("IslandCollector", () => {
     const islands = collector.collect(app);
 
     // Functions should be skipped
-    expect(islands[0].props).toEqual({ valid: "test" });
-    expect(islands[0].props.onClick).toBeUndefined();
+    expect(islands[0]?.props).toEqual({ valid: "test" });
+    expect(islands[0]?.props.onClick).toBeUndefined();
   });
 
   it("should handle islands with no props", () => {
@@ -142,7 +142,7 @@ describe("IslandCollector", () => {
     const islands = collector.collect(app);
 
     expect(islands).toHaveLength(1);
-    expect(islands[0].props).toEqual({});
+    expect(islands[0]?.props).toEqual({});
   });
 
   it("should generate unique IDs for each island", () => {

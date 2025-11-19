@@ -6,8 +6,8 @@
 
 /** @jsxImportSource semajsx/dom */
 
-import { signal, computed } from "semajsx/signal";
-import { render, createPortal } from "semajsx/dom";
+import { computed, signal } from "semajsx/signal";
+import { createPortal, render } from "semajsx/dom";
 
 // Example 1: Basic Modal using Portal
 function Modal(props: { isOpen: boolean; onClose: () => void; children: any }) {
@@ -180,7 +180,9 @@ function Notification(props: {
 }
 
 function NotificationExample() {
-  const notifications = signal<Array<{ id: number; message: string; type: "success" | "error" | "info" }>>([]);
+  const notifications = signal<
+    Array<{ id: number; message: string; type: "success" | "error" | "info" }>
+  >([]);
   let nextId = 0;
 
   const addNotification = (
@@ -188,10 +190,7 @@ function NotificationExample() {
     type: "success" | "error" | "info",
   ) => {
     const id = nextId++;
-    notifications.value = [
-      ...notifications.value,
-      { id, message, type },
-    ];
+    notifications.value = [...notifications.value, { id, message, type }];
 
     // Auto-remove after 3 seconds
     setTimeout(() => {
@@ -203,8 +202,8 @@ function NotificationExample() {
     notifications.value = notifications.value.filter((n) => n.id !== id);
   };
 
-  const notificationsList = computed(() => {
-    return notifications.value.map((notif) => (
+  const notificationsList = computed(notifications, (notifications) => {
+    return notifications.map((notif) => (
       <Notification
         key={notif.id}
         message={notif.message}

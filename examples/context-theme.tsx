@@ -52,7 +52,7 @@ function App() {
 }
 
 // Header component - uses theme Signal from context
-function Header(props: any, ctx: ComponentAPI) {
+function Header(_props: any, ctx: ComponentAPI) {
   const themeSignal = ctx.inject(ThemeContext);
 
   // Handle case where context might not be provided
@@ -76,7 +76,7 @@ function Header(props: any, ctx: ComponentAPI) {
 }
 
 // Content component - uses theme Signal from context
-function Content(props: any, ctx: ComponentAPI) {
+function Content(_props: any, ctx: ComponentAPI) {
   const themeSignal = ctx.inject(ThemeContext);
 
   if (!themeSignal) {
@@ -102,7 +102,7 @@ function Content(props: any, ctx: ComponentAPI) {
 }
 
 // Nested component - deeply nested but still has access to theme
-function NestedComponent(props: any, ctx: ComponentAPI) {
+function NestedComponent(_props: any, ctx: ComponentAPI) {
   const themeSignal = ctx.inject(ThemeContext);
 
   if (!themeSignal) {

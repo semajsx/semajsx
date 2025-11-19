@@ -1,6 +1,6 @@
 /** @jsxImportSource semajsx/dom */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { renderToString } from "@/server/render";
 import { island } from "@/server/island";
 import { signal } from "@/signal/signal";
@@ -39,8 +39,8 @@ describe("renderToString", () => {
     const result = renderToString(app);
 
     expect(result.islands).toHaveLength(1);
-    expect(result.islands[0].id).toBe("island-0");
-    expect(result.islands[0].props).toEqual({ initial: 5 });
+    expect(result.islands[0]?.id).toBe("island-0");
+    expect(result.islands[0]?.props).toEqual({ initial: 5 });
     expect(result.html).toContain('data-island-id="island-0"');
     expect(result.html).toContain("data-island-props=");
   });
@@ -71,9 +71,9 @@ describe("renderToString", () => {
     const result = renderToString(app);
 
     expect(result.islands).toHaveLength(3);
-    expect(result.islands[0].id).toBe("island-0");
-    expect(result.islands[1].id).toBe("island-1");
-    expect(result.islands[2].id).toBe("island-2");
+    expect(result.islands[0]?.id).toBe("island-0");
+    expect(result.islands[1]?.id).toBe("island-1");
+    expect(result.islands[2]?.id).toBe("island-2");
 
     expect(result.scripts).toContain("island-0.js");
     expect(result.scripts).toContain("island-1.js");
@@ -240,7 +240,7 @@ describe("renderToString", () => {
     // Test with absolute path
     const Counter = island(
       () => <button>Click</button>,
-      "file:///home/user/project/src/components/Counter.tsx"
+      "file:///home/user/project/src/components/Counter.tsx",
     );
 
     const app = <Counter />;
@@ -258,8 +258,8 @@ describe("renderToString", () => {
     expect(result.html).toContain("data-island-props=");
 
     // Server-side metadata should still have the path
-    expect(result.islands[0].path).toBe(
-      "file:///home/user/project/src/components/Counter.tsx"
+    expect(result.islands[0]?.path).toBe(
+      "file:///home/user/project/src/components/Counter.tsx",
     );
   });
 });
