@@ -64,8 +64,8 @@ semajsx/
    - `server/island.ts` - Island component annotation
    - `server/render.ts` - Server-side rendering to HTML
    - `server/collector.ts` - Runtime island discovery
-   - `server/builder.ts` - Lazy island code building
-   - `server/router.ts` - Route management with SSR
+   - `server/vite-builder.ts` - Vite-powered island module transformation
+   - `server/vite-router.ts` - Route management with SSR and Vite integration
    - `client/hydrate.ts` - Client-side island hydration
 
 ## Development Commands
@@ -150,58 +150,64 @@ SemaJSX supports two rendering targets:
 
 ### SSR Island Architecture
 
-SemaJSX implements a modern **Island Architecture** for server-side rendering:
+SemaJSX implements a modern **Island Architecture** for server-side rendering with Vite integration:
 
 - **Runtime Discovery** - Islands are discovered during SSR rendering, no build-time analysis required
 - **Manual Annotation** - Components are explicitly marked as islands using `island()` function
-- **Lazy Building** - Island client code is built on-demand when requested
+- **Vite-Powered** - Uses Vite for on-demand module transformation
+- **Shared Dependencies** - All islands share the same dependencies (e.g., semajsx/dom)
 - **Selective Hydration** - Only island components are hydrated on the client
-- **Performance** - Static content loads instantly without JavaScript
+- **Performance** - Static content loads instantly, dependencies are cached
 
 **Island Workflow:**
 
 ```tsx
 // 1. Mark component as an island
-import { island } from 'semajsx/server'
+import { island } from "semajsx/server";
 
 export const Counter = island(
   function Counter({ initial = 0 }) {
-    const count = signal(initial)
-    return <button onClick={() => count.value++}>{count}</button>
+    const count = signal(initial);
+    return <button onClick={() => count.value++}>{count}</button>;
   },
-  import.meta.url  // Component module path
-)
+  import.meta.url, // Component module path
+);
 
 // 2. Use in your app (mix static and interactive)
 function App() {
   return (
     <div>
       <h1>Static Content</h1>
-      <Counter initial={0} />  {/* Island - will hydrate */}
+      <Counter initial={0} /> {/* Island - will hydrate */}
       <p>More static content</p>
     </div>
-  )
+  );
 }
 
-// 3. Create server with router
-import { createRouter } from 'semajsx/server'
+// 3. Create server with Vite router
+import { createViteRouter } from "semajsx/server";
 
-const router = createRouter({
-  '/': () => <App />
-})
+const router = await createViteRouter(
+  {
+    "/": () => <App />,
+  },
+  { dev: true },
+);
 
 // 4. Handle requests
-const result = await router.get('/')  // { html, islands, scripts }
-const islandCode = await router.getIslandCode('island-0')  // Lazy build
+const result = await router.get("/"); // { html, islands, scripts }
+const entryPoint = await router.getIslandEntryPoint("island-0");
+const module = await router.handleModuleRequest("/@fs/path/to/module");
 ```
 
 **Benefits:**
 
 - **Fast Initial Load** - Static HTML loads instantly
-- **Minimal JavaScript** - Only interactive components load JS
+- **Minimal JavaScript** - Only interactive components load JS, shared dependencies
 - **SEO Friendly** - Full server-side rendering
 - **Runtime Flexibility** - No build-time configuration needed
 - **Natural DX** - Simple `island()` wrapper for marking components
+- **Browser Caching** - Shared modules can be cached long-term
 
 ### Signal VNodes
 
@@ -233,7 +239,8 @@ const view = computed(() =>
 - `src/dom/properties.ts` - DOM property setting with signal support
 - `src/server/island.ts` - Island component annotation for SSR
 - `src/server/render.ts` - Server-side rendering to HTML strings
-- `src/server/router.ts` - Router with lazy island building
+- `src/server/vite-router.ts` - Vite-powered router with SSR
+- `src/server/vite-builder.ts` - Vite integration for module transformation
 - `src/client/hydrate.ts` - Client-side island hydration
 - `src/terminal/render.ts` - Terminal rendering logic
 - `src/terminal/renderer.ts` - Terminal layout engine with Yoga
@@ -259,6 +266,7 @@ The project uses **Vitest** with two test configurations:
    - Run with: `bun run test`
 
 Test Structure:
+
 - `tests/signal/` - Signal system tests (signal, computed, batch)
 - `tests/runtime/` - Runtime tests (VNode, helpers)
 - `tests/terminal/` - Terminal rendering tests
@@ -281,7 +289,7 @@ Exports:
 - `semajsx/dom` - DOM rendering utilities
 - `semajsx/dom/jsx-runtime` - DOM JSX runtime (production)
 - `semajsx/dom/jsx-dev-runtime` - DOM JSX dev runtime
-- `semajsx/server` - SSR and Island architecture (island, renderToString, createRouter)
+- `semajsx/server` - SSR and Island architecture (island, renderToString, createViteRouter)
 - `semajsx/client` - Client-side hydration utilities
 - `semajsx/terminal` - Terminal rendering system
 - `semajsx/terminal/jsx-runtime` - Terminal JSX runtime (production)

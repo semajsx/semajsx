@@ -1,17 +1,21 @@
-/** @jsxImportSource semajsx/dom */
-
-import { createRouter } from "../../src/server";
+import { createViteRouter } from "../../src/server";
 import { App } from "./App";
 
 /**
- * SSR Islands Server Example
- * Demonstrates runtime island discovery and lazy building
+ * SSR Islands Server with Vite
+ * Uses Vite dev server for module transformation (no bundling!)
  */
 
-// Create router with routes
-const router = createRouter({
-  "/": () => <App />,
-});
+// Create Vite-powered router
+const router = await createViteRouter(
+  {
+    "/": () => <App />,
+  },
+  {
+    dev: true, // Enable Vite dev server
+    root: import.meta.dir, // Project root
+  },
+);
 
 // Create HTTP server
 const server = Bun.serve({
@@ -20,54 +24,70 @@ const server = Bun.serve({
     const url = new URL(req.url);
     console.log(`[${new Date().toISOString()}] ${req.method} ${url.pathname}`);
 
-    // Handle island code requests
-    if (url.pathname.startsWith("/islands/")) {
-      const islandId = url.pathname.match(/\/islands\/(.+)\.js/)?.[1];
+    try {
+      // Handle Vite module requests (/@fs/, /@vite/, /node_modules/, etc.)
+      if (
+        url.pathname.startsWith("/@") ||
+        url.pathname.startsWith("/node_modules/") ||
+        url.pathname.includes("/@fs/")
+      ) {
+        console.log(`  → Vite module request: ${url.pathname}`);
+        const result = await router.handleModuleRequest(url.pathname);
 
-      if (!islandId) {
-        return new Response("Island ID not found", { status: 400 });
-      }
-
-      try {
-        const island = router.getIsland(islandId);
-        if (!island) {
-          return new Response("Island not found", { status: 404 });
+        if (result) {
+          return new Response(result.code, {
+            headers: {
+              "Content-Type": "application/javascript",
+              "Cache-Control": "no-cache",
+            },
+          });
         }
 
-        console.log(`  → Building island: ${islandId} (${island.path})`);
-        const code = await router.getIslandCode(islandId);
+        return new Response("Module not found", { status: 404 });
+      }
+
+      // Handle island entry point requests
+      if (url.pathname.startsWith("/islands/")) {
+        const islandId = url.pathname.match(/\/islands\/(.+)\.js/)?.[1];
+
+        if (!islandId) {
+          return new Response("Invalid island ID", { status: 400 });
+        }
+
+        console.log(`  → Island entry point: ${islandId}`);
+        const code = await router.getIslandEntryPoint(islandId);
 
         return new Response(code, {
           headers: {
-            "Content-Type": "application/javascript",
-            "Cache-Control": "public, max-age=31536000, immutable",
+            "Content-Type": "application/javascript; charset=utf-8",
+            "Cache-Control": "no-cache",
           },
         });
-      } catch (error) {
-        console.error(`  ✗ Error building island ${islandId}:`, error);
-        return new Response(`Error building island: ${error}`, {
-          status: 500,
-        });
       }
-    }
 
-    // Handle page requests
-    try {
+      // Handle page requests
       const result = await router.get(url.pathname);
 
       console.log(`  ✓ Rendered page with ${result.islands.length} islands`);
       for (const island of result.islands) {
         console.log(
-          `    - ${island.id}: ${
-            island.componentName || "anonymous"
-          } (${island.path})`,
+          `    - ${island.id}: ${island.componentName || "anonymous"} (${island.path})`,
         );
       }
 
       const html = `
 <!DOCTYPE html>
-${result.html}
-${result.scripts}
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SemaJSX SSR Islands (Vite)</title>
+</head>
+<body>
+  ${result.html}
+  ${result.scripts}
+</body>
+</html>
       `.trim();
 
       return new Response(html, {
@@ -76,7 +96,7 @@ ${result.scripts}
         },
       });
     } catch (error: any) {
-      console.error(`  ✗ Error rendering page:`, error);
+      console.error(`  ✗ Error:`, error);
 
       if (error.message?.includes("Route not found")) {
         return new Response("404 - Page Not Found", { status: 404 });
@@ -90,16 +110,30 @@ ${result.scripts}
 });
 
 console.log(`
-🏝️  SemaJSX SSR Islands Server
+🏝️  SemaJSX SSR Islands Server (Vite-powered!)
 
 Server running at: http://localhost:${server.port}
 
 Features:
-  ✅ Runtime island discovery
-  ✅ Lazy island building
-  ✅ Automatic hydration
-  ✅ Minimal JavaScript
+  ✅ Vite dev server for instant module transformation
+  ✅ No bundling - modules loaded on demand
+  ✅ Shared dependencies - semajsx loaded once
+  ✅ Fast HMR-ready setup
+  ✅ Browser caching for dependencies
 
 Try it:
   Open http://localhost:${server.port} in your browser!
+
+Dev Tools:
+  - Check Network tab to see module loading
+  - Notice how semajsx is loaded separately and cached
+  - Islands share the same semajsx dependency!
 `);
+
+// Cleanup on exit
+process.on("SIGINT", async () => {
+  console.log("\n\nShutting down...");
+  await router.close();
+  server.stop();
+  process.exit(0);
+});
