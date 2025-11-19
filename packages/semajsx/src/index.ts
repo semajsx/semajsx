@@ -4,7 +4,7 @@
 
 // Core exports
 export * from "./signal";
-export * from "./runtime";
+export * from "@semajsx/core";
 
 // Helpers
-export { resource, stream, when } from "./runtime/helpers";
+export { resource, stream, when } from "@semajsx/core";

@@ -121,6 +121,7 @@
     "vitest": "^4.0.8"
   },
   "dependencies": {
+    "@semajsx/core": "workspace:*",
     "@semajsx/signal": "workspace:*",
     "@semajsx/utils": "workspace:*",
     "ansi-escapes": "^7.2.0",

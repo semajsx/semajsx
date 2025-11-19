@@ -6,6 +6,7 @@
       "semajsx": ["./packages/semajsx/src/index.ts"],
       "semajsx/*": ["./packages/semajsx/src/*"],
       "@semajsx/*": ["./packages/*/src"],
+      "@semajsx/core": ["./packages/core/src/index.ts"],
       "@semajsx/signal": ["./packages/signal/src/index.ts"],
       "@semajsx/utils": ["./packages/utils/src/index.ts"]
     }
@@ -15,6 +16,7 @@
     { "path": "./packages/configs" },
     { "path": "./packages/utils" },
     { "path": "./packages/signal" },
+    { "path": "./packages/core" },
     { "path": "./packages/semajsx" }
   ]
 }

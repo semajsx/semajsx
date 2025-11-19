@@ -8,6 +8,7 @@
       "semajsx": ["./src/index.ts"],
       "semajsx/*": ["./src/*"],
       "@/*": ["./src/*"],
+      "@semajsx/core": ["../core/src/index.ts"],
       "@semajsx/signal": ["../signal/src/index.ts"],
       "@semajsx/utils": ["../utils/src/index.ts"]
     }

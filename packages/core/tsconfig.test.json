@@ -1,0 +1,12 @@
+{
+  "extends": "@semajsx/configs/tsconfig.test.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@semajsx/core": ["./src/index.ts"],
+      "@semajsx/signal": ["../signal/src/index.ts"],
+      "@semajsx/utils": ["../utils/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "tests/**/*.ts", "tests/**/*.tsx"]
+}
