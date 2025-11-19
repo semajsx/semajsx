@@ -245,25 +245,31 @@ export class Logger {
    * Start a log group
    */
   group(title: string, options: GroupOptions = {}): this {
-    const { bordered = true, borderColor = "cyan" } = options;
-
-    const content = (
-      <box flexDirection="column">
-        <text bold color={borderColor}>
-          ▼ {title}
-        </text>
-      </box>
-    );
+    const { bordered = false, borderColor = "cyan" } = options;
 
     if (bordered) {
+      // Bordered style - box with title
       print(
         <box border="round" borderColor={borderColor} padding={1}>
-          {content}
+          <text bold color={borderColor}>
+            {title}
+          </text>
         </box>,
         { stream: this.options.stream },
       );
     } else {
-      print(content, { stream: this.options.stream });
+      // Default style - title with underline
+      print(
+        <box flexDirection="column">
+          <text bold color={borderColor}>
+            {title}
+          </text>
+          <text color={borderColor} dim>
+            {"─".repeat(Math.min(title.length, 50))}
+          </text>
+        </box>,
+        { stream: this.options.stream },
+      );
     }
 
     this.groupDepth++;

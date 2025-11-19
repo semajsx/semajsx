@@ -76,12 +76,13 @@ export interface LoggerOptions {
 export interface GroupOptions {
   /**
    * Whether to show border around group
-   * @default true
+   * @default false
    */
   bordered?: boolean;
 
   /**
-   * Border color
+   * Border/underline color
+   * @default "cyan"
    */
   borderColor?: string;
 
