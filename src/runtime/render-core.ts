@@ -121,14 +121,30 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
   function collectNodes(rendered: RenderedNode<TNode>): TNode[] {
     const nodes: TNode[] = [];
 
-    // If this rendered node has a direct DOM node, include it
-    if (rendered.node) {
-      nodes.push(rendered.node);
+    // Fragment: no node, only children
+    if (rendered.vnode.type === Fragment) {
+      for (const child of rendered.children) {
+        nodes.push(...collectNodes(child));
+      }
+      return nodes;
     }
 
-    // Also collect nodes from children (handles Fragments and initial signal content)
-    for (const child of rendered.children) {
-      nodes.push(...collectNodes(child));
+    // Signal marker: include marker node + content children
+    if (rendered.vnode.type === "#signal") {
+      if (rendered.node) {
+        nodes.push(rendered.node); // marker
+      }
+      // Collect content children (after marker)
+      for (const child of rendered.children) {
+        nodes.push(...collectNodes(child));
+      }
+      return nodes;
+    }
+
+    // Regular elements and text nodes: just the node itself
+    // Children are already attached to the node
+    if (rendered.node) {
+      nodes.push(rendered.node);
     }
 
     return nodes;
