@@ -254,7 +254,12 @@ const view = computed(() =>
 2. **Type everything** - Use TypeScript for all code
 3. **Test with examples** - Create examples to verify functionality
 4. **Document edge cases** - Comment non-obvious behavior
-5. **Type safety rules**:
+5. **Use JSX syntax**:
+   - **Always use JSX** in examples, tests, and documentation
+   - **Never use `h()` directly** in user-facing code (tests, examples)
+   - The `h()` function is internal - JSX is the public API
+   - Exception: Internal runtime code may use `h()` for implementation
+6. **Type safety rules**:
    - **NEVER use `as any`** - Avoid any type assertions that bypass type checking
    - Prefer proper type definitions over type casting
    - Use `unknown` instead of `any` when the type is genuinely unknown
@@ -296,6 +301,59 @@ Pre-commit hooks automatically run on staged files:
 - **Lint**: oxlint with auto-fix on TypeScript files
 - **Commit Messages**: Conventional commits enforced (English only)
 
+### Git Workflow
+
+**IMPORTANT: Always let Git hooks run. Never use `--no-verify` flag.**
+
+The project has pre-commit hooks that ensure code quality. These hooks:
+- Automatically format code with Prettier
+- Run linting and auto-fix issues
+- Validate commit message format
+
+✅ **Good - Let hooks run:**
+```bash
+git add .
+git commit -m "feat: add new feature"
+# Hooks will run automatically
+```
+
+❌ **Bad - Don't skip hooks:**
+```bash
+# DON'T DO THIS
+git commit --no-verify -m "skip hooks"
+git commit -n -m "skip hooks"
+```
+
+**Commit Message Format:**
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>: <description>
+
+[optional body]
+
+[optional footer]
+```
+
+**Types:**
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `refactor:` - Code refactoring
+- `test:` - Adding or updating tests
+- `docs:` - Documentation changes
+- `chore:` - Maintenance tasks
+- `style:` - Code style changes (formatting)
+- `perf:` - Performance improvements
+
+**Examples:**
+```bash
+git commit -m "feat: add signal batching support"
+git commit -m "fix: resolve memory leak in effect cleanup"
+git commit -m "refactor: convert test files to use JSX syntax"
+git commit -m "test: add integration tests for portal component"
+```
+
 ## Testing
 
 The project uses **Vitest** with two test configurations:
@@ -309,11 +367,126 @@ The project uses **Vitest** with two test configurations:
    - Playwright/Chromium for DOM rendering tests
    - Run with: `bun run test`
 
-Test Structure:
+### Test Structure
 
 - `tests/signal/` - Signal system tests (signal, computed, batch)
-- `tests/runtime/` - Runtime tests (VNode, helpers)
+- `tests/runtime/` - Runtime tests (VNode, helpers, context)
+- `tests/dom/` - DOM-specific tests (ref, portal, signal-array)
+- `tests/server/` - SSR and island tests (render, island, collector)
 - `tests/terminal/` - Terminal rendering tests
+
+### Writing Tests
+
+**IMPORTANT: Always use JSX syntax in tests, never use `h()` function calls directly.**
+
+✅ **Good - Use JSX:**
+```tsx
+/** @jsxImportSource semajsx/dom */
+
+it("should render a component", () => {
+  const Greeting = ({ name }: { name: string }) => {
+    return <h1>Hello, {name}!</h1>;
+  };
+
+  const vnode = <Greeting name="World" />;
+  render(vnode, container);
+
+  expect(container.textContent).toBe("Hello, World!");
+});
+```
+
+❌ **Bad - Don't use h():**
+```tsx
+// DON'T DO THIS
+import { h } from "@/runtime/vnode";
+
+it("should render a component", () => {
+  const Greeting = ({ name }: { name: string }) => {
+    return h("h1", null, `Hello, ${name}!`);
+  };
+
+  const vnode = h(Greeting, { name: "World" });  // Wrong!
+  render(vnode, container);
+});
+```
+
+### Test File Guidelines
+
+1. **File Extension**: Use `.tsx` for test files that use JSX (most test files)
+2. **JSX Import Source**: Always add the appropriate `@jsxImportSource` directive:
+   - For DOM tests: `/** @jsxImportSource semajsx/dom */`
+   - For Terminal tests: `/** @jsxImportSource semajsx/terminal */`
+
+3. **Component Usage**: Use JSX component syntax `<Component prop={value} />` instead of function calls `Component({ prop: value })`
+
+4. **Element Creation**: Use JSX tags `<div>content</div>` instead of `h("div", null, "content")`
+
+### Test Examples
+
+**DOM Component Test:**
+```tsx
+/** @jsxImportSource semajsx/dom */
+
+import { signal } from "@/signal";
+import { render } from "@/dom/render";
+
+it("should handle reactive components", () => {
+  const Counter = ({ initial = 0 }) => {
+    const count = signal(initial);
+    return <button onClick={() => count.value++}>{count}</button>;
+  };
+
+  const vnode = <Counter initial={5} />;
+  render(vnode, container);
+
+  expect(container.textContent).toBe("5");
+});
+```
+
+**Terminal Component Test:**
+```tsx
+/** @jsxImportSource semajsx/terminal */
+
+import { render } from "@/terminal";
+
+it("should render terminal component", () => {
+  const app = (
+    <box flexDirection="column">
+      <text color="green" bold={true}>
+        Styled Text
+      </text>
+    </box>
+  );
+
+  render(app, { renderer });
+  expect(mockStream.output.length).toBeGreaterThan(0);
+});
+```
+
+**Island Component Test:**
+```tsx
+/** @jsxImportSource semajsx/dom */
+
+import { island } from "@/server/island";
+import { renderToString } from "@/server/render";
+
+it("should render island as placeholder", () => {
+  const Counter = island(
+    ({ initial = 0 }) => <button>Count: {initial}</button>,
+    "/Counter.tsx"
+  );
+
+  const app = (
+    <div>
+      <h1>App</h1>
+      <Counter initial={5} />
+    </div>
+  );
+
+  const result = renderToString(app);
+  expect(result.islands).toHaveLength(1);
+});
+```
 
 ## Publishing
 
