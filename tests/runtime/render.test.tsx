@@ -3,7 +3,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { computed, signal } from "@/signal";
 import { render, unmount } from "@/dom/render";
-import { h } from "@/runtime/vnode";
 
 describe("render", () => {
   let container: HTMLDivElement;
@@ -18,18 +17,18 @@ describe("render", () => {
   });
 
   it("should render simple element", () => {
-    const vnode = h("div", { class: "test" }, "Hello");
+    const vnode = <div class="test">Hello</div>;
     render(vnode, container);
 
     expect(container.innerHTML).toContain('<div class="test">Hello</div>');
   });
 
   it("should render nested elements", () => {
-    const vnode = h(
-      "div",
-      null,
-      h("h1", null, "Title"),
-      h("p", null, "Content"),
+    const vnode = (
+      <div>
+        <h1>Title</h1>
+        <p>Content</p>
+      </div>
     );
     render(vnode, container);
 
@@ -39,7 +38,7 @@ describe("render", () => {
 
   it("should render signal as text", () => {
     const count = signal(5);
-    const vnode = h("div", null, count);
+    const vnode = <div>{count}</div>;
     render(vnode, container);
 
     expect(container.textContent).toContain("5");
@@ -51,7 +50,7 @@ describe("render", () => {
   it("should render computed signal", () => {
     const count = signal(5);
     const doubled = computed([count], (c) => c * 2);
-    const vnode = h("div", null, doubled);
+    const vnode = <div>{doubled}</div>;
     render(vnode, container);
 
     expect(container.textContent).toContain("10");
@@ -62,10 +61,8 @@ describe("render", () => {
 
   it("should render signal VNode", () => {
     const show = signal(true);
-    const content = computed([show], (s) =>
-      s ? h("p", null, "Visible") : h("p", null, "Hidden"),
-    );
-    const vnode = h("div", null, content);
+    const content = computed([show], (s) => (s ? <p>Visible</p> : <p>Hidden</p>));
+    const vnode = <div>{content}</div>;
     render(vnode, container);
 
     expect(container.textContent).toContain("Visible");
@@ -76,7 +73,7 @@ describe("render", () => {
 
   it("should handle signal props", () => {
     const className = signal("initial");
-    const vnode = h("div", { class: className }, "Test");
+    const vnode = <div class={className}>Test</div>;
     render(vnode, container);
 
     const div = container.querySelector("div");
@@ -88,14 +85,14 @@ describe("render", () => {
 
   it("should handle event handlers", () => {
     let clicked = false;
-    const vnode = h(
-      "button",
-      {
-        onclick: () => {
+    const vnode = (
+      <button
+        onclick={() => {
           clicked = true;
-        },
-      },
-      "Click me",
+        }}
+      >
+        Click me
+      </button>
     );
     render(vnode, container);
 
@@ -107,10 +104,10 @@ describe("render", () => {
 
   it("should render components", () => {
     const Greeting = ({ name }: { name: string }) => {
-      return h("h1", null, `Hello, ${name}!`);
+      return <h1>Hello, {name}!</h1>;
     };
 
-    const vnode = h(Greeting, { name: "World" });
+    const vnode = <Greeting name="World" />;
     render(vnode, container);
 
     expect(container.textContent).toBe("Hello, World!");
@@ -133,7 +130,7 @@ describe("render", () => {
 
   it("should unmount and cleanup subscriptions", () => {
     const count = signal(0);
-    const vnode = h("div", null, count);
+    const vnode = <div>{count}</div>;
     const rendered = render(vnode, container);
 
     // Store reference to the div before unmount

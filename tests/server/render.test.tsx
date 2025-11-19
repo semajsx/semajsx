@@ -1,12 +1,18 @@
+/** @jsxImportSource semajsx/dom */
+
 import { describe, it, expect } from "vitest";
 import { renderToString } from "@/server/render";
 import { island } from "@/server/island";
 import { signal } from "@/signal/signal";
-import { h } from "@/runtime/vnode";
 
 describe("renderToString", () => {
   it("should render simple HTML", () => {
-    const app = h("div", null, h("h1", null, "Hello"), h("p", null, "World"));
+    const app = (
+      <div>
+        <h1>Hello</h1>
+        <p>World</p>
+      </div>
+    );
 
     const result = renderToString(app);
 
@@ -20,10 +26,15 @@ describe("renderToString", () => {
   it("should render islands as placeholders", () => {
     const Counter = island(function Counter({ initial = 0 }) {
       const count = signal(initial);
-      return h("button", null, count);
+      return <button>{count}</button>;
     }, "/Counter.tsx");
 
-    const app = h("div", null, h("h1", null, "App"), Counter({ initial: 5 }));
+    const app = (
+      <div>
+        <h1>App</h1>
+        <Counter initial={5} />
+      </div>
+    );
 
     const result = renderToString(app);
 
@@ -35,9 +46,9 @@ describe("renderToString", () => {
   });
 
   it("should generate scripts for islands", () => {
-    const Counter = island(() => h("button", null, "Click"), "/Counter.tsx");
+    const Counter = island(() => <button>Click</button>, "/Counter.tsx");
 
-    const app = Counter({});
+    const app = <Counter />;
 
     const result = renderToString(app, { islandBasePath: "/islands" });
 
@@ -46,10 +57,16 @@ describe("renderToString", () => {
   });
 
   it("should handle multiple islands", () => {
-    const Counter = island(() => h("button", null, "Count"), "/Counter.tsx");
-    const TodoList = island(() => h("ul", null), "/TodoList.tsx");
+    const Counter = island(() => <button>Count</button>, "/Counter.tsx");
+    const TodoList = island(() => <ul></ul>, "/TodoList.tsx");
 
-    const app = h("div", null, Counter({}), TodoList({}), Counter({}));
+    const app = (
+      <div>
+        <Counter />
+        <TodoList />
+        <Counter />
+      </div>
+    );
 
     const result = renderToString(app);
 
@@ -64,11 +81,17 @@ describe("renderToString", () => {
   });
 
   it("should render nested elements correctly", () => {
-    const app = h(
-      "div",
-      { className: "container" },
-      h("header", null, h("h1", null, "Title")),
-      h("main", null, h("section", null, h("p", null, "Content"))),
+    const app = (
+      <div className="container">
+        <header>
+          <h1>Title</h1>
+        </header>
+        <main>
+          <section>
+            <p>Content</p>
+          </section>
+        </main>
+      </div>
     );
 
     const result = renderToString(app);
@@ -82,11 +105,13 @@ describe("renderToString", () => {
   });
 
   it("should handle attributes correctly", () => {
-    const app = h(
-      "div",
-      null,
-      h("a", { href: "/about", target: "_blank", rel: "noopener" }, "Link"),
-      h("input", { type: "text", value: "test", disabled: true }),
+    const app = (
+      <div>
+        <a href="/about" target="_blank" rel="noopener">
+          Link
+        </a>
+        <input type="text" value="test" disabled={true} />
+      </div>
     );
 
     const result = renderToString(app);
@@ -100,7 +125,7 @@ describe("renderToString", () => {
   });
 
   it("should handle className attribute", () => {
-    const app = h("div", { className: "container main-content" }, "Content");
+    const app = <div className="container main-content">Content</div>;
 
     const result = renderToString(app);
 
@@ -108,7 +133,11 @@ describe("renderToString", () => {
   });
 
   it("should escape HTML in text content", () => {
-    const app = h("div", null, h("p", null, "<script>alert('xss')</script>"));
+    const app = (
+      <div>
+        <p>{"<script>alert('xss')</script>"}</p>
+      </div>
+    );
 
     const result = renderToString(app);
 
@@ -117,13 +146,13 @@ describe("renderToString", () => {
   });
 
   it("should handle self-closing tags", () => {
-    const app = h(
-      "div",
-      null,
-      h("img", { src: "/logo.png", alt: "Logo" }),
-      h("br"),
-      h("hr"),
-      h("input", { type: "text" }),
+    const app = (
+      <div>
+        <img src="/logo.png" alt="Logo" />
+        <br />
+        <hr />
+        <input type="text" />
+      </div>
     );
 
     const result = renderToString(app);
@@ -135,20 +164,20 @@ describe("renderToString", () => {
   });
 
   it("should handle mixed static and island content", () => {
-    const Counter = island(() => h("button", null, "Count"), "/Counter.tsx");
+    const Counter = island(() => <button>Count</button>, "/Counter.tsx");
 
-    const app = h(
-      "div",
-      null,
-      h("header", null, h("h1", null, "Static Header")),
-      h(
-        "main",
-        null,
-        h("p", null, "Some static content"),
-        Counter({}),
-        h("p", null, "More static content"),
-      ),
-      h("footer", null, "Static Footer"),
+    const app = (
+      <div>
+        <header>
+          <h1>Static Header</h1>
+        </header>
+        <main>
+          <p>Some static content</p>
+          <Counter />
+          <p>More static content</p>
+        </main>
+        <footer>Static Footer</footer>
+      </div>
     );
 
     const result = renderToString(app);
@@ -162,9 +191,9 @@ describe("renderToString", () => {
   });
 
   it("should use custom island base path", () => {
-    const Counter = island(() => h("button", null, "Count"), "/Counter.tsx");
+    const Counter = island(() => <button>Count</button>, "/Counter.tsx");
 
-    const app = Counter({});
+    const app = <Counter />;
 
     const result = renderToString(app, { islandBasePath: "/custom/path" });
 
@@ -174,10 +203,12 @@ describe("renderToString", () => {
   it("should handle array children", () => {
     const items = ["Apple", "Banana", "Cherry"];
 
-    const app = h(
-      "ul",
-      null,
-      ...items.map((item) => h("li", { key: item }, item)),
+    const app = (
+      <ul>
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
     );
 
     const result = renderToString(app);
@@ -188,13 +219,13 @@ describe("renderToString", () => {
   });
 
   it("should handle null and undefined children", () => {
-    const app = h(
-      "div",
-      null,
-      h("p", null, "Before"),
-      null,
-      undefined,
-      h("p", null, "After"),
+    const app = (
+      <div>
+        <p>Before</p>
+        {null}
+        {undefined}
+        <p>After</p>
+      </div>
     );
 
     const result = renderToString(app);
@@ -208,11 +239,11 @@ describe("renderToString", () => {
   it("should not expose file paths in HTML (security)", () => {
     // Test with absolute path
     const Counter = island(
-      () => h("button", null, "Click"),
-      "file:///home/user/project/src/components/Counter.tsx",
+      () => <button>Click</button>,
+      "file:///home/user/project/src/components/Counter.tsx"
     );
 
-    const app = Counter({});
+    const app = <Counter />;
 
     const result = renderToString(app);
 
@@ -228,7 +259,7 @@ describe("renderToString", () => {
 
     // Server-side metadata should still have the path
     expect(result.islands[0].path).toBe(
-      "file:///home/user/project/src/components/Counter.tsx",
+      "file:///home/user/project/src/components/Counter.tsx"
     );
   });
 });

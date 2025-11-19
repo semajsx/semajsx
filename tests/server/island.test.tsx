@@ -1,13 +1,14 @@
+/** @jsxImportSource semajsx/dom */
+
 import { describe, it, expect } from "vitest";
 import { island, isIslandComponent, isIslandVNode } from "@/server/island";
 import { signal } from "@/signal/signal";
-import { h } from "@/runtime/vnode";
 
 describe("island", () => {
   it("should mark component as island", () => {
     const Counter = island(function Counter({ initial = 0 }) {
       const count = signal(initial);
-      return h("button", { onClick: () => count.value++ }, count);
+      return <button onClick={() => count.value++}>{count}</button>;
     }, "/path/to/Counter.tsx");
 
     expect(isIslandComponent(Counter)).toBe(true);
@@ -16,27 +17,27 @@ describe("island", () => {
   it("should create VNode with island marker", () => {
     const Counter = island(function Counter({ initial = 0 }) {
       const count = signal(initial);
-      return h("button", null, count);
+      return <button>{count}</button>;
     }, "/path/to/Counter.tsx");
 
-    const vnode = Counter({ initial: 5 });
+    const vnode = <Counter initial={5} />;
     expect(isIslandVNode(vnode)).toBe(true);
   });
 
   it("should preserve component props", () => {
     const Counter = island(function Counter({ initial = 0, label = "Count" }) {
-      return h("div", null, `${label}: ${initial}`);
+      return <div>{`${label}: ${initial}`}</div>;
     }, "/path/to/Counter.tsx");
 
-    const vnode = Counter({ initial: 10, label: "Total" });
+    const vnode = <Counter initial={10} label="Total" />;
     expect(vnode.props).toEqual({ initial: 10, label: "Total" });
   });
 
   it("should store module path in island metadata", () => {
     const modulePath = "/src/components/MyComponent.tsx";
-    const MyComponent = island(() => h("div", null, "Hello"), modulePath);
+    const MyComponent = island(() => <div>Hello</div>, modulePath);
 
-    const vnode = MyComponent({});
+    const vnode = <MyComponent />;
     expect(isIslandVNode(vnode)).toBe(true);
 
     // Check that island marker contains module path
@@ -46,20 +47,17 @@ describe("island", () => {
   });
 
   it("should not mark regular components as islands", () => {
-    const RegularComponent = () => h("div", null, "Not an island");
+    const RegularComponent = () => <div>Not an island</div>;
     expect(isIslandComponent(RegularComponent)).toBe(false);
 
-    const vnode = RegularComponent();
+    const vnode = <RegularComponent />;
     expect(isIslandVNode(vnode)).toBe(false);
   });
 
   it("should work with components that have no props", () => {
-    const Static = island(
-      () => h("div", null, "Static content"),
-      "/path/to/Static.tsx",
-    );
+    const Static = island(() => <div>Static content</div>, "/path/to/Static.tsx");
 
-    const vnode = Static({});
+    const vnode = <Static />;
     expect(isIslandVNode(vnode)).toBe(true);
   });
 });
