@@ -79,8 +79,11 @@ bun run build
 # Watch mode for development
 bun run dev
 
-# Type checking
+# Type checking (all files including examples and tests)
 bun run typecheck
+
+# Type checking (library code only)
+bun run typecheck:lib
 ```
 
 ### Testing
@@ -251,6 +254,47 @@ const view = computed(() =>
 2. **Type everything** - Use TypeScript for all code
 3. **Test with examples** - Create examples to verify functionality
 4. **Document edge cases** - Comment non-obvious behavior
+5. **Type safety rules**:
+   - **NEVER use `as any`** - Avoid any type assertions that bypass type checking
+   - Prefer proper type definitions over type casting
+   - Use `unknown` instead of `any` when the type is genuinely unknown
+   - If type assertion is absolutely necessary, use specific types (e.g., `as HTMLElement`)
+   - Document why a type assertion is needed if it must be used
+
+## Code Quality
+
+### Type Checking
+
+The project uses strict TypeScript configuration with comprehensive type checking:
+
+- **Full Coverage**: `bun run typecheck` checks ALL TypeScript files including `src/`, `tests/`, and `examples/`
+- **Build-Only**: `bun run typecheck:lib` checks only library code in `src/` for build validation
+- **Strict Mode**: Enabled with additional checks:
+  - `noUncheckedIndexedAccess`: Array/object access safety
+  - `noImplicitOverride`: Explicit override declarations
+  - `noUnusedLocals` / `noUnusedParameters`: No unused code
+  - `noFallthroughCasesInSwitch`: Complete switch statements
+
+### Linting & Formatting
+
+The project uses **oxlint** (fast Rust-based linter) and **Prettier**:
+
+- **Lint All Files**: `bun run lint` checks `src/`, `tests/`, and `examples/`
+- **Auto-Fix**: `bun run lint:fix` automatically fixes issues
+- **Format**: `bun run format` formats all files with Prettier
+
+**Enforced Rules**:
+- `@typescript-eslint/no-explicit-any` (error): Prevents `any` type usage
+- `@typescript-eslint/no-unsafe-*` (warnings): Warns about unsafe type operations
+- `english-only/no-non-english-comments` (error): English-only comments required
+- Console/debugger statements (warnings): Clean production code
+
+### Git Hooks
+
+Pre-commit hooks automatically run on staged files:
+- **Format**: Prettier on all staged files
+- **Lint**: oxlint with auto-fix on TypeScript files
+- **Commit Messages**: Conventional commits enforced (English only)
 
 ## Testing
 

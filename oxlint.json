@@ -5,7 +5,12 @@
     "no-debugger": "warn",
     "no-console": "warn",
     "no-warning-comments": "warn",
-    "english-only/no-non-english-comments": "error"
+    "english-only/no-non-english-comments": "error",
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-unsafe-assignment": "warn",
+    "@typescript-eslint/no-unsafe-member-access": "warn",
+    "@typescript-eslint/no-unsafe-call": "warn",
+    "@typescript-eslint/no-unsafe-return": "warn"
   },
   "ignore": ["dist", "node_modules", "coverage", "*.tsbuildinfo", "playwright-report", "test-results"]
 }
