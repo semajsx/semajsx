@@ -15,7 +15,8 @@ export {
 
 export { setProperty, setSignalProperty, setRef } from "./properties";
 
-export { render, unmount } from "./render";
+export { render } from "./render";
+export type { DOMRenderResult } from "./render";
 
 export { hydrate } from "./hydrate";
 

@@ -106,18 +106,17 @@ describe("Portal functionality", () => {
     expect(portalTarget.textContent).toBe("Count: 5");
   });
 
-  it("should clean up portal content on unmount", async () => {
+  it("should clean up portal content on unmount", () => {
     const vnode = createPortal(
       <div className="portal-content">Portal</div>,
       portalTarget
     );
 
-    const rendered = render(vnode, container);
+    const { unmount } = render(vnode, container);
 
     expect(portalTarget.querySelector(".portal-content")).toBeTruthy();
 
-    const { unmount } = await import("@/dom/render");
-    unmount(rendered);
+    unmount();
 
     expect(portalTarget.querySelector(".portal-content")).toBeFalsy();
   });

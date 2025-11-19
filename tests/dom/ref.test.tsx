@@ -36,22 +36,21 @@ describe("Ref functionality", () => {
     expect(capturedElement!.textContent).toBe("Hello");
   });
 
-  it("should clear ref on unmount with signal", async () => {
+  it("should clear ref on unmount with signal", () => {
     const divRef = signal<HTMLDivElement | null>(null);
     const vnode = <div ref={divRef}>Hello</div>;
 
-    const rendered = render(vnode, container);
+    const { unmount } = render(vnode, container);
 
     expect(divRef.value).toBeInstanceOf(HTMLDivElement);
 
     // Unmount
-    const { unmount } = await import("@/dom/render");
-    unmount(rendered);
+    unmount();
 
     expect(divRef.value).toBe(null);
   });
 
-  it("should call ref callback with null on unmount", async () => {
+  it("should call ref callback with null on unmount", () => {
     const calls: Array<HTMLDivElement | null> = [];
     const refCallback = (el: HTMLDivElement | null) => {
       calls.push(el);
@@ -59,14 +58,13 @@ describe("Ref functionality", () => {
 
     const vnode = <div ref={refCallback}>Hello</div>;
 
-    const rendered = render(vnode, container);
+    const { unmount } = render(vnode, container);
 
     expect(calls).toHaveLength(1);
     expect(calls[0]).toBeInstanceOf(HTMLDivElement);
 
     // Unmount
-    const { unmount } = await import("@/dom/render");
-    unmount(rendered);
+    unmount();
 
     expect(calls).toHaveLength(2);
     expect(calls[1]).toBe(null);

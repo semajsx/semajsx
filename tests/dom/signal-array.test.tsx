@@ -2,7 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { signal, computed } from "@/signal";
-import { render, unmount } from "@/dom/render";
+import { render } from "@/dom/render";
 
 describe("Signal<Array<VNode>> rendering", () => {
   let container: HTMLDivElement;
@@ -14,7 +14,6 @@ describe("Signal<Array<VNode>> rendering", () => {
 
   afterEach(() => {
     if (container.parentNode) {
-      unmount(container);
       document.body.removeChild(container);
     }
   });

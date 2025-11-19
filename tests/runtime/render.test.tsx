@@ -2,7 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { computed, signal } from "@/signal";
-import { render, unmount } from "@/dom/render";
+import { render } from "@/dom/render";
 
 describe("render", () => {
   let container: HTMLDivElement;
@@ -131,7 +131,7 @@ describe("render", () => {
   it("should unmount and cleanup subscriptions", () => {
     const count = signal(0);
     const vnode = <div>{count}</div>;
-    const rendered = render(vnode, container);
+    const { unmount } = render(vnode, container);
 
     // Store reference to the div before unmount
     const div = container.querySelector("div");
@@ -141,7 +141,7 @@ describe("render", () => {
     expect(div?.textContent).toContain("5");
 
     // Unmount removes the node from DOM
-    unmount(rendered);
+    unmount();
     expect(container.children.length).toBe(0);
 
     // After unmount, signal changes should not update (subscription cleaned up)
