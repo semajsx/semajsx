@@ -66,16 +66,17 @@ const server = Bun.serve({
       }
 
       // Handle page requests
-      const result = await router.get(url.pathname);
+      try {
+        const result = await router.get(url.pathname);
 
-      console.log(`  ✓ Rendered page with ${result.islands.length} islands`);
-      for (const island of result.islands) {
-        console.log(
-          `    - ${island.id}: ${island.componentName || "anonymous"} (${island.path})`,
-        );
-      }
+        console.log(`  ✓ Rendered page with ${result.islands.length} islands`);
+        for (const island of result.islands) {
+          console.log(
+            `    - ${island.id}: ${island.componentName || "anonymous"} (${island.path})`,
+          );
+        }
 
-      const html = `
+        const html = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -90,17 +91,20 @@ const server = Bun.serve({
 </html>
       `.trim();
 
-      return new Response(html, {
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-        },
-      });
-    } catch (error: any) {
-      console.error(`  ✗ Error:`, error);
-
-      if (error.message?.includes("Route not found")) {
-        return new Response("404 - Page Not Found", { status: 404 });
+        return new Response(html, {
+          headers: {
+            "Content-Type": "text/html; charset=utf-8",
+          },
+        });
+      } catch (routeError: any) {
+        if (routeError.message?.includes("Route not found")) {
+          console.log(`  → 404 Not Found: ${url.pathname}`);
+          return new Response("404 - Page Not Found", { status: 404 });
+        }
+        throw routeError; // Re-throw other errors
       }
+    } catch (error: any) {
+      console.error(`  ✗ Error: ${error.message}`);
 
       return new Response(`500 - Internal Server Error\n\n${error.message}`, {
         status: 500,
