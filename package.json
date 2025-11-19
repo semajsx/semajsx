@@ -57,6 +57,11 @@
       "import": "./dist/terminal/jsx-dev-runtime.js",
       "types": "./dist/terminal/jsx-dev-runtime.d.ts"
     },
+    "./terminal/logger": {
+      "development": "./src/terminal/logger/index.ts",
+      "import": "./dist/terminal/logger/index.js",
+      "types": "./dist/terminal/logger/index.d.ts"
+    },
     "./server": {
       "browser": "./src/server/island-noop.ts",
       "development": "./src/server/index.ts",

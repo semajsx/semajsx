@@ -1,5 +1,6 @@
 import type { IslandMetadata } from "../shared/types";
 import { createServer, type ViteDevServer } from "vite";
+import { logger } from "../terminal/logger";
 
 /**
  * Vite-based island builder
@@ -71,7 +72,7 @@ export class ViteIslandBuilder {
       ],
     });
 
-    console.log("[SemaJSX] Vite dev server initialized");
+    logger.success("Vite dev server initialized");
   }
 
   /**
@@ -96,9 +97,9 @@ export class ViteIslandBuilder {
           return result.code;
         }
       } catch (error) {
-        console.warn(
-          `[ViteBuilder] Could not transform entry for ${island.id}:`,
-          error,
+        logger.warn(
+          `Could not transform entry for ${island.id}:`,
+          error as Record<string, unknown>,
         );
       }
     }
@@ -123,7 +124,10 @@ export class ViteIslandBuilder {
           }
         : null;
     } catch (error) {
-      console.error(`[ViteBuilder] Error transforming ${url}:`, error);
+      logger.error(
+        `Error transforming ${url}:`,
+        error as Record<string, unknown>,
+      );
       return null;
     }
   }

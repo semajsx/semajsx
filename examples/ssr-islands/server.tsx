@@ -1,7 +1,14 @@
 /** @jsxImportSource semajsx/dom */
 
 import { createViteRouter, type DocumentTemplate } from "semajsx/server";
+import { logger, createLogger } from "semajsx/terminal/logger";
 import { App } from "./App";
+
+// Create a startup logger without timestamps and level indicators
+const startupLogger = createLogger({
+  timestamp: false,
+  showLevel: false,
+});
 
 /**
  * SSR Islands Server with Vite
@@ -47,9 +54,9 @@ const router = await createViteRouter(
 // Create HTTP server
 const server = Bun.serve({
   port: 3000,
-  async fetch(req) {
+  async fetch(req: Request) {
     const url = new URL(req.url);
-    console.log(`[${new Date().toISOString()}] ${req.method} ${url.pathname}`);
+    logger.info(`${req.method} ${url.pathname}`);
 
     try {
       // Handle Vite module requests (/@fs/, /@vite/, /node_modules/, etc.)
@@ -58,7 +65,7 @@ const server = Bun.serve({
         url.pathname.startsWith("/node_modules/") ||
         url.pathname.includes("/@fs/")
       ) {
-        console.log(`  → Vite module request: ${url.pathname}`);
+        logger.debug(`  → Vite module request: ${url.pathname}`);
         const result = await router.handleModuleRequest(url.pathname);
 
         if (result) {
@@ -81,7 +88,7 @@ const server = Bun.serve({
           return new Response("Invalid island ID", { status: 400 });
         }
 
-        console.log(`  → Island entry point: ${islandId}`);
+        logger.debug(`  → Island entry point: ${islandId}`);
         const code = await router.getIslandEntryPoint(islandId);
 
         return new Response(code, {
@@ -100,7 +107,7 @@ const server = Bun.serve({
         url.pathname.endsWith(".jsx") ||
         url.pathname.endsWith(".js")
       ) {
-        console.log(`  → Source file request: ${url.pathname}`);
+        logger.debug(`  → Source file request: ${url.pathname}`);
         const result = await router.handleModuleRequest(url.pathname);
 
         if (result) {
@@ -119,10 +126,10 @@ const server = Bun.serve({
       try {
         const result = await router.get(url.pathname);
 
-        console.log(`  ✓ Rendered page with ${result.islands.length} islands`);
+        logger.success(`Rendered page with ${result.islands.length} islands`);
         for (const island of result.islands) {
-          console.log(
-            `    - ${island.id}: ${island.componentName || "anonymous"} (${island.path})`,
+          logger.debug(
+            `  - ${island.id}: ${island.componentName || "anonymous"} (${island.path})`,
           );
         }
 
@@ -134,47 +141,59 @@ const server = Bun.serve({
             "Content-Type": "text/html; charset=utf-8",
           },
         });
-      } catch (routeError: any) {
-        if (routeError.message?.includes("Route not found")) {
-          console.log(`  → 404 Not Found: ${url.pathname}`);
+      } catch (routeError: unknown) {
+        if (
+          routeError instanceof Error &&
+          routeError.message?.includes("Route not found")
+        ) {
+          logger.warn(`404 Not Found: ${url.pathname}`);
           return new Response("404 - Page Not Found", { status: 404 });
         }
         throw routeError; // Re-throw other errors
       }
-    } catch (error: any) {
-      console.error(`  ✗ Error: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      logger.error(`Error: ${errorMessage}`);
 
-      return new Response(`500 - Internal Server Error\n\n${error.message}`, {
+      return new Response(`500 - Internal Server Error\n\n${errorMessage}`, {
         status: 500,
       });
     }
   },
 });
 
-console.log(`
-🏝️  SemaJSX SSR Islands Server (Vite-powered!)
+// Display startup info (without timestamps)
+startupLogger.blank();
+startupLogger.success("🏝️  SemaJSX SSR Islands Server (Vite-powered!)");
+startupLogger.blank();
+startupLogger.info(`Server running at: http://localhost:${server.port}`);
+startupLogger.blank();
+startupLogger
+  .group("Features", { borderColor: "green" })
+  .info("✓ Vite dev server for instant module transformation")
+  .info("✓ No bundling - modules loaded on demand")
+  .info("✓ Shared dependencies - semajsx loaded once")
+  .info("✓ Fast HMR-ready setup")
+  .info("✓ Browser caching for dependencies")
+  .groupEnd();
+startupLogger.blank();
+startupLogger
+  .group("Dev Tools", { borderColor: "cyan" })
+  .info("• Check Network tab to see module loading")
+  .info("• Notice how semajsx is loaded separately and cached")
+  .info("• Islands share the same semajsx dependency!")
+  .groupEnd();
+startupLogger.blank();
 
-Server running at: http://localhost:${server.port}
-
-Features:
-  ✅ Vite dev server for instant module transformation
-  ✅ No bundling - modules loaded on demand
-  ✅ Shared dependencies - semajsx loaded once
-  ✅ Fast HMR-ready setup
-  ✅ Browser caching for dependencies
-
-Try it:
-  Open http://localhost:${server.port} in your browser!
-
-Dev Tools:
-  - Check Network tab to see module loading
-  - Notice how semajsx is loaded separately and cached
-  - Islands share the same semajsx dependency!
-`);
-
-// Cleanup on exit
+// Cleanup on exit (with flag to prevent double execution)
+let isShuttingDown = false;
 process.on("SIGINT", async () => {
-  console.log("\n\nShutting down...");
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  logger.blank();
+  logger.warn("Shutting down...");
   await router.close();
   server.stop();
   process.exit(0);
