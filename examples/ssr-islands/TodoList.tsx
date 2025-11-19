@@ -1,7 +1,8 @@
 /** @jsxImportSource semajsx/dom */
 
-import { signal } from "semajsx/signal";
+import { signal, computed } from "semajsx/signal";
 import { island } from "semajsx/server";
+import { Fragment } from "semajsx";
 
 /**
  * TodoList component - marked as an island for client-side hydration
@@ -21,6 +22,52 @@ export const TodoList = island(
     const removeTodo = (index: number) => {
       todos.value = todos.value.filter((_, i) => i !== index);
     };
+
+    // Use computed to make the todo list reactive
+    // computed(dependency, computeFunction)
+    // Wrap map result in Fragment so computed returns a single VNode
+    const todoItems = computed(todos, (todoList) => (
+      <Fragment>
+        {todoList.map((todo, index) => (
+          <li
+            key={index}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "10px",
+              margin: "5px 0",
+              background: "#f3f4f6",
+              borderRadius: "4px",
+            }}
+          >
+            <span>{todo}</span>
+            <button
+              onClick={() => removeTodo(index)}
+              style={{
+                padding: "5px 10px",
+                cursor: "pointer",
+                background: "#ef4444",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+              }}
+            >
+              Delete
+            </button>
+          </li>
+        ))}
+      </Fragment>
+    ));
+
+    // Use computed for conditional rendering based on todos
+    const emptyMessage = computed(todos, (todoList) =>
+      todoList.length === 0 ? (
+        <p style={{ color: "#6b7280", textAlign: "center" }}>
+          No todos yet. Add one above!
+        </p>
+      ) : null,
+    );
 
     return (
       <div
@@ -54,42 +101,8 @@ export const TodoList = island(
             Add
           </button>
         </div>
-        <ul style={{ listStyle: "none", padding: "0" }}>
-          {todos.value.map((todo, index) => (
-            <li
-              key={index}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "10px",
-                margin: "5px 0",
-                background: "#f3f4f6",
-                borderRadius: "4px",
-              }}
-            >
-              <span>{todo}</span>
-              <button
-                onClick={() => removeTodo(index)}
-                style={{
-                  padding: "5px 10px",
-                  cursor: "pointer",
-                  background: "#ef4444",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                }}
-              >
-                Delete
-              </button>
-            </li>
-          ))}
-        </ul>
-        {todos.value.length === 0 && (
-          <p style={{ color: "#6b7280", textAlign: "center" }}>
-            No todos yet. Add one above!
-          </p>
-        )}
+        <ul style={{ listStyle: "none", padding: "0" }}>{todoItems}</ul>
+        {emptyMessage}
       </div>
     );
   },
