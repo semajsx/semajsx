@@ -226,51 +226,6 @@ const view = computed(() =>
 <div>{view}</div>;
 ```
 
-### Render API
-
-The `render()` function returns an object with lifecycle methods for managing the rendered tree:
-
-```tsx
-import { render } from "semajsx/dom";
-
-const { unmount } = render(<App />, container);
-```
-
-**API Design Philosophy:**
-
-- **Simple return object** - Returns `{ unmount: () => void }` for cleanup
-- **Signal-driven updates** - No manual `rerender()` needed; signals auto-update the DOM
-- **Automatic subscriptions** - Signals are tracked and cleaned up automatically
-- **No createRoot pattern** - Simpler API than React/Vue since signals handle reactivity
-
-**Usage Examples:**
-
-```tsx
-// Basic rendering (signals auto-update)
-const count = signal(0);
-render(<div>{count}</div>, container);
-count.value++; // DOM updates automatically
-
-// Cleanup when needed
-const { unmount } = render(<App />, container);
-unmount(); // Removes nodes and cleans up subscriptions
-
-// Testing pattern
-it("should render and unmount", () => {
-  const { unmount } = render(<Component />, container);
-  expect(container.textContent).toBe("...");
-  unmount();
-  expect(container.children.length).toBe(0);
-});
-```
-
-**Why this API?**
-
-- **Aligned with signals** - Fine-grained reactivity means no manual re-renders
-- **Simple and clear** - One function call, one cleanup method
-- **Type-safe** - `DOMRenderResult` interface ensures correct usage
-- **Consistent** - Same pattern used across DOM and Terminal renderers
-
 ## Code Organization
 
 - **Pure functions** - Most functions are pure and side-effect free
@@ -465,6 +420,12 @@ it("should render a component", () => {
 3. **Component Usage**: Use JSX component syntax `<Component prop={value} />` instead of function calls `Component({ prop: value })`
 
 4. **Element Creation**: Use JSX tags `<div>content</div>` instead of `h("div", null, "content")`
+
+5. **Render API**: Use destructured `unmount` from render result for cleanup
+   ```tsx
+   const { unmount } = render(<App />, container);
+   unmount(); // Cleanup when needed
+   ```
 
 ### Test Examples
 
