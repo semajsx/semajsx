@@ -20,9 +20,9 @@ export { Fragment };
 /**
  * HTML attribute types (base definitions without Signal support)
  */
-interface BaseHTMLAttributes {
+interface BaseHTMLAttributes<T = Element> {
   // Ref - special prop for element references
-  ref?: Ref<Element>;
+  ref?: Ref<T>;
 
   // Standard attributes
   id?: string;
@@ -152,7 +152,9 @@ interface BaseHTMLAttributes {
  * HTML attributes with Signal support
  * All non-function properties can accept Signal values
  */
-export type HTMLAttributes = WithKey<WithSignals<BaseHTMLAttributes>> & {
+export type HTMLAttributes<T = Element> = WithKey<
+  WithSignals<BaseHTMLAttributes<T>>
+> & {
   // Data attributes support both plain values and Signals
   [dataAttribute: `data-${string}`]:
     | string
@@ -162,7 +164,8 @@ export type HTMLAttributes = WithKey<WithSignals<BaseHTMLAttributes>> & {
     | undefined;
 };
 
-interface BaseAnchorHTMLAttributes extends BaseHTMLAttributes {
+interface BaseAnchorHTMLAttributes
+  extends BaseHTMLAttributes<HTMLAnchorElement> {
   href?: string;
   target?: "_blank" | "_self" | "_parent" | "_top";
   rel?: string;
@@ -183,7 +186,8 @@ export type AnchorHTMLAttributes = WithKey<
   WithSignals<BaseAnchorHTMLAttributes>
 >;
 
-interface BaseButtonHTMLAttributes extends BaseHTMLAttributes {
+interface BaseButtonHTMLAttributes
+  extends BaseHTMLAttributes<HTMLButtonElement> {
   disabled?: boolean;
   type?: "button" | "submit" | "reset";
   value?: string;
@@ -200,13 +204,15 @@ export type ButtonHTMLAttributes = WithKey<
   WithSignals<BaseButtonHTMLAttributes>
 >;
 
-interface BaseInputHTMLAttributes extends BaseHTMLAttributes {
+interface BaseInputHTMLAttributes extends BaseHTMLAttributes<HTMLInputElement> {
   accept?: string;
   alt?: string;
   autoComplete?: string;
   autoFocus?: boolean;
   capture?: boolean | "user" | "environment";
   checked?: boolean;
+  defaultChecked?: boolean;
+  defaultValue?: string | number;
   disabled?: boolean;
   form?: string;
   formAction?: string;
@@ -233,7 +239,8 @@ interface BaseInputHTMLAttributes extends BaseHTMLAttributes {
 
 export type InputHTMLAttributes = WithKey<WithSignals<BaseInputHTMLAttributes>>;
 
-interface BaseTextareaHTMLAttributes extends BaseHTMLAttributes {
+interface BaseTextareaHTMLAttributes
+  extends BaseHTMLAttributes<HTMLTextAreaElement> {
   autoComplete?: string;
   autoFocus?: boolean;
   cols?: number;
@@ -254,7 +261,8 @@ export type TextareaHTMLAttributes = WithKey<
   WithSignals<BaseTextareaHTMLAttributes>
 >;
 
-interface BaseSelectHTMLAttributes extends BaseHTMLAttributes {
+interface BaseSelectHTMLAttributes
+  extends BaseHTMLAttributes<HTMLSelectElement> {
   autoComplete?: string;
   autoFocus?: boolean;
   disabled?: boolean;
@@ -270,7 +278,8 @@ export type SelectHTMLAttributes = WithKey<
   WithSignals<BaseSelectHTMLAttributes>
 >;
 
-interface BaseOptionHTMLAttributes extends BaseHTMLAttributes {
+interface BaseOptionHTMLAttributes
+  extends BaseHTMLAttributes<HTMLOptionElement> {
   disabled?: boolean;
   label?: string;
   selected?: boolean;
@@ -281,7 +290,7 @@ export type OptionHTMLAttributes = WithKey<
   WithSignals<BaseOptionHTMLAttributes>
 >;
 
-interface BaseLabelHTMLAttributes extends BaseHTMLAttributes {
+interface BaseLabelHTMLAttributes extends BaseHTMLAttributes<HTMLLabelElement> {
   for?: string;
   htmlFor?: string;
   form?: string;
@@ -289,7 +298,7 @@ interface BaseLabelHTMLAttributes extends BaseHTMLAttributes {
 
 export type LabelHTMLAttributes = WithKey<WithSignals<BaseLabelHTMLAttributes>>;
 
-interface BaseFormHTMLAttributes extends BaseHTMLAttributes {
+interface BaseFormHTMLAttributes extends BaseHTMLAttributes<HTMLFormElement> {
   acceptCharset?: string;
   action?: string;
   autoComplete?: string;
@@ -302,7 +311,7 @@ interface BaseFormHTMLAttributes extends BaseHTMLAttributes {
 
 export type FormHTMLAttributes = WithKey<WithSignals<BaseFormHTMLAttributes>>;
 
-interface BaseImgHTMLAttributes extends BaseHTMLAttributes {
+interface BaseImgHTMLAttributes extends BaseHTMLAttributes<HTMLImageElement> {
   alt?: string;
   crossOrigin?: "anonymous" | "use-credentials" | "";
   decoding?: "async" | "auto" | "sync";
@@ -318,7 +327,7 @@ interface BaseImgHTMLAttributes extends BaseHTMLAttributes {
 
 export type ImgHTMLAttributes = WithKey<WithSignals<BaseImgHTMLAttributes>>;
 
-interface BaseVideoHTMLAttributes extends BaseHTMLAttributes {
+interface BaseVideoHTMLAttributes extends BaseHTMLAttributes<HTMLVideoElement> {
   autoPlay?: boolean;
   controls?: boolean;
   crossOrigin?: "anonymous" | "use-credentials" | "";
@@ -334,7 +343,7 @@ interface BaseVideoHTMLAttributes extends BaseHTMLAttributes {
 
 export type VideoHTMLAttributes = WithKey<WithSignals<BaseVideoHTMLAttributes>>;
 
-interface BaseAudioHTMLAttributes extends BaseHTMLAttributes {
+interface BaseAudioHTMLAttributes extends BaseHTMLAttributes<HTMLAudioElement> {
   autoPlay?: boolean;
   controls?: boolean;
   crossOrigin?: "anonymous" | "use-credentials" | "";
@@ -346,7 +355,8 @@ interface BaseAudioHTMLAttributes extends BaseHTMLAttributes {
 
 export type AudioHTMLAttributes = WithKey<WithSignals<BaseAudioHTMLAttributes>>;
 
-interface BaseCanvasHTMLAttributes extends BaseHTMLAttributes {
+interface BaseCanvasHTMLAttributes
+  extends BaseHTMLAttributes<HTMLCanvasElement> {
   height?: number | string;
   width?: number | string;
 }
@@ -355,7 +365,8 @@ export type CanvasHTMLAttributes = WithKey<
   WithSignals<BaseCanvasHTMLAttributes>
 >;
 
-interface BaseIframeHTMLAttributes extends BaseHTMLAttributes {
+interface BaseIframeHTMLAttributes
+  extends BaseHTMLAttributes<HTMLIFrameElement> {
   allow?: string;
   allowFullScreen?: boolean;
   height?: number | string;
@@ -372,14 +383,15 @@ export type IframeHTMLAttributes = WithKey<
   WithSignals<BaseIframeHTMLAttributes>
 >;
 
-interface BaseTableHTMLAttributes extends BaseHTMLAttributes {
+interface BaseTableHTMLAttributes extends BaseHTMLAttributes<HTMLTableElement> {
   cellPadding?: number | string;
   cellSpacing?: number | string;
 }
 
 export type TableHTMLAttributes = WithKey<WithSignals<BaseTableHTMLAttributes>>;
 
-interface BaseTdHTMLAttributes extends BaseHTMLAttributes {
+interface BaseTdHTMLAttributes
+  extends BaseHTMLAttributes<HTMLTableCellElement> {
   colSpan?: number;
   headers?: string;
   rowSpan?: number;
@@ -387,7 +399,8 @@ interface BaseTdHTMLAttributes extends BaseHTMLAttributes {
 
 export type TdHTMLAttributes = WithKey<WithSignals<BaseTdHTMLAttributes>>;
 
-interface BaseThHTMLAttributes extends BaseHTMLAttributes {
+interface BaseThHTMLAttributes
+  extends BaseHTMLAttributes<HTMLTableCellElement> {
   abbr?: string;
   colSpan?: number;
   headers?: string;
@@ -397,7 +410,7 @@ interface BaseThHTMLAttributes extends BaseHTMLAttributes {
 
 export type ThHTMLAttributes = WithKey<WithSignals<BaseThHTMLAttributes>>;
 
-interface BaseStyleHTMLAttributes extends BaseHTMLAttributes {
+interface BaseStyleHTMLAttributes extends BaseHTMLAttributes<HTMLStyleElement> {
   media?: string;
   scoped?: boolean;
   type?: string;
@@ -405,7 +418,8 @@ interface BaseStyleHTMLAttributes extends BaseHTMLAttributes {
 
 export type StyleHTMLAttributes = WithKey<WithSignals<BaseStyleHTMLAttributes>>;
 
-interface BaseScriptHTMLAttributes extends BaseHTMLAttributes {
+interface BaseScriptHTMLAttributes
+  extends BaseHTMLAttributes<HTMLScriptElement> {
   async?: boolean;
   crossOrigin?: "anonymous" | "use-credentials" | "";
   defer?: boolean;
@@ -420,7 +434,7 @@ export type ScriptHTMLAttributes = WithKey<
   WithSignals<BaseScriptHTMLAttributes>
 >;
 
-interface BaseLinkHTMLAttributes extends BaseHTMLAttributes {
+interface BaseLinkHTMLAttributes extends BaseHTMLAttributes<HTMLLinkElement> {
   as?: string;
   crossOrigin?: "anonymous" | "use-credentials" | "";
   href?: string;
@@ -435,7 +449,7 @@ interface BaseLinkHTMLAttributes extends BaseHTMLAttributes {
 
 export type LinkHTMLAttributes = WithKey<WithSignals<BaseLinkHTMLAttributes>>;
 
-interface BaseMetaHTMLAttributes extends BaseHTMLAttributes {
+interface BaseMetaHTMLAttributes extends BaseHTMLAttributes<HTMLMetaElement> {
   charSet?: string;
   content?: string;
   httpEquiv?: string;
@@ -466,64 +480,64 @@ export namespace JSX {
 
   export interface IntrinsicElements {
     // Document structure
-    html: HTMLAttributes;
-    head: HTMLAttributes;
-    body: HTMLAttributes;
-    title: HTMLAttributes;
+    html: HTMLAttributes<HTMLHtmlElement>;
+    head: HTMLAttributes<HTMLHeadElement>;
+    body: HTMLAttributes<HTMLBodyElement>;
+    title: HTMLAttributes<HTMLTitleElement>;
     meta: MetaHTMLAttributes;
     link: LinkHTMLAttributes;
     style: StyleHTMLAttributes;
     script: ScriptHTMLAttributes;
 
     // Content sectioning
-    header: HTMLAttributes;
-    footer: HTMLAttributes;
-    main: HTMLAttributes;
-    nav: HTMLAttributes;
-    section: HTMLAttributes;
-    article: HTMLAttributes;
-    aside: HTMLAttributes;
-    h1: HTMLAttributes;
-    h2: HTMLAttributes;
-    h3: HTMLAttributes;
-    h4: HTMLAttributes;
-    h5: HTMLAttributes;
-    h6: HTMLAttributes;
+    header: HTMLAttributes<HTMLElement>;
+    footer: HTMLAttributes<HTMLElement>;
+    main: HTMLAttributes<HTMLElement>;
+    nav: HTMLAttributes<HTMLElement>;
+    section: HTMLAttributes<HTMLElement>;
+    article: HTMLAttributes<HTMLElement>;
+    aside: HTMLAttributes<HTMLElement>;
+    h1: HTMLAttributes<HTMLHeadingElement>;
+    h2: HTMLAttributes<HTMLHeadingElement>;
+    h3: HTMLAttributes<HTMLHeadingElement>;
+    h4: HTMLAttributes<HTMLHeadingElement>;
+    h5: HTMLAttributes<HTMLHeadingElement>;
+    h6: HTMLAttributes<HTMLHeadingElement>;
 
     // Text content
-    div: HTMLAttributes;
-    p: HTMLAttributes;
-    span: HTMLAttributes;
-    pre: HTMLAttributes;
-    code: HTMLAttributes;
-    blockquote: HTMLAttributes;
-    hr: HTMLAttributes;
-    br: HTMLAttributes;
+    div: HTMLAttributes<HTMLDivElement>;
+    p: HTMLAttributes<HTMLParagraphElement>;
+    span: HTMLAttributes<HTMLSpanElement>;
+    pre: HTMLAttributes<HTMLPreElement>;
+    code: HTMLAttributes<HTMLElement>;
+    blockquote: HTMLAttributes<HTMLQuoteElement>;
+    hr: HTMLAttributes<HTMLHRElement>;
+    br: HTMLAttributes<HTMLBRElement>;
 
     // Lists
-    ul: HTMLAttributes;
-    ol: HTMLAttributes;
-    li: HTMLAttributes;
-    dl: HTMLAttributes;
-    dt: HTMLAttributes;
-    dd: HTMLAttributes;
+    ul: HTMLAttributes<HTMLUListElement>;
+    ol: HTMLAttributes<HTMLOListElement>;
+    li: HTMLAttributes<HTMLLIElement>;
+    dl: HTMLAttributes<HTMLDListElement>;
+    dt: HTMLAttributes<HTMLElement>;
+    dd: HTMLAttributes<HTMLElement>;
 
     // Inline text semantics
     a: AnchorHTMLAttributes;
-    strong: HTMLAttributes;
-    em: HTMLAttributes;
-    b: HTMLAttributes;
-    i: HTMLAttributes;
-    u: HTMLAttributes;
-    s: HTMLAttributes;
-    small: HTMLAttributes;
-    mark: HTMLAttributes;
-    abbr: HTMLAttributes;
-    cite: HTMLAttributes;
-    q: HTMLAttributes;
-    sub: HTMLAttributes;
-    sup: HTMLAttributes;
-    time: HTMLAttributes;
+    strong: HTMLAttributes<HTMLElement>;
+    em: HTMLAttributes<HTMLElement>;
+    b: HTMLAttributes<HTMLElement>;
+    i: HTMLAttributes<HTMLElement>;
+    u: HTMLAttributes<HTMLElement>;
+    s: HTMLAttributes<HTMLElement>;
+    small: HTMLAttributes<HTMLElement>;
+    mark: HTMLAttributes<HTMLElement>;
+    abbr: HTMLAttributes<HTMLElement>;
+    cite: HTMLAttributes<HTMLElement>;
+    q: HTMLAttributes<HTMLQuoteElement>;
+    sub: HTMLAttributes<HTMLElement>;
+    sup: HTMLAttributes<HTMLElement>;
+    time: HTMLAttributes<HTMLTimeElement>;
 
     // Forms
     form: FormHTMLAttributes;
@@ -532,47 +546,47 @@ export namespace JSX {
     button: ButtonHTMLAttributes;
     select: SelectHTMLAttributes;
     option: OptionHTMLAttributes;
-    optgroup: HTMLAttributes;
+    optgroup: HTMLAttributes<HTMLOptGroupElement>;
     label: LabelHTMLAttributes;
-    fieldset: HTMLAttributes;
-    legend: HTMLAttributes;
+    fieldset: HTMLAttributes<HTMLFieldSetElement>;
+    legend: HTMLAttributes<HTMLLegendElement>;
 
     // Tables
     table: TableHTMLAttributes;
-    thead: HTMLAttributes;
-    tbody: HTMLAttributes;
-    tfoot: HTMLAttributes;
-    tr: HTMLAttributes;
+    thead: HTMLAttributes<HTMLTableSectionElement>;
+    tbody: HTMLAttributes<HTMLTableSectionElement>;
+    tfoot: HTMLAttributes<HTMLTableSectionElement>;
+    tr: HTMLAttributes<HTMLTableRowElement>;
     th: ThHTMLAttributes;
     td: TdHTMLAttributes;
-    caption: HTMLAttributes;
-    colgroup: HTMLAttributes;
-    col: HTMLAttributes;
+    caption: HTMLAttributes<HTMLTableCaptionElement>;
+    colgroup: HTMLAttributes<HTMLTableColElement>;
+    col: HTMLAttributes<HTMLTableColElement>;
 
     // Media
     img: ImgHTMLAttributes;
     video: VideoHTMLAttributes;
     audio: AudioHTMLAttributes;
-    source: HTMLAttributes;
-    track: HTMLAttributes;
+    source: HTMLAttributes<HTMLSourceElement>;
+    track: HTMLAttributes<HTMLTrackElement>;
     canvas: CanvasHTMLAttributes;
-    svg: HTMLAttributes;
+    svg: HTMLAttributes<SVGElement>;
 
     // Embedded content
     iframe: IframeHTMLAttributes;
-    embed: HTMLAttributes;
-    object: HTMLAttributes;
-    param: HTMLAttributes;
-    picture: HTMLAttributes;
+    embed: HTMLAttributes<HTMLEmbedElement>;
+    object: HTMLAttributes<HTMLObjectElement>;
+    param: HTMLAttributes<HTMLParamElement>;
+    picture: HTMLAttributes<HTMLPictureElement>;
 
     // Interactive elements
-    details: HTMLAttributes;
-    summary: HTMLAttributes;
-    dialog: HTMLAttributes;
-    menu: HTMLAttributes;
+    details: HTMLAttributes<HTMLDetailsElement>;
+    summary: HTMLAttributes<HTMLElement>;
+    dialog: HTMLAttributes<HTMLDialogElement>;
+    menu: HTMLAttributes<HTMLMenuElement>;
 
     // Web Components
-    slot: HTMLAttributes;
-    template: HTMLAttributes;
+    slot: HTMLAttributes<HTMLSlotElement>;
+    template: HTMLAttributes<HTMLTemplateElement>;
   }
 }
