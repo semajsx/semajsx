@@ -39,6 +39,9 @@ interface BaseHTMLAttributes {
   draggable?: boolean;
   spellcheck?: boolean;
 
+  // Special React-style props
+  dangerouslySetInnerHTML?: { __html: string };
+
   // ARIA attributes
   role?: string;
   "aria-label"?: string;

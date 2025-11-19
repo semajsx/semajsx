@@ -3,6 +3,7 @@ import type {
   RouterConfig,
   SSRResult,
   IslandMetadata,
+  DocumentTemplate,
 } from "../shared/types";
 import { renderToString } from "./render";
 import {
@@ -21,6 +22,20 @@ interface RouteMatch {
 }
 
 /**
+ * Internal router configuration with required base fields
+ */
+interface InternalRouterConfig {
+  islandBasePath: string;
+  enableCache: boolean;
+  dev: boolean;
+  root: string;
+  buildOptions: { minify: boolean; sourcemap: boolean };
+  document?: DocumentTemplate;
+  title?: string;
+  meta?: Record<string, any>;
+}
+
+/**
  * Vite-powered SSR Router with island support
  * Uses Vite dev server for module transformation in dev mode
  */
@@ -28,7 +43,7 @@ export class ViteRouter {
   private routeMap: Map<string, RouteHandler> = new Map();
   private dynamicRoutes: Array<{ pattern: RegExp; handler: RouteHandler }> = [];
   private builder: ViteIslandBuilder | null = null;
-  private config: Required<RouterConfig>;
+  private config: InternalRouterConfig;
   // Use LRU cache to prevent memory leaks from unbounded island storage
   private islandsCache: LRUCache<string, IslandMetadata>;
   private initialized = false;
@@ -40,6 +55,9 @@ export class ViteRouter {
       dev: config.dev ?? true,
       root: config.root ?? process.cwd(),
       buildOptions: config.buildOptions ?? { minify: true, sourcemap: false },
+      document: config.document,
+      title: config.title,
+      meta: config.meta,
     };
 
     // Initialize LRU cache with configurable max size
