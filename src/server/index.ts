@@ -8,11 +8,16 @@ export { island, isIslandComponent, isIslandVNode } from "./island";
 // SSR rendering
 export { renderToString } from "./render";
 
-// Router
-export { createRouter, Router } from "./router";
+// Routers
+export { createRouter, Router } from "./router"; // Legacy bundled router
+export { createViteRouter, ViteRouter } from "./vite-router"; // New Vite-powered router
 
-// Builder (for advanced usage)
+// Builders (for advanced usage)
 export { createIslandBuilder, type BuildOptions } from "./builder";
+export {
+  createViteIslandBuilder,
+  type ViteBuilderOptions,
+} from "./vite-builder";
 
 // Collector (for advanced usage)
 export { createIslandCollector, IslandCollector } from "./collector";

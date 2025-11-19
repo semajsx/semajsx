@@ -51,7 +51,11 @@ export interface RouterConfig {
   islandBasePath?: string;
   /** Enable code caching */
   enableCache?: boolean;
-  /** Custom build options */
+  /** Development mode (uses Vite for module transformation) */
+  dev?: boolean;
+  /** Project root directory (for Vite) */
+  root?: string;
+  /** Custom build options (for production bundling) */
   buildOptions?: {
     minify?: boolean;
     sourcemap?: boolean;

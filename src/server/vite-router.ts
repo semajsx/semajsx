@@ -5,7 +5,11 @@ import type {
   IslandMetadata,
 } from "../shared/types";
 import { renderToString } from "./render";
-import { createIslandBuilder, type IslandBuilder } from "./builder";
+import {
+  createViteIslandBuilder,
+  type ViteIslandBuilder,
+} from "./vite-builder";
+import type { ViteDevServer } from "vite";
 
 /**
  * Route matcher result
@@ -16,25 +20,41 @@ interface RouteMatch {
 }
 
 /**
- * SSR Router with island support
+ * Vite-powered SSR Router with island support
+ * Uses Vite dev server for module transformation in dev mode
  */
-export class Router {
+export class ViteRouter {
   private routeMap: Map<string, RouteHandler> = new Map();
   private dynamicRoutes: Array<{ pattern: RegExp; handler: RouteHandler }> = [];
-  private builder: IslandBuilder;
+  private builder: ViteIslandBuilder | null = null;
   private config: Required<RouterConfig>;
   private islandsMap = new Map<string, IslandMetadata>();
+  private initialized = false;
 
   constructor(config: RouterConfig = {}) {
     this.config = {
       islandBasePath: config.islandBasePath ?? "/islands",
       enableCache: config.enableCache ?? true,
-      dev: config.dev ?? false,
+      dev: config.dev ?? true,
       root: config.root ?? process.cwd(),
       buildOptions: config.buildOptions ?? { minify: true, sourcemap: false },
     };
+  }
 
-    this.builder = createIslandBuilder(this.config.buildOptions);
+  /**
+   * Initialize the router (async because Vite setup is async)
+   */
+  async initialize(): Promise<void> {
+    if (this.initialized) return;
+
+    if (this.config.dev) {
+      this.builder = await createViteIslandBuilder({
+        dev: true,
+        root: this.config.root,
+      });
+    }
+
+    this.initialized = true;
   }
 
   /**
@@ -66,6 +86,8 @@ export class Router {
    * Get page content for a given path (lazy rendering)
    */
   async get(path: string): Promise<SSRResult> {
+    await this.initialize();
+
     // Find matching route
     const match = this.matchRoute(path);
     if (!match) {
@@ -89,15 +111,37 @@ export class Router {
   }
 
   /**
-   * Get island client code (lazy build)
+   * Get island client code
+   * In dev mode, returns the entry point (Vite will transform it)
+   * In prod mode, would return pre-built bundle
    */
-  async getIslandCode(islandId: string): Promise<string> {
+  async getIslandEntryPoint(islandId: string): Promise<string> {
+    await this.initialize();
+
     const island = this.islandsMap.get(islandId);
     if (!island) {
       throw new Error(`Island not found: ${islandId}`);
     }
 
-    return this.builder.getCode(island);
+    if (!this.builder) {
+      throw new Error("Vite builder not initialized");
+    }
+
+    return this.builder.getEntryPoint(island);
+  }
+
+  /**
+   * Handle module transformation request
+   * This is called when browser requests /@fs/... or /node_modules/...
+   */
+  async handleModuleRequest(url: string): Promise<{ code: string } | null> {
+    await this.initialize();
+
+    if (!this.builder) {
+      throw new Error("Vite builder not initialized");
+    }
+
+    return this.builder.transformModule(url);
   }
 
   /**
@@ -108,10 +152,19 @@ export class Router {
   }
 
   /**
-   * Clear builder cache
+   * Get Vite dev server instance (for middleware integration)
    */
-  clearCache(islandId?: string): void {
-    this.builder.clearCache(islandId);
+  getViteServer(): ViteDevServer | null {
+    return this.builder?.getViteServer() ?? null;
+  }
+
+  /**
+   * Close the router and cleanup resources
+   */
+  async close(): Promise<void> {
+    if (this.builder) {
+      await this.builder.close();
+    }
   }
 
   /**
@@ -159,15 +212,20 @@ export class Router {
 }
 
 /**
- * Create a new router with optional routes
+ * Create a new Vite-powered router
  */
-export function createRouter(
+export async function createViteRouter(
   routes?: Record<string, RouteHandler>,
   config?: RouterConfig,
-): Router {
-  const router = new Router(config);
+): Promise<ViteRouter> {
+  const router = new ViteRouter(config);
+
   if (routes) {
     router.routes(routes);
   }
+
+  // Initialize immediately
+  await router.initialize();
+
   return router;
 }
