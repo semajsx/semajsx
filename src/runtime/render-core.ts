@@ -95,6 +95,22 @@ export function isAsyncIterator<T>(
  */
 export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
   /**
+   * Helper to recursively collect all actual DOM nodes from a rendered node
+   * Handles fragments and signal nodes that may not have their own DOM node
+   */
+  function collectNodes(rendered: RenderedNode<TNode>): TNode[] {
+    if (rendered.node) {
+      return [rendered.node];
+    }
+    // No direct node, collect from children (Fragment or Signal wrapper case)
+    const nodes: TNode[] = [];
+    for (const child of rendered.children) {
+      nodes.push(...collectNodes(child));
+    }
+    return nodes;
+  }
+
+  /**
    * Render a single VNode
    */
   function renderNode(
@@ -306,17 +322,11 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
       renderNode(child, parentContext),
     );
 
-    // Append children to the portal container
+    // Append all child nodes to the portal container (recursively handles fragments)
     for (const child of children) {
-      if (child.node) {
-        strategy.appendChild(container, child.node);
-      } else if (child.children.length > 0) {
-        // Fragment case - append all fragment children
-        for (const fragChild of child.children) {
-          if (fragChild.node) {
-            strategy.appendChild(container, fragChild.node);
-          }
-        }
+      const nodes = collectNodes(child);
+      for (const node of nodes) {
+        strategy.appendChild(container, node);
       }
     }
 
@@ -493,16 +503,11 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
       renderNode(child, parentContext),
     );
 
+    // Append all child nodes (recursively handles fragments and signal wrappers)
     for (const child of children) {
-      if (child.node) {
-        strategy.appendChild(element, child.node);
-      } else if (child.children.length > 0) {
-        // Fragment case - append all fragment children
-        for (const fragChild of child.children) {
-          if (fragChild.node) {
-            strategy.appendChild(element, fragChild.node);
-          }
-        }
+      const nodes = collectNodes(child);
+      for (const node of nodes) {
+        strategy.appendChild(element, node);
       }
     }
 
