@@ -7,4 +7,5 @@ export {
   hydrateIslandById,
   hasIslands,
   getIslandIds,
+  markIslandHydrated,
 } from "./hydrate";

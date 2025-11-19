@@ -28,11 +28,11 @@ export async function hydrateIslands(): Promise<void> {
     return;
   }
 
-  console.log(`[SemaJSX] Hydrating ${placeholders.length} islands...`);
+  console.log(`[SemaJSX] Found ${placeholders.length} islands to hydrate`);
 
-  // Hydrate islands in parallel
+  // Hydrate islands in parallel for better performance
   const hydrations = Array.from(placeholders).map((placeholder) =>
-    hydrateIsland(placeholder as HTMLElement),
+    waitForIslandScript(placeholder as HTMLElement),
   );
 
   await Promise.all(hydrations);
@@ -41,12 +41,11 @@ export async function hydrateIslands(): Promise<void> {
 }
 
 /**
- * Hydrate a single island
- *
- * Note: The island's source path is not exposed to the client for security.
- * Hydration is handled by the island's entry point script loaded via <script> tag.
+ * Wait for an island's script to load and hydrate it
+ * The actual hydration is performed by the island's entry point script
+ * This function just waits for it to complete
  */
-async function hydrateIsland(placeholder: HTMLElement): Promise<void> {
+async function waitForIslandScript(placeholder: HTMLElement): Promise<void> {
   const islandId = placeholder.getAttribute("data-island-id");
 
   if (!islandId) {
@@ -54,15 +53,28 @@ async function hydrateIsland(placeholder: HTMLElement): Promise<void> {
     return;
   }
 
-  try {
-    // The island code will be loaded via script tag
-    // It will handle its own hydration
-    // This function is just here for potential eager hydration
-
-    console.log(`[SemaJSX] Island ${islandId} will be hydrated by its script`);
-  } catch (error) {
-    console.error(`[SemaJSX] Error hydrating island ${islandId}:`, error);
+  // Check if island is already hydrated
+  if (placeholder.hasAttribute("data-hydrated")) {
+    return;
   }
+
+  // Wait for hydration to complete (set by island entry point)
+  return new Promise((resolve) => {
+    // Check every 50ms for up to 10 seconds
+    const maxAttempts = 200;
+    let attempts = 0;
+
+    const checkInterval = setInterval(() => {
+      if (placeholder.hasAttribute("data-hydrated")) {
+        clearInterval(checkInterval);
+        resolve();
+      } else if (++attempts >= maxAttempts) {
+        clearInterval(checkInterval);
+        console.warn(`[SemaJSX] Island ${islandId} hydration timeout`);
+        resolve();
+      }
+    }, 50);
+  });
 }
 
 /**
@@ -89,7 +101,7 @@ export async function hydrateIslandById(islandId: string): Promise<void> {
     return;
   }
 
-  await hydrateIsland(placeholder);
+  await waitForIslandScript(placeholder);
 }
 
 /**
@@ -107,4 +119,17 @@ export function getIslandIds(): string[] {
   return Array.from(placeholders)
     .map((el) => el.getAttribute("data-island-id"))
     .filter((id): id is string => id !== null);
+}
+
+/**
+ * Mark an island as hydrated
+ * This should be called by the island entry point after hydration completes
+ */
+export function markIslandHydrated(islandId: string): void {
+  const placeholder = document.querySelector(
+    `[data-island-id="${islandId}"]`,
+  );
+  if (placeholder) {
+    placeholder.setAttribute("data-hydrated", "true");
+  }
 }

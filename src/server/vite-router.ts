@@ -10,6 +10,7 @@ import {
   type ViteIslandBuilder,
 } from "./vite-builder";
 import type { ViteDevServer } from "vite";
+import { LRUCache } from "./lru-cache";
 
 /**
  * Route matcher result
@@ -28,7 +29,8 @@ export class ViteRouter {
   private dynamicRoutes: Array<{ pattern: RegExp; handler: RouteHandler }> = [];
   private builder: ViteIslandBuilder | null = null;
   private config: Required<RouterConfig>;
-  private islandsMap = new Map<string, IslandMetadata>();
+  // Use LRU cache to prevent memory leaks from unbounded island storage
+  private islandsCache: LRUCache<string, IslandMetadata>;
   private initialized = false;
 
   constructor(config: RouterConfig = {}) {
@@ -39,6 +41,11 @@ export class ViteRouter {
       root: config.root ?? process.cwd(),
       buildOptions: config.buildOptions ?? { minify: true, sourcemap: false },
     };
+
+    // Initialize LRU cache with configurable max size
+    // Default: 1000 islands (should be enough for most apps)
+    const cacheSize = (config as any).islandCacheSize ?? 1000;
+    this.islandsCache = new LRUCache<string, IslandMetadata>(cacheSize);
   }
 
   /**
@@ -102,9 +109,10 @@ export class ViteRouter {
       islandBasePath: this.config.islandBasePath,
     });
 
-    // Store islands for later code retrieval
+    // Store islands in LRU cache for later code retrieval
+    // Old islands will be automatically evicted when cache is full
     for (const island of result.islands) {
-      this.islandsMap.set(island.id, island);
+      this.islandsCache.set(island.id, island);
     }
 
     return result;
@@ -118,7 +126,7 @@ export class ViteRouter {
   async getIslandEntryPoint(islandId: string): Promise<string> {
     await this.initialize();
 
-    const island = this.islandsMap.get(islandId);
+    const island = this.islandsCache.get(islandId);
     if (!island) {
       throw new Error(`Island not found: ${islandId}`);
     }
@@ -148,7 +156,7 @@ export class ViteRouter {
    * Get island metadata by ID
    */
   getIsland(islandId: string): IslandMetadata | undefined {
-    return this.islandsMap.get(islandId);
+    return this.islandsCache.get(islandId);
   }
 
   /**

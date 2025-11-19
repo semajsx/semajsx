@@ -48,13 +48,13 @@ export class ViteIslandBuilder {
       plugins: [
         {
           name: "semajsx-virtual-islands",
-          resolveId(id) {
+          resolveId(id: string) {
             // Handle virtual island modules
             if (id.startsWith("virtual:island-")) {
               return "\0" + id; // \0 prefix indicates virtual module
             }
           },
-          load(id) {
+          load(id: string) {
             // Provide the code for virtual island modules
             if (id.startsWith("\0virtual:island-")) {
               const islandId = id
@@ -130,25 +130,30 @@ export class ViteIslandBuilder {
 
   /**
    * Generate entry point for island (with imports, no bundling)
+   * Uses hydration instead of rendering to preserve server-rendered HTML
    */
   private generateEntryPoint(island: IslandMetadata): string {
     const propsJson = JSON.stringify(island.props);
+    const componentName = island.componentName;
 
     // Normalize component path
     const componentPath = this.normalizeModulePath(island.path);
 
     // Generate code that imports dependencies (Vite will resolve them)
+    // Use hydrate() instead of render() to preserve server-rendered content
     return `
 // Island hydration entry point for ${island.id}
-import { render } from 'semajsx/dom';
+import { hydrate } from 'semajsx/dom';
+import { markIslandHydrated } from 'semajsx/client';
 import * as ComponentModule from '${componentPath}';
 
 // Get the component
-const Component = ComponentModule.default ||
+// Try to find by name first (most reliable), then fall back to default or first function
+const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName} || ` : ""}ComponentModule.default ||
                   Object.values(ComponentModule).find(exp => typeof exp === 'function');
 
 if (!Component) {
-  console.error('[Island ${island.id}] No component found in module');
+  console.error('[Island ${island.id}] No component found in module ${componentPath}');
 } else {
   // Props from server
   const props = ${propsJson};
@@ -159,15 +164,20 @@ if (!Component) {
   if (!placeholder) {
     console.error('[Island ${island.id}] Placeholder not found');
   } else {
-    // Create VNode and render directly into the placeholder
-    const vnode = Component(props);
+    try {
+      // Create VNode
+      const vnode = Component(props);
 
-    // Render into the placeholder div (replaces its content)
-    render(vnode, placeholder);
+      // Hydrate (attach interactivity to server-rendered content)
+      hydrate(vnode, placeholder);
 
-    // Clean up island attributes (optional - keeps the div but removes markers)
-    placeholder.removeAttribute('data-island-id');
-    placeholder.removeAttribute('data-island-props');
+      // Mark island as hydrated for progressive enhancement
+      markIslandHydrated('${island.id}');
+
+      console.log('[Island ${island.id}] Hydrated successfully');
+    } catch (error) {
+      console.error('[Island ${island.id}] Hydration error:', error);
+    }
   }
 }
 `.trim();
@@ -182,8 +192,8 @@ if (!Component) {
       const fsPath = new URL(path).pathname;
 
       // Make path relative to Vite root
-      const root = this.options.root;
-      if (fsPath.startsWith(root)) {
+      const root = this.options.root || process.cwd();
+      if (root && fsPath.startsWith(root)) {
         // Path is within root, make it relative
         const relativePath = fsPath.slice(root.length);
         // Ensure it starts with / for Vite to resolve from root

@@ -2,8 +2,18 @@ import type { VNode, JSXNode } from "../runtime/types";
 import type { SSRResult, IslandMetadata } from "../shared/types";
 import { Fragment } from "../runtime/types";
 import { isIslandVNode, getIslandMetadata } from "./island";
-import { createIslandCollector } from "./collector";
 import { isSignal, unwrap } from "../signal/utils";
+
+/**
+ * Render context for collecting islands during traversal
+ */
+interface RenderContext {
+  islands: IslandMetadata[];
+  islandCounter: number;
+  islandBasePath: string;
+  // Cache for component render results to avoid duplicate rendering
+  renderCache: WeakMap<VNode, string>;
+}
 
 /**
  * Render a VNode tree to an HTML string with island support
@@ -28,21 +38,93 @@ export function renderToString(
 ): SSRResult {
   const { islandBasePath = "/islands" } = options;
 
-  // Collect all islands from the tree
-  const collector = createIslandCollector();
-  const islands = collector.collect(vnode);
+  // Create render context to collect islands during single traversal
+  const context: RenderContext = {
+    islands: [],
+    islandCounter: 0,
+    islandBasePath,
+    renderCache: new WeakMap(),
+  };
 
-  // Render HTML with island placeholders
-  const html = renderVNodeToHTML(vnode, islands);
+  // Render HTML and collect islands in one pass (fixes duplicate rendering)
+  const html = renderVNodeToHTML(vnode, context);
 
   // Generate script tags for islands
-  const scripts = generateIslandScripts(islands, islandBasePath);
+  const scripts = generateIslandScripts(context.islands, islandBasePath);
 
   return {
     html,
-    islands,
+    islands: context.islands,
     scripts,
   };
+}
+
+/**
+ * Serialize props for island hydration
+ */
+function serializeProps(props: any): Record<string, any> {
+  if (!props || typeof props !== "object") {
+    return {};
+  }
+
+  const serialized: Record<string, any> = {};
+
+  for (const [key, value] of Object.entries(props)) {
+    // Skip children - they will be rendered separately
+    if (key === "children" || key === "key" || key === "ref") {
+      continue;
+    }
+
+    // Skip functions (event handlers, callbacks)
+    if (typeof value === "function") {
+      continue;
+    }
+
+    // Skip symbols
+    if (typeof value === "symbol") {
+      continue;
+    }
+
+    // Skip undefined
+    if (value === undefined) {
+      continue;
+    }
+
+    // Handle signals - serialize their current value
+    if (isSignal(value)) {
+      serialized[key] = unwrap(value);
+      continue;
+    }
+
+    // Handle null, boolean, number, string
+    if (
+      value === null ||
+      typeof value === "boolean" ||
+      typeof value === "number" ||
+      typeof value === "string"
+    ) {
+      serialized[key] = value;
+      continue;
+    }
+
+    // Handle arrays and plain objects
+    if (Array.isArray(value) || isPlainObject(value)) {
+      try {
+        // Test if it's JSON-serializable
+        JSON.stringify(value);
+        serialized[key] = value;
+      } catch (error) {
+        console.warn(`Cannot serialize prop "${key}":`, error);
+      }
+      continue;
+    }
+
+    console.warn(
+      `Skipping non-serializable prop "${key}" of type ${typeof value}`,
+    );
+  }
+
+  return serialized;
 }
 
 /**
@@ -50,7 +132,7 @@ export function renderToString(
  */
 function renderVNodeToHTML(
   vnode: VNode | JSXNode,
-  islands: IslandMetadata[],
+  context: RenderContext,
 ): string {
   // Handle null/undefined
   if (vnode == null) {
@@ -59,7 +141,7 @@ function renderVNodeToHTML(
 
   // Handle signals
   if (isSignal(vnode)) {
-    return renderVNodeToHTML(unwrap(vnode), islands);
+    return renderVNodeToHTML(unwrap(vnode), context);
   }
 
   // Handle primitives
@@ -73,7 +155,7 @@ function renderVNodeToHTML(
 
   // Handle arrays
   if (Array.isArray(vnode)) {
-    return vnode.map((child) => renderVNodeToHTML(child, islands)).join("");
+    return vnode.map((child) => renderVNodeToHTML(child, context)).join("");
   }
 
   // Must be a VNode at this point
@@ -88,23 +170,15 @@ function renderVNodeToHTML(
     return escapeHTML(String(vnodeTyped.props?.nodeValue || ""));
   }
 
-  // Handle islands - render placeholder
+  // Handle islands - render content AND mark for hydration
   if (isIslandVNode(vnodeTyped)) {
-    const metadata = getIslandMetadata(vnodeTyped);
-    if (metadata) {
-      // Find the island ID
-      const island = islands.find((i) => i.path === metadata.modulePath);
-      if (island) {
-        return renderIslandPlaceholder(island);
-      }
-    }
-    return "";
+    return renderIsland(vnodeTyped, context);
   }
 
   // Handle fragments
   if (vnodeTyped.type === Fragment) {
     return vnodeTyped.children
-      .map((child) => renderVNodeToHTML(child, islands))
+      .map((child) => renderVNodeToHTML(child, context))
       .join("");
   }
 
@@ -112,25 +186,77 @@ function renderVNodeToHTML(
   if (typeof vnodeTyped.type === "function") {
     try {
       const result = vnodeTyped.type(vnodeTyped.props || {});
-      return renderVNodeToHTML(result, islands);
+      return renderVNodeToHTML(result, context);
     } catch (error) {
       console.error("Error rendering component:", error);
-      return "";
+      // Return error fallback
+      return renderErrorFallback(error, vnodeTyped);
     }
   }
 
   // Handle DOM elements
   if (typeof vnodeTyped.type === "string") {
-    return renderElement(vnodeTyped, islands);
+    return renderElement(vnodeTyped, context);
   }
 
   return "";
 }
 
 /**
+ * Render an island component
+ * - Renders the full HTML content on server (for SEO and no-JS users)
+ * - Wraps content in a hydration marker
+ * - Collects island metadata for client-side hydration
+ */
+function renderIsland(vnode: VNode, context: RenderContext): string {
+  const metadata = getIslandMetadata(vnode);
+  if (!metadata) {
+    return "";
+  }
+
+  // Generate unique island ID
+  const islandId = `island-${context.islandCounter++}`;
+
+  // Serialize props for hydration
+  const serializedProps = serializeProps(metadata.props);
+
+  // Store island metadata
+  const islandMetadata: IslandMetadata = {
+    id: islandId,
+    path: metadata.modulePath,
+    props: serializedProps,
+    componentName:
+      typeof metadata.component === "function"
+        ? metadata.component.name
+        : undefined,
+  };
+  context.islands.push(islandMetadata);
+
+  // Render the island's content on the server
+  let content = "";
+  try {
+    const result = metadata.component(metadata.props || {});
+    content = renderVNodeToHTML(result, context);
+  } catch (error) {
+    console.error(`Error rendering island ${islandId}:`, error);
+    content = renderErrorFallback(error, vnode);
+  }
+
+  // Wrap content in island marker for hydration
+  // The marker includes:
+  // - data-island-id: unique identifier
+  // - data-island-props: serialized props (for hydration)
+  // - Server-rendered HTML content (for SEO and progressive enhancement)
+  const propsJson = JSON.stringify(serializedProps);
+  const escapedProps = escapeHTML(propsJson);
+
+  return `<div data-island-id="${islandId}" data-island-props="${escapedProps}">${content}</div>`;
+}
+
+/**
  * Render a DOM element to HTML
  */
-function renderElement(vnode: VNode, islands: IslandMetadata[]): string {
+function renderElement(vnode: VNode, context: RenderContext): string {
   const tag = vnode.type as string;
   const props = vnode.props || {};
 
@@ -162,7 +288,7 @@ function renderElement(vnode: VNode, islands: IslandMetadata[]): string {
 
   // Regular tag with children
   const children = (vnode.children || [])
-    .map((child) => renderVNodeToHTML(child, islands))
+    .map((child) => renderVNodeToHTML(child, context))
     .join("");
 
   return `<${tag}${attrs}>${children}</${tag}>`;
@@ -229,19 +355,6 @@ function renderAttributes(props: Record<string, any>): string {
 }
 
 /**
- * Render island placeholder HTML
- *
- * Note: We only expose the island ID and props to the client.
- * The file path is kept server-side only to prevent directory structure leakage.
- */
-function renderIslandPlaceholder(island: IslandMetadata): string {
-  const propsJson = JSON.stringify(island.props);
-  const escapedProps = escapeHTML(propsJson);
-
-  return `<div data-island-id="${island.id}" data-island-props="${escapedProps}"></div>`;
-}
-
-/**
  * Generate script tags for loading islands
  */
 function generateIslandScripts(
@@ -261,6 +374,20 @@ function generateIslandScripts(
 }
 
 /**
+ * Render error fallback
+ */
+function renderErrorFallback(error: any, vnode?: VNode): string {
+  const message = error?.message || String(error);
+  const componentName =
+    vnode && typeof vnode.type === "function" ? vnode.type.name : "Unknown";
+
+  return `<div style="border: 2px solid red; padding: 10px; margin: 10px; background: #fee;">
+    <strong>Error rendering component: ${escapeHTML(componentName)}</strong>
+    <pre>${escapeHTML(message)}</pre>
+  </div>`;
+}
+
+/**
  * Escape HTML special characters
  */
 function escapeHTML(str: string): string {
@@ -277,4 +404,16 @@ function escapeHTML(str: string): string {
  */
 function camelToKebab(str: string): string {
   return str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+}
+
+/**
+ * Check if a value is a plain object
+ */
+function isPlainObject(value: any): boolean {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
 }
