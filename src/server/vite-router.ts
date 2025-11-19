@@ -115,6 +115,20 @@ export class ViteRouter {
       this.islandsCache.set(island.id, island);
     }
 
+    // If document template is provided, render complete HTML document
+    if (this.config.document) {
+      const { renderDocument } = await import("./document");
+
+      const documentVNode = this.config.document({
+        children: result.html,
+        scripts: result.scripts,
+        islands: result.islands,
+        path,
+      });
+
+      result.document = renderDocument(documentVNode);
+    }
+
     return result;
   }
 

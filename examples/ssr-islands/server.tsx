@@ -1,6 +1,6 @@
 /** @jsxImportSource semajsx/dom */
 
-import { createViteRouter } from "semajsx/server";
+import { createViteRouter, type DocumentTemplate } from "semajsx/server";
 import { App } from "./App";
 
 /**
@@ -8,7 +8,32 @@ import { App } from "./App";
  * Uses Vite dev server for module transformation (no bundling!)
  */
 
-// Create Vite-powered router
+// Custom HTML document template (JSX!)
+const Document: DocumentTemplate = ({ children, scripts }) => (
+  <html lang="en">
+    <head>
+      <meta charSet="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>SemaJSX SSR Islands (Vite)</title>
+      <style>{`
+        body {
+          font-family: system-ui, -apple-system, sans-serif;
+          margin: 0;
+          padding: 20px;
+          background: #f9fafb;
+        }
+      `}</style>
+    </head>
+    <body>
+      {/* Page content - rendered as raw HTML */}
+      <div dangerouslySetInnerHTML={{ __html: children }} />
+      {/* Island scripts - rendered as raw HTML */}
+      <div dangerouslySetInnerHTML={{ __html: scripts }} />
+    </body>
+  </html>
+);
+
+// Create Vite-powered router with JSX document template
 const router = await createViteRouter(
   {
     "/": () => <App />,
@@ -16,6 +41,7 @@ const router = await createViteRouter(
   {
     dev: true, // Enable Vite dev server
     root: import.meta.dir, // Project root
+    document: Document, // Use JSX document template!
   },
 );
 
@@ -101,20 +127,8 @@ const server = Bun.serve({
           );
         }
 
-        const html = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SemaJSX SSR Islands (Vite)</title>
-</head>
-<body>
-  ${result.html}
-  ${result.scripts}
-</body>
-</html>
-      `.trim();
+        // Use the complete HTML document rendered from JSX template
+        const html = result.document || result.html;
 
         return new Response(html, {
           headers: {

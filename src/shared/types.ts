@@ -18,12 +18,14 @@ export interface IslandMetadata {
  * Result of SSR rendering with islands
  */
 export interface SSRResult {
-  /** Rendered HTML string */
+  /** Rendered HTML string (page content only) */
   html: string;
   /** List of islands found during rendering */
   islands: IslandMetadata[];
   /** Script tags to load island code */
   scripts: string;
+  /** Complete HTML document (if document template was provided) */
+  document?: string;
 }
 
 /**
@@ -44,6 +46,20 @@ export interface IslandMarker {
 export type RouteHandler = (params?: Record<string, string>) => VNode;
 
 /**
+ * Document template function for rendering complete HTML documents
+ */
+export type DocumentTemplate = (props: {
+  /** Page content HTML */
+  children: string;
+  /** Island script tags */
+  scripts: string;
+  /** Island metadata (for custom processing) */
+  islands: IslandMetadata[];
+  /** Current route path */
+  path: string;
+}) => VNode;
+
+/**
  * Router configuration
  */
 export interface RouterConfig {
@@ -60,4 +76,6 @@ export interface RouterConfig {
     minify?: boolean;
     sourcemap?: boolean;
   };
+  /** HTML document template (JSX) */
+  document?: DocumentTemplate;
 }

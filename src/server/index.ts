@@ -20,10 +20,14 @@ export {
 // Collector (for advanced usage)
 export { createIslandCollector, IslandCollector } from "./collector";
 
+// Document templates
+export { DefaultDocument, renderDocument } from "./document";
+
 // Re-export shared types
 export type {
   IslandMetadata,
   SSRResult,
   RouteHandler,
   RouterConfig,
+  DocumentTemplate,
 } from "../shared/types";
