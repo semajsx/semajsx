@@ -62,7 +62,141 @@ importers:
         specifier: ^4.0.8
         version: 4.0.10(@types/node@22.19.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(yaml@2.8.1)
 
+  packages/dom:
+    dependencies:
+      "@semajsx/core":
+        specifier: workspace:*
+        version: link:../core
+      "@semajsx/signal":
+        specifier: workspace:*
+        version: link:../signal
+      "@semajsx/utils":
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
+      "@semajsx/configs":
+        specifier: workspace:*
+        version: link:../configs
+
+  packages/logger:
+    dependencies:
+      "@semajsx/core":
+        specifier: workspace:*
+        version: link:../core
+      "@semajsx/terminal":
+        specifier: workspace:*
+        version: link:../terminal
+    devDependencies:
+      "@semajsx/configs":
+        specifier: workspace:*
+        version: link:../configs
+      tsdown:
+        specifier: ^0.16.4
+        version: 0.16.5(ms@2.1.3)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+
   packages/semajsx:
+    dependencies:
+      "@semajsx/core":
+        specifier: workspace:*
+        version: link:../core
+      "@semajsx/dom":
+        specifier: workspace:*
+        version: link:../dom
+      "@semajsx/server":
+        specifier: workspace:*
+        version: link:../server
+      "@semajsx/signal":
+        specifier: workspace:*
+        version: link:../signal
+      "@semajsx/terminal":
+        specifier: workspace:*
+        version: link:../terminal
+      "@semajsx/utils":
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
+      "@semajsx/configs":
+        specifier: workspace:*
+        version: link:../configs
+      "@types/bun":
+        specifier: latest
+        version: 1.3.2(@types/react@19.2.6)
+      "@types/node":
+        specifier: ^22.0.0
+        version: 22.19.1
+      "@vitest/browser":
+        specifier: ^4.0.8
+        version: 4.0.10(vite@7.2.2(@types/node@22.19.1)(jiti@2.6.1)(yaml@2.8.1))(vitest@4.0.10)
+      "@vitest/browser-playwright":
+        specifier: ^4.0.8
+        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@22.19.1)(jiti@2.6.1)(yaml@2.8.1))(vitest@4.0.10)
+      playwright:
+        specifier: ^1.56.1
+        version: 1.56.1
+      tsdown:
+        specifier: ^0.16.4
+        version: 0.16.5(ms@2.1.3)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^7.2.2
+        version: 7.2.2(@types/node@22.19.1)(jiti@2.6.1)(yaml@2.8.1)
+      vitest:
+        specifier: ^4.0.8
+        version: 4.0.10(@types/node@22.19.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(yaml@2.8.1)
+
+  packages/server:
+    dependencies:
+      "@semajsx/core":
+        specifier: workspace:*
+        version: link:../core
+      "@semajsx/dom":
+        specifier: workspace:*
+        version: link:../dom
+      "@semajsx/logger":
+        specifier: workspace:*
+        version: link:../logger
+      "@semajsx/signal":
+        specifier: workspace:*
+        version: link:../signal
+      vite:
+        specifier: ^6.0.0
+        version: 6.4.1(@types/node@22.19.1)(jiti@2.6.1)(yaml@2.8.1)
+    devDependencies:
+      "@semajsx/configs":
+        specifier: workspace:*
+        version: link:../configs
+      tsdown:
+        specifier: ^0.16.4
+        version: 0.16.5(ms@2.1.3)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+
+  packages/signal:
+    dependencies:
+      "@semajsx/utils":
+        specifier: workspace:*
+        version: link:../utils
+    devDependencies:
+      "@semajsx/configs":
+        specifier: workspace:*
+        version: link:../configs
+      tsdown:
+        specifier: ^0.16.4
+        version: 0.16.5(ms@2.1.3)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.8
+        version: 4.0.10(@types/node@22.19.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(yaml@2.8.1)
+
+  packages/terminal:
     dependencies:
       "@semajsx/core":
         specifier: workspace:*
@@ -98,52 +232,6 @@ importers:
       "@semajsx/configs":
         specifier: workspace:*
         version: link:../configs
-      "@types/bun":
-        specifier: latest
-        version: 1.3.2(@types/react@19.2.6)
-      "@types/node":
-        specifier: ^22.0.0
-        version: 22.19.1
-      "@vitest/browser":
-        specifier: ^4.0.8
-        version: 4.0.10(vite@7.2.2(@types/node@22.19.1)(jiti@2.6.1)(yaml@2.8.1))(vitest@4.0.10)
-      "@vitest/browser-playwright":
-        specifier: ^4.0.8
-        version: 4.0.10(playwright@1.56.1)(vite@7.2.2(@types/node@22.19.1)(jiti@2.6.1)(yaml@2.8.1))(vitest@4.0.10)
-      playwright:
-        specifier: ^1.56.1
-        version: 1.56.1
-      tsdown:
-        specifier: ^0.16.4
-        version: 0.16.5(ms@2.1.3)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vite:
-        specifier: ^7.2.2
-        version: 7.2.2(@types/node@22.19.1)(jiti@2.6.1)(yaml@2.8.1)
-      vitest:
-        specifier: ^4.0.8
-        version: 4.0.10(@types/node@22.19.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(yaml@2.8.1)
-
-  packages/signal:
-    dependencies:
-      "@semajsx/utils":
-        specifier: workspace:*
-        version: link:../utils
-    devDependencies:
-      "@semajsx/configs":
-        specifier: workspace:*
-        version: link:../configs
-      tsdown:
-        specifier: ^0.16.4
-        version: 0.16.5(ms@2.1.3)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: ^4.0.8
-        version: 4.0.10(@types/node@22.19.1)(@vitest/browser-playwright@4.0.10)(jiti@2.6.1)(yaml@2.8.1)
 
   packages/utils:
     devDependencies:
@@ -2510,6 +2598,49 @@ packages:
       synckit:
         optional: true
 
+  vite@6.4.1:
+    resolution:
+      {
+        integrity: sha512-+Oxm7q9hDoLMyJOYfUYBuHQo+dkAloi33apOPP56pzj+vsdJDzr+j1NISE5pyaAuKL4A3UD34qd0lx5+kfKp2g==,
+      }
+    engines: { node: ^18.0.0 || ^20.0.0 || >=22.0.0 }
+    hasBin: true
+    peerDependencies:
+      "@types/node": ^18.0.0 || ^20.0.0 || >=22.0.0
+      jiti: ">=1.21.0"
+      less: "*"
+      lightningcss: ^1.21.0
+      sass: "*"
+      sass-embedded: "*"
+      stylus: "*"
+      sugarss: "*"
+      terser: ^5.16.0
+      tsx: ^4.8.1
+      yaml: ^2.4.2
+    peerDependenciesMeta:
+      "@types/node":
+        optional: true
+      jiti:
+        optional: true
+      less:
+        optional: true
+      lightningcss:
+        optional: true
+      sass:
+        optional: true
+      sass-embedded:
+        optional: true
+      stylus:
+        optional: true
+      sugarss:
+        optional: true
+      terser:
+        optional: true
+      tsx:
+        optional: true
+      yaml:
+        optional: true
+
   vite@7.2.2:
     resolution:
       {
@@ -3892,6 +4023,20 @@ snapshots:
     dependencies:
       "@oxc-project/runtime": 0.97.0
       rolldown: 1.0.0-beta.50
+
+  vite@6.4.1(@types/node@22.19.1)(jiti@2.6.1)(yaml@2.8.1):
+    dependencies:
+      esbuild: 0.25.12
+      fdir: 6.5.0(picomatch@4.0.3)
+      picomatch: 4.0.3
+      postcss: 8.5.6
+      rollup: 4.53.3
+      tinyglobby: 0.2.15
+    optionalDependencies:
+      "@types/node": 22.19.1
+      fsevents: 2.3.3
+      jiti: 2.6.1
+      yaml: 2.8.1
 
   vite@7.2.2(@types/node@22.19.1)(jiti@2.6.1)(yaml@2.8.1):
     dependencies:

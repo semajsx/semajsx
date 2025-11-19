@@ -90,6 +90,7 @@
       "dependencies": {
         "@semajsx/core": "workspace:*",
         "@semajsx/dom": "workspace:*",
+        "@semajsx/logger": "workspace:*",
         "@semajsx/signal": "workspace:*",
       },
       "devDependencies": {
