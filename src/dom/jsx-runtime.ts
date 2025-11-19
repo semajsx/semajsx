@@ -5,12 +5,12 @@
 
 import { Fragment } from "../runtime/types";
 import type {
-  Component,
+  ComponentAPI,
   JSXNode,
+  Ref,
   VNode,
   WithKey,
   WithSignals,
-  Ref,
 } from "../runtime/types";
 import type { Signal } from "../signal/types";
 
@@ -451,7 +451,10 @@ export namespace JSX {
   // JSX factory returns sync VNodes
   export type Element = VNode;
 
-  export type ElementType = keyof IntrinsicElements | Component<any>;
+  export type ElementType =
+    | keyof IntrinsicElements
+    | ((props: any) => JSXNode)
+    | ((props: any, ctx: ComponentAPI) => JSXNode);
 
   export interface ElementChildrenAttribute {
     children: {};

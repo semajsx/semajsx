@@ -4,7 +4,12 @@
  */
 
 import { Fragment } from "../runtime/types";
-import type { Component, JSXNode, VNode, WithSignals } from "../runtime/types";
+import type {
+  ComponentAPI,
+  JSXNode,
+  VNode,
+  WithSignals,
+} from "../runtime/types";
 import type { TerminalStyle } from "./types";
 
 export { jsx, jsxs } from "../runtime/jsx";
@@ -61,7 +66,10 @@ export type TextAttributes = TerminalAttributes;
 export namespace JSX {
   export type Element = VNode;
 
-  export type ElementType = keyof IntrinsicElements | Component<any>;
+  export type ElementType =
+    | keyof IntrinsicElements
+    | ((props: any) => JSXNode)
+    | ((props: any, ctx: ComponentAPI) => JSXNode);
 
   export interface ElementChildrenAttribute {
     children: {};

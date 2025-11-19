@@ -1,4 +1,4 @@
-import type { Component, VNode, JSXNode } from "../runtime/types";
+import type { Component, JSXNode, VNode } from "../runtime/types";
 import { ISLAND_MARKER } from "../shared/island-marker";
 import type { IslandMarker } from "../shared/types";
 
@@ -27,12 +27,12 @@ import type { IslandMarker } from "../shared/types";
  * )
  * ```
  */
-export function island<P extends Record<string, any> = {}>(
-  component: Component<P>,
+export function island<T extends Component<any>>(
+  component: T,
   modulePath: string,
-): Component<P> {
+): T {
   // Create a wrapped component that marks itself as an island
-  const wrappedComponent: Component<P> = (props: P): JSXNode => {
+  const wrappedComponent = ((props: any): JSXNode => {
     // Create a VNode with island marker
     const vnode: VNode & { [ISLAND_MARKER]?: IslandMarker } = {
       type: component,
@@ -46,7 +46,7 @@ export function island<P extends Record<string, any> = {}>(
     };
 
     return vnode;
-  };
+  }) as T;
 
   // Also mark the wrapper function itself for static analysis
   (wrappedComponent as any)[ISLAND_MARKER] = {
