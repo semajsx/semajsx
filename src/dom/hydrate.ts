@@ -268,9 +268,11 @@ function hydrateSignalNode(
         domNode.nodeType,
       );
     }
-  }
-  // For simple values (string, number), the server renders them as text nodes
-  else if (typeof currentValue === "string" || typeof currentValue === "number") {
+  } // For simple values (string, number), the server renders them as text nodes
+  else if (
+    typeof currentValue === "string" ||
+    typeof currentValue === "number"
+  ) {
     if (domNode.nodeType === Node.TEXT_NODE) {
       const expectedText = String(currentValue);
       if (domNode.textContent !== expectedText) {
@@ -329,7 +331,7 @@ function hydrateSignalNode(
         const children = Array.from(fragment.childNodes);
 
         // Insert in order by tracking the last inserted node
-        let insertAfter = anchor;
+        let insertAfter: Node | null = anchor;
         for (const child of children) {
           parent.insertBefore(child, insertAfter.nextSibling);
           insertAfter = child;
@@ -382,9 +384,7 @@ function renderNode(vnode: any, parentElement: Element): Node | null {
 
     // Handle special VNode types
     if (vnodeTyped.type === "#text") {
-      return document.createTextNode(
-        String(vnodeTyped.props?.nodeValue || ""),
-      );
+      return document.createTextNode(String(vnodeTyped.props?.nodeValue || ""));
     }
 
     if (vnodeTyped.type === "#signal") {

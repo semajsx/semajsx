@@ -1,6 +1,7 @@
+/** @jsxImportSource semajsx/dom */
+
 import { beforeEach, describe, expect, it } from "vitest";
 import { signal } from "@/signal";
-import { h } from "@/runtime/vnode";
 import { render } from "@/dom/render";
 
 describe("Ref functionality", () => {
@@ -13,7 +14,7 @@ describe("Ref functionality", () => {
 
   it("should set ref with signal", () => {
     const divRef = signal<HTMLDivElement | null>(null);
-    const vnode = h("div", { ref: divRef }, "Hello");
+    const vnode = <div ref={divRef}>Hello</div>;
 
     render(vnode, container);
 
@@ -27,7 +28,7 @@ describe("Ref functionality", () => {
       capturedElement = el;
     };
 
-    const vnode = h("div", { ref: refCallback }, "Hello");
+    const vnode = <div ref={refCallback}>Hello</div>;
 
     render(vnode, container);
 
@@ -35,37 +36,35 @@ describe("Ref functionality", () => {
     expect(capturedElement!.textContent).toBe("Hello");
   });
 
-  it("should clear ref on unmount with signal", async () => {
+  it("should clear ref on unmount with signal", () => {
     const divRef = signal<HTMLDivElement | null>(null);
-    const vnode = h("div", { ref: divRef }, "Hello");
+    const vnode = <div ref={divRef}>Hello</div>;
 
-    const rendered = render(vnode, container);
+    const { unmount } = render(vnode, container);
 
     expect(divRef.value).toBeInstanceOf(HTMLDivElement);
 
     // Unmount
-    const { unmount } = await import("@/dom/render");
-    unmount(rendered);
+    unmount();
 
     expect(divRef.value).toBe(null);
   });
 
-  it("should call ref callback with null on unmount", async () => {
+  it("should call ref callback with null on unmount", () => {
     const calls: Array<HTMLDivElement | null> = [];
     const refCallback = (el: HTMLDivElement | null) => {
       calls.push(el);
     };
 
-    const vnode = h("div", { ref: refCallback }, "Hello");
+    const vnode = <div ref={refCallback}>Hello</div>;
 
-    const rendered = render(vnode, container);
+    const { unmount } = render(vnode, container);
 
     expect(calls).toHaveLength(1);
     expect(calls[0]).toBeInstanceOf(HTMLDivElement);
 
     // Unmount
-    const { unmount } = await import("@/dom/render");
-    unmount(rendered);
+    unmount();
 
     expect(calls).toHaveLength(2);
     expect(calls[1]).toBe(null);
@@ -75,10 +74,12 @@ describe("Ref functionality", () => {
     const inputRef = signal<HTMLInputElement | null>(null);
     const buttonRef = signal<HTMLButtonElement | null>(null);
 
-    const vnode = h("div", {}, [
-      h("input", { ref: inputRef, type: "text" }),
-      h("button", { ref: buttonRef }, "Click"),
-    ]);
+    const vnode = (
+      <div>
+        <input ref={inputRef} type="text" />
+        <button ref={buttonRef}>Click</button>
+      </div>
+    );
 
     render(vnode, container);
 
@@ -90,7 +91,7 @@ describe("Ref functionality", () => {
 
   it("should allow imperative DOM manipulation via ref", () => {
     const inputRef = signal<HTMLInputElement | null>(null);
-    const vnode = h("input", { ref: inputRef, type: "text" });
+    const vnode = <input ref={inputRef} type="text" />;
 
     render(vnode, container);
 

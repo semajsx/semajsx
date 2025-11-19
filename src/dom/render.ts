@@ -22,6 +22,16 @@ import {
 } from "../runtime/render-core";
 
 /**
+ * Result returned by the render function
+ */
+export interface DOMRenderResult {
+  /**
+   * Unmount the rendered tree and cleanup subscriptions
+   */
+  unmount: () => void;
+}
+
+/**
  * DOM-specific render strategy with optimization
  */
 const domStrategy: RenderStrategy<Node> = {
@@ -46,13 +56,30 @@ const { renderNode, unmount: unmountCore } = createRenderer(domStrategy);
 /**
  * Render a VNode tree to the DOM
  * Supports sync VNodes, async VNodes (Promise), and streaming VNodes (AsyncIterableIterator)
+ *
+ * @example
+ * // Basic usage
+ * const { unmount } = render(<App />, container);
+ *
+ * @example
+ * // With signals (auto-updates)
+ * const count = signal(0);
+ * render(<div>{count}</div>, container);
+ * count.value++; // UI updates automatically
+ *
+ * @example
+ * // Cleanup when needed
+ * const { unmount } = render(<App />, container);
+ * unmount();
  */
 export function render(
   element: VNode | Promise<VNode> | AsyncIterableIterator<VNode>,
   container: Element,
-): RenderedNode<Node> {
+): DOMRenderResult {
   // Initialize empty context map for root render
   const initialContext: ContextMap = new Map();
+
+  let rendered: RenderedNode<Node>;
 
   // Handle async element (Promise<VNode>)
   if (isPromise(element)) {
@@ -67,15 +94,12 @@ export function render(
       props: { signal: resultSignal, context: initialContext },
       children: [],
     };
-    const rendered = renderNode(signalVNode, initialContext);
+    rendered = renderNode(signalVNode, initialContext);
     if (rendered.node) {
       appendChild(container, rendered.node);
     }
-    return rendered;
-  }
-
-  // Handle async generator (AsyncIterableIterator<VNode>)
-  if (isAsyncIterator(element)) {
+  } else if (isAsyncIterator(element)) {
+    // Handle async generator (AsyncIterableIterator<VNode>)
     const pending: VNode = {
       type: "#text",
       props: { nodeValue: "" },
@@ -87,21 +111,23 @@ export function render(
       props: { signal: resultSignal, context: initialContext },
       children: [],
     };
-    const rendered = renderNode(signalVNode, initialContext);
+    rendered = renderNode(signalVNode, initialContext);
     if (rendered.node) {
       appendChild(container, rendered.node);
     }
-    return rendered;
+  } else {
+    // Handle sync VNode
+    rendered = renderNode(element, initialContext);
+
+    if (rendered.node) {
+      appendChild(container, rendered.node);
+    }
   }
 
-  // Handle sync VNode
-  const rendered = renderNode(element, initialContext);
-
-  if (rendered.node) {
-    appendChild(container, rendered.node);
-  }
-
-  return rendered;
+  // Return result object with unmount method
+  return {
+    unmount: () => unmountCore(rendered),
+  };
 }
 
 /**
@@ -312,9 +338,3 @@ function reconcileKeyedChildren(
   }
 }
 
-/**
- * Unmount a rendered DOM node (exported for external use)
- */
-export function unmount(node: RenderedNode<Node>): void {
-  unmountCore(node);
-}

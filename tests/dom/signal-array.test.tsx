@@ -1,8 +1,8 @@
 /** @jsxImportSource semajsx/dom */
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { signal, computed } from "@/signal";
-import { render, unmount } from "@/dom/render";
+import { computed, signal } from "@/signal";
+import { render } from "@/dom/render";
 
 describe("Signal<Array<VNode>> rendering", () => {
   let container: HTMLDivElement;
@@ -14,7 +14,6 @@ describe("Signal<Array<VNode>> rendering", () => {
 
   afterEach(() => {
     if (container.parentNode) {
-      unmount(container);
       document.body.removeChild(container);
     }
   });
@@ -32,8 +31,8 @@ describe("Signal<Array<VNode>> rendering", () => {
     const ul = container.querySelector("ul");
     expect(ul).toBeTruthy();
     expect(ul?.children.length).toBe(2);
-    expect(ul?.children[0].textContent).toBe("Apple");
-    expect(ul?.children[1].textContent).toBe("Banana");
+    expect(ul?.children[0]?.textContent).toBe("Apple");
+    expect(ul?.children[1]?.textContent).toBe("Banana");
   });
 
   it("should update when computed array changes", async () => {
@@ -49,7 +48,7 @@ describe("Signal<Array<VNode>> rendering", () => {
     // Initial state
     let ul = container.querySelector("ul");
     expect(ul?.children.length).toBe(2);
-    expect(ul?.children[0].textContent).toBe("Apple");
+    expect(ul?.children[0]?.textContent).toBe("Apple");
 
     // Update the signal
     items.value = ["Apple", "Banana", "Cherry"];
@@ -59,7 +58,7 @@ describe("Signal<Array<VNode>> rendering", () => {
 
     ul = container.querySelector("ul");
     expect(ul?.children.length).toBe(3);
-    expect(ul?.children[2].textContent).toBe("Cherry");
+    expect(ul?.children[2]?.textContent).toBe("Cherry");
   });
 
   it("should handle empty array", async () => {
@@ -115,7 +114,7 @@ describe("Signal<Array<VNode>> rendering", () => {
     await new Promise((resolve) => setTimeout(resolve, 10));
 
     expect(ul?.children.length).toBe(3);
-    expect(ul?.children[2].querySelector("span")?.textContent).toBe("Task 3");
+    expect(ul?.children[2]?.querySelector("span")?.textContent).toBe("Task 3");
   });
 
   it("should handle conditional rendering with array", async () => {
@@ -145,7 +144,7 @@ describe("Signal<Array<VNode>> rendering", () => {
     expect(container.querySelector("p")).toBeNull();
     const lis = container.querySelectorAll("li");
     expect(lis.length).toBe(2);
-    expect(lis[0].textContent).toBe("Apple");
+    expect(lis[0]?.textContent).toBe("Apple");
   });
 
   it("should work with multiple computed arrays in same parent", async () => {
@@ -185,8 +184,8 @@ describe("Signal<Array<VNode>> rendering", () => {
 
     expect(fruitItems.length).toBe(2);
     expect(vegItems.length).toBe(2);
-    expect(fruitItems[0].textContent).toBe("Apple");
-    expect(vegItems[0].textContent).toBe("Carrot");
+    expect(fruitItems[0]?.textContent).toBe("Apple");
+    expect(vegItems[0]?.textContent).toBe("Carrot");
   });
 
   it("should preserve event handlers in array items", async () => {
@@ -208,11 +207,11 @@ describe("Signal<Array<VNode>> rendering", () => {
     expect(buttons.length).toBe(2);
 
     // Click first button
-    buttons[0].click();
+    buttons[0]?.click();
     expect(clicked.value).toBe("Item 1");
 
     // Click second button
-    buttons[1].click();
+    buttons[1]?.click();
     expect(clicked.value).toBe("Item 2");
 
     // Update items
@@ -224,7 +223,7 @@ describe("Signal<Array<VNode>> rendering", () => {
     expect(updatedButtons.length).toBe(3);
 
     // Click new button
-    updatedButtons[2].click();
+    updatedButtons[2]?.click();
     expect(clicked.value).toBe("Item 3");
   });
 });

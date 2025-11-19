@@ -75,7 +75,7 @@ function Section(props: { title: string }, ctx: ComponentAPI) {
 }
 
 // Details component - also consumes context
-function Details(props: any, ctx: ComponentAPI) {
+function Details(_props: any, ctx: ComponentAPI) {
   const theme = ctx.inject(ThemeContext) ?? "light";
   const language = ctx.inject(LanguageContext) ?? "en";
 

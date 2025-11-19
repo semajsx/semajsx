@@ -1,99 +1,114 @@
-import { describe, it, expect } from "vitest";
+/** @jsxImportSource semajsx/dom */
+
+import { describe, expect, it } from "vitest";
 import { createIslandCollector } from "@/server/collector";
 import { island } from "@/server/island";
 import { signal } from "@/signal/signal";
-import { h } from "@/runtime/vnode";
 
 describe("IslandCollector", () => {
   it("should collect islands from VNode tree", () => {
     const Counter = island(function Counter({ initial = 0 }) {
       const count = signal(initial);
-      return h("button", null, count);
+      return <button>{count}</button>;
     }, "/path/to/Counter.tsx");
 
-    const app = h("div", null, h("h1", null, "App"), Counter({ initial: 5 }));
+    const app = (
+      <div>
+        <h1>App</h1>
+        <Counter initial={5} />
+      </div>
+    );
 
     const collector = createIslandCollector();
     const islands = collector.collect(app);
 
     expect(islands).toHaveLength(1);
-    expect(islands[0].id).toBe("island-0");
-    expect(islands[0].path).toBe("/path/to/Counter.tsx");
-    expect(islands[0].props).toEqual({ initial: 5 });
+    expect(islands[0]?.id).toBe("island-0");
+    expect(islands[0]?.path).toBe("/path/to/Counter.tsx");
+    expect(islands[0]?.props).toEqual({ initial: 5 });
   });
 
   it("should collect multiple islands", () => {
     const Counter = island(
-      (props: { initial: number }) => h("button", null, props.initial),
+      (props: { initial: number }) => <button>{props.initial}</button>,
       "/Counter.tsx",
     );
 
     const TodoList = island(
-      (props: { items: string[] }) => h("ul", null),
+      (_props: { items: string[] }) => <ul></ul>,
       "/TodoList.tsx",
     );
 
-    const app = h(
-      "div",
-      null,
-      Counter({ initial: 0 }),
-      TodoList({ items: ["a", "b"] }),
-      Counter({ initial: 10 }),
+    const app = (
+      <div>
+        <Counter initial={0} />
+        <TodoList items={["a", "b"]} />
+        <Counter initial={10} />
+      </div>
     );
 
     const collector = createIslandCollector();
     const islands = collector.collect(app);
 
     expect(islands).toHaveLength(3);
-    expect(islands[0].id).toBe("island-0");
-    expect(islands[0].path).toBe("/Counter.tsx");
-    expect(islands[1].id).toBe("island-1");
-    expect(islands[1].path).toBe("/TodoList.tsx");
-    expect(islands[2].id).toBe("island-2");
-    expect(islands[2].path).toBe("/Counter.tsx");
+    expect(islands[0]?.id).toBe("island-0");
+    expect(islands[0]?.path).toBe("/Counter.tsx");
+    expect(islands[1]?.id).toBe("island-1");
+    expect(islands[1]?.path).toBe("/TodoList.tsx");
+    expect(islands[2]?.id).toBe("island-2");
+    expect(islands[2]?.path).toBe("/Counter.tsx");
   });
 
   it("should collect islands at same level", () => {
-    const Button = island(() => h("button", null, "Click"), "/Button.tsx");
-    const Card = island(() => h("div", null, "Card"), "/Card.tsx");
+    const Button = island(() => <button>Click</button>, "/Button.tsx");
+    const Card = island(() => <div>Card</div>, "/Card.tsx");
 
-    const app = h("div", null, Card({}), h("section", null, Button({})));
+    const app = (
+      <div>
+        <Card />
+        <section>
+          <Button />
+        </section>
+      </div>
+    );
 
     const collector = createIslandCollector();
     const islands = collector.collect(app);
 
     // Should collect both Card and Button at their respective levels
     expect(islands).toHaveLength(2);
-    expect(islands[0].id).toBe("island-0");
-    expect(islands[0].path).toBe("/Card.tsx");
-    expect(islands[1].id).toBe("island-1");
-    expect(islands[1].path).toBe("/Button.tsx");
+    expect(islands[0]?.id).toBe("island-0");
+    expect(islands[0]?.path).toBe("/Card.tsx");
+    expect(islands[1]?.id).toBe("island-1");
+    expect(islands[1]?.path).toBe("/Button.tsx");
   });
 
   it("should serialize props correctly", () => {
     const Component = island(
-      (props: {
+      (_props: {
         num: number;
         str: string;
         bool: boolean;
         arr: number[];
         obj: any;
-      }) => h("div", null),
+      }) => <div></div>,
       "/Component.tsx",
     );
 
-    const app = Component({
-      num: 42,
-      str: "hello",
-      bool: true,
-      arr: [1, 2, 3],
-      obj: { key: "value" },
-    });
+    const app = (
+      <Component
+        num={42}
+        str="hello"
+        bool={true}
+        arr={[1, 2, 3]}
+        obj={{ key: "value" }}
+      />
+    );
 
     const collector = createIslandCollector();
     const islands = collector.collect(app);
 
-    expect(islands[0].props).toEqual({
+    expect(islands[0]?.props).toEqual({
       num: 42,
       str: "hello",
       bool: true,
@@ -104,39 +119,42 @@ describe("IslandCollector", () => {
 
   it("should skip non-serializable props", () => {
     const Component = island(
-      (props: { onClick?: () => void; valid: string }) => h("div", null),
+      (_props: { onClick?: () => void; valid: string }) => <div></div>,
       "/Component.tsx",
     );
 
-    const app = Component({
-      onClick: () => console.log("click"),
-      valid: "test",
-    });
+    const app = <Component onClick={() => console.log("click")} valid="test" />;
 
     const collector = createIslandCollector();
     const islands = collector.collect(app);
 
     // Functions should be skipped
-    expect(islands[0].props).toEqual({ valid: "test" });
-    expect(islands[0].props.onClick).toBeUndefined();
+    expect(islands[0]?.props).toEqual({ valid: "test" });
+    expect(islands[0]?.props.onClick).toBeUndefined();
   });
 
   it("should handle islands with no props", () => {
-    const Static = island(() => h("div", null, "Static"), "/Static.tsx");
+    const Static = island(() => <div>Static</div>, "/Static.tsx");
 
-    const app = Static({});
+    const app = <Static />;
 
     const collector = createIslandCollector();
     const islands = collector.collect(app);
 
     expect(islands).toHaveLength(1);
-    expect(islands[0].props).toEqual({});
+    expect(islands[0]?.props).toEqual({});
   });
 
   it("should generate unique IDs for each island", () => {
-    const Component = island(() => h("div", null), "/Component.tsx");
+    const Component = island(() => <div></div>, "/Component.tsx");
 
-    const app = h("div", null, Component({}), Component({}), Component({}));
+    const app = (
+      <div>
+        <Component />
+        <Component />
+        <Component />
+      </div>
+    );
 
     const collector = createIslandCollector();
     const islands = collector.collect(app);

@@ -1,6 +1,7 @@
+/** @jsxImportSource semajsx/dom */
+
 import { describe, expect, it } from "vitest";
 import { Context, context } from "@/runtime/context";
-import { h } from "@/runtime/vnode";
 import { Fragment } from "@/runtime/types";
 import type { ComponentAPI } from "@/runtime/types";
 
@@ -25,8 +26,8 @@ describe("Context API", () => {
 
   it("Context component should return Fragment with children (single provide)", () => {
     const TestContext = context<string>();
-    const child1 = h("div", {}, "child1");
-    const child2 = h("span", {}, "child2");
+    const child1 = <div>child1</div>;
+    const child2 = <span>child2</span>;
 
     const result = Context({
       provide: [TestContext, "test"],
@@ -42,7 +43,7 @@ describe("Context API", () => {
   it("Context component should return Fragment with children (multiple provides)", () => {
     const Context1 = context<string>();
     const Context2 = context<number>();
-    const child = h("div", {}, "child");
+    const child = <div>child</div>;
 
     const result = Context({
       provide: [

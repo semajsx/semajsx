@@ -1,4 +1,4 @@
-import type { VNode } from "../runtime/types";
+import type { JSXNode, VNode } from "../runtime/types";
 
 /**
  * Island metadata collected during SSR rendering

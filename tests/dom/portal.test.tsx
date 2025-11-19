@@ -1,6 +1,7 @@
+/** @jsxImportSource semajsx/dom */
+
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { signal } from "@/signal";
-import { h } from "@/runtime/vnode";
 import { render } from "@/dom/render";
 import { createPortal, PortalComponent } from "@/dom/portal";
 
@@ -24,10 +25,12 @@ describe("Portal functionality", () => {
   });
 
   it("should render children to portal target using createPortal", () => {
-    const vnode = h("div", {}, [
-      h("p", {}, "Main content"),
-      createPortal(h("div", {}, "Portal content"), portalTarget),
-    ]);
+    const vnode = (
+      <div>
+        <p>Main content</p>
+        {createPortal(<div>Portal content</div>, portalTarget)}
+      </div>
+    );
 
     render(vnode, container);
 
@@ -40,12 +43,14 @@ describe("Portal functionality", () => {
   });
 
   it("should render children to portal target using PortalComponent", () => {
-    const vnode = h("div", {}, [
-      h("p", {}, "Main content"),
-      h(PortalComponent, { container: portalTarget }, [
-        h("div", {}, "Portal content"),
-      ]),
-    ]);
+    const vnode = (
+      <div>
+        <p>Main content</p>
+        <PortalComponent container={portalTarget}>
+          <div>Portal content</div>
+        </PortalComponent>
+      </div>
+    );
 
     render(vnode, container);
 
@@ -60,10 +65,12 @@ describe("Portal functionality", () => {
     document.body.appendChild(target1);
     document.body.appendChild(target2);
 
-    const vnode = h("div", {}, [
-      createPortal(h("div", {}, "Portal 1"), target1),
-      createPortal(h("div", {}, "Portal 2"), target2),
-    ]);
+    const vnode = (
+      <div>
+        {createPortal(<div>Portal 1</div>, target1)}
+        {createPortal(<div>Portal 2</div>, target2)}
+      </div>
+    );
 
     render(vnode, container);
 
@@ -76,10 +83,17 @@ describe("Portal functionality", () => {
 
   it("should support reactive content in portals", async () => {
     const count = signal(0);
-    const vnode = h("div", {}, [
-      h("p", {}, "Main"),
-      createPortal(h("div", {}, ["Count: ", count]), portalTarget),
-    ]);
+    const vnode = (
+      <div>
+        <p>Main</p>
+        {createPortal(
+          <div>
+            Count: {count}
+          </div>,
+          portalTarget
+        )}
+      </div>
+    );
 
     render(vnode, container);
 
@@ -92,30 +106,29 @@ describe("Portal functionality", () => {
     expect(portalTarget.textContent).toBe("Count: 5");
   });
 
-  it("should clean up portal content on unmount", async () => {
+  it("should clean up portal content on unmount", () => {
     const vnode = createPortal(
-      h("div", { className: "portal-content" }, "Portal"),
-      portalTarget,
+      <div className="portal-content">Portal</div>,
+      portalTarget
     );
 
-    const rendered = render(vnode, container);
+    const { unmount } = render(vnode, container);
 
     expect(portalTarget.querySelector(".portal-content")).toBeTruthy();
 
-    const { unmount } = await import("@/dom/render");
-    unmount(rendered);
+    unmount();
 
     expect(portalTarget.querySelector(".portal-content")).toBeFalsy();
   });
 
   it("should handle nested elements in portal", () => {
     const vnode = createPortal(
-      h("div", { className: "modal" }, [
-        h("h1", {}, "Modal Title"),
-        h("p", {}, "Modal content"),
-        h("button", {}, "Close"),
-      ]),
-      portalTarget,
+      <div className="modal">
+        <h1>Modal Title</h1>
+        <p>Modal content</p>
+        <button>Close</button>
+      </div>,
+      portalTarget
     );
 
     render(vnode, container);
@@ -134,8 +147,8 @@ describe("Portal functionality", () => {
     };
 
     const vnode = createPortal(
-      h("button", { onClick: handleClick }, "Click me"),
-      portalTarget,
+      <button onClick={handleClick}>Click me</button>,
+      portalTarget
     );
 
     render(vnode, container);
@@ -150,8 +163,8 @@ describe("Portal functionality", () => {
   it("should work with refs in portaled content", () => {
     const buttonRef = signal<HTMLButtonElement | null>(null);
     const vnode = createPortal(
-      h("button", { ref: buttonRef }, "Portal button"),
-      portalTarget,
+      <button ref={buttonRef}>Portal button</button>,
+      portalTarget
     );
 
     render(vnode, container);
