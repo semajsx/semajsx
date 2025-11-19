@@ -5,7 +5,6 @@
     "outDir": "dist",
     "rootDir": "src",
     "paths": {
-      "@/*": ["./src/*"],
       "@semajsx/core": ["../core/src/index.ts"],
       "@semajsx/terminal": ["../terminal/src/index.ts"]
     }
