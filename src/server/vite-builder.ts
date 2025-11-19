@@ -141,8 +141,9 @@ export class ViteIslandBuilder {
 
     // Generate code that imports dependencies (Vite will resolve them)
     // Use hydrate() instead of render() to preserve server-rendered content
+    const displayName = componentName || island.id;
     return `
-// Island hydration entry point for ${island.id}
+// Island hydration entry point: ${displayName}
 import { hydrate } from 'semajsx/dom';
 import { markIslandHydrated } from 'semajsx/client';
 import * as ComponentModule from '${componentPath}';
@@ -153,7 +154,7 @@ const Component = ${componentName ? `ComponentModule['${componentName}'] || Comp
                   Object.values(ComponentModule).find(exp => typeof exp === 'function');
 
 if (!Component) {
-  console.error('[Island ${island.id}] No component found in module ${componentPath}');
+  console.error('[${displayName}] No component found in module ${componentPath}');
 } else {
   // Props from server
   const props = ${propsJson};
@@ -162,7 +163,7 @@ if (!Component) {
   const placeholder = document.querySelector('[data-island-id="${island.id}"]');
 
   if (!placeholder) {
-    console.error('[Island ${island.id}] Placeholder not found');
+    console.error('[${displayName}] Placeholder not found');
   } else {
     try {
       // Create VNode
@@ -174,9 +175,9 @@ if (!Component) {
       // Mark island as hydrated for progressive enhancement
       markIslandHydrated('${island.id}');
 
-      console.log('[Island ${island.id}] Hydrated successfully');
+      console.log('[${displayName}] Hydrated successfully');
     } catch (error) {
-      console.error('[Island ${island.id}] Hydration error:', error);
+      console.error('[${displayName}] Hydration error:', error);
     }
   }
 }

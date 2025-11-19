@@ -227,8 +227,15 @@ function renderIsland(vnode: VNode, context: RenderContext): string {
     return "";
   }
 
-  // Generate unique island ID
-  const islandId = `island-${context.islandCounter++}`;
+  // Extract component name for better debugging
+  const componentName =
+    typeof metadata.component === "function"
+      ? metadata.component.name || "Anonymous"
+      : "Unknown";
+
+  // Generate unique island ID using component name
+  // Example: "Counter-0", "TodoList-1", "Anonymous-2"
+  const islandId = generateIslandId(componentName, context.islandCounter++);
 
   // Serialize props for hydration
   const serializedProps = serializeProps(metadata.props);
@@ -238,10 +245,7 @@ function renderIsland(vnode: VNode, context: RenderContext): string {
     id: islandId,
     path: metadata.modulePath,
     props: serializedProps,
-    componentName:
-      typeof metadata.component === "function"
-        ? metadata.component.name
-        : undefined,
+    componentName,
   };
   context.islands.push(islandMetadata);
 
@@ -251,7 +255,10 @@ function renderIsland(vnode: VNode, context: RenderContext): string {
     const result = metadata.component(metadata.props || {});
     content = renderVNodeToHTML(result, context);
   } catch (error) {
-    console.error(`Error rendering island ${islandId}:`, error);
+    console.error(
+      `[SSR] Error rendering island "${islandId}" (${componentName}):`,
+      error,
+    );
     content = renderErrorFallback(error, vnode);
   }
 
@@ -398,6 +405,26 @@ function renderErrorFallback(error: any, vnode?: VNode): string {
     <strong>Error rendering component: ${escapeHTML(componentName)}</strong>
     <pre>${escapeHTML(message)}</pre>
   </div>`;
+}
+
+/**
+ * Generate a unique island ID from component name and counter
+ * Examples: "Counter-0", "todo-list-1", "my-component-2"
+ */
+function generateIslandId(componentName: string, counter: number): string {
+  // Convert to kebab-case and sanitize for use as HTML attribute
+  const kebabName = camelToKebab(componentName)
+    .toLowerCase()
+    // Remove leading dash if component name started with uppercase
+    .replace(/^-/, "")
+    // Replace any non-alphanumeric characters (except dash) with dash
+    .replace(/[^a-z0-9-]/g, "-")
+    // Remove consecutive dashes
+    .replace(/-+/g, "-")
+    // Remove trailing dashes
+    .replace(/-$/, "");
+
+  return `${kebabName}-${counter}`;
 }
 
 /**
