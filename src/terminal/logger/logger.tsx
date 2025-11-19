@@ -115,7 +115,9 @@ export class Logger {
       // It's a VNode, can't stringify
       return "[JSX Content]";
     }
-    return JSON.stringify(data, null, 2);
+    // Format JSON with newline before opening brace
+    const json = JSON.stringify(data, null, 2);
+    return "\n" + json;
   }
 
   /**
