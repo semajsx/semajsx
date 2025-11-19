@@ -36,9 +36,10 @@ export class ViteIslandBuilder {
       appType: "custom",
       resolve: {
         // Ensure Vite respects package.json "exports" field with conditions
+        // "browser" condition provides noop island() to avoid loading server code in browser
         // "development" condition will resolve to source files (.ts)
         // "import" condition will resolve to dist files (.js) when installed as npm package
-        conditions: ["development", "module", "import", "default"],
+        conditions: ["browser", "development", "module", "import", "default"],
       },
       optimizeDeps: {
         // Disable optimization for semajsx to use source directly in development

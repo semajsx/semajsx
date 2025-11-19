@@ -1,6 +1,6 @@
-/** @jsxImportSource ../../src/dom */
+/** @jsxImportSource semajsx/dom */
 
-import { createViteRouter } from "../../src/server";
+import { createViteRouter } from "semajsx/server";
 import { App } from "./App";
 
 /**
