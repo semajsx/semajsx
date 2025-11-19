@@ -1,6 +1,5 @@
 import type { IslandMetadata } from "../shared/types";
 import { createServer, type ViteDevServer } from "vite";
-import path from "node:path";
 
 /**
  * Vite-based island builder
@@ -36,12 +35,14 @@ export class ViteIslandBuilder {
       },
       appType: "custom",
       resolve: {
-        // Ensure Vite respects package.json "exports" field
+        // Ensure Vite respects package.json "exports" field with conditions
+        // "development" condition will resolve to source files (.ts)
+        // "import" condition will resolve to dist files (.js) when installed as npm package
         conditions: ["development", "module", "import", "default"],
       },
       optimizeDeps: {
-        // Pre-bundle semajsx for faster loading
-        include: ["semajsx", "semajsx/dom", "semajsx/signal"],
+        // Disable optimization for semajsx to use source directly in development
+        exclude: ["semajsx", "semajsx/dom", "semajsx/signal"],
       },
       plugins: [
         {
@@ -171,12 +172,23 @@ if (!Component) {
   }
 
   /**
-   * Normalize module path (convert file:// URLs to @fs/ paths for Vite)
+   * Normalize module path (convert file:// URLs to paths relative to Vite root)
    */
   private normalizeModulePath(path: string): string {
     if (path.startsWith("file://")) {
-      // Convert file:// URL to @fs/ path that Vite understands
+      // Convert file:// URL to filesystem path
       const fsPath = new URL(path).pathname;
+
+      // Make path relative to Vite root
+      const root = this.options.root;
+      if (fsPath.startsWith(root)) {
+        // Path is within root, make it relative
+        const relativePath = fsPath.slice(root.length);
+        // Ensure it starts with / for Vite to resolve from root
+        return relativePath.startsWith("/") ? relativePath : `/${relativePath}`;
+      }
+
+      // Path is outside root, use @fs protocol
       return `/@fs${fsPath}`;
     }
     return path;

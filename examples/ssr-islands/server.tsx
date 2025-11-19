@@ -1,3 +1,5 @@
+/** @jsxImportSource ../../src/dom */
+
 import { createViteRouter } from "../../src/server";
 import { App } from "./App";
 
@@ -63,6 +65,29 @@ const server = Bun.serve({
             "Cache-Control": "no-cache",
           },
         });
+      }
+
+      // Handle source file requests (TypeScript/JavaScript files)
+      // These should be transformed by Vite
+      if (
+        url.pathname.endsWith(".tsx") ||
+        url.pathname.endsWith(".ts") ||
+        url.pathname.endsWith(".jsx") ||
+        url.pathname.endsWith(".js")
+      ) {
+        console.log(`  → Source file request: ${url.pathname}`);
+        const result = await router.handleModuleRequest(url.pathname);
+
+        if (result) {
+          return new Response(result.code, {
+            headers: {
+              "Content-Type": "application/javascript",
+              "Cache-Control": "no-cache",
+            },
+          });
+        }
+
+        return new Response("Module not found", { status: 404 });
       }
 
       // Handle page requests
