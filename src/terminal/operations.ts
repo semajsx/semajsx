@@ -237,6 +237,16 @@ export function applyStyle(
   if (style.margin !== undefined) {
     yogaNode.setMargin(Yoga.EDGE_ALL, style.margin);
   }
+  // Logical properties (applied before specific edges so they can be overridden)
+  if (style.marginInline !== undefined) {
+    yogaNode.setMargin(Yoga.EDGE_LEFT, style.marginInline);
+    yogaNode.setMargin(Yoga.EDGE_RIGHT, style.marginInline);
+  }
+  if (style.marginBlock !== undefined) {
+    yogaNode.setMargin(Yoga.EDGE_TOP, style.marginBlock);
+    yogaNode.setMargin(Yoga.EDGE_BOTTOM, style.marginBlock);
+  }
+  // Specific edges (override logical properties)
   if (style.marginLeft !== undefined) {
     yogaNode.setMargin(Yoga.EDGE_LEFT, style.marginLeft);
   }
@@ -254,6 +264,16 @@ export function applyStyle(
   if (style.padding !== undefined) {
     yogaNode.setPadding(Yoga.EDGE_ALL, style.padding);
   }
+  // Logical properties (applied before specific edges so they can be overridden)
+  if (style.paddingInline !== undefined) {
+    yogaNode.setPadding(Yoga.EDGE_LEFT, style.paddingInline);
+    yogaNode.setPadding(Yoga.EDGE_RIGHT, style.paddingInline);
+  }
+  if (style.paddingBlock !== undefined) {
+    yogaNode.setPadding(Yoga.EDGE_TOP, style.paddingBlock);
+    yogaNode.setPadding(Yoga.EDGE_BOTTOM, style.paddingBlock);
+  }
+  // Specific edges (override logical properties)
   if (style.paddingLeft !== undefined) {
     yogaNode.setPadding(Yoga.EDGE_LEFT, style.paddingLeft);
   }
