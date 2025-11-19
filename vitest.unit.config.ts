@@ -45,7 +45,15 @@ export default defineConfig({
     // Unit tests don't need browser environment
     environment: "node",
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
-    exclude: ["tests/**/*.browser.test.ts", "tests/**/*.browser.test.tsx"],
+    exclude: [
+      "tests/**/*.browser.test.ts",
+      "tests/**/*.browser.test.tsx",
+      // Exclude DOM tests that need browser environment
+      "tests/dom/**/*.test.tsx",
+      "tests/runtime/render.test.tsx",
+      "tests/runtime/jsx.test.tsx",
+      "tests/runtime/async.test.tsx",
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],

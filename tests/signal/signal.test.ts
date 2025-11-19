@@ -1,6 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { signal } from "@/signal/signal";
 
+// Helper to wait for microtasks (signal updates are batched with queueMicrotask)
+const waitForUpdate = () => new Promise((resolve) => queueMicrotask(resolve));
+
 describe("signal", () => {
   it("should create a signal with initial value", () => {
     const s = signal(42);
@@ -30,27 +33,29 @@ describe("signal", () => {
     expect(s.peek()).toBe(100);
   });
 
-  it("should notify subscribers on change", () => {
+  it("should notify subscribers on change", async () => {
     const s = signal(0);
     const listener = vi.fn();
 
     s.subscribe(listener);
     s.value = 1;
 
+    await waitForUpdate();
     expect(listener).toHaveBeenCalledWith(1);
   });
 
-  it("should not notify if value is same", () => {
+  it("should not notify if value is same", async () => {
     const s = signal(5);
     const listener = vi.fn();
 
     s.subscribe(listener);
     s.value = 5;
 
+    await waitForUpdate();
     expect(listener).not.toHaveBeenCalled();
   });
 
-  it("should unsubscribe", () => {
+  it("should unsubscribe", async () => {
     const s = signal(0);
     const listener = vi.fn();
 
@@ -58,10 +63,11 @@ describe("signal", () => {
     unsubscribe();
 
     s.value = 1;
+    await waitForUpdate();
     expect(listener).not.toHaveBeenCalled();
   });
 
-  it("should handle multiple subscribers", () => {
+  it("should handle multiple subscribers", async () => {
     const s = signal(0);
     const listener1 = vi.fn();
     const listener2 = vi.fn();
@@ -71,28 +77,31 @@ describe("signal", () => {
 
     s.value = 1;
 
+    await waitForUpdate();
     expect(listener1).toHaveBeenCalledWith(1);
     expect(listener2).toHaveBeenCalledWith(1);
   });
 
-  it("should work with objects", () => {
+  it("should work with objects", async () => {
     const s = signal({ count: 0 });
     const listener = vi.fn();
 
     s.subscribe(listener);
     s.value = { count: 1 };
 
+    await waitForUpdate();
     expect(listener).toHaveBeenCalledWith({ count: 1 });
     expect(s.value).toEqual({ count: 1 });
   });
 
-  it("should work with arrays", () => {
+  it("should work with arrays", async () => {
     const s = signal([1, 2, 3]);
     const listener = vi.fn();
 
     s.subscribe(listener);
     s.value = [4, 5, 6];
 
+    await waitForUpdate();
     expect(listener).toHaveBeenCalledWith([4, 5, 6]);
     expect(s.value).toEqual([4, 5, 6]);
   });
