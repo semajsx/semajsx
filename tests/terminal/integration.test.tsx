@@ -132,7 +132,6 @@ describe("Terminal Integration", () => {
         return (
           <box>
             <text>Count: {count}</text>
-            <button onClick={() => count.value++}>Increment</button>
           </box>
         );
       }
