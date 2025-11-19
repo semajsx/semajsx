@@ -13,6 +13,11 @@
       "@semajsx/dom/jsx-runtime": ["../dom/src/jsx-runtime.ts"],
       "@semajsx/dom/jsx-dev-runtime": ["../dom/src/jsx-dev-runtime.ts"],
       "@semajsx/signal": ["../signal/src/index.ts"],
+      "@semajsx/terminal": ["../terminal/src/index.ts"],
+      "@semajsx/terminal/jsx-runtime": ["../terminal/src/jsx-runtime.ts"],
+      "@semajsx/terminal/jsx-dev-runtime": [
+        "../terminal/src/jsx-dev-runtime.ts"
+      ],
       "@semajsx/utils": ["../utils/src/index.ts"]
     }
   },

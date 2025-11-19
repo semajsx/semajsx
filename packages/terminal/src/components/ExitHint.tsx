@@ -1,7 +1,6 @@
 /** @jsxImportSource semajsx */
 import { computed, signal, type WritableSignal } from "@semajsx/signal";
-import { when } from "@/runtime/helpers";
-import type { JSXNode } from "@/runtime/types";
+import { when, type JSXNode } from "@semajsx/core";
 
 /**
  * Global exiting signal for terminal rendering

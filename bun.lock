@@ -54,14 +54,8 @@
         "@semajsx/core": "workspace:*",
         "@semajsx/dom": "workspace:*",
         "@semajsx/signal": "workspace:*",
+        "@semajsx/terminal": "workspace:*",
         "@semajsx/utils": "workspace:*",
-        "ansi-escapes": "^7.2.0",
-        "chalk": "^5.6.2",
-        "cli-boxes": "^4.0.1",
-        "slice-ansi": "^7.1.2",
-        "string-width": "^8.1.0",
-        "wrap-ansi": "^9.0.2",
-        "yoga-layout-prebuilt": "^1.10.0",
       },
       "devDependencies": {
         "@semajsx/configs": "workspace:*",
@@ -87,6 +81,25 @@
         "tsdown": "^0.16.4",
         "typescript": "^5.9.3",
         "vitest": "^4.0.8",
+      },
+    },
+    "packages/terminal": {
+      "name": "@semajsx/terminal",
+      "version": "0.1.0",
+      "dependencies": {
+        "@semajsx/core": "workspace:*",
+        "@semajsx/signal": "workspace:*",
+        "@semajsx/utils": "workspace:*",
+        "ansi-escapes": "^7.2.0",
+        "chalk": "^5.6.2",
+        "cli-boxes": "^4.0.1",
+        "slice-ansi": "^7.1.2",
+        "string-width": "^8.1.0",
+        "wrap-ansi": "^9.0.2",
+        "yoga-layout-prebuilt": "^1.10.0",
+      },
+      "devDependencies": {
+        "@semajsx/configs": "workspace:*",
       },
     },
     "packages/utils": {
@@ -348,6 +361,8 @@
     "@semajsx/dom": ["@semajsx/dom@workspace:packages/dom"],
 
     "@semajsx/signal": ["@semajsx/signal@workspace:packages/signal"],
+
+    "@semajsx/terminal": ["@semajsx/terminal@workspace:packages/terminal"],
 
     "@semajsx/utils": ["@semajsx/utils@workspace:packages/utils"],
 

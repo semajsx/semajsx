@@ -2,7 +2,7 @@
  * Logger types and interfaces
  */
 
-import type { VNode } from "../../runtime/types";
+import type { VNode } from "@semajsx/core";
 
 /**
  * Log level

@@ -1,4 +1,4 @@
-import type { VNode } from "../runtime/types";
+import type { VNode } from "@semajsx/core";
 import { setProperty, setSignalProperty } from "./properties";
 import {
   appendChild,
@@ -14,8 +14,8 @@ import {
 import { TerminalRenderer } from "./renderer";
 import type { TerminalNode } from "./types";
 import { getExitingSignal, resetExitingSignal } from "./components/ExitHint";
-import { type ContextMap } from "../runtime/context";
-import { createRenderer, type RenderStrategy } from "../runtime/render-core";
+import { type ContextMap } from "@semajsx/core";
+import { createRenderer, type RenderStrategy } from "@semajsx/core";
 
 /**
  * Terminal-specific render strategy (no reuse optimization needed)

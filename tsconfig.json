@@ -9,6 +9,7 @@
       "@semajsx/core": ["./packages/core/src/index.ts"],
       "@semajsx/dom": ["./packages/dom/src/index.ts"],
       "@semajsx/signal": ["./packages/signal/src/index.ts"],
+      "@semajsx/terminal": ["./packages/terminal/src/index.ts"],
       "@semajsx/utils": ["./packages/utils/src/index.ts"]
     }
   },
@@ -19,6 +20,7 @@
     { "path": "./packages/signal" },
     { "path": "./packages/core" },
     { "path": "./packages/dom" },
+    { "path": "./packages/terminal" },
     { "path": "./packages/semajsx" }
   ]
 }
