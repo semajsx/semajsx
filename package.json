@@ -94,6 +94,8 @@
     "example:ssr": "bun --conditions=development examples/ssr-islands/server.tsx",
     "example:terminal": "bun --conditions=development examples/terminal-counter/simple.tsx",
     "example:terminal-print": "bun --conditions=development examples/terminal-print/simple-print.tsx",
+    "example:logger": "bun --conditions=development examples/logger/basic.tsx",
+    "example:logger:showcase": "bun --conditions=development examples/logger/showcase.tsx",
     "prepare": "husky"
   },
   "keywords": [

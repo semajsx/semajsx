@@ -19,6 +19,7 @@ export * from "./properties";
 export * from "./rendering";
 export * from "./components";
 export * from "./utils";
+export * from "./logger";
 
 // Re-export helpers for convenience
 export { when, resource, stream } from "../runtime/helpers";

@@ -33,11 +33,15 @@ export interface TerminalStyle {
   marginRight?: number;
   marginTop?: number;
   marginBottom?: number;
+  marginInline?: number; // Left + Right (horizontal)
+  marginBlock?: number; // Top + Bottom (vertical)
   padding?: number;
   paddingLeft?: number;
   paddingRight?: number;
   paddingTop?: number;
   paddingBottom?: number;
+  paddingInline?: number; // Left + Right (horizontal)
+  paddingBlock?: number; // Top + Bottom (vertical)
   border?: "single" | "double" | "round" | "bold" | "none";
   borderColor?: string;
   color?: string;
