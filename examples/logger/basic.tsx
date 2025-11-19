@@ -47,7 +47,7 @@ logger.progress(100, 100, "Ready", { color: "green" });
 logger.blank();
 
 logger.jsx(
-  <box border="round" borderColor="green" padding={1}>
+  <box border="round" borderColor="green" paddingInline={1}>
     <text bold color="green">
       ✓ Server running at http://localhost:3000
     </text>

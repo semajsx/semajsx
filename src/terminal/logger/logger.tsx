@@ -193,7 +193,7 @@ export class Logger {
 
     if (this.options.bordered && config.borderColor) {
       print(
-        <box border="round" borderColor={config.borderColor} padding={1}>
+        <box border="round" borderColor={config.borderColor} paddingInline={1}>
           {logContent}
         </box>,
         { stream: this.options.stream },
@@ -255,7 +255,7 @@ export class Logger {
     if (bordered) {
       // Bordered style - box with title
       print(
-        <box border="round" borderColor={borderColor} padding={1}>
+        <box border="round" borderColor={borderColor} paddingInline={1}>
           <text bold color={borderColor}>
             {title}
           </text>
@@ -378,7 +378,7 @@ export class Logger {
         flexDirection="column"
         border={border}
         borderColor={borderColor}
-        padding={1}
+        paddingInline={1}
       >
         {rows}
       </box>,
