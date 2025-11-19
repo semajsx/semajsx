@@ -2,7 +2,6 @@
 
 import { signal, computed } from "semajsx/signal";
 import { island } from "semajsx/server";
-import { Fragment } from "semajsx";
 
 /**
  * TodoList component - marked as an island for client-side hydration
@@ -24,41 +23,38 @@ export const TodoList = island(
     };
 
     // Use computed to make the todo list reactive
-    // computed(dependency, computeFunction)
-    // Wrap map result in Fragment so computed returns a single VNode
-    const todoItems = computed(todos, (todoList) => (
-      <Fragment>
-        {todoList.map((todo, index) => (
-          <li
-            key={index}
+    // Signal<Array<VNode>> is now supported - automatically wrapped in Fragment
+    const todoItems = computed(todos, (todoList) =>
+      todoList.map((todo, index) => (
+        <li
+          key={index}
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "10px",
+            margin: "5px 0",
+            background: "#f3f4f6",
+            borderRadius: "4px",
+          }}
+        >
+          <span>{todo}</span>
+          <button
+            onClick={() => removeTodo(index)}
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "10px",
-              margin: "5px 0",
-              background: "#f3f4f6",
+              padding: "5px 10px",
+              cursor: "pointer",
+              background: "#ef4444",
+              color: "white",
+              border: "none",
               borderRadius: "4px",
             }}
           >
-            <span>{todo}</span>
-            <button
-              onClick={() => removeTodo(index)}
-              style={{
-                padding: "5px 10px",
-                cursor: "pointer",
-                background: "#ef4444",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-              }}
-            >
-              Delete
-            </button>
-          </li>
-        ))}
-      </Fragment>
-    ));
+            Delete
+          </button>
+        </li>
+      )),
+    );
 
     // Use computed for conditional rendering based on todos
     const emptyMessage = computed(todos, (todoList) =>

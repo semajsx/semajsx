@@ -237,6 +237,15 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
     // Convert value to VNode
     if (isVNode(value)) {
       newVNode = value;
+    } else if (Array.isArray(value)) {
+      // Support arrays - wrap in Fragment automatically
+      // This allows: computed(todos, list => list.map(...))
+      // Without requiring manual Fragment wrapping
+      newVNode = {
+        type: Fragment,
+        props: {},
+        children: value.filter(isVNode), // Filter out non-VNodes
+      };
     } else if (typeof value === "string" || typeof value === "number") {
       newVNode = {
         type: "#text",
