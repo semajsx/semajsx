@@ -159,14 +159,15 @@ if (!Component) {
   if (!placeholder) {
     console.error('[Island ${island.id}] Placeholder not found');
   } else {
-    // Create VNode and render
+    // Create VNode and render directly into the placeholder
     const vnode = Component(props);
-    const parent = placeholder.parentElement;
 
-    if (parent) {
-      render(vnode, parent);
-      placeholder.remove();
-    }
+    // Render into the placeholder div (replaces its content)
+    render(vnode, placeholder);
+
+    // Clean up island attributes (optional - keeps the div but removes markers)
+    placeholder.removeAttribute('data-island-id');
+    placeholder.removeAttribute('data-island-props');
   }
 }
 `.trim();

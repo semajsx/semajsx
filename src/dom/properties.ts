@@ -92,6 +92,23 @@ export function setSignalProperty<T = unknown>(
 
   // Subscribe to changes
   return signal.subscribe((value: T) => {
+    // Special handling for input/textarea value to avoid interrupting user input
+    // Only update if the element is not currently focused (user is not typing)
+    if (
+      key === "value" &&
+      (element instanceof HTMLInputElement ||
+        element instanceof HTMLTextAreaElement)
+    ) {
+      // Only update if element is not currently focused (avoids cursor jumps during typing)
+      if (document.activeElement !== element) {
+        setProperty(element, key, value);
+      }
+      // If element IS focused, skip update to avoid interrupting user input
+      // The value will sync when the element loses focus
+      return;
+    }
+
+    // For all other properties, update normally
     setProperty(element, key, value);
   });
 }
@@ -101,10 +118,7 @@ export function setSignalProperty<T = unknown>(
  * - Supports both Signal refs and callback refs
  * - Returns a cleanup function to clear the ref
  */
-export function setRef(
-  element: Node,
-  ref: Ref<any>,
-): () => void {
+export function setRef(element: Node, ref: Ref<any>): () => void {
   // Signal ref
   if (isSignal(ref)) {
     ref.set(element);
