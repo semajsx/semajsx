@@ -1,7 +1,7 @@
-import type { VNode, JSXNode } from "../runtime/types";
-import type { SSRResult, IslandMetadata } from "../shared/types";
+import type { JSXNode, VNode } from "../runtime/types";
+import type { IslandMetadata, SSRResult } from "../shared/types";
 import { Fragment } from "../runtime/types";
-import { isIslandVNode, getIslandMetadata } from "./island";
+import { getIslandMetadata, isIslandVNode } from "./island";
 import { isSignal, unwrap } from "../signal/utils";
 
 /**
@@ -173,7 +173,7 @@ function renderVNodeToHTML(
   // Handle signal nodes - unwrap and render the signal's value
   if (vnodeTyped.type === "#signal") {
     const signal = vnodeTyped.props?.signal;
-    if (signal && isSignal(signal)) {
+    if (signal && isSignal<VNode>(signal)) {
       const unwrapped = unwrap(signal);
       const rendered = renderVNodeToHTML(unwrapped, context);
       // If signal renders to empty content, use a comment marker for hydration
