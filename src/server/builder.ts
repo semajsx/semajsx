@@ -11,7 +11,8 @@ export class IslandBuilder {
     this.buildOptions = {
       minify: options.minify ?? true,
       sourcemap: options.sourcemap ?? false,
-      external: options.external ?? ["semajsx", "semajsx/dom"],
+      // Don't externalize by default - bundle everything for browser
+      external: options.external ?? [],
     };
   }
 
@@ -110,32 +111,67 @@ export class IslandBuilder {
   private createEntryPoint(island: IslandMetadata): string {
     const propsJson = JSON.stringify(island.props);
 
+    // Convert file:// URL to file system path
+    const componentPath = this.normalizeModulePath(island.path);
+
+    // Use absolute path to semajsx/dom for reliable resolution
+    const semajsxDomPath = this.resolveSemajsxModule("dom");
+
     return `
-import { render } from 'semajsx/dom';
+import { render } from '${semajsxDomPath}';
+import * as ComponentModule from '${componentPath}';
 
-// Import the island component
-const module = await import('${island.path}');
-const Component = module.default || module[Object.keys(module)[0]];
+// Get the component (try default export first, then find first function export)
+const Component = ComponentModule.default ||
+                  Object.values(ComponentModule).find(exp => typeof exp === 'function');
 
-// Find the placeholder element
-const placeholder = document.querySelector('[data-island-id="${island.id}"]');
-if (!placeholder) {
-  console.error('Island placeholder not found: ${island.id}');
+if (!Component) {
+  console.error('[Island ${island.id}] No component found in module');
 } else {
-  // Parse props
+  // Props from server
   const props = ${propsJson};
 
-  // Create VNode (assuming Component is already a JSX component)
-  const vnode = Component(props);
+  // Find the placeholder element
+  const placeholder = document.querySelector('[data-island-id="${island.id}"]');
 
-  // Render and replace placeholder
-  const parent = placeholder.parentElement;
-  if (parent) {
-    render(vnode, parent);
-    placeholder.remove();
+  if (!placeholder) {
+    console.error('[Island ${island.id}] Placeholder not found');
+  } else {
+    // Create VNode and render
+    const vnode = Component(props);
+    const parent = placeholder.parentElement;
+
+    if (parent) {
+      render(vnode, parent);
+      placeholder.remove();
+    }
   }
 }
 `.trim();
+  }
+
+  /**
+   * Normalize module path (convert file:// URLs to file system paths)
+   */
+  private normalizeModulePath(path: string): string {
+    if (path.startsWith("file://")) {
+      // Convert file:// URL to file system path
+      return new URL(path).pathname;
+    }
+    return path;
+  }
+
+  /**
+   * Resolve semajsx module to absolute path
+   */
+  private resolveSemajsxModule(subpath: string): string {
+    // Resolve relative to this file (src/server/builder.ts)
+    // So dom module is at ../dom/index.ts
+    const thisFilePath = import.meta.url;
+    const thisFileDir = new URL(".", thisFilePath).pathname;
+
+    // Go up one level (from src/server to src) and then into the subpath
+    return `${thisFileDir}../${subpath}/index.ts`;
   }
 }
 
