@@ -90,25 +90,8 @@ export function setSignalProperty<T = unknown>(
   // Set initial value
   setProperty(element, key, signal.peek());
 
-  // Subscribe to changes
+  // Subscribe to changes and update property
   return signal.subscribe((value: T) => {
-    // Special handling for input/textarea value to avoid interrupting user input
-    // Only update if the element is not currently focused (user is not typing)
-    if (
-      key === "value" &&
-      (element instanceof HTMLInputElement ||
-        element instanceof HTMLTextAreaElement)
-    ) {
-      // Only update if element is not currently focused (avoids cursor jumps during typing)
-      if (document.activeElement !== element) {
-        setProperty(element, key, value);
-      }
-      // If element IS focused, skip update to avoid interrupting user input
-      // The value will sync when the element loses focus
-      return;
-    }
-
-    // For all other properties, update normally
     setProperty(element, key, value);
   });
 }
