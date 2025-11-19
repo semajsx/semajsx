@@ -124,6 +124,8 @@ export class ViteRouter {
         scripts: result.scripts,
         islands: result.islands,
         path,
+        title: this.config.title,
+        meta: this.config.meta,
       });
 
       result.document = renderDocument(documentVNode);

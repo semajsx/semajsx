@@ -9,12 +9,12 @@ import { App } from "./App";
  */
 
 // Custom HTML document template (JSX!)
-const Document: DocumentTemplate = ({ children, scripts }) => (
+const Document: DocumentTemplate = ({ children, scripts, title }) => (
   <html lang="en">
     <head>
       <meta charSet="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>SemaJSX SSR Islands (Vite)</title>
+      {title && <title>{title}</title>}
       <style>{`
         body {
           font-family: system-ui, -apple-system, sans-serif;
@@ -42,6 +42,7 @@ const router = await createViteRouter(
     dev: true, // Enable Vite dev server
     root: import.meta.dir, // Project root
     document: Document, // Use JSX document template!
+    title: "SemaJSX SSR Islands (Vite)", // Page title
   },
 );
 

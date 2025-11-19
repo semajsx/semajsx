@@ -57,6 +57,10 @@ export type DocumentTemplate = (props: {
   islands: IslandMetadata[];
   /** Current route path */
   path: string;
+  /** Page title (optional, should be provided by user) */
+  title?: string;
+  /** Additional metadata (optional) */
+  meta?: Record<string, any>;
 }) => VNode;
 
 /**
@@ -78,4 +82,8 @@ export interface RouterConfig {
   };
   /** HTML document template (JSX) */
   document?: DocumentTemplate;
+  /** Default page title (passed to document template) */
+  title?: string;
+  /** Additional metadata (passed to document template) */
+  meta?: Record<string, any>;
 }

@@ -11,16 +11,17 @@ import type { DocumentTemplate } from "../shared/types";
  * @example
  * ```tsx
  * const router = createViteRouter(routes, {
- *   document: DefaultDocument
+ *   document: DefaultDocument,
+ *   title: "My App"  // Required if using DefaultDocument
  * });
  * ```
  */
-export const DefaultDocument: DocumentTemplate = ({ children, scripts }) => (
+export const DefaultDocument: DocumentTemplate = ({ children, scripts, title }) => (
   <html lang="en">
     <head>
       <meta charSet="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>SemaJSX App</title>
+      {title && <title>{title}</title>}
     </head>
     <body>
       {/* Render page content as raw HTML */}
