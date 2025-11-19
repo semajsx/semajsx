@@ -12,27 +12,28 @@
  * - JSX content support
  */
 
+import { VNode } from "semajsx/runtime";
 import { print } from "../render";
 import type {
+  GroupOptions,
+  LogData,
   LoggerOptions,
   LogLevel,
   LogLevelConfig,
-  GroupOptions,
-  TableOptions,
   ProgressOptions,
+  TableOptions,
   TimerResult,
-  LogData,
 } from "./types";
 
 /**
  * Default log level configurations
  */
 const DEFAULT_LEVEL_CONFIG: Record<LogLevel, LogLevelConfig> = {
-  debug: { icon: "🐛", color: "gray", bold: false },
-  info: { icon: "ℹ️", color: "cyan", bold: false },
-  success: { icon: "✓", color: "green", bold: true },
-  warn: { icon: "⚠️", color: "yellow", bold: true },
-  error: { icon: "✗", color: "red", bold: true, borderColor: "red" },
+  debug: { icon: "?", color: "gray", bold: false },
+  info: { icon: "i", color: "cyan", bold: false },
+  success: { icon: "+", color: "green", bold: true },
+  warn: { icon: "!", color: "yellow", bold: true },
+  error: { icon: "x", color: "red", bold: true, borderColor: "red" },
 };
 
 /**
@@ -122,7 +123,7 @@ export class Logger {
     const indent = "  ".repeat(this.groupDepth);
 
     // Build log parts
-    const parts: React.JSX.Element[] = [];
+    const parts: VNode[] = [];
 
     // Timestamp
     if (this.options.timestamp) {
@@ -136,11 +137,7 @@ export class Logger {
     // Level with icon
     if (this.options.showLevel) {
       parts.push(
-        <text
-          color={config.color}
-          bold={config.bold}
-          marginRight={1}
-        >
+        <text color={config.color} bold={config.bold} marginRight={1}>
           {config.icon} {level.toUpperCase()}
         </text>,
       );
@@ -167,7 +164,7 @@ export class Logger {
     // Main content
     if (typeof data === "object" && "type" in data) {
       // It's JSX - render it directly
-      parts.push(data as React.JSX.Element);
+      parts.push(data as VNode);
     } else {
       const content = this.formatData(data);
       parts.push(<text>{content}</text>);
@@ -299,9 +296,7 @@ export class Logger {
   child(prefix: string): Logger {
     return new Logger({
       ...this.options,
-      prefix: this.options.prefix
-        ? `${this.options.prefix}:${prefix}`
-        : prefix,
+      prefix: this.options.prefix ? `${this.options.prefix}:${prefix}` : prefix,
     });
   }
 
@@ -324,7 +319,7 @@ export class Logger {
     // Get headers from first row if not provided
     const cols = headers || Object.keys(data[0] || {});
 
-    const rows: React.JSX.Element[] = [];
+    const rows: VNode[] = [];
 
     // Header row
     if (headerSeparator) {
@@ -340,11 +335,7 @@ export class Logger {
       rows.push(headerRow);
 
       // Separator
-      rows.push(
-        <text dim>
-          {"-".repeat(cols.length * 20)}
-        </text>,
-      );
+      rows.push(<text dim>{"-".repeat(cols.length * 20)}</text>);
     }
 
     // Data rows
@@ -450,10 +441,7 @@ export class Logger {
   /**
    * Measure execution time of a function
    */
-  async measure<T>(
-    label: string,
-    fn: () => T | Promise<T>,
-  ): Promise<T> {
+  async measure<T>(label: string, fn: () => T | Promise<T>): Promise<T> {
     const timer = this.time(label);
     try {
       const result = await fn();
@@ -469,10 +457,9 @@ export class Logger {
    * Log a separator line
    */
   separator(char = "─", color = "gray"): this {
-    print(
-      <text color={color}>{char.repeat(80)}</text>,
-      { stream: this.options.stream },
-    );
+    print(<text color={color}>{char.repeat(80)}</text>, {
+      stream: this.options.stream,
+    });
     return this;
   }
 
@@ -487,7 +474,7 @@ export class Logger {
   /**
    * Raw JSX log (for custom content)
    */
-  jsx(content: React.JSX.Element): this {
+  jsx(content: VNode): this {
     print(content, { stream: this.options.stream });
     return this;
   }

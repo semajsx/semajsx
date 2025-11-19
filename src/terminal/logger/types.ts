@@ -56,7 +56,7 @@ export interface LoggerOptions {
    * Output stream
    * @default process.stdout
    */
-  stream?: unknown; // NodeJS.WriteStream
+  stream?: NodeJS.WriteStream;
 
   /**
    * Whether to use borders for logs
