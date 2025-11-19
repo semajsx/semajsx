@@ -230,12 +230,15 @@ function renderAttributes(props: Record<string, any>): string {
 
 /**
  * Render island placeholder HTML
+ *
+ * Note: We only expose the island ID and props to the client.
+ * The file path is kept server-side only to prevent directory structure leakage.
  */
 function renderIslandPlaceholder(island: IslandMetadata): string {
   const propsJson = JSON.stringify(island.props);
   const escapedProps = escapeHTML(propsJson);
 
-  return `<div data-island-id="${island.id}" data-island-path="${island.path}" data-island-props="${escapedProps}"></div>`;
+  return `<div data-island-id="${island.id}" data-island-props="${escapedProps}"></div>`;
 }
 
 /**

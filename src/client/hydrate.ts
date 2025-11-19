@@ -42,20 +42,15 @@ export async function hydrateIslands(): Promise<void> {
 
 /**
  * Hydrate a single island
+ *
+ * Note: The island's source path is not exposed to the client for security.
+ * Hydration is handled by the island's entry point script loaded via <script> tag.
  */
 async function hydrateIsland(placeholder: HTMLElement): Promise<void> {
   const islandId = placeholder.getAttribute("data-island-id");
-  const islandPath = placeholder.getAttribute("data-island-path");
 
   if (!islandId) {
     console.error("[SemaJSX] Island placeholder missing data-island-id");
-    return;
-  }
-
-  if (!islandPath) {
-    console.error(
-      `[SemaJSX] Island placeholder missing data-island-path: ${islandId}`,
-    );
     return;
   }
 
@@ -64,9 +59,7 @@ async function hydrateIsland(placeholder: HTMLElement): Promise<void> {
     // It will handle its own hydration
     // This function is just here for potential eager hydration
 
-    console.log(
-      `[SemaJSX] Island ${islandId} will be hydrated by its script`,
-    );
+    console.log(`[SemaJSX] Island ${islandId} will be hydrated by its script`);
   } catch (error) {
     console.error(`[SemaJSX] Error hydrating island ${islandId}:`, error);
   }

@@ -31,7 +31,7 @@ describe("renderToString", () => {
     expect(result.islands[0].id).toBe("island-0");
     expect(result.islands[0].props).toEqual({ initial: 5 });
     expect(result.html).toContain('data-island-id="island-0"');
-    expect(result.html).toContain('data-island-path="/Counter.tsx"');
+    expect(result.html).toContain("data-island-props=");
   });
 
   it("should generate scripts for islands", () => {
@@ -203,5 +203,32 @@ describe("renderToString", () => {
     expect(result.html).toContain("<p>After</p>");
     expect(result.html).not.toContain("null");
     expect(result.html).not.toContain("undefined");
+  });
+
+  it("should not expose file paths in HTML (security)", () => {
+    // Test with absolute path
+    const Counter = island(
+      () => h("button", null, "Click"),
+      "file:///home/user/project/src/components/Counter.tsx",
+    );
+
+    const app = Counter({});
+
+    const result = renderToString(app);
+
+    // HTML should NOT contain the file path
+    expect(result.html).not.toContain("/home/user");
+    expect(result.html).not.toContain("file://");
+    expect(result.html).not.toContain("Counter.tsx");
+    expect(result.html).not.toContain("data-island-path");
+
+    // But should still have island ID and props
+    expect(result.html).toContain('data-island-id="island-0"');
+    expect(result.html).toContain("data-island-props=");
+
+    // Server-side metadata should still have the path
+    expect(result.islands[0].path).toBe(
+      "file:///home/user/project/src/components/Counter.tsx",
+    );
   });
 });
