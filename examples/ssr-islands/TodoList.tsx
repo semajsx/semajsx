@@ -1,3 +1,5 @@
+/** @jsxImportSource semajsx/dom */
+
 import { signal } from "../../src/signal";
 import { island } from "../../src/server";
 
@@ -21,20 +23,33 @@ export const TodoList = island(
     };
 
     return (
-      <div style={{ padding: "20px", border: "2px solid #10b981", borderRadius: "8px", margin: "10px 0" }}>
+      <div
+        style={{
+          padding: "20px",
+          border: "2px solid #10b981",
+          borderRadius: "8px",
+          margin: "10px 0",
+        }}
+      >
         <h3>Interactive Todo List (Island)</h3>
         <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
           <input
             type="text"
             value={input}
-            onInput={(e) => input.value = (e.target as HTMLInputElement).value}
+            onInput={(e) =>
+              (input.value = (e.target as HTMLInputElement).value)
+            }
             onKeyPress={(e) => e.key === "Enter" && addTodo()}
             placeholder="Add a new todo..."
             style={{ flex: "1", padding: "10px", fontSize: "16px" }}
           />
           <button
             onClick={addTodo}
-            style={{ padding: "10px 20px", fontSize: "16px", cursor: "pointer" }}
+            style={{
+              padding: "10px 20px",
+              fontSize: "16px",
+              cursor: "pointer",
+            }}
           >
             Add
           </button>
@@ -50,13 +65,20 @@ export const TodoList = island(
                 padding: "10px",
                 margin: "5px 0",
                 background: "#f3f4f6",
-                borderRadius: "4px"
+                borderRadius: "4px",
               }}
             >
               <span>{todo}</span>
               <button
                 onClick={() => removeTodo(index)}
-                style={{ padding: "5px 10px", cursor: "pointer", background: "#ef4444", color: "white", border: "none", borderRadius: "4px" }}
+                style={{
+                  padding: "5px 10px",
+                  cursor: "pointer",
+                  background: "#ef4444",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                }}
               >
                 Delete
               </button>
@@ -64,10 +86,12 @@ export const TodoList = island(
           ))}
         </ul>
         {todos.value.length === 0 && (
-          <p style={{ color: "#6b7280", textAlign: "center" }}>No todos yet. Add one above!</p>
+          <p style={{ color: "#6b7280", textAlign: "center" }}>
+            No todos yet. Add one above!
+          </p>
         )}
       </div>
     );
   },
-  import.meta.url
+  import.meta.url,
 );

@@ -1,3 +1,5 @@
+/** @jsxImportSource semajsx/dom */
+
 import { Counter } from "./Counter";
 import { TodoList } from "./TodoList";
 
@@ -8,7 +10,7 @@ export function App() {
   return (
     <html lang="en">
       <head>
-        <meta charset="UTF-8" />
+        <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>SemaJSX SSR Islands Demo</title>
         <style>
@@ -45,21 +47,21 @@ export function App() {
         <div class="static-content">
           <h2>What is this?</h2>
           <p>
-            This page demonstrates <strong>SSR Islands</strong> - a technique where
-            server-rendered HTML contains "islands" of interactivity.
+            This page demonstrates <strong>SSR Islands</strong> - a technique
+            where server-rendered HTML contains "islands" of interactivity.
           </p>
           <p>
-            The static content (like this text) is rendered on the server and sent
-            as HTML. The interactive components below are <strong>islands</strong> that
-            hydrate on the client side.
+            The static content (like this text) is rendered on the server and
+            sent as HTML. The interactive components below are{" "}
+            <strong>islands</strong> that hydrate on the client side.
           </p>
         </div>
 
         <h2>📊 Static Content</h2>
         <div class="static-content">
           <p>
-            This is <em>static content</em> rendered on the server. It doesn't need
-            JavaScript and loads instantly.
+            This is <em>static content</em> rendered on the server. It doesn't
+            need JavaScript and loads instantly.
           </p>
           <ul>
             <li>✅ Fast initial load</li>
@@ -70,7 +72,8 @@ export function App() {
 
         <h2>🎮 Interactive Islands</h2>
         <p style={{ color: "#6b7280" }}>
-          The components below are marked as islands and will hydrate on the client:
+          The components below are marked as islands and will hydrate on the
+          client:
         </p>
 
         {/* Island 1: Counter */}
@@ -78,8 +81,8 @@ export function App() {
 
         <div class="static-content">
           <p>
-            <strong>More static content between islands!</strong> This demonstrates
-            that you can mix static and interactive content freely.
+            <strong>More static content between islands!</strong> This
+            demonstrates that you can mix static and interactive content freely.
           </p>
         </div>
 
@@ -89,14 +92,32 @@ export function App() {
         <h2>🎯 Key Benefits</h2>
         <div class="static-content">
           <ul>
-            <li><strong>Selective Hydration:</strong> Only interactive components load JavaScript</li>
-            <li><strong>Faster Performance:</strong> Less JavaScript = faster page loads</li>
-            <li><strong>Runtime Discovery:</strong> Islands are discovered at render time</li>
-            <li><strong>Lazy Building:</strong> Island code is built on-demand</li>
+            <li>
+              <strong>Selective Hydration:</strong> Only interactive components
+              load JavaScript
+            </li>
+            <li>
+              <strong>Faster Performance:</strong> Less JavaScript = faster page
+              loads
+            </li>
+            <li>
+              <strong>Runtime Discovery:</strong> Islands are discovered at
+              render time
+            </li>
+            <li>
+              <strong>Lazy Building:</strong> Island code is built on-demand
+            </li>
           </ul>
         </div>
 
-        <footer style={{ marginTop: "40px", padding: "20px", textAlign: "center", color: "#6b7280" }}>
+        <footer
+          style={{
+            marginTop: "40px",
+            padding: "20px",
+            textAlign: "center",
+            color: "#6b7280",
+          }}
+        >
           <p>Built with ❤️ using SemaJSX</p>
         </footer>
       </body>

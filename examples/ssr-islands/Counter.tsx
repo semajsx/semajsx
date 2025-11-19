@@ -1,3 +1,5 @@
+/** @jsxImportSource semajsx/dom */
+
 import { signal } from "../../src/signal";
 import { island } from "../../src/server";
 
@@ -9,25 +11,46 @@ export const Counter = island(
     const count = signal(initial);
 
     return (
-      <div style={{ padding: "20px", border: "2px solid #3b82f6", borderRadius: "8px", margin: "10px 0" }}>
+      <div
+        style={{
+          padding: "20px",
+          border: "2px solid #3b82f6",
+          borderRadius: "8px",
+          margin: "10px 0",
+        }}
+      >
         <h3>Interactive Counter (Island)</h3>
-        <p>Current count: <strong>{count}</strong></p>
+        <p>
+          Current count: <strong>{count}</strong>
+        </p>
         <div style={{ display: "flex", gap: "10px" }}>
           <button
             onClick={() => count.value++}
-            style={{ padding: "10px 20px", fontSize: "16px", cursor: "pointer" }}
+            style={{
+              padding: "10px 20px",
+              fontSize: "16px",
+              cursor: "pointer",
+            }}
           >
             Increment
           </button>
           <button
             onClick={() => count.value--}
-            style={{ padding: "10px 20px", fontSize: "16px", cursor: "pointer" }}
+            style={{
+              padding: "10px 20px",
+              fontSize: "16px",
+              cursor: "pointer",
+            }}
           >
             Decrement
           </button>
           <button
-            onClick={() => count.value = 0}
-            style={{ padding: "10px 20px", fontSize: "16px", cursor: "pointer" }}
+            onClick={() => (count.value = 0)}
+            style={{
+              padding: "10px 20px",
+              fontSize: "16px",
+              cursor: "pointer",
+            }}
           >
             Reset
           </button>
@@ -35,5 +58,5 @@ export const Counter = island(
       </div>
     );
   },
-  import.meta.url
+  import.meta.url,
 );

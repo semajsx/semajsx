@@ -1,3 +1,5 @@
+/** @jsxImportSource semajsx/dom */
+
 import { createRouter } from "../../src/server";
 import { App } from "./App";
 
@@ -55,7 +57,11 @@ const server = Bun.serve({
 
       console.log(`  ✓ Rendered page with ${result.islands.length} islands`);
       for (const island of result.islands) {
-        console.log(`    - ${island.id}: ${island.componentName || "anonymous"} (${island.path})`);
+        console.log(
+          `    - ${island.id}: ${
+            island.componentName || "anonymous"
+          } (${island.path})`,
+        );
       }
 
       const html = `
