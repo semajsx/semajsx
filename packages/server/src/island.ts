@@ -1,5 +1,9 @@
-import type { Component, JSXNode, VNode } from "@semajsx/core/types";
-import { ISLAND_MARKER } from "./shared/island-marker";
+import {
+  ISLAND_MARKER,
+  type Component,
+  type JSXNode,
+  type VNode,
+} from "@semajsx/core";
 import type { IslandMarker } from "./shared/types";
 
 /**

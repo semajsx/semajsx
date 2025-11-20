@@ -1,7 +1,6 @@
 {
   "extends": "@semajsx/configs/tsconfig.lib.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "rootDir": "./src",
     "outDir": "./dist"
   },

@@ -70,16 +70,6 @@ export interface ComponentAPI {
 }
 
 /**
- * Rendered node tracking
- */
-export interface RenderedNode {
-  vnode: VNode;
-  dom: Node | null;
-  subscriptions: Array<() => void>;
-  children: RenderedNode[];
-}
-
-/**
  * Ref types
  */
 

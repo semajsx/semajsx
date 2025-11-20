@@ -3,8 +3,7 @@
  * Use with: @jsxImportSource @semajsx/dom
  */
 
-import { h } from "@semajsx/core";
-import { ISLAND_MARKER } from "./shared/island-marker";
+import { h, ISLAND_MARKER } from "@semajsx/core";
 
 export { Fragment } from "./jsx-runtime";
 export type * from "./jsx-runtime";

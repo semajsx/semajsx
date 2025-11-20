@@ -1,4 +1,4 @@
-export { ISLAND_MARKER } from "./island-marker";
+export { ISLAND_MARKER } from "@semajsx/core";
 export type {
   IslandMetadata,
   IslandMarker,

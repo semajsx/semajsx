@@ -12,5 +12,12 @@
     "@typescript-eslint/no-unsafe-call": "warn",
     "@typescript-eslint/no-unsafe-return": "warn"
   },
-  "ignore": ["dist", "node_modules", "coverage", "*.tsbuildinfo", "playwright-report", "test-results"]
+  "ignore": [
+    "dist",
+    "node_modules",
+    "coverage",
+    "*.tsbuildinfo",
+    "playwright-report",
+    "test-results"
+  ]
 }

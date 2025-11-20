@@ -3,18 +3,13 @@
   "version": "0.1.0",
   "description": "Server-side rendering and Island architecture for SemaJSX",
   "type": "module",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./client": {
-      "types": "./dist/client/index.d.ts",
-      "import": "./dist/client/index.js"
-    }
+    ".": "./src/index.ts",
+    "./client": "./src/client/index.ts",
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
@@ -43,8 +38,5 @@
     "vite": {
       "optional": true
     }
-  },
-  "publishConfig": {
-    "access": "public"
   }
 }

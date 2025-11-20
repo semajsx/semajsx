@@ -3,9 +3,6 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "semajsx": ["./packages/semajsx/src/index.ts"],
-      "semajsx/*": ["./packages/semajsx/src/*"],
-      "@semajsx/*": ["./packages/*/src"],
       "@semajsx/core": ["./packages/core/src/index.ts"],
       "@semajsx/dom": ["./packages/dom/src/index.ts"],
       "@semajsx/logger": ["./packages/logger/src/index.ts"],

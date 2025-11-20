@@ -10,7 +10,7 @@ SemaJSX is a lightweight, signal-based reactive JSX runtime for building modern 
 
 ### Monorepo Structure
 
-This project uses a **monorepo architecture** powered by PNPM workspaces and PNPM workspaces:
+This project uses a **monorepo architecture** powered by Bun workspaces:
 
 ```
 semajsx/
@@ -39,8 +39,6 @@ semajsx/
 │       └── package.json
 │
 ├── package.json              # Root workspace configuration
-├── pnpm-workspace.yaml       # PNPM workspace definition
-├── pnpm-workspace.yaml                # PNPM workspaces configuration
 └── MONOREPO_ARCHITECTURE.md  # Detailed architecture documentation
 ```
 
@@ -103,28 +101,28 @@ See [MONOREPO_ARCHITECTURE.md](./MONOREPO_ARCHITECTURE.md) for detailed migratio
 
 ```bash
 # Install dependencies for all packages
-pnpm install
+bun install
 
 # Build all packages
-pnpm build
+bun run build
 
 # Run dev mode for all packages
-pnpm dev
+bun run dev
 
 # Run tests in all packages
-pnpm test
+bun run test
 
 # Type check all packages
-pnpm typecheck
+bun run typecheck
 
 # Lint all packages
-pnpm lint
+bun run lint
 
 # Format all files
-pnpm format
+bun run format
 
 # Clean all build outputs and node_modules
-pnpm clean
+bun run clean
 ```
 
 ### Package-Specific Commands
@@ -136,17 +134,17 @@ Navigate to a specific package to run its commands:
 cd packages/semajsx
 
 # Build this package only
-pnpm build
+bun run build
 
 # Watch mode for development
-pnpm dev
+bun run dev
 
 # Run tests for this package
-pnpm test
-pnpm test:unit
+bun run test
+bun run test:unit
 
 # Type checking
-pnpm typecheck
+bun run typecheck
 ```
 
 ### Examples (in packages/semajsx)
@@ -155,23 +153,23 @@ pnpm typecheck
 cd packages/semajsx
 
 # Vite counter (DOM, development server)
-pnpm example:dev
+bun run example:dev
 
 # Bun server example
-pnpm example:bun
+bun run example:bun
 
 # Performance optimizations demo
-pnpm example:perf
+bun run example:perf
 
 # SSR Islands architecture demo
-pnpm example:ssr
+bun run example:ssr
 
 # Terminal rendering example
-pnpm example:terminal
+bun run example:terminal
 
 # Logger examples
-pnpm example:logger
-pnpm example:logger:showcase
+bun run example:logger
+bun run example:logger:showcase
 ```
 
 ## Key Concepts
@@ -235,8 +233,8 @@ See [MONOREPO_ARCHITECTURE.md](./MONOREPO_ARCHITECTURE.md) for details on the Is
    - Document why a type assertion is needed if it must be used
 7. **Workspace management**:
    - Use workspace protocol (`workspace:*`) for internal dependencies
-   - Always run `pnpm install` from the root directory
-   - Use `pnpm -F <package-name>` to run commands in specific packages from root
+   - Always run `bun install` from the root directory
+   - Use `bun --filter <package-name>` to run commands in specific packages from root
 
 ## Code Quality
 
@@ -252,19 +250,19 @@ Run type checking:
 
 ```bash
 # Check all packages
-pnpm typecheck
+bun run typecheck
 
 # Check specific package
-cd packages/semajsx && pnpm typecheck
+cd packages/semajsx && bun run typecheck
 ```
 
 ### Linting & Formatting
 
 The project uses **oxlint** (fast Rust-based linter) and **Prettier**:
 
-- **Lint All Packages**: `pnpm lint` from root
-- **Auto-Fix**: `pnpm lint:fix`
-- **Format**: `pnpm format` formats all files with Prettier
+- **Lint All Packages**: `bun run lint` from root
+- **Auto-Fix**: `bun run lint:fix`
+- **Format**: `bun run format` formats all files with Prettier
 
 Configuration files are at the root level and apply to all packages.
 
@@ -321,11 +319,11 @@ The project uses **Vitest** with two test configurations in `packages/semajsx`:
 1. **Unit Tests** (`vitest.unit.config.ts`)
    - Node environment for signal system and runtime tests
    - Fast execution without browser overhead
-   - Run with: `pnpm test:unit`
+   - Run with: `bun run test:unit`
 
 2. **Browser Tests** (`vitest.config.ts`)
    - Playwright/Chromium for DOM rendering tests
-   - Run with: `pnpm test`
+   - Run with: `bun run test`
 
 ### Test Guidelines
 
@@ -341,8 +339,7 @@ When adding a new package to the monorepo:
 2. Create `package.json` with appropriate name (`@semajsx/<name>`)
 3. Create `tsconfig.json` extending `@semajsx/configs`
 4. Add package reference to root `tsconfig.json`
-5. Add to `pnpm-workspace.yaml` pipeline if needed
-6. Run `pnpm install` from root to set up workspace links
+5. Run `bun install` from root to set up workspace links
 
 ## Publishing
 
@@ -352,12 +349,11 @@ For now:
 
 ```bash
 cd packages/semajsx
-pnpm build
+bun run build
 npm publish
 ```
 
 ## Useful Resources
 
 - [MONOREPO_ARCHITECTURE.md](./MONOREPO_ARCHITECTURE.md) - Detailed architecture and migration plan
-- [PNPM workspaces Documentation](https://turbo.build/repo/docs)
-- [PNPM Workspaces](https://pnpm.io/workspaces)
+- [Bun Workspaces](https://bun.sh/docs/install/workspaces)
