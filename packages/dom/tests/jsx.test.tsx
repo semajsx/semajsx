@@ -23,7 +23,7 @@ describe("JSX integration", () => {
     expect(container.innerHTML).toContain('<div class="test">Hello JSX</div>');
   });
 
-  it("should render JSX with signal", () => {
+  it("should render JSX with signal", async () => {
     const count = signal(42);
     const vnode = <div>Count: {count}</div>;
     render(vnode, container);
@@ -31,6 +31,7 @@ describe("JSX integration", () => {
     expect(container.textContent).toContain("Count: 42");
 
     count.value = 100;
+    await new Promise((resolve) => queueMicrotask(resolve));
     expect(container.textContent).toContain("Count: 100");
   });
 
@@ -45,7 +46,7 @@ describe("JSX integration", () => {
     expect(container.textContent).toBe("Hello, Vitest!");
   });
 
-  it("should render JSX with computed", () => {
+  it("should render JSX with computed", async () => {
     const count = signal(5);
     const doubled = computed([count], (c) => c * 2);
 
@@ -61,11 +62,12 @@ describe("JSX integration", () => {
     expect(container.textContent).toContain("Doubled: 10");
 
     count.value = 10;
+    await new Promise((resolve) => queueMicrotask(resolve));
     expect(container.textContent).toContain("Count: 10");
     expect(container.textContent).toContain("Doubled: 20");
   });
 
-  it("should render conditional JSX", () => {
+  it("should render conditional JSX", async () => {
     const show = signal(true);
     const content = computed([show], (s) =>
       s ? <p>Visible</p> : <p>Hidden</p>,
@@ -77,6 +79,7 @@ describe("JSX integration", () => {
     expect(container.textContent).toContain("Visible");
 
     show.value = false;
+    await new Promise((resolve) => queueMicrotask(resolve));
     expect(container.textContent).toContain("Hidden");
   });
 

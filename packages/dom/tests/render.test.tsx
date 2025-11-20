@@ -36,7 +36,7 @@ describe("render", () => {
     expect(container.querySelector("p")?.textContent).toBe("Content");
   });
 
-  it("should render signal as text", () => {
+  it("should render signal as text", async () => {
     const count = signal(5);
     const vnode = <div>{count}</div>;
     render(vnode, container);
@@ -44,10 +44,11 @@ describe("render", () => {
     expect(container.textContent).toContain("5");
 
     count.value = 10;
+    await new Promise((resolve) => queueMicrotask(resolve));
     expect(container.textContent).toContain("10");
   });
 
-  it("should render computed signal", () => {
+  it("should render computed signal", async () => {
     const count = signal(5);
     const doubled = computed([count], (c) => c * 2);
     const vnode = <div>{doubled}</div>;
@@ -56,10 +57,11 @@ describe("render", () => {
     expect(container.textContent).toContain("10");
 
     count.value = 10;
+    await new Promise((resolve) => queueMicrotask(resolve));
     expect(container.textContent).toContain("20");
   });
 
-  it("should render signal VNode", () => {
+  it("should render signal VNode", async () => {
     const show = signal(true);
     const content = computed([show], (s) =>
       s ? <p>Visible</p> : <p>Hidden</p>,
@@ -70,10 +72,11 @@ describe("render", () => {
     expect(container.textContent).toContain("Visible");
 
     show.value = false;
+    await new Promise((resolve) => queueMicrotask(resolve));
     expect(container.textContent).toContain("Hidden");
   });
 
-  it("should handle signal props", () => {
+  it("should handle signal props", async () => {
     const className = signal("initial");
     const vnode = <div class={className}>Test</div>;
     render(vnode, container);
@@ -82,6 +85,7 @@ describe("render", () => {
     expect(div?.className).toBe("initial");
 
     className.value = "updated";
+    await new Promise((resolve) => queueMicrotask(resolve));
     expect(div?.className).toBe("updated");
   });
 
@@ -130,7 +134,7 @@ describe("render", () => {
     expect(spans[1]?.textContent).toBe("Two");
   });
 
-  it("should unmount and cleanup subscriptions", () => {
+  it("should unmount and cleanup subscriptions", async () => {
     const count = signal(0);
     const vnode = <div>{count}</div>;
     const { unmount } = render(vnode, container);
@@ -140,6 +144,7 @@ describe("render", () => {
     expect(div?.textContent).toContain("0");
 
     count.value = 5;
+    await new Promise((resolve) => queueMicrotask(resolve));
     expect(div?.textContent).toContain("5");
 
     // Unmount removes the node from DOM
@@ -148,6 +153,7 @@ describe("render", () => {
 
     // After unmount, signal changes should not update (subscription cleaned up)
     count.value = 10;
+    await new Promise((resolve) => queueMicrotask(resolve));
 
     // The original div should still show '5' since it's no longer subscribed
     expect(div?.textContent).toContain("5");
