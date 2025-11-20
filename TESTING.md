@@ -46,17 +46,9 @@ bun add -D vitest @vitest/browser-playwright
 
 ### Monorepo Workspace Setup
 
-SemaJSX uses Bun workspaces with per-package Vitest configurations. Each package has its own `vitest.config.ts`.
+SemaJSX uses Vitest's `test.projects` to manage tests across the monorepo. Each package has its own `vitest.config.ts`.
 
-**Current approach** (per-package):
-```bash
-# Run all package tests via Bun workspaces
-bun run test  # Runs: bun run --filter '*' test
-```
-
-**Alternative: Vitest Projects** (unified):
-
-You can create a root `vitest.config.ts` using Vitest's `test.projects` to run all tests from a single process:
+**Root configuration**:
 
 ```ts
 // vitest.config.ts (root)
@@ -64,19 +56,18 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    // Reference all package configs
     projects: ["packages/*"],
   },
 });
 ```
 
-Then run with:
+**Running tests**:
 ```bash
 vitest                    # Run all projects
 vitest --project=dom      # Run specific package
 ```
 
-> Note: Vitest 3.2+ deprecated `vitest.workspace.ts` in favor of `test.projects`. Use `test.projects` for new configurations.
+> Note: Vitest 3.2+ deprecated `vitest.workspace.ts` in favor of `test.projects`.
 
 ### Per-Package Configuration
 
