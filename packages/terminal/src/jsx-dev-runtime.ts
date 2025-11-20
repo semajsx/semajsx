@@ -1,6 +1,6 @@
 /**
  * JSX automatic runtime for Terminal (development)
- * Use with: @jsxImportSource semajsx/terminal
+ * Use with: @jsxImportSource @semajsx/terminal
  */
 
 import { h } from "@semajsx/core";

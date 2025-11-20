@@ -22,7 +22,7 @@ bun add semajsx
 ## Quick Start
 
 ```tsx
-import { logger } from "semajsx/terminal/logger";
+import { logger } from "@semajsx/logger";
 
 // Basic logging
 logger.info("Server started");
@@ -219,7 +219,7 @@ logger.jsx(<text>Custom content</text>);
 Create a custom logger with options:
 
 ```tsx
-import { createLogger } from "semajsx/terminal/logger";
+import { createLogger } from "@semajsx/logger";
 
 const customLogger = createLogger({
   // Show timestamps (default: true)
@@ -365,7 +365,7 @@ try {
 Full TypeScript support with type definitions:
 
 ```tsx
-import type { LoggerOptions, LogLevel } from "semajsx/terminal/logger";
+import type { LoggerOptions, LogLevel } from "@semajsx/logger";
 
 const options: LoggerOptions = {
   minLevel: "info",

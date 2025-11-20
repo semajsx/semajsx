@@ -15,85 +15,60 @@ This project uses a **monorepo architecture** powered by Bun workspaces:
 ```
 semajsx/
 ├── packages/
-│   ├── semajsx/              # Main package (currently contains all code)
+│   ├── core/                 # @semajsx/core - Runtime core (VNode, helpers)
+│   ├── signal/               # @semajsx/signal - Signal reactivity system
+│   ├── dom/                  # @semajsx/dom - DOM rendering
 │   │   ├── src/
-│   │   │   ├── signal/       # Signal reactivity system
-│   │   │   ├── runtime/      # VNode and rendering engine
-│   │   │   ├── dom/          # DOM rendering and operations
-│   │   │   ├── terminal/     # Terminal rendering (Ink-like API)
-│   │   │   ├── server/       # SSR and Island architecture
-│   │   │   ├── client/       # Client-side hydration
-│   │   │   ├── shared/       # Shared types and utilities
-│   │   │   ├── jsx-runtime.ts
-│   │   │   ├── jsx-dev-runtime.ts
-│   │   │   └── index.ts
-│   │   ├── tests/            # Tests
-│   │   ├── examples/         # Examples
-│   │   └── package.json
-│   │
+│   │   ├── tests/
+│   │   └── examples/
+│   ├── terminal/             # @semajsx/terminal - Terminal rendering
+│   │   ├── src/
+│   │   └── examples/
+│   ├── server/               # @semajsx/server - SSR and Island architecture
+│   │   ├── src/
+│   │   ├── tests/
+│   │   └── examples/
+│   ├── logger/               # @semajsx/logger - Logging utilities
+│   │   ├── src/
+│   │   └── examples/
+│   ├── utils/                # @semajsx/utils - Shared utilities
+│   ├── semajsx/              # semajsx - Main umbrella package (re-exports)
+│   │   └── src/
 │   └── configs/              # Shared TypeScript configurations (internal)
-│       ├── tsconfig.base.json    # Base config
-│       ├── tsconfig.lib.json     # Library packages config
-│       ├── tsconfig.app.json     # Application config
-│       ├── tsconfig.test.json    # Test files config
-│       └── package.json
 │
 ├── package.json              # Root workspace configuration
 └── MONOREPO_ARCHITECTURE.md  # Detailed architecture documentation
 ```
 
-**Future Package Structure** (to be implemented):
+### Core Modules
 
-The monorepo will eventually be split into these packages:
+1. **Signal System** (`packages/signal/`)
+   - Signal reactivity primitives
+   - Computed values and batching
 
-- `@semajsx/core` - Runtime core (VNode, helpers)
-- `@semajsx/signal` - Signal reactivity system
-- `@semajsx/dom` - DOM rendering
-- `@semajsx/terminal` - Terminal rendering
-- `@semajsx/server` - SSR and Island architecture
-- `@semajsx/logger` - Logging utilities
-- `@semajsx/utils` - Shared utilities
-- `semajsx` - Main umbrella package (re-exports all packages)
+2. **Core Runtime** (`packages/core/`)
+   - VNode creation and normalization
+   - Runtime helpers (when, resource, stream)
 
-See [MONOREPO_ARCHITECTURE.md](./MONOREPO_ARCHITECTURE.md) for detailed migration plans.
+3. **DOM Rendering** (`packages/dom/`)
+   - DOM manipulation and rendering
+   - JSX runtime for DOM
+   - Hydration support
 
-### Core Modules (in packages/semajsx/src)
+4. **Terminal Rendering** (`packages/terminal/`)
+   - Terminal-specific rendering
+   - Flexbox layout with Yoga
+   - Built-in components (Box, Text)
 
-1. **Signal System** (`signal/`)
-   - `signal.ts` - Writable reactive signals
-   - `computed.ts` - Derived computed values
-   - `batch.ts` - Batched updates
-   - `utils.ts` - Utility functions (isSignal, unwrap, peek)
-   - `types.ts` - Type definitions
+5. **Server** (`packages/server/`)
+   - SSR and Island architecture
+   - Vite-powered routing and building
 
-2. **Runtime** (`runtime/`)
-   - `vnode.ts` - VNode creation and normalization
-   - `helpers.ts` - Runtime helpers (when, resource, stream)
-   - `types.ts` - Core type definitions
+6. **Logger** (`packages/logger/`)
+   - Logging utilities
 
-3. **DOM Rendering** (`dom/`)
-   - `operations.ts` - Low-level DOM manipulation
-   - `properties.ts` - Property setting with signal support
-   - `render.ts` - DOM rendering engine
-   - `jsx-runtime.ts` - JSX runtime for DOM
-   - `jsx-dev-runtime.ts` - JSX dev runtime for DOM
-
-4. **Terminal Rendering** (`terminal/`)
-   - `operations.ts` - Terminal-specific operations
-   - `properties.ts` - Terminal property handling
-   - `render.ts` - Terminal rendering engine
-   - `renderer.ts` - Layout engine with Yoga
-   - `jsx-runtime.ts` - JSX runtime for terminal
-   - `components/` - Built-in components (Box, Text)
-   - `utils/` - Terminal utilities (colors, ANSI codes)
-
-5. **SSR & Island Architecture** (`server/`, `client/`)
-   - `server/island.ts` - Island component annotation
-   - `server/render.ts` - Server-side rendering to HTML
-   - `server/collector.ts` - Runtime island discovery
-   - `server/vite-builder.ts` - Vite-powered island module transformation
-   - `server/vite-router.ts` - Route management with SSR and Vite integration
-   - `client/hydrate.ts` - Client-side island hydration
+7. **Utils** (`packages/utils/`)
+   - Shared utilities
 
 ## Development Commands
 
@@ -147,30 +122,16 @@ bun run test:unit
 bun run typecheck
 ```
 
-### Examples (in packages/semajsx)
+### Examples
 
-```bash
-cd packages/semajsx
+Examples are located in their respective packages:
 
-# Vite counter (DOM, development server)
-bun run example:dev
+- **DOM examples**: `packages/dom/examples/`
+- **Server examples**: `packages/server/examples/`
+- **Terminal examples**: `packages/terminal/examples/`
+- **Logger examples**: `packages/logger/examples/`
 
-# Bun server example
-bun run example:bun
-
-# Performance optimizations demo
-bun run example:perf
-
-# SSR Islands architecture demo
-bun run example:ssr
-
-# Terminal rendering example
-bun run example:terminal
-
-# Logger examples
-bun run example:logger
-bun run example:logger:showcase
-```
+Run examples from each package directory.
 
 ## Key Concepts
 

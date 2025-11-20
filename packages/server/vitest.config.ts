@@ -1,17 +1,11 @@
 import { defineConfig } from "vitest/config";
-import { playwright } from "@vitest/browser-playwright";
 
 export default defineConfig({
   esbuild: {
     jsxImportSource: "semajsx",
   },
   test: {
-    browser: {
-      enabled: true,
-      headless: true,
-      provider: playwright(),
-      instances: [{ browser: "chromium" }],
-    },
+    environment: "node",
     include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
   },
 });

@@ -2,7 +2,7 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 import { signal } from "@semajsx/signal";
-import { render } from "@/render";
+import { render } from "@semajsx/dom";
 
 describe("Ref functionality", () => {
   let container: HTMLDivElement;

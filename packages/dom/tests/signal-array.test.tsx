@@ -2,7 +2,7 @@
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { computed, signal } from "@semajsx/signal";
-import { render } from "@/render";
+import { render } from "@semajsx/dom";
 
 describe("Signal<Array<VNode>> rendering", () => {
   let container: HTMLDivElement;
