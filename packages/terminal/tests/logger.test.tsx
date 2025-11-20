@@ -128,8 +128,9 @@ describe("Logger", () => {
       logger.info("test");
 
       const output = mockStream.getOutput();
-      expect(output).not.toContain("[");
-      expect(output).not.toContain("]");
+      // Check that there's no timestamp pattern like [HH:MM:SS AM/PM]
+      // Note: ANSI codes may contain [ so we check for timestamp-specific pattern
+      expect(output).not.toMatch(/\[\d+:\d+:\d+\s*(AM|PM)?\]/);
     });
 
     it("should use custom timestamp format", () => {
@@ -208,7 +209,9 @@ describe("Logger", () => {
 
       const output = mockStream.getOutput();
       expect(output).toContain("MODULE");
-      expect(output).not.toContain(":");
+      // Check that MODULE appears without a parent prefix (no "SOMETHING:MODULE" pattern)
+      // Note: timestamp contains : so we check for specific prefix pattern
+      expect(output).not.toMatch(/\w+:MODULE/);
     });
   });
 
