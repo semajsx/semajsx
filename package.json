@@ -11,8 +11,8 @@
   "scripts": {
     "build": "bun run --filter '*' build",
     "dev": "bun run --filter '*' dev",
-    "test": "bun run --filter '*' test",
-    "test:run": "bun run --filter '*' test:run",
+    "test": "vitest",
+    "test:run": "vitest run",
     "typecheck": "bun run --filter '*' typecheck",
     "clean": "bun run --filter '*' clean && rm -rf node_modules",
     "format": "prettier --write .",
