@@ -24,11 +24,12 @@ This document summarizes the configuration improvements made to achieve best pra
 **After:** Each example has ~5 lines of config
 
 **Example:**
+
 ```json
 {
   "extends": "../../tsconfig.examples.base.json",
   "compilerOptions": {
-    "jsxImportSource": "semajsx/dom"  // Only override what's different
+    "jsxImportSource": "semajsx/dom" // Only override what's different
   }
 }
 ```
@@ -36,6 +37,7 @@ This document summarizes the configuration improvements made to achieve best pra
 #### Enhanced `tsconfig.base.json` with Stricter Options
 
 Added comprehensive strict mode options:
+
 - `noUncheckedIndexedAccess` - Safer array/object access
 - `noImplicitOverride` - Explicit override keywords
 - `forceConsistentCasingInFileNames` - Cross-OS compatibility
@@ -51,11 +53,13 @@ Added comprehensive strict mode options:
 **Problem:** Inconsistent use of package names vs. direct paths
 
 **Before:**
+
 - terminal-counter: `"jsxImportSource": "../../src/terminal"` (direct path)
 - terminal-print: `"jsxImportSource": "../../src/terminal"` (direct path)
 - shared: `"jsxImportSource": "semajsx/terminal"` (package name)
 
 **After:** All use package names:
+
 - `"jsxImportSource": "semajsx/dom"` for DOM examples
 - `"jsxImportSource": "semajsx/terminal"` for Terminal examples
 
@@ -64,6 +68,7 @@ Added comprehensive strict mode options:
 **Problem:** Missing example projects in root `tsconfig.json`
 
 **Added:**
+
 - `examples/performance-test`
 - `examples/terminal-print`
 - `examples/shared`
@@ -73,6 +78,7 @@ Added comprehensive strict mode options:
 #### Removed Redundant Settings
 
 **Cleaned up:**
+
 - Removed `emitDeclarationOnly: false` (default value)
 - Removed empty `exclude: []` arrays
 - Added proper test file exclusions
@@ -85,6 +91,7 @@ Added comprehensive strict mode options:
 #### Added Complete Path Aliases to Both Configs
 
 **Problem:**
+
 - `vitest.config.ts` (browser tests) had NO path aliases
 - `vitest.unit.config.ts` (unit tests) was missing `semajsx/*` mappings
 
@@ -113,6 +120,7 @@ alias: {
 #### Updated `oxlint.json`
 
 **Changes:**
+
 - Changed `no-console: "off"` → `"warn"` (encourage explicit console usage)
 - Removed `*.config.ts` from ignore (config files should be linted too)
 - Removed `examples` from ignore (examples should be linted)
@@ -121,6 +129,7 @@ alias: {
 #### Updated `.prettierignore`
 
 **Added missing patterns:**
+
 - `*.tsbuildinfo` - TypeScript build cache
 - `playwright-report` - Test reports
 - `test-results` - Test results
@@ -131,6 +140,7 @@ alias: {
 ## File Count Reduction
 
 ### Before
+
 ```
 12 TypeScript configuration files:
 - tsconfig.json (root)
@@ -145,6 +155,7 @@ Total: ~400 lines of configuration across many files
 ```
 
 ### After
+
 ```
 5 TypeScript configuration files:
 - tsconfig.json (root - 3 project references)
@@ -163,24 +174,29 @@ Total: ~100 lines of configuration
 ## Benefits
 
 ### ✅ Reduced Maintenance Burden
+
 - Shared configuration means one place to update settings
 - Changes propagate automatically to all examples
 
 ### ✅ Improved Type Safety
+
 - Stricter TypeScript options catch more errors at compile time
 - Consistent settings across all projects
 
 ### ✅ Better DX (Developer Experience)
+
 - Clearer configuration hierarchy
 - Easier for contributors to understand
 - Faster onboarding
 
 ### ✅ Standardization
+
 - All examples follow same patterns
 - Package names used consistently
 - Path aliases work everywhere
 
 ### ✅ Verified Working
+
 - All type checks pass (`bun run typecheck`)
 - No breaking changes to existing code
 - Examples still work correctly
@@ -221,6 +237,7 @@ Create a minimal `tsconfig.json`:
 ### For Tests
 
 Import from package names:
+
 ```typescript
 import { signal } from "semajsx";
 import { render } from "semajsx/dom";
@@ -239,6 +256,7 @@ No changes needed - `tsdown.config.ts` has all aliases configured.
 ### Phase 1: Merge tsconfig.build.json
 
 **Removed `tsconfig.build.json`:**
+
 - Was nearly identical to `tsconfig.lib.json`
 - Updated `tsdown.config.ts` to use `tsconfig.lib.json`
 - Reduced from 12 to 11 files
@@ -248,15 +266,18 @@ No changes needed - `tsdown.config.ts` has all aliases configured.
 **Key Insight:** Instead of one config per example, group by rendering target!
 
 **Removed:**
+
 - `tsconfig.examples.base.json` (shared base)
 - `tsconfig.test.json` (separate test config)
 - All 6 individual example `tsconfig.json` files
 
 **Created:**
+
 - `tsconfig.dom.json` - Includes all DOM examples + DOM tests
 - `tsconfig.terminal.json` - Includes all Terminal examples + Terminal tests
 
 **Benefits:**
+
 - No need to create `tsconfig.json` for each new example
 - Tests and examples colocated by target
 - Just add to `include` pattern instead of new file
@@ -279,6 +300,7 @@ Root (Minimal):
 ## Future Improvements (Optional)
 
 ### Could Consider:
+
 1. **Use `vite-tsconfig-paths`** in Vitest - Auto-load paths from tsconfig (reduces duplication)
 2. **Enable treeshaking** in tsdown - Reduce bundle sizes
 3. **Add more browsers** to browser tests - Firefox, WebKit for cross-browser coverage
