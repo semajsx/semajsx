@@ -3,6 +3,7 @@ import { defineConfig } from "tsdown";
 export default defineConfig({
   entry: ["src/index.ts", "src/jsx-runtime.ts", "src/jsx-dev-runtime.ts"],
   format: ["esm"],
+  unbundle: true,
   dts: true,
   clean: true,
   sourcemap: true,
@@ -18,4 +19,8 @@ export default defineConfig({
     "wrap-ansi",
     "yoga-layout-prebuilt",
   ],
+  exports: {
+    all: true,
+    devExports: true,
+  },
 });

@@ -3,6 +3,7 @@ import { defineConfig } from "tsdown";
 export default defineConfig({
   entry: ["src/index.ts", "src/client/index.ts"],
   format: ["esm"],
+  unbundle: true,
   dts: true,
   clean: true,
   sourcemap: true,
@@ -13,4 +14,8 @@ export default defineConfig({
     "@semajsx/signal",
     "vite",
   ],
+  exports: {
+    all: true,
+    devExports: true,
+  },
 });

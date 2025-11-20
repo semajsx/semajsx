@@ -3,15 +3,12 @@
   "version": "0.1.0",
   "description": "Core runtime for SemaJSX - VNode system and rendering primitives",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "exports": {
-    ".": {
-      "development": "./src/index.ts",
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    }
+    ".": "./src/index.ts",
+    "./*": "./*"
   },
   "files": [
     "dist"
@@ -42,5 +39,11 @@
     "tsdown": "^0.16.4",
     "typescript": "^5.9.3",
     "vitest": "^4.0.8"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.mjs",
+      "./*": "./*"
+    }
   }
 }
