@@ -7,9 +7,9 @@
     "*.tsx": "${capture}.test.ts, ${capture}.test.tsx, ${capture}.spec.ts, ${capture}.spec.tsx",
     "*.js": "${capture}.test.js, ${capture}.spec.js, ${capture}.d.ts, ${capture}.js.map",
     "*.jsx": "${capture}.test.jsx, ${capture}.spec.jsx",
-    "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lockb, .npmrc, .yarnrc",
+    "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lock, bun.lockb, .npmrc, .yarnrc, vitest.config.*, commitlint.config.*, oxlint.json, .lintstagedrc*",
     "tsconfig.json": "tsconfig.*.json",
-    ".eslintrc*": ".eslintignore, .prettierrc*, .prettierignore",
-    "README.md": "LICENSE*, CHANGELOG*, CONTRIBUTING*"
+    "README.md": "LICENSE*, CHANGELOG*, CONTRIBUTING*, CODE_OF_CONDUCT*, MONOREPO_ARCHITECTURE*, TESTING.md, CLAUDE.md",
+    ".gitignore": ".gitattributes, .editorconfig, .prettierrc*, .prettierignore"
   }
 }
