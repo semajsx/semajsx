@@ -8,8 +8,7 @@
   "types": "./dist/index.d.mts",
   "exports": {
     ".": "./src/index.ts",
-    "./utils": "./src/utils.ts",
-    "./package.json": "./package.json"
+    "./utils": "./src/utils.ts"
   },
   "files": [
     "dist"
