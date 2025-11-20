@@ -289,6 +289,7 @@ cd packages/dom && bun run test
 ```
 
 **Key Guidelines:**
+
 - Always use JSX syntax in tests, never `h()` directly
 - Use `/** @jsxImportSource @semajsx/dom */` for DOM tests
 - Wait for signal updates with `await new Promise(r => queueMicrotask(r))`

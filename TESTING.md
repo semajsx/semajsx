@@ -21,14 +21,14 @@ SemaJSX uses **Vitest** with a dual testing strategy:
 
 ## Test Structure by Package
 
-| Package | Environment | Purpose |
-|---------|-------------|---------|
-| `@semajsx/signal` | Node | Signal primitives, computed values |
-| `@semajsx/core` | Node | VNode creation, runtime helpers |
-| `@semajsx/dom` | Browser | DOM rendering, events, hydration |
-| `@semajsx/server` | Browser | SSR, island architecture |
-| `@semajsx/terminal` | Node | Terminal rendering |
-| `@semajsx/utils` | Node | Utility functions |
+| Package             | Environment | Purpose                            |
+| ------------------- | ----------- | ---------------------------------- |
+| `@semajsx/signal`   | Node        | Signal primitives, computed values |
+| `@semajsx/core`     | Node        | VNode creation, runtime helpers    |
+| `@semajsx/dom`      | Browser     | DOM rendering, events, hydration   |
+| `@semajsx/server`   | Browser     | SSR, island architecture           |
+| `@semajsx/terminal` | Node        | Terminal rendering                 |
+| `@semajsx/utils`    | Node        | Utility functions                  |
 
 ## Dependencies
 
@@ -62,6 +62,7 @@ export default defineConfig({
 ```
 
 **Running tests**:
+
 ```bash
 vitest                    # Run all projects
 vitest --project=dom      # Run specific package
@@ -225,7 +226,11 @@ describe("render", () => {
   it("should handle event handlers", () => {
     let clicked = false;
     const vnode = (
-      <button onclick={() => { clicked = true; }}>
+      <button
+        onclick={() => {
+          clicked = true;
+        }}
+      >
         Click me
       </button>
     );
@@ -291,11 +296,13 @@ bun run test --filter dom
 ## Debugging Browser Tests
 
 1. **Run in headed mode**:
+
    ```bash
    cd packages/dom && bun run test --browser.headless=false
    ```
 
 2. **Use Vitest UI**:
+
    ```bash
    bun run test --ui
    ```
