@@ -10,8 +10,8 @@
     "jsx": "react-jsx",
 
     // Build options for library packages
+    // Note: rootDir must be specified in each package's tsconfig
     "outDir": "./dist",
-    "rootDir": "./src",
     "declaration": true,
     "declarationMap": true
   },
