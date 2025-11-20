@@ -1,6 +1,6 @@
 /** @jsxImportSource semajsx/terminal */
-import { signal } from "@/signal";
-import { render } from "@/terminal";
+import { signal } from "@semajsx/signal";
+import { render } from "@semajsx/terminal";
 
 // Simple counter - ink-style API!
 const count = signal(0);

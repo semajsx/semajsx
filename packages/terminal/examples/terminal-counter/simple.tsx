@@ -1,6 +1,6 @@
 /** @jsxImportSource semajsx/terminal */
-import { signal } from "@/signal";
-import { ExitHint, render } from "@/terminal";
+import { signal } from "@semajsx/signal";
+import { ExitHint, render } from "@semajsx/terminal";
 
 // Simple counter with JSX
 const count = signal(0);

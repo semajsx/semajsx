@@ -4,7 +4,7 @@
  * Basic Logger Example
  */
 
-import { logger } from "@/terminal/logger";
+import { logger } from "@semajsx/logger";
 
 // Simple logging
 logger.info("Application started");

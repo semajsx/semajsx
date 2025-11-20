@@ -4,8 +4,8 @@
  * Logger Showcase - Demonstrates all logger features
  */
 
-import { logger, createLogger } from "@/terminal/logger";
-import { signal } from "@/signal";
+import { logger, createLogger } from "@semajsx/logger";
+import { signal } from "@semajsx/signal";
 
 async function main() {
   console.clear();
