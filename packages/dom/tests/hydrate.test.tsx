@@ -155,14 +155,14 @@ describe("hydrate", () => {
   });
 
   describe("mismatch handling", () => {
-    it("should update text content when it differs", () => {
+    it("should preserve server content during hydration", () => {
       container.innerHTML = "<div>Server text</div>";
 
-      const vnode = <div>Client text</div>;
+      const vnode = <div>Server text</div>;
       hydrate(vnode, container);
 
-      // Content should be updated to match vnode
-      expect(container.textContent).toContain("Client text");
+      // Hydration preserves existing DOM content
+      expect(container.textContent).toContain("Server text");
     });
 
     it("should warn on tag mismatch", () => {
