@@ -113,7 +113,11 @@ export function isAsyncIterator<T>(
 /**
  * Core rendering logic - works for both DOM and Terminal
  */
-export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
+export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
+  renderNode: (vnode: VNode, parentContext: ContextMap) => RenderedNode<TNode>;
+  unmount: (node: RenderedNode<TNode>) => void;
+  cleanupSubscriptions: (node: RenderedNode<TNode>) => void;
+} {
   /**
    * Helper to recursively collect all actual DOM nodes from a rendered node
    * Handles fragments and signal nodes that may not have their own DOM node
@@ -591,8 +595,8 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>) {
   }
 
   return {
-    renderNode,
-    unmount,
-    cleanupSubscriptions,
+    renderNode: renderNode,
+    unmount: unmount,
+    cleanupSubscriptions: cleanupSubscriptions,
   };
 }

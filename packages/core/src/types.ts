@@ -3,12 +3,12 @@ import type { Signal, WritableSignal } from "@semajsx/signal";
 /**
  * Special VNode type for fragment support
  */
-export const Fragment = Symbol.for("semajsx.fragment");
+export const Fragment: symbol = Symbol.for("semajsx.fragment");
 
 /**
  * Special VNode type for portal support
  */
-export const Portal = Symbol.for("semajsx.portal");
+export const Portal: symbol = Symbol.for("semajsx.portal");
 
 /**
  * VNode types

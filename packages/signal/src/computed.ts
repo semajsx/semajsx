@@ -93,4 +93,4 @@ export function computed(deps: any, compute: any): Signal<any> {
   };
 }
 
-export const memo = computed;
+export const memo: typeof computed = computed;
