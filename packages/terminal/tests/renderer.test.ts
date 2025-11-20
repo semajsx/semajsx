@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { TerminalRenderer } from "@/renderer";
-import { appendChild, createElement, createTextNode } from "@/operations";
+import { TerminalRenderer } from "@semajsx/terminal";
+import { appendChild, createElement, createTextNode } from "@semajsx/terminal";
 import { Writable } from "stream";
 
 /**

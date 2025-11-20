@@ -1,7 +1,7 @@
 /** @jsxImportSource @semajsx/terminal */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Logger, createLogger } from "@/logger";
+import { Logger, createLogger } from "@semajsx/logger";
 import { Writable } from "stream";
 
 /**

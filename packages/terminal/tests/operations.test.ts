@@ -7,7 +7,7 @@ import {
   replaceNode,
   setText,
   applyStyle,
-} from "@/operations";
+} from "@semajsx/terminal";
 
 describe("Terminal Operations", () => {
   describe("createElement", () => {

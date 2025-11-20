@@ -2,7 +2,7 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 import { signal } from "@semajsx/signal";
-import { render, TerminalRenderer } from "@";
+import { render, TerminalRenderer } from "@semajsx/terminal";
 import { Writable } from "stream";
 
 /**
