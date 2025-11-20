@@ -26,8 +26,6 @@ export class ViteIslandBuilder {
       return;
     }
 
-    const builder = this;
-
     this.vite = await createServer({
       root: this.options.root,
       server: {
@@ -55,14 +53,14 @@ export class ViteIslandBuilder {
               return "\0" + id; // \0 prefix indicates virtual module
             }
           },
-          load(id: string) {
+          load: (id: string) => {
             // Provide the code for virtual island modules
             if (id.startsWith("\0virtual:island-")) {
               const islandId = id
                 .replace("\0virtual:island-", "")
                 .replace(".js", "");
               // Get the raw code from the entry points map
-              const rawCode = builder.entryPoints.get(islandId);
+              const rawCode = this.entryPoints.get(islandId);
               if (rawCode) {
                 return rawCode;
               }
