@@ -44,7 +44,43 @@ bun add -D vitest @vitest/browser-playwright
 
 ## Configuration
 
-### Node Environment (Signal/Core)
+### Monorepo Workspace Setup
+
+SemaJSX uses Bun workspaces with per-package Vitest configurations. Each package has its own `vitest.config.ts`.
+
+**Current approach** (per-package):
+```bash
+# Run all package tests via Bun workspaces
+bun run test  # Runs: bun run --filter '*' test
+```
+
+**Alternative: Vitest Projects** (unified):
+
+You can create a root `vitest.config.ts` using Vitest's `test.projects` to run all tests from a single process:
+
+```ts
+// vitest.config.ts (root)
+import { defineConfig } from "vitest/config";
+
+export default defineConfig({
+  test: {
+    // Reference all package configs
+    projects: ["packages/*"],
+  },
+});
+```
+
+Then run with:
+```bash
+vitest                    # Run all projects
+vitest --project=dom      # Run specific package
+```
+
+> Note: Vitest 3.2+ deprecated `vitest.workspace.ts` in favor of `test.projects`. Use `test.projects` for new configurations.
+
+### Per-Package Configuration
+
+#### Node Environment (Signal/Core)
 
 ```ts
 // packages/signal/vitest.config.ts
@@ -59,7 +95,7 @@ export default defineConfig({
 });
 ```
 
-### Browser Mode (DOM)
+#### Browser Mode (DOM)
 
 ```ts
 // packages/dom/vitest.config.ts
@@ -67,6 +103,31 @@ import { defineConfig } from "vitest/config";
 import { playwright } from "@vitest/browser-playwright";
 
 export default defineConfig({
+  esbuild: {
+    jsxImportSource: "semajsx",
+  },
+  test: {
+    browser: {
+      enabled: true,
+      headless: true,
+      provider: playwright(),
+      instances: [{ browser: "chromium" }],
+    },
+    include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
+  },
+});
+```
+
+### Using defineProject for Sub-packages
+
+For better type hints in sub-packages, use `defineProject`:
+
+```ts
+// packages/dom/vitest.config.ts
+import { defineProject } from "vitest/config";
+import { playwright } from "@vitest/browser-playwright";
+
+export default defineProject({
   esbuild: {
     jsxImportSource: "semajsx",
   },
