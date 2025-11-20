@@ -8,6 +8,7 @@
   "types": "./dist/index.d.mts",
   "exports": {
     ".": "./src/index.ts",
+    "./types": "./src/types.ts",
     "./*": "./*"
   },
   "files": [
@@ -43,6 +44,7 @@
   "publishConfig": {
     "exports": {
       ".": "./dist/index.mjs",
+      "./types": "./dist/types.mjs",
       "./*": "./*"
     }
   }
