@@ -3,13 +3,11 @@
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.expand": false,
   "explorer.fileNesting.patterns": {
-    "*.ts": "${capture}.test.ts, ${capture}.test.tsx, ${capture}.spec.ts, ${capture}.spec.tsx, ${capture}.d.ts",
-    "*.tsx": "${capture}.test.ts, ${capture}.test.tsx, ${capture}.spec.ts, ${capture}.spec.tsx",
-    "*.js": "${capture}.test.js, ${capture}.spec.js, ${capture}.d.ts, ${capture}.js.map",
-    "*.jsx": "${capture}.test.jsx, ${capture}.spec.jsx",
-    "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, bun.lock, bun.lockb, .npmrc, .yarnrc, vitest.config.*, commitlint.config.*, oxlint.json, .lintstagedrc*",
-    "tsconfig.json": "tsconfig.*.json",
-    "README.md": "LICENSE*, CHANGELOG*, CONTRIBUTING*, CODE_OF_CONDUCT*, MONOREPO_ARCHITECTURE*, TESTING.md, CLAUDE.md",
-    ".gitignore": ".gitattributes, .editorconfig, .prettierrc*, .prettierignore"
+    "*.ts": "${capture}.js, ${capture}.d.ts, ${capture}.d.ts.map, ${capture}.js.map, ${capture}.test.ts, ${capture}.test.tsx, ${capture}.spec.ts, ${capture}.spec.tsx",
+    "*.tsx": "${capture}.js, ${capture}.d.ts, ${capture}.test.ts, ${capture}.test.tsx, ${capture}.spec.ts, ${capture}.spec.tsx",
+    "*.js": "${capture}.js.map, ${capture}.d.ts, ${capture}.test.js, ${capture}.spec.js",
+    "*.jsx": "${capture}.js, ${capture}.test.jsx, ${capture}.spec.jsx",
+    "package.json": ".browserslistrc, .editorconfig, .eslint*, .gitattributes, .gitignore, .lintstagedrc*, .npmrc, .nvmrc, .prettierignore, .prettierrc*, .stylelintrc*, .yarnrc*, bun.lock*, commitlint.config.*, eslint.config.*, jest.config.*, oxlint.json, package-lock.json, pnpm-lock.yaml, prettier.config.*, tsconfig.json, turbo.json, vitest.config.*, yarn.lock",
+    "readme*": "AUTHORS, BACKERS*, CHANGELOG*, CITATION*, CODE_OF_CONDUCT*, CODEOWNERS, CONTRIBUTING*, CONTRIBUTORS, COPYING*, CREDITS, GOVERNANCE.md, HISTORY.md, LICENSE*, MONOREPO_ARCHITECTURE*, SECURITY.md, SPONSORS*, TESTING.md, CLAUDE.md"
   }
 }
