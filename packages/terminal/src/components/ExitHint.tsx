@@ -59,7 +59,7 @@ export interface ExitHintProps {
  * - The counter remains visible
  * - The exit hint is hidden from final output
  */
-export function ExitHint({ children }: ExitHintProps) {
+export function ExitHint({ children }: ExitHintProps): JSXNode {
   // Create inverted signal: show when NOT exiting
   const shouldShow = computed(globalExitingSignal, (isExiting) => !isExiting);
 

@@ -5,7 +5,6 @@
  */
 
 import { logger, createLogger } from "@semajsx/logger";
-import { signal } from "@semajsx/signal";
 
 async function main() {
   console.clear();
@@ -160,7 +159,7 @@ async function main() {
   timer2.end("Processed 5 images");
 
   // Measure function
-  const result = await logger.measure("API Call", async () => {
+  const _result = await logger.measure("API Call", async () => {
     await new Promise((resolve) => setTimeout(resolve, 200));
     return { data: "response" };
   });

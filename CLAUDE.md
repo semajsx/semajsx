@@ -275,22 +275,26 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ## Testing
 
-The project uses **Vitest** with two test configurations in `packages/semajsx`:
+The project uses **Vitest** with a dual testing strategy:
 
-1. **Unit Tests** (`vitest.unit.config.ts`)
-   - Node environment for signal system and runtime tests
-   - Fast execution without browser overhead
-   - Run with: `bun run test:unit`
+- **Node Environment**: Signal system, core runtime, utils (fast)
+- **Browser Mode + Playwright**: DOM rendering with real browser APIs
 
-2. **Browser Tests** (`vitest.config.ts`)
-   - Playwright/Chromium for DOM rendering tests
-   - Run with: `bun run test`
+```bash
+# Run all tests
+bun run test
 
-### Test Guidelines
+# Run specific package
+cd packages/dom && bun run test
+```
 
-**IMPORTANT: Always use JSX syntax in tests, never use `h()` function calls directly.**
+**Key Guidelines:**
 
-See CLAUDE.md.backup for detailed testing examples and guidelines.
+- Always use JSX syntax in tests, never `h()` directly
+- Use `/** @jsxImportSource @semajsx/dom */` for DOM tests
+- Wait for signal updates with `await new Promise(r => queueMicrotask(r))`
+
+See [TESTING.md](./TESTING.md) for detailed configuration, examples, and best practices
 
 ## Adding New Packages
 
@@ -316,5 +320,6 @@ npm publish
 
 ## Useful Resources
 
+- [TESTING.md](./TESTING.md) - Detailed testing guide with examples
 - [MONOREPO_ARCHITECTURE.md](./MONOREPO_ARCHITECTURE.md) - Detailed architecture and migration plan
 - [Bun Workspaces](https://bun.sh/docs/install/workspaces)

@@ -513,4 +513,4 @@ export function createLogger(options: LoggerOptions = {}): Logger {
 /**
  * Default logger instance
  */
-export const logger = createLogger();
+export const logger: Logger = createLogger();

@@ -1,7 +1,7 @@
-import { defineConfig } from "vitest/config";
+import { defineProject } from "vitest/config";
 import { playwright } from "@vitest/browser-playwright";
 
-export default defineConfig({
+export default defineProject({
   esbuild: {
     jsxImportSource: "@semajsx/core",
   },

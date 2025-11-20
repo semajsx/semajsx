@@ -4,7 +4,7 @@
 
 import { h } from "./vnode";
 import { Fragment } from "./types";
-import type { ComponentAPI, Context, ContextProps } from "./types";
+import type { ComponentAPI, Context, ContextProps, VNode } from "./types";
 
 // Context map type - stores context values for current render environment
 export type ContextMap = Map<symbol, any>;
@@ -49,7 +49,7 @@ export function context<T>(name?: string): Context<T> {
  * </Context>
  * ```
  */
-export function Context(props: ContextProps) {
+export function Context(props: ContextProps): VNode {
   const children = props.children
     ? Array.isArray(props.children)
       ? props.children

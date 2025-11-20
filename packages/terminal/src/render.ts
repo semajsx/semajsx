@@ -210,7 +210,7 @@ export function render(
     if (process.stdin.isTTY && process.stdin.setRawMode) {
       try {
         process.stdin.setRawMode(originalRawMode || false);
-      } catch (err) {
+      } catch {
         // Terminal may already be closed, ignore error
       }
     }
