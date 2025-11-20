@@ -12,7 +12,7 @@ export default defineProject({
       provider: playwright(),
       instances: [{ browser: "chromium" }],
     },
-    include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
     passWithNoTests: true,
   },
 });
