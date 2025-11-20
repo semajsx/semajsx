@@ -10,9 +10,10 @@
     "jsx": "react-jsx",
 
     // Build options for library packages
-    "composite": true,
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": [

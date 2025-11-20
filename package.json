@@ -9,12 +9,12 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "bun --filter '*' run build",
-    "dev": "bun --filter '*' run dev",
-    "test": "bun --filter '*' run test",
-    "test:run": "bun --filter '*' run test:run",
-    "typecheck": "bun --filter '*' run typecheck",
-    "clean": "bun --filter '*' run clean && rm -rf node_modules",
+    "build": "bun run --filter '*' build",
+    "dev": "bun run --filter '*' dev",
+    "test": "bun run --filter '*' test",
+    "test:run": "bun run --filter '*' test:run",
+    "typecheck": "bun run --filter '*' typecheck",
+    "clean": "bun run --filter '*' clean && rm -rf node_modules",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "oxlint packages",
