@@ -1,4 +1,4 @@
-/** @jsxImportSource semajsx/terminal */
+/** @jsxImportSource @semajsx/terminal */
 
 /**
  * Basic Logger Example

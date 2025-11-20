@@ -1,5 +1,5 @@
-/** @jsxImportSource semajsx/terminal */
-import { print } from "semajsx/terminal";
+/** @jsxImportSource @semajsx/terminal */
+import { print } from "@semajsx/terminal";
 
 export interface ServerConfig {
   /**

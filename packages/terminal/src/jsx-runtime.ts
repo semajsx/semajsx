@@ -1,6 +1,6 @@
 /**
  * JSX automatic runtime for Terminal (production)
- * Use with: @jsxImportSource semajsx/terminal
+ * Use with: @jsxImportSource @semajsx/terminal
  */
 
 import { Fragment } from "@semajsx/core";

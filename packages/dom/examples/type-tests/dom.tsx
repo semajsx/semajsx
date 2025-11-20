@@ -1,4 +1,4 @@
-/** @jsxImportSource semajsx/dom */
+/** @jsxImportSource @semajsx/dom */
 
 /**
  * Test file for DOM TypeScript definitions

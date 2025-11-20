@@ -1,4 +1,4 @@
-/** @jsxImportSource semajsx/dom */
+/** @jsxImportSource @semajsx/dom */
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { computed, signal } from "@semajsx/signal";

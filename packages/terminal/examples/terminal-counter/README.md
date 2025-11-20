@@ -7,8 +7,8 @@ This example demonstrates how to use SemaJSX's terminal rendering capabilities t
 The easiest way to use SemaJSX terminal rendering - just like Ink!
 
 ```tsx
-import { signal } from "semajsx/signal";
-import { render } from "semajsx/terminal";
+import { signal } from "@semajsx/signal";
+import { render } from "@semajsx/terminal";
 
 const count = signal(0);
 setInterval(() => count.value++, 1000);
@@ -74,7 +74,7 @@ bun examples/terminal-counter/simple.ts
 ### 1. Create a Signal
 
 ```typescript
-import { signal } from "semajsx/signal";
+import { signal } from "@semajsx/signal";
 
 const count = signal(0);
 
@@ -88,7 +88,7 @@ setInterval(() => {
 
 ```typescript
 import { h } from "semajsx";
-import { TerminalRenderer, render } from "semajsx/terminal";
+import { TerminalRenderer, render } from "@semajsx/terminal";
 
 const app = h(
   "box",
@@ -110,7 +110,7 @@ const app = h(
 **Option A: Simple (Ink-style) - Recommended**
 
 ```typescript
-import { render } from "semajsx/terminal";
+import { render } from "@semajsx/terminal";
 
 // Automatically handles everything!
 render(app);
@@ -119,7 +119,7 @@ render(app);
 **Option B: Manual Control**
 
 ```typescript
-import { render } from "semajsx/terminal";
+import { render } from "@semajsx/terminal";
 
 // Disable auto-rendering for manual control
 const { rerender, unmount } = render(app, { autoRender: false });
@@ -139,7 +139,7 @@ process.on("SIGINT", () => {
 **Option C: Custom Renderer**
 
 ```typescript
-import { TerminalRenderer, render } from "semajsx/terminal";
+import { TerminalRenderer, render } from "@semajsx/terminal";
 
 const renderer = new TerminalRenderer(process.stderr);
 render(app, { renderer });

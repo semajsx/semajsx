@@ -1,4 +1,4 @@
-/** @jsxImportSource semajsx/dom */
+/** @jsxImportSource @semajsx/dom */
 
 import { Counter } from "./Counter";
 import { TodoList } from "./TodoList";

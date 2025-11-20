@@ -99,9 +99,9 @@ The `vite.config.ts` sets up:
 
 ## Implementation Details
 
-- Uses `/** @jsxImportSource semajsx/dom */` for JSX
+- Uses `/** @jsxImportSource @semajsx/dom */` for JSX
 - Imports `signal`, `computed` from `semajsx`
-- Imports `render` from `semajsx/dom`
+- Imports `render` from `@semajsx/dom`
 - Renders to `#root` div in index.html
 
 ## Key Concepts

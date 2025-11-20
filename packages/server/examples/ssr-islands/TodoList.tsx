@@ -1,7 +1,7 @@
-/** @jsxImportSource semajsx/dom */
+/** @jsxImportSource @semajsx/dom */
 
-import { signal, computed } from "semajsx/signal";
-import { island } from "semajsx/server";
+import { signal, computed } from "@semajsx/signal";
+import { island } from "@semajsx/server";
 
 /**
  * TodoList component - marked as an island for client-side hydration

@@ -77,8 +77,8 @@ bun-server/
 
 ## Implementation Notes
 
-- Uses `/** @jsxImportSource semajsx/dom */` directive
-- Imports from `semajsx` (signals) and `semajsx/dom` (rendering)
+- Uses `/** @jsxImportSource @semajsx/dom */` directive
+- Imports from `semajsx` (signals) and `@semajsx/dom` (rendering)
 - Server provides HMR via the `shared/server-utils` module
 - Minimal setup - just a few files!
 

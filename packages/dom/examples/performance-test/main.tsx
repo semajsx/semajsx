@@ -1,6 +1,6 @@
-/** @jsxImportSource semajsx/dom */
+/** @jsxImportSource @semajsx/dom */
 import { batch, computed, signal } from "semajsx";
-import { render } from "semajsx/dom";
+import { render } from "@semajsx/dom";
 
 // Batching Test Component
 function BatchingTest() {

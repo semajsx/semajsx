@@ -1,4 +1,4 @@
-/** @jsxImportSource semajsx/dom */
+/** @jsxImportSource @semajsx/dom */
 
 import { describe, expect, it } from "vitest";
 import { renderToString } from "@semajsx/server";

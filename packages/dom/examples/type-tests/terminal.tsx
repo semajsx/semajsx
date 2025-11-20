@@ -1,4 +1,4 @@
-/** @jsxImportSource semajsx/terminal */
+/** @jsxImportSource @semajsx/terminal */
 
 /**
  * Test file for Terminal TypeScript definitions

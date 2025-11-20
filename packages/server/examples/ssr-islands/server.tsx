@@ -1,7 +1,7 @@
-/** @jsxImportSource semajsx/dom */
+/** @jsxImportSource @semajsx/dom */
 
-import { createViteRouter, type DocumentTemplate } from "semajsx/server";
-import { logger, createLogger } from "semajsx/terminal/logger";
+import { createViteRouter, type DocumentTemplate } from "@semajsx/server";
+import { logger, createLogger } from "@semajsx/logger";
 import { App } from "./App";
 
 // Create a startup logger without timestamps and level indicators

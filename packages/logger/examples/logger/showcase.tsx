@@ -1,4 +1,4 @@
-/** @jsxImportSource semajsx/terminal */
+/** @jsxImportSource @semajsx/terminal */
 
 /**
  * Logger Showcase - Demonstrates all logger features

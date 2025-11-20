@@ -4,10 +4,10 @@
  * Run with: bun --conditions=development --port=0 examples/ref-example.tsx
  */
 
-/** @jsxImportSource semajsx/dom */
+/** @jsxImportSource @semajsx/dom */
 
-import { signal } from "semajsx/signal";
-import { render } from "semajsx/dom";
+import { signal } from "@semajsx/signal";
+import { render } from "@semajsx/dom";
 
 // Example 1: Using ref with signal
 function FocusableInput() {

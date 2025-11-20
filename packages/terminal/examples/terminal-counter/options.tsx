@@ -1,4 +1,4 @@
-/** @jsxImportSource semajsx/terminal */
+/** @jsxImportSource @semajsx/terminal */
 import { signal } from "@semajsx/signal";
 import { render } from "@semajsx/terminal";
 

@@ -1,6 +1,6 @@
-/** @jsxImportSource semajsx/dom */
+/** @jsxImportSource @semajsx/dom */
 import { computed, signal } from "semajsx";
-import { render } from "semajsx/dom";
+import { render } from "@semajsx/dom";
 
 function App() {
   const count = signal(0);

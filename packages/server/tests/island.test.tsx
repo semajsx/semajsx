@@ -1,4 +1,4 @@
-/** @jsxImportSource semajsx/dom */
+/** @jsxImportSource @semajsx/dom */
 
 import { describe, it, expect } from "vitest";
 import { island, isIslandComponent, isIslandVNode } from "@semajsx/server";

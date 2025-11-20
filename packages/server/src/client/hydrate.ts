@@ -10,7 +10,7 @@
  * @example
  * ```tsx
  * // In your client entry point
- * import { hydrateIslands } from 'semajsx/client'
+ * import { hydrateIslands } from '@semajsx/dom'
  *
  * // Wait for DOM to be ready
  * if (document.readyState === 'loading') {

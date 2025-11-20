@@ -3,7 +3,7 @@
  *
  * @example
  * ```tsx
- * import { logger } from "semajsx/terminal/logger";
+ * import { logger } from "@semajsx/logger";
  *
  * // Basic logging
  * logger.info("Server started");

@@ -15,7 +15,7 @@ This example demonstrates SemaJSX's **SSR Island Architecture** with runtime dis
 ### 1. Mark Components as Islands
 
 ```tsx
-import { island } from "semajsx/server";
+import { island } from "@semajsx/server";
 import { signal } from "semajsx";
 
 export const Counter = island(
@@ -44,7 +44,7 @@ export function App() {
 ### 3. Create Server with Router
 
 ```tsx
-import { createRouter } from "semajsx/server";
+import { createRouter } from "@semajsx/server";
 
 const router = createRouter({
   "/": () => <App />,

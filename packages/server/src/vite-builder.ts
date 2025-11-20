@@ -44,7 +44,7 @@ export class ViteIslandBuilder {
       },
       optimizeDeps: {
         // Disable optimization for semajsx to use source directly in development
-        exclude: ["semajsx", "semajsx/dom", "semajsx/signal"],
+        exclude: ["semajsx", "@semajsx/dom", "@semajsx/signal"],
       },
       plugins: [
         {
@@ -148,8 +148,8 @@ export class ViteIslandBuilder {
     const displayName = componentName || island.id;
     return `
 // Island hydration entry point: ${displayName}
-import { hydrate } from 'semajsx/dom';
-import { markIslandHydrated } from 'semajsx/client';
+import { hydrate } from '@semajsx/dom';
+import { markIslandHydrated } from '@semajsx/dom';
 import * as ComponentModule from '${componentPath}';
 
 // Get the component

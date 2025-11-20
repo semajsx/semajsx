@@ -4,10 +4,10 @@
  * Run with: bun --conditions=development --port=0 examples/portal-example.tsx
  */
 
-/** @jsxImportSource semajsx/dom */
+/** @jsxImportSource @semajsx/dom */
 
-import { computed, signal } from "semajsx/signal";
-import { createPortal, render } from "semajsx/dom";
+import { computed, signal } from "@semajsx/signal";
+import { createPortal, render } from "@semajsx/dom";
 
 // Example 1: Basic Modal using Portal
 function Modal(props: { isOpen: boolean; onClose: () => void; children: any }) {
