@@ -150,5 +150,5 @@ playwright-report
 test-results
 
 # Test screenshots
-test/__screenshots__/
+**/__screenshots__/
 .content-temp

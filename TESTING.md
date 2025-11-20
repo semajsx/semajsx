@@ -19,14 +19,33 @@ SemaJSX uses **Vitest** with a dual testing strategy:
    - Use Vitest across all packages
    - Each package configures its appropriate environment
 
-## Test Structure by Package
+## Test File Organization
+
+Tests are **collocated** with source files (placed next to the files they test):
+
+```
+packages/dom/src/
+  render.ts
+  render.test.tsx      # Test file next to source
+  hydrate.ts
+  hydrate.test.tsx
+  operations.ts
+  operations.test.ts
+```
+
+**Naming convention:**
+
+- `xxx.test.ts` for TypeScript tests
+- `xxx.test.tsx` for JSX tests (when using JSX syntax)
+
+## Test Environment by Package
 
 | Package             | Environment | Purpose                            |
 | ------------------- | ----------- | ---------------------------------- |
 | `@semajsx/signal`   | Node        | Signal primitives, computed values |
-| `@semajsx/core`     | Node        | VNode creation, runtime helpers    |
+| `@semajsx/core`     | Browser     | VNode creation, runtime helpers    |
 | `@semajsx/dom`      | Browser     | DOM rendering, events, hydration   |
-| `@semajsx/server`   | Browser     | SSR, island architecture           |
+| `@semajsx/server`   | Node        | SSR, island architecture           |
 | `@semajsx/terminal` | Node        | Terminal rendering                 |
 | `@semajsx/utils`    | Node        | Utility functions                  |
 
@@ -72,7 +91,7 @@ vitest --project=dom      # Run specific package
 
 ### Per-Package Configuration
 
-#### Node Environment (Signal/Core)
+#### Node Environment (Signal/Utils)
 
 ```ts
 // packages/signal/vitest.config.ts
@@ -82,12 +101,12 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    include: ["tests/**/*.test.ts"],
+    include: ["src/**/*.test.ts"],
   },
 });
 ```
 
-#### Browser Mode (DOM)
+#### Browser Mode (DOM/Core)
 
 ```ts
 // packages/dom/vitest.config.ts
@@ -96,7 +115,7 @@ import { playwright } from "@vitest/browser-playwright";
 
 export default defineConfig({
   esbuild: {
-    jsxImportSource: "semajsx",
+    jsxImportSource: "@semajsx/dom",
   },
   test: {
     browser: {
@@ -105,7 +124,7 @@ export default defineConfig({
       provider: playwright(),
       instances: [{ browser: "chromium" }],
     },
-    include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
   },
 });
 ```
@@ -121,7 +140,7 @@ import { playwright } from "@vitest/browser-playwright";
 
 export default defineProject({
   esbuild: {
-    jsxImportSource: "semajsx",
+    jsxImportSource: "@semajsx/dom",
   },
   test: {
     browser: {
@@ -130,7 +149,7 @@ export default defineProject({
       provider: playwright(),
       instances: [{ browser: "chromium" }],
     },
-    include: ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
   },
 });
 ```
@@ -158,9 +177,9 @@ bun run test --browser.headless=false
 ### Node Environment Test Example (Signal)
 
 ```ts
-// packages/signal/tests/signal.test.ts
+// packages/signal/src/signal.test.ts
 import { describe, it, expect } from "vitest";
-import { signal, computed } from "@semajsx/signal";
+import { signal, computed } from "./index";
 
 describe("signal", () => {
   it("should update value reactively", () => {
@@ -186,11 +205,12 @@ describe("signal", () => {
 ### Browser Mode Test Example (DOM)
 
 ```tsx
+// packages/dom/src/render.test.tsx
 /** @jsxImportSource @semajsx/dom */
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { signal } from "@semajsx/signal";
-import { render } from "@semajsx/dom";
+import { render } from "./render";
 
 describe("render", () => {
   let container: HTMLDivElement;
