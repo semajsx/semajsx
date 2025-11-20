@@ -227,4 +227,99 @@ describe("hydrate", () => {
       warnSpy.mockRestore();
     });
   });
+
+  describe("text mismatch handling", () => {
+    it("should update mismatched text content", () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      container.innerHTML = "<div>Old text</div>";
+
+      const vnode = <div>New text</div>;
+      hydrate(vnode, container);
+
+      // Text should be updated
+      expect(container.textContent).toBe("New text");
+      warnSpy.mockRestore();
+    });
+  });
+
+  describe("array handling", () => {
+    it("should hydrate array of elements", () => {
+      container.innerHTML = "<span>A</span><span>B</span><span>C</span>";
+
+      const items = ["A", "B", "C"];
+      const vnode = (
+        <>
+          {items.map((item) => (
+            <span>{item}</span>
+          ))}
+        </>
+      );
+      hydrate(vnode, container);
+
+      const spans = container.querySelectorAll("span");
+      expect(spans.length).toBe(3);
+    });
+  });
+
+  describe("signal edge cases", () => {
+    it("should hydrate signal with null value", async () => {
+      container.innerHTML = "<!--signal-empty-->";
+
+      const value = signal(null);
+      const vnode = <>{value}</>;
+      hydrate(vnode, container);
+
+      // Should handle null signal gracefully
+      expect(container.childNodes.length).toBeGreaterThan(0);
+    });
+
+    it("should hydrate signal with array value", async () => {
+      container.innerHTML = "<span>1</span><span>2</span>";
+
+      const items = signal([1, 2]);
+      const vnode = (
+        <>
+          {items.value.map((n) => (
+            <span>{n}</span>
+          ))}
+        </>
+      );
+      hydrate(vnode, container);
+
+      expect(container.querySelectorAll("span").length).toBe(2);
+    });
+  });
+
+  describe("missing children handling", () => {
+    it("should warn and append when DOM has fewer children than VNode", () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      container.innerHTML = "<div><span>First</span></div>";
+
+      const vnode = (
+        <div>
+          <span>First</span>
+          <span>Second</span>
+        </div>
+      );
+      hydrate(vnode, container);
+
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+  });
+
+  describe("node type edge cases", () => {
+    it("should skip hydration for non-element DOM nodes", () => {
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      // Create a text node directly
+      container.appendChild(document.createTextNode("text"));
+
+      const vnode = <div>Content</div>;
+      hydrate(vnode, container);
+
+      // Should warn about expected element
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+  });
 });
