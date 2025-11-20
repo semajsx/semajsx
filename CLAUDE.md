@@ -16,17 +16,22 @@ This project uses a **monorepo architecture** powered by Bun workspaces:
 semajsx/
 ├── packages/
 │   ├── core/                 # @semajsx/core - Runtime core (VNode, helpers)
+│   │   └── src/
+│   │       ├── vnode.ts
+│   │       ├── vnode.test.ts     # Tests collocated with source
+│   │       └── ...
 │   ├── signal/               # @semajsx/signal - Signal reactivity system
 │   ├── dom/                  # @semajsx/dom - DOM rendering
 │   │   ├── src/
-│   │   ├── tests/
+│   │   │   ├── render.ts
+│   │   │   ├── render.test.tsx   # Tests collocated with source
+│   │   │   └── ...
 │   │   └── examples/
 │   ├── terminal/             # @semajsx/terminal - Terminal rendering
 │   │   ├── src/
 │   │   └── examples/
 │   ├── server/               # @semajsx/server - SSR and Island architecture
 │   │   ├── src/
-│   │   ├── tests/
 │   │   └── examples/
 │   ├── logger/               # @semajsx/logger - Logging utilities
 │   │   ├── src/
@@ -280,6 +285,25 @@ The project uses **Vitest** with a dual testing strategy:
 - **Node Environment**: Signal system, core runtime, utils (fast)
 - **Browser Mode + Playwright**: DOM rendering with real browser APIs
 
+### Test File Organization
+
+Tests are **collocated** with source files:
+
+```
+packages/dom/src/
+  render.ts
+  render.test.tsx      # Test file next to source
+  hydrate.ts
+  hydrate.test.tsx
+  operations.ts
+  operations.test.ts
+```
+
+**Naming convention:**
+
+- `xxx.test.ts` for TypeScript tests
+- `xxx.test.tsx` for JSX tests
+
 ```bash
 # Run all tests
 bun run test
@@ -293,6 +317,7 @@ cd packages/dom && bun run test
 - Always use JSX syntax in tests, never `h()` directly
 - Use `/** @jsxImportSource @semajsx/dom */` for DOM tests
 - Wait for signal updates with `await new Promise(r => queueMicrotask(r))`
+- Place test files next to the source files they test
 
 See [TESTING.md](./TESTING.md) for detailed configuration, examples, and best practices
 
