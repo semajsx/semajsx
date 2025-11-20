@@ -13,9 +13,10 @@ export function jsx(type: VNodeType, props: any, key?: any): VNode {
   // Island components are functions with ISLAND_MARKER symbol
   if (typeof type === "function" && ISLAND_MARKER in type) {
     // Call the island wrapper directly with all props
+    // Island wrappers always return VNode
     const islandProps =
       children !== undefined ? { ...restProps, children } : restProps;
-    return type(islandProps);
+    return type(islandProps) as VNode;
   }
 
   if (children !== undefined) {
@@ -36,9 +37,10 @@ export function jsxs(type: VNodeType, props: any, key?: any): VNode {
   // Island components are functions with ISLAND_MARKER symbol
   if (typeof type === "function" && ISLAND_MARKER in type) {
     // Call the island wrapper directly with all props
+    // Island wrappers always return VNode
     const islandProps =
       children !== undefined ? { ...restProps, children } : restProps;
-    return type(islandProps);
+    return type(islandProps) as VNode;
   }
 
   if (children !== undefined) {
