@@ -23,10 +23,9 @@ export type {
   ContextProvide,
   JSXNode,
   Ref,
-  RenderedNode,
   VNode,
   WithKey,
   WithSignals,
 } from "./types";
 
-export type { RenderStrategy } from "./render-core";
+export type { RenderedNode, RenderStrategy } from "./render-core";
