@@ -350,6 +350,7 @@ function hydrateSignalNode(
  * Render a VNode to a DOM node (fallback when hydration fails)
  * This is a simplified version of render() just for hydration fallback
  */
+// oxlint-disable-next-line only-used-in-recursion
 function renderNode(vnode: any, parentElement: Element): Node | null {
   if (vnode == null || vnode === false || vnode === true) {
     return document.createComment("empty");
