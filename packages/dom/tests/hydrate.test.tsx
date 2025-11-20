@@ -155,14 +155,25 @@ describe("hydrate", () => {
   });
 
   describe("mismatch handling", () => {
-    it("should preserve server content during hydration", () => {
-      container.innerHTML = "<div>Server text</div>";
+    it("should attach event handlers to existing DOM", () => {
+      container.innerHTML = "<button>Click</button>";
 
-      const vnode = <div>Server text</div>;
+      let clicked = false;
+      const vnode = (
+        <button
+          onclick={() => {
+            clicked = true;
+          }}
+        >
+          Click
+        </button>
+      );
       hydrate(vnode, container);
 
-      // Hydration preserves existing DOM content
-      expect(container.textContent).toContain("Server text");
+      // Event handler should be attached to existing button
+      const button = container.querySelector("button");
+      button?.click();
+      expect(clicked).toBe(true);
     });
 
     it("should warn on tag mismatch", () => {
