@@ -350,7 +350,7 @@ function hydrateSignalNode(
  * Render a VNode to a DOM node (fallback when hydration fails)
  * This is a simplified version of render() just for hydration fallback
  */
-function renderNode(vnode: any, _parentElement: Element): Node | null {
+function renderNode(vnode: any, parentElement: Element): Node | null {
   if (vnode == null || vnode === false || vnode === true) {
     return document.createComment("empty");
   }
