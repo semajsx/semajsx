@@ -15,7 +15,7 @@
     "./terminal": "./src/terminal/index.ts",
     "./terminal/jsx-dev-runtime": "./src/terminal/jsx-dev-runtime.ts",
     "./terminal/jsx-runtime": "./src/terminal/jsx-runtime.ts",
-    "./*": "./*"
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
@@ -70,18 +70,5 @@
     "@semajsx/signal": "workspace:*",
     "@semajsx/terminal": "workspace:*",
     "@semajsx/utils": "workspace:*"
-  },
-  "publishConfig": {
-    "exports": {
-      ".": "./dist/index.mjs",
-      "./dom": "./dist/dom/index.mjs",
-      "./dom/jsx-dev-runtime": "./dist/dom/jsx-dev-runtime.mjs",
-      "./dom/jsx-runtime": "./dist/dom/jsx-runtime.mjs",
-      "./signal": "./dist/signal/index.mjs",
-      "./terminal": "./dist/terminal/index.mjs",
-      "./terminal/jsx-dev-runtime": "./dist/terminal/jsx-dev-runtime.mjs",
-      "./terminal/jsx-runtime": "./dist/terminal/jsx-runtime.mjs",
-      "./*": "./*"
-    }
   }
 }

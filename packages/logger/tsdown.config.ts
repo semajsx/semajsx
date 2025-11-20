@@ -9,7 +9,6 @@ export default defineConfig({
   sourcemap: true,
   external: ["@semajsx/core", "@semajsx/terminal", "@semajsx/utils"],
   exports: {
-    all: true,
     devExports: true,
   },
 });

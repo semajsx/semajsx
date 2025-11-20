@@ -15,7 +15,6 @@ export default defineConfig({
     "vite",
   ],
   exports: {
-    all: true,
     devExports: true,
   },
 });

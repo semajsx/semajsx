@@ -9,7 +9,7 @@
     ".": "./src/index.ts",
     "./jsx-dev-runtime": "./src/jsx-dev-runtime.ts",
     "./jsx-runtime": "./src/jsx-runtime.ts",
-    "./*": "./*"
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
@@ -29,14 +29,5 @@
   },
   "devDependencies": {
     "@semajsx/configs": "workspace:*"
-  },
-  "publishConfig": {
-    "access": "public",
-    "exports": {
-      ".": "./dist/index.mjs",
-      "./jsx-dev-runtime": "./dist/jsx-dev-runtime.mjs",
-      "./jsx-runtime": "./dist/jsx-runtime.mjs",
-      "./*": "./*"
-    }
   }
 }

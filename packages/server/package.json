@@ -9,7 +9,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./client": "./src/client/index.ts",
-    "./*": "./*"
+    "./package.json": "./package.json"
   },
   "files": [
     "dist",
@@ -37,14 +37,6 @@
   "peerDependenciesMeta": {
     "vite": {
       "optional": true
-    }
-  },
-  "publishConfig": {
-    "access": "public",
-    "exports": {
-      ".": "./dist/index.mjs",
-      "./client": "./dist/client/index.mjs",
-      "./*": "./*"
     }
   }
 }

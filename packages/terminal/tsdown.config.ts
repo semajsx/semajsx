@@ -20,7 +20,6 @@ export default defineConfig({
     "yoga-layout-prebuilt",
   ],
   exports: {
-    all: true,
     devExports: true,
   },
 });

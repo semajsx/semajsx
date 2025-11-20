@@ -24,7 +24,6 @@ export default defineConfig({
     "@semajsx/utils",
   ],
   exports: {
-    all: true,
     devExports: true,
   },
 });
