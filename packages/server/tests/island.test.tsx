@@ -1,8 +1,8 @@
 /** @jsxImportSource semajsx/dom */
 
 import { describe, it, expect } from "vitest";
-import { island, isIslandComponent, isIslandVNode } from "@/server/island";
-import { signal } from "@/signal/signal";
+import { island, isIslandComponent, isIslandVNode } from "@semajsx/server";
+import { signal } from "@semajsx/signal";
 
 describe("island", () => {
   it("should mark component as island", () => {

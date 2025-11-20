@@ -1,9 +1,9 @@
 /** @jsxImportSource semajsx/dom */
 
 import { describe, expect, it } from "vitest";
-import { createIslandCollector } from "@/server/collector";
-import { island } from "@/server/island";
-import { signal } from "@/signal/signal";
+import { createIslandCollector } from "@semajsx/server";
+import { island } from "@semajsx/server";
+import { signal } from "@semajsx/signal";
 
 describe("IslandCollector", () => {
   it("should collect islands from VNode tree", () => {

@@ -2,8 +2,8 @@
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { signal } from "@semajsx/signal";
-import { render } from "@/render";
-import { createPortal, PortalComponent } from "@/portal";
+import { render } from "@semajsx/dom";
+import { createPortal, PortalComponent } from "@semajsx/dom";
 
 describe("Portal functionality", () => {
   let container: HTMLDivElement;

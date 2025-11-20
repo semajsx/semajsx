@@ -1,7 +1,7 @@
 /** @jsxImportSource semajsx/dom */
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { render } from "@/dom/render";
+import { render } from "@semajsx/dom";
 
 describe("Async Components", () => {
   let container: HTMLDivElement;

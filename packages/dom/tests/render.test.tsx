@@ -1,8 +1,8 @@
 /** @jsxImportSource semajsx/dom */
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { computed, signal } from "@/signal";
-import { render } from "@/dom/render";
+import { computed, signal } from "@semajsx/signal";
+import { render } from "@semajsx/dom";
 
 describe("render", () => {
   let container: HTMLDivElement;
