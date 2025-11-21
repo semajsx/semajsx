@@ -96,16 +96,35 @@ class AppImpl implements App {
       },
       resolve: {
         conditions: ["browser", "development", "import"],
-        alias: {
-          // Stub out Node.js built-ins for browser
-          "node:path": "/@id/__vite-browser-external:path",
-          "node:fs": "/@id/__vite-browser-external:fs",
-          "node:url": "/@id/__vite-browser-external:url",
-          path: "/@id/__vite-browser-external:path",
-          fs: "/@id/__vite-browser-external:fs",
-        },
       },
-      plugins: [this._createVirtualIslandsPlugin()],
+      plugins: [
+        this._createVirtualIslandsPlugin(),
+        // Plugin to stub Node.js built-ins for browser
+        {
+          name: "semajsx-node-externals",
+          resolveId(id: string) {
+            // Handle Node.js built-in modules
+            if (
+              id === "node:path" ||
+              id === "node:fs" ||
+              id === "node:url" ||
+              id === "path" ||
+              id === "fs" ||
+              id === "url"
+            ) {
+              return { id: `\0node-external:${id}`, external: false };
+            }
+            return null;
+          },
+          load(id: string) {
+            if (id.startsWith("\0node-external:")) {
+              // Return empty stub for browser
+              return "export default {}; export const resolve = () => ''; export const join = () => ''; export const dirname = () => '';";
+            }
+            return null;
+          },
+        },
+      ],
       // Exclude problematic native modules from SSR bundling
       ssr: {
         noExternal: ["@semajsx/core", "@semajsx/dom", "@semajsx/signal"],
