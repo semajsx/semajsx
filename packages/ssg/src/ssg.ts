@@ -1,6 +1,7 @@
 import { mkdir, writeFile, rm } from "fs/promises";
 import { join, dirname, resolve } from "path";
-import { renderToString, renderDocument } from "@semajsx/server";
+import { createApp, renderDocument } from "@semajsx/server";
+import type { App, RouteContext } from "@semajsx/server";
 import { DefaultDocument } from "./document";
 import {
   RawHTML,
@@ -15,31 +16,38 @@ import {
   type Watcher,
   type DocumentProps,
 } from "./types";
-import { MDXProcessor } from "./mdx";
+import { viteMDXPlugin } from "./mdx";
 
 /**
  * SSG (Static Site Generator) core class
+ * Built on top of server's createApp
  */
 export class SSG implements SSGInstance {
   private config: SSGConfig;
   private rootDir: string;
   private collections: Map<string, Collection>;
   private entriesCache: Map<string, CollectionEntry[]>;
-  private mdxProcessor: MDXProcessor;
+  private app: App;
 
   constructor(config: SSGConfig) {
-    // Resolve rootDir - defaults to process.cwd() but should be set to script location
+    // Resolve rootDir
     this.rootDir = config.rootDir ?? process.cwd();
 
     this.config = {
       base: "/",
       ...config,
-      // Resolve outDir relative to rootDir
       outDir: resolve(this.rootDir, config.outDir),
     };
     this.collections = new Map();
     this.entriesCache = new Map();
-    this.mdxProcessor = new MDXProcessor(config.mdx);
+
+    // Create App with MDX plugin
+    this.app = createApp({
+      root: this.rootDir,
+      vite: {
+        plugins: [viteMDXPlugin(config.mdx ?? {})],
+      },
+    });
 
     // Register collections
     for (const collection of config.collections ?? []) {
@@ -47,16 +55,10 @@ export class SSG implements SSGInstance {
     }
   }
 
-  /**
-   * Get the root directory for resolving paths
-   */
   getRootDir(): string {
     return this.rootDir;
   }
 
-  /**
-   * Get all entries from a collection
-   */
   async getCollection<T = unknown>(
     name: string,
   ): Promise<CollectionEntry<T>[]> {
@@ -65,15 +67,12 @@ export class SSG implements SSGInstance {
       throw new Error(`Collection "${name}" not found`);
     }
 
-    // Check cache
     if (this.entriesCache.has(name)) {
       return this.entriesCache.get(name) as CollectionEntry<T>[];
     }
 
-    // Load entries
     const entries = await collection.source.getEntries();
 
-    // Validate with schema and enhance render function
     const validatedEntries = entries.map((entry) => {
       const result = collection.schema.safeParse(entry.data);
       if (!result.success) {
@@ -82,32 +81,41 @@ export class SSG implements SSGInstance {
         );
       }
 
-      // Create enhanced entry with MDX rendering capability
       return {
         ...entry,
         data: result.data,
         render: async () => {
-          const compiled = await this.mdxProcessor.compile(
-            entry.body,
-            entry.data as Record<string, unknown>,
-          );
+          // TODO: Use Vite to transform MDX with imports
+          // For now, return a simple component from body
+          const { h } = await import("@semajsx/dom");
+
+          // Parse markdown to simple HTML (basic implementation)
+          const html = entry.body
+            .replace(/^### (.+)$/gm, "<h3>$1</h3>")
+            .replace(/^## (.+)$/gm, "<h2>$1</h2>")
+            .replace(/^# (.+)$/gm, "<h1>$1</h1>")
+            .replace(/\n\n/g, "</p><p>")
+            .replace(/^(.+)$/gm, "<p>$1</p>")
+            .replace(/<p><h/g, "<h")
+            .replace(/<\/h(\d)><\/p>/g, "</h$1>");
+
+          const Content = () =>
+            h("div", {
+              dangerouslySetInnerHTML: { __html: html },
+            });
+
           return {
-            Content: compiled.Content,
-            headings: compiled.headings,
+            Content,
+            headings: this.extractHeadings(entry.body),
           };
         },
       };
     });
 
-    // Cache entries
     this.entriesCache.set(name, validatedEntries);
-
     return validatedEntries as CollectionEntry<T>[];
   }
 
-  /**
-   * Get a single entry from a collection
-   */
   async getEntry<T = unknown>(
     name: string,
     id: string,
@@ -116,64 +124,100 @@ export class SSG implements SSGInstance {
     return entries.find((e) => e.id === id || e.slug === id) ?? null;
   }
 
-  /**
-   * Build the static site
-   */
   async build(options: BuildOptions = {}): Promise<BuildResult> {
     const { incremental = false, state: prevState } = options;
     const outDir = this.config.outDir;
 
-    // Initialize build state
+    // Initialize App (starts Vite)
+    await this.app.prepare();
+
+    try {
+      // Register routes with App
+      await this.registerRoutes();
+
+      // Build all pages
+      return await this.buildPages(incremental, prevState, outDir);
+    } finally {
+      await this.app.close();
+    }
+  }
+
+  private async registerRoutes(): Promise<void> {
+    const routes = this.config.routes ?? [];
+
+    for (const route of routes) {
+      if (route.getStaticPaths) {
+        // Dynamic route - register each path
+        const staticPaths = await route.getStaticPaths(this);
+        for (const sp of staticPaths) {
+          const path = this.applyParams(route.path, sp.params);
+          const props = { ...sp.props, params: sp.params };
+
+          this.app.route(path, (_context: RouteContext) => {
+            return route.component(props);
+          });
+        }
+      } else {
+        // Static route
+        let props: Record<string, unknown> = {};
+        if (typeof route.props === "function") {
+          props = await route.props(this);
+        } else if (route.props) {
+          props = route.props;
+        }
+
+        this.app.route(route.path, (_context: RouteContext) => {
+          return route.component(props);
+        });
+      }
+    }
+  }
+
+  private async buildPages(
+    incremental: boolean,
+    prevState: BuildState | undefined,
+    outDir: string,
+  ): Promise<BuildResult> {
     const state: BuildState = {
       cursors: {},
       pageHashes: {},
       timestamp: Date.now(),
     };
 
-    const stats = {
-      added: 0,
-      updated: 0,
-      deleted: 0,
-      unchanged: 0,
-    };
-
+    const stats = { added: 0, updated: 0, deleted: 0, unchanged: 0 };
     const builtPaths: string[] = [];
 
-    // Clear output directory (unless incremental)
     if (!incremental) {
       await rm(outDir, { recursive: true, force: true });
     }
     await mkdir(outDir, { recursive: true });
 
-    // Clear cache to ensure fresh data
     this.entriesCache.clear();
 
-    // Generate all paths
+    // Get all paths to build
     const allPaths = await this.generateAllPaths();
     const currentPaths = new Set(allPaths.map((p) => p.path));
 
-    // Delete removed pages in incremental mode
+    // Delete removed pages
     if (incremental && prevState) {
       for (const oldPath of Object.keys(prevState.pageHashes)) {
         if (!currentPaths.has(oldPath)) {
           const filePath = this.pathToFilePath(oldPath);
-          const fullPath = join(outDir, filePath);
           try {
-            await rm(fullPath);
+            await rm(join(outDir, filePath));
             stats.deleted++;
           } catch {
-            // File might not exist
+            // ignore
           }
         }
       }
     }
 
-    // Build each path
+    // Build each page
     for (const { path, props } of allPaths) {
-      const html = await this.renderPath(path, props);
+      const html = await this.renderPage(path, props);
       const hash = this.hashContent(html);
 
-      // Check if we need to write this file
       const prevHash = prevState?.pageHashes[path];
       const needsWrite = !incremental || !prevHash || prevHash !== hash;
 
@@ -181,14 +225,10 @@ export class SSG implements SSGInstance {
         const filePath = this.pathToFilePath(path);
         const fullPath = join(outDir, filePath);
 
-        // Ensure directory exists
         await mkdir(dirname(fullPath), { recursive: true });
-
-        // Write HTML file
         await writeFile(fullPath, html);
 
         builtPaths.push(path);
-
         if (!prevHash) {
           stats.added++;
         } else {
@@ -198,61 +238,40 @@ export class SSG implements SSGInstance {
         stats.unchanged++;
       }
 
-      // Update state
       state.pageHashes[path] = hash;
     }
 
-    // Update cursors for each collection
     for (const [name, collection] of this.collections) {
       if (collection.source.getChanges) {
         state.cursors[name] = Date.now().toString();
       }
     }
 
-    return {
-      state,
-      paths: builtPaths,
-      stats,
-    };
+    return { state, paths: builtPaths, stats };
   }
 
-  /**
-   * Watch for changes and rebuild
-   */
-  watch(options: WatchOptions = {}): Watcher {
-    const unsubscribers: (() => void)[] = [];
+  private async renderPage(
+    path: string,
+    props: Record<string, unknown>,
+  ): Promise<string> {
+    // Use App to render the page
+    const result = await this.app.render(path);
 
-    // Watch each collection
-    for (const [name, collection] of this.collections) {
-      if (collection.source.watch) {
-        const unsubscribe = collection.source.watch(async (_changes) => {
-          try {
-            // Clear cache for this collection
-            this.entriesCache.delete(name);
-
-            // Incremental rebuild
-            const result = await this.build({ incremental: true });
-            options.onRebuild?.(result);
-          } catch (error) {
-            options.onError?.(error as Error);
-          }
-        });
-        unsubscribers.push(unsubscribe);
-      }
-    }
-
-    return {
-      close: () => {
-        for (const unsubscribe of unsubscribers) {
-          unsubscribe();
-        }
-      },
+    // Wrap with document template
+    const documentProps: DocumentProps = {
+      children: new RawHTML(result.html),
+      title: props.title as string | undefined,
+      base: this.config.base ?? "/",
+      path,
+      props,
     };
+
+    const template = this.config.document ?? DefaultDocument;
+    const documentVNode = template(documentProps);
+
+    return renderDocument(documentVNode);
   }
 
-  /**
-   * Generate all static paths from routes
-   */
   private async generateAllPaths(): Promise<
     Array<{ path: string; props: Record<string, unknown> }>
   > {
@@ -261,18 +280,12 @@ export class SSG implements SSGInstance {
 
     for (const route of routes) {
       if (route.getStaticPaths) {
-        // Dynamic route
         const staticPaths = await route.getStaticPaths(this);
         for (const sp of staticPaths) {
           const path = this.applyParams(route.path, sp.params);
-          const props = {
-            ...sp.props,
-            params: sp.params,
-          };
-          paths.push({ path, props });
+          paths.push({ path, props: { ...sp.props, params: sp.params } });
         }
       } else {
-        // Static route
         let props: Record<string, unknown> = {};
         if (typeof route.props === "function") {
           props = await route.props(this);
@@ -286,54 +299,34 @@ export class SSG implements SSGInstance {
     return paths;
   }
 
-  /**
-   * Render a path to HTML
-   */
-  private async renderPath(
-    path: string,
-    props: Record<string, unknown>,
-  ): Promise<string> {
-    const routes = this.config.routes ?? [];
-    const route = routes.find((r) => this.matchRoute(r.path, path));
+  watch(options: WatchOptions = {}): Watcher {
+    const unsubscribers: (() => void)[] = [];
 
-    if (!route) {
-      throw new Error(`No route found for path: ${path}`);
+    for (const [name, collection] of this.collections) {
+      if (collection.source.watch) {
+        const unsubscribe = collection.source.watch(async () => {
+          try {
+            this.entriesCache.delete(name);
+            const result = await this.build({ incremental: true });
+            options.onRebuild?.(result);
+          } catch (error) {
+            options.onError?.(error as Error);
+          }
+        });
+        unsubscribers.push(unsubscribe);
+      }
     }
 
-    // Render the component using @semajsx/server
-    const vnode = route.component(props);
-    const result = renderToString(vnode);
-
-    // Create document props
-    const documentProps: DocumentProps = {
-      children: new RawHTML(result.html),
-      title: props.title as string | undefined,
-      base: this.config.base ?? "/",
-      path,
-      props,
+    return {
+      close: () => unsubscribers.forEach((fn) => fn()),
     };
-
-    // Use custom or default document template
-    const template = this.config.document ?? DefaultDocument;
-    const documentVNode = template(documentProps);
-
-    return renderDocument(documentVNode);
   }
 
-  /**
-   * Convert URL path to file path
-   */
   private pathToFilePath(urlPath: string): string {
-    if (urlPath === "/") {
-      return "index.html";
-    }
-    // /blog/post -> blog/post/index.html
+    if (urlPath === "/") return "index.html";
     return `${urlPath.slice(1)}/index.html`;
   }
 
-  /**
-   * Apply params to route pattern
-   */
   private applyParams(pattern: string, params: Record<string, string>): string {
     let path = pattern;
     for (const [key, value] of Object.entries(params)) {
@@ -342,38 +335,7 @@ export class SSG implements SSGInstance {
     return path;
   }
 
-  /**
-   * Check if route pattern matches path
-   */
-  private matchRoute(pattern: string, path: string): boolean {
-    const patternParts = pattern.split("/").filter(Boolean);
-    const pathParts = path.split("/").filter(Boolean);
-
-    if (patternParts.length !== pathParts.length) {
-      return false;
-    }
-
-    for (let i = 0; i < patternParts.length; i++) {
-      const patternPart = patternParts[i];
-      const pathPart = pathParts[i];
-
-      if (patternPart?.startsWith(":")) {
-        continue; // Dynamic segment matches anything
-      }
-
-      if (patternPart !== pathPart) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  /**
-   * Hash content for change detection
-   */
   private hashContent(content: string): string {
-    // Simple hash for now
     let hash = 0;
     for (let i = 0; i < content.length; i++) {
       const char = content.charCodeAt(i);
@@ -382,11 +344,29 @@ export class SSG implements SSGInstance {
     }
     return hash.toString(16);
   }
+
+  private extractHeadings(
+    content: string,
+  ): Array<{ depth: number; text: string; slug: string }> {
+    const headings: Array<{ depth: number; text: string; slug: string }> = [];
+    const regex = /^(#{1,6})\s+(.+)$/gm;
+
+    let match;
+    while ((match = regex.exec(content)) !== null) {
+      if (!match[1] || !match[2]) continue;
+      const depth = match[1].length;
+      const text = match[2].trim();
+      const slug = text
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-");
+      headings.push({ depth, text, slug });
+    }
+
+    return headings;
+  }
 }
 
-/**
- * Create an SSG instance
- */
 export function createSSG(config: SSGConfig): SSGInstance {
   return new SSG(config);
 }
