@@ -53,34 +53,27 @@ export class MDXProcessor {
     code: string,
     components: Record<string, (props: Record<string, unknown>) => VNode>,
   ): (props?: Record<string, unknown>) => VNode {
-    // Create a function that returns the MDX content
-    // eslint-disable-next-line @typescript-eslint/no-implied-eval
-    const fn = new Function(
-      "jsx",
-      "jsxs",
-      "Fragment",
-      "components",
-      `
-      const { jsx: _jsx, jsxs: _jsxs, Fragment: _Fragment } = arguments[0];
-      const _components = arguments[1];
-      ${code}
-      return MDXContent;
-    `,
-    );
-
     // Import JSX runtime
     // This will be resolved at runtime
     return (props: Record<string, unknown> = {}) => {
       try {
         // Dynamic import of JSX runtime
         const jsxRuntime = require("@semajsx/dom/jsx-runtime");
-        const MDXContent = fn(jsxRuntime, components);
-        return MDXContent({ ...props, components });
-      } catch {
-        // Fallback for when runtime is not available
-        throw new Error(
-          "MDX rendering requires @semajsx/dom/jsx-runtime to be available",
+
+        // Create a function that returns the MDX content
+        // MDX compiled code expects jsx runtime in arguments[0]
+        // eslint-disable-next-line @typescript-eslint/no-implied-eval
+        const fn = new Function(
+          "arguments",
+          `${code}
+          return MDXContent;`,
         );
+
+        const MDXContent = fn([jsxRuntime]);
+        return MDXContent({ ...props, components });
+      } catch (e) {
+        // Fallback for when runtime is not available
+        throw new Error(`MDX rendering failed: ${(e as Error).message}`);
       }
     };
   }
