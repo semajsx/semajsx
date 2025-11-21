@@ -9,7 +9,6 @@ import { logger } from "@semajsx/logger";
 export class ViteIslandBuilder {
   private vite: ViteDevServer | null = null;
   private entryPoints = new Map<string, string>();
-  private virtualModules = new Map<string, string>();
   private options: ViteBuilderOptions;
 
   constructor(options: ViteBuilderOptions = {}) {
@@ -29,36 +28,20 @@ export class ViteIslandBuilder {
 
     // Build plugins array
     const plugins: PluginOption[] = [
-      // Virtual modules plugin
+      // Virtual islands plugin
       {
-        name: "semajsx-virtual-modules",
-        resolveId: (id: string) => {
-          // Handle virtual island modules
-          if (
-            id.startsWith("virtual:island-") ||
-            id.startsWith("virtual:mdx-")
-          ) {
-            return "\0" + id; // \0 prefix indicates virtual module
+        name: "semajsx-virtual-islands",
+        resolveId(id: string) {
+          if (id.startsWith("virtual:island-")) {
+            return "\0" + id;
           }
         },
         load: (id: string) => {
-          // Provide the code for virtual island modules
           if (id.startsWith("\0virtual:island-")) {
             const islandId = id
               .replace("\0virtual:island-", "")
               .replace(".js", "");
-            const rawCode = this.entryPoints.get(islandId);
-            if (rawCode) {
-              return rawCode;
-            }
-          }
-          // Provide the code for virtual MDX modules
-          if (id.startsWith("\0virtual:mdx-")) {
-            const mdxId = id.replace("\0virtual:mdx-", "").replace(".mdx", "");
-            const rawCode = this.virtualModules.get(mdxId);
-            if (rawCode) {
-              return rawCode;
-            }
+            return this.entryPoints.get(islandId);
           }
         },
       },
@@ -144,41 +127,6 @@ export class ViteIslandBuilder {
     } catch (error) {
       logger.error(
         `Error transforming ${url}:`,
-        error as Record<string, unknown>,
-      );
-      return null;
-    }
-  }
-
-  /**
-   * Transform MDX content through Vite
-   * This allows MDX files to import components with proper module resolution
-   */
-  async transformMDX(
-    id: string,
-    content: string,
-  ): Promise<{ code: string } | null> {
-    if (!this.vite) {
-      throw new Error("Vite server not initialized");
-    }
-
-    // Store the content in virtualModules map
-    this.virtualModules.set(id, content);
-
-    try {
-      // Transform through Vite using virtual module
-      const virtualId = `virtual:mdx-${id}.mdx`;
-      const result = await this.vite.transformRequest(virtualId);
-
-      // Clean up
-      this.virtualModules.delete(id);
-
-      return result ? { code: result.code } : null;
-    } catch (error) {
-      // Clean up on error
-      this.virtualModules.delete(id);
-      logger.error(
-        `Error transforming MDX ${id}:`,
         error as Record<string, unknown>,
       );
       return null;

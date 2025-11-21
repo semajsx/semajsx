@@ -161,8 +161,6 @@ export interface SSGConfig {
   mdx?: MDXConfig;
   /** Custom document template */
   document?: DocumentTemplate;
-  /** Enable Vite-based MDX transformation (allows imports in MDX) */
-  vite?: boolean;
 }
 
 // =============================================================================

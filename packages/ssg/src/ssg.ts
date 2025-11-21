@@ -1,10 +1,6 @@
 import { mkdir, writeFile, rm } from "fs/promises";
 import { join, dirname, resolve } from "path";
-import {
-  renderToString,
-  renderDocument,
-  ViteIslandBuilder,
-} from "@semajsx/server";
+import { renderToString, renderDocument } from "@semajsx/server";
 import { DefaultDocument } from "./document";
 import {
   RawHTML,
@@ -19,7 +15,7 @@ import {
   type Watcher,
   type DocumentProps,
 } from "./types";
-import { MDXProcessor, viteMDXPlugin } from "./mdx";
+import { MDXProcessor } from "./mdx";
 
 /**
  * SSG (Static Site Generator) core class
@@ -30,7 +26,6 @@ export class SSG implements SSGInstance {
   private collections: Map<string, Collection>;
   private entriesCache: Map<string, CollectionEntry[]>;
   private mdxProcessor: MDXProcessor;
-  private viteBuilder: ViteIslandBuilder | null = null;
 
   constructor(config: SSGConfig) {
     // Resolve rootDir - defaults to process.cwd() but should be set to script location
@@ -45,14 +40,6 @@ export class SSG implements SSGInstance {
     this.collections = new Map();
     this.entriesCache = new Map();
     this.mdxProcessor = new MDXProcessor(config.mdx);
-
-    // Create Vite builder if enabled (allows MDX imports)
-    if (config.vite) {
-      this.viteBuilder = new ViteIslandBuilder({
-        root: this.rootDir,
-        plugins: [viteMDXPlugin(config.mdx ?? {})],
-      });
-    }
 
     // Register collections
     for (const collection of config.collections ?? []) {
@@ -100,48 +87,6 @@ export class SSG implements SSGInstance {
         ...entry,
         data: result.data,
         render: async () => {
-          // Use Vite builder if available (allows imports in MDX)
-          if (this.viteBuilder) {
-            const transformed = await this.viteBuilder.transformMDX(
-              entry.id,
-              entry.body,
-            );
-            if (transformed) {
-              // Execute the transformed code to get the component
-              const jsxRuntime = await import("@semajsx/dom/jsx-runtime");
-              // eslint-disable-next-line @typescript-eslint/no-implied-eval
-              const fn = new Function(
-                "exports",
-                "require",
-                transformed.code +
-                  "\nreturn typeof MDXContent !== 'undefined' ? MDXContent : exports.default;",
-              );
-
-              // Simple require shim for the transformed code
-              const exports: Record<string, unknown> = {};
-              const requireShim = (id: string) => {
-                if (
-                  id === "@semajsx/dom/jsx-runtime" ||
-                  id.includes("jsx-runtime")
-                ) {
-                  return jsxRuntime;
-                }
-                throw new Error(`Cannot require "${id}" in MDX`);
-              };
-
-              const Content = fn(exports, requireShim);
-              return {
-                Content: (props: Record<string, unknown> = {}) =>
-                  Content({
-                    ...props,
-                    components: this.config.mdx?.components ?? {},
-                  }),
-                headings: this.mdxProcessor["extractHeadings"](entry.body),
-              };
-            }
-          }
-
-          // Fallback to simple MDX processor
           const compiled = await this.mdxProcessor.compile(
             entry.body,
             entry.data as Record<string, unknown>,
@@ -177,11 +122,6 @@ export class SSG implements SSGInstance {
   async build(options: BuildOptions = {}): Promise<BuildResult> {
     const { incremental = false, state: prevState } = options;
     const outDir = this.config.outDir;
-
-    // Initialize Vite builder if enabled
-    if (this.viteBuilder) {
-      await this.viteBuilder.initialize();
-    }
 
     // Initialize build state
     const state: BuildState = {
