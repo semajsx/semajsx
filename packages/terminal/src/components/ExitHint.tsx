@@ -1,4 +1,4 @@
-/** @jsxImportSource semajsx */
+/** @jsxImportSource @semajsx/terminal */
 import { computed, signal, type WritableSignal } from "@semajsx/signal";
 import { when, type JSXNode } from "@semajsx/core";
 

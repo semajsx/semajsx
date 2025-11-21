@@ -306,9 +306,19 @@ export function render(
  * @example
  * // Print to stderr
  * print(<text color="red">Error occurred</text>, { stream: process.stderr });
+ *
+ * @example
+ * // Print a blank line
+ * print();
  */
-export function print(element: VNode, options: PrintOptions = {}): void {
+export function print(element?: VNode, options: PrintOptions = {}): void {
   const { stream: outputStream = process.stdout } = options;
+
+  // If no element provided, just print a blank line
+  if (element === undefined) {
+    outputStream.write("\n");
+    return;
+  }
 
   // Save raw mode state
   const wasRawMode = process.stdin.isTTY && process.stdin.isRaw;

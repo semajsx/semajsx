@@ -7,3 +7,6 @@
 
 export { ExitHint } from "./ExitHint";
 export type { ExitHintProps } from "./ExitHint";
+
+export { BlankLine } from "./BlankLine";
+export type { BlankLineProps } from "./BlankLine";
