@@ -1,7 +1,7 @@
 /** @jsxImportSource @semajsx/dom */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createApp } from "./app";
-import { island } from "./island";
+import { island } from "./client/island";
 import { signal } from "@semajsx/signal";
 import type { App } from "./shared/types";
 

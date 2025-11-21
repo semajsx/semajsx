@@ -5,9 +5,6 @@
 // Main App API (recommended)
 export { createApp } from "./app";
 
-// Island marking
-export { island, isIslandComponent, isIslandVNode } from "./island";
-
 // SSR rendering
 export { renderToString } from "./render";
 
