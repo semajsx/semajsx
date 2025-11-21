@@ -82,49 +82,20 @@ class AppImpl implements App {
       },
       appType: "custom",
       optimizeDeps: {
-        // Don't pre-bundle semajsx packages - load from source
-        exclude: [
+        // Include semajsx packages for pre-bundling (better browser compatibility)
+        include: [
           "@semajsx/core",
           "@semajsx/dom",
           "@semajsx/signal",
-          "@semajsx/server",
-          // Exclude native modules that cause issues
-          "lightningcss",
-          "fsevents",
-          "rollup",
+          "@semajsx/server/client",
         ],
+        // Exclude native modules that cause issues
+        exclude: ["lightningcss", "fsevents", "rollup"],
       },
       resolve: {
         conditions: ["browser", "development", "import"],
       },
-      plugins: [
-        this._createVirtualIslandsPlugin(),
-        // Plugin to stub Node.js built-ins for browser
-        {
-          name: "semajsx-node-externals",
-          resolveId(id: string) {
-            // Handle Node.js built-in modules
-            if (
-              id === "node:path" ||
-              id === "node:fs" ||
-              id === "node:url" ||
-              id === "path" ||
-              id === "fs" ||
-              id === "url"
-            ) {
-              return { id: `\0node-external:${id}`, external: false };
-            }
-            return null;
-          },
-          load(id: string) {
-            if (id.startsWith("\0node-external:")) {
-              // Return empty stub for browser
-              return "export default {}; export const resolve = () => ''; export const join = () => ''; export const dirname = () => '';";
-            }
-            return null;
-          },
-        },
-      ],
+      plugins: [this._createVirtualIslandsPlugin()],
       // Exclude problematic native modules from SSR bundling
       ssr: {
         noExternal: ["@semajsx/core", "@semajsx/dom", "@semajsx/signal"],
