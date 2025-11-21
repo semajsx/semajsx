@@ -1,6 +1,7 @@
 // Core SSG
 export { createSSG, SSG } from "./ssg";
 export { DefaultDocument } from "./document";
+export { RawHTML } from "./types";
 
 // Collection
 export { defineCollection } from "./collection";

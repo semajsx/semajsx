@@ -110,9 +110,29 @@ export interface MDXConfig {
 // Document Template
 // =============================================================================
 
+/**
+ * Raw HTML content that can be used directly in JSX or converted to string
+ */
+export class RawHTML {
+  constructor(public readonly html: string) {}
+
+  toString(): string {
+    return this.html;
+  }
+
+  /** Get a VNode that renders the raw HTML */
+  toVNode(): VNode {
+    return {
+      type: "div",
+      props: { dangerouslySetInnerHTML: { __html: this.html } },
+      children: [],
+    } as VNode;
+  }
+}
+
 export interface DocumentProps {
-  /** Rendered page content (as JSX/VNode) */
-  children: VNode | string;
+  /** Rendered page content */
+  children: RawHTML;
   /** Page title */
   title?: string;
   /** Base URL path */

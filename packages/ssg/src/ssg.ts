@@ -2,17 +2,18 @@ import { mkdir, writeFile, rm } from "fs/promises";
 import { join, dirname } from "path";
 import { renderToString, renderDocument } from "@semajsx/server";
 import { DefaultDocument } from "./document";
-import type {
-  SSGConfig,
-  SSGInstance,
-  Collection,
-  CollectionEntry,
-  BuildOptions,
-  BuildResult,
-  BuildState,
-  WatchOptions,
-  Watcher,
-  DocumentProps,
+import {
+  RawHTML,
+  type SSGConfig,
+  type SSGInstance,
+  type Collection,
+  type CollectionEntry,
+  type BuildOptions,
+  type BuildResult,
+  type BuildState,
+  type WatchOptions,
+  type Watcher,
+  type DocumentProps,
 } from "./types";
 import { MDXProcessor } from "./mdx";
 
@@ -292,7 +293,7 @@ export class SSG implements SSGInstance {
 
     // Create document props
     const documentProps: DocumentProps = {
-      children: result.html,
+      children: new RawHTML(result.html),
       title: props.title as string | undefined,
       base: this.config.base ?? "/",
       path,

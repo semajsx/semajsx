@@ -15,8 +15,6 @@ export const DefaultDocument: DocumentTemplate = ({
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>{title}</title>
     </head>
-    <body>
-      <div id="root" dangerouslySetInnerHTML={{ __html: children as string }} />
-    </body>
+    <body>{children.toVNode()}</body>
   </html>
 );
