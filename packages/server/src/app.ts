@@ -350,16 +350,16 @@ class AppImpl implements App {
       throw new Error(`Island not found: ${islandId}`);
     }
 
-    // Generate entry point code
+    // Generate entry point code (use h() instead of JSX since this is runtime-generated)
     const entryCode = `
-import { hydrate } from '@semajsx/dom';
+import { hydrate, h } from '@semajsx/dom';
 import { markIslandHydrated } from '@semajsx/server/client';
 import Component from '${island.path}';
 
 const container = document.querySelector('[data-island-id="${islandId}"]');
 if (container) {
   const props = JSON.parse(container.getAttribute('data-island-props') || '{}');
-  hydrate(<Component {...props} />, container);
+  hydrate(h(Component, props), container);
   markIslandHydrated('${islandId}');
 }
 `;
@@ -469,14 +469,14 @@ if (container) {
           }
 
           return `
-import { hydrate } from '@semajsx/dom';
+import { hydrate, h } from '@semajsx/dom';
 import { markIslandHydrated } from '@semajsx/server/client';
 import Component from '${island.path}';
 
 const container = document.querySelector('[data-island-id="${islandId}"]');
 if (container) {
   const props = JSON.parse(container.getAttribute('data-island-props') || '{}');
-  hydrate(<Component {...props} />, container);
+  hydrate(h(Component, props), container);
   markIslandHydrated('${islandId}');
 }
 `;
