@@ -1,8 +1,0 @@
-{
-  "extends": "@semajsx/configs/tsconfig.lib.json",
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "jsxImportSource": "@semajsx/dom"
-  },
-  "include": ["./**/*"]
-}
