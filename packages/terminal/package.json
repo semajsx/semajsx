@@ -20,7 +20,9 @@
     "dev": "tsdown --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "example:counter": "bun run examples/terminal-counter/app.tsx",
+    "example:print": "bun run examples/terminal-print/simple-print.tsx"
   },
   "dependencies": {
     "@semajsx/core": "workspace:*",

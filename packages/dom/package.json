@@ -20,7 +20,8 @@
     "dev": "tsdown --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "example:vite-counter": "vite examples/vite-counter"
   },
   "dependencies": {
     "@semajsx/core": "workspace:*",

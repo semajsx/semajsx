@@ -17,7 +17,9 @@
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "example:basic": "bun run examples/logger/basic.tsx",
+    "example:showcase": "bun run examples/logger/showcase.tsx"
   },
   "dependencies": {
     "@semajsx/core": "workspace:*",

@@ -1,9 +1,8 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "@semajsx/configs/tsconfig.lib.json",
   "compilerOptions": {
-    "module": "ESNext",
     "jsx": "react-jsx",
-    "jsxImportSource": "../../src"
+    "jsxImportSource": "@semajsx/dom"
   },
   "include": ["./**/*"]
 }

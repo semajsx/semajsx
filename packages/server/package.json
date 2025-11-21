@@ -18,7 +18,8 @@
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "example:ssr-islands": "bun run examples/ssr-islands/server.tsx"
   },
   "dependencies": {
     "@semajsx/core": "workspace:*",
