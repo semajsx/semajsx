@@ -1,7 +1,7 @@
 import { mkdir, writeFile, rm } from "fs/promises";
 import { join, dirname } from "path";
 import { renderToString, renderDocument } from "@semajsx/server";
-import { h } from "@semajsx/core";
+import { DefaultDocument } from "./document";
 import type {
   SSGConfig,
   SSGInstance,
@@ -300,36 +300,10 @@ export class SSG implements SSGInstance {
     };
 
     // Use custom or default document template
-    const documentVNode = this.config.document
-      ? this.config.document(documentProps)
-      : this.defaultDocument(documentProps);
+    const template = this.config.document ?? DefaultDocument;
+    const documentVNode = template(documentProps);
 
     return renderDocument(documentVNode);
-  }
-
-  /**
-   * Default document template
-   */
-  private defaultDocument(props: DocumentProps): ReturnType<typeof h> {
-    const { children, title = "SSG Page", base } = props;
-
-    return h("html", { lang: "en" }, [
-      h("head", {}, [
-        h("meta", { charSet: "UTF-8" }),
-        h("meta", {
-          name: "viewport",
-          content: "width=device-width, initial-scale=1.0",
-        }),
-        h("base", { href: base }),
-        h("title", {}, [title]),
-      ]),
-      h("body", {}, [
-        h("div", {
-          id: "root",
-          dangerouslySetInnerHTML: { __html: children as string },
-        }),
-      ]),
-    ]);
   }
 
   /**

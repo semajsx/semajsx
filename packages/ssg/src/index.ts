@@ -1,5 +1,6 @@
 // Core SSG
 export { createSSG, SSG } from "./ssg";
+export { DefaultDocument } from "./document";
 
 // Collection
 export { defineCollection } from "./collection";
