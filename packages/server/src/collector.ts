@@ -1,6 +1,6 @@
 import type { VNode } from "@semajsx/core/types";
 import type { IslandMetadata } from "./shared/types";
-import { isIslandVNode, getIslandMetadata } from "./island";
+import { isIslandVNode, getIslandMetadata } from "./client/island";
 import { Fragment } from "@semajsx/core/types";
 
 /**

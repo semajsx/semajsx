@@ -5,4 +5,12 @@ export type {
   SSRResult,
   RouteHandler,
   RouterConfig,
+  DocumentTemplate,
+  // App API types
+  AppConfig,
+  BuildOptions,
+  DevOptions,
+  BuildResult,
+  RenderResult,
+  App,
 } from "./types";

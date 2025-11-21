@@ -1,7 +1,7 @@
 /** @jsxImportSource @semajsx/dom */
 
 import { signal } from "@semajsx/signal";
-import { island } from "@semajsx/server";
+import { island } from "@semajsx/server/client";
 
 /**
  * Counter component - marked as an island for client-side hydration

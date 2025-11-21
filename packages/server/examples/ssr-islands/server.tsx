@@ -1,6 +1,6 @@
 /** @jsxImportSource @semajsx/dom */
 
-import { createViteRouter, type DocumentTemplate } from "@semajsx/server";
+import { createApp, type DocumentTemplate } from "@semajsx/server";
 import { logger, createLogger } from "@semajsx/logger";
 import { App } from "./App";
 
@@ -12,7 +12,7 @@ const startupLogger = createLogger({
 
 /**
  * SSR Islands Server with Vite
- * Uses Vite dev server for module transformation (no bundling!)
+ * Uses the createApp API for simplified setup
  */
 
 // Custom HTML document template (JSX!)
@@ -38,155 +38,86 @@ const Document: DocumentTemplate = ({ children, scripts, title }) => (
   </html>
 );
 
-// Create Vite-powered router with JSX document template
-const router = await createViteRouter(
-  {
+// Create app with the new API
+const app = createApp({
+  routes: {
     "/": () => <App />,
   },
-  {
-    dev: true, // Enable Vite dev server
-    root: import.meta.dir, // Project root
-    document: Document, // Use JSX document template!
-    title: "SemaJSX SSR Islands (Vite)", // Page title
+  // Full Vite config exposure
+  vite: {
+    // Add any Vite plugins or config here
+    // plugins: [],
+    // resolve: { alias: {} },
   },
-);
+  islands: {
+    basePath: "/islands",
+  },
+  document: Document,
+  title: "SemaJSX SSR Islands (Vite)",
+  root: import.meta.dir,
+});
 
-// Create HTTP server
+// Initialize the app
+await app.prepare();
+
+// Create HTTP server using handleRequest
 const server = Bun.serve({
   port: 3000,
   async fetch(req: Request) {
     const url = new URL(req.url);
     logger.info(`${req.method} ${url.pathname}`);
 
-    try {
-      // Handle Vite module requests (/@fs/, /@vite/, /node_modules/, etc.)
-      if (
-        url.pathname.startsWith("/@") ||
-        url.pathname.startsWith("/node_modules/") ||
-        url.pathname.includes("/@fs/")
-      ) {
-        logger.debug(`  → Vite module request: ${url.pathname}`);
-        const result = await router.handleModuleRequest(url.pathname);
+    // Use the unified handleRequest for all requests
+    const response = await app.handleRequest(req);
 
-        if (result) {
-          return new Response(result.code, {
-            headers: {
-              "Content-Type": "application/javascript",
-              "Cache-Control": "no-cache",
-            },
-          });
-        }
-
-        return new Response("Module not found", { status: 404 });
-      }
-
-      // Handle island entry point requests
-      if (url.pathname.startsWith("/islands/")) {
-        const islandId = url.pathname.match(/\/islands\/(.+)\.js/)?.[1];
-
-        if (!islandId) {
-          return new Response("Invalid island ID", { status: 400 });
-        }
-
-        logger.debug(`  → Island entry point: ${islandId}`);
-        const code = await router.getIslandEntryPoint(islandId);
-
-        return new Response(code, {
-          headers: {
-            "Content-Type": "application/javascript; charset=utf-8",
-            "Cache-Control": "no-cache",
-          },
-        });
-      }
-
-      // Handle source file requests (TypeScript/JavaScript files)
-      // These should be transformed by Vite
-      if (
-        url.pathname.endsWith(".tsx") ||
-        url.pathname.endsWith(".ts") ||
-        url.pathname.endsWith(".jsx") ||
-        url.pathname.endsWith(".js")
-      ) {
-        logger.debug(`  → Source file request: ${url.pathname}`);
-        const result = await router.handleModuleRequest(url.pathname);
-
-        if (result) {
-          return new Response(result.code, {
-            headers: {
-              "Content-Type": "application/javascript",
-              "Cache-Control": "no-cache",
-            },
-          });
-        }
-
-        return new Response("Module not found", { status: 404 });
-      }
-
-      // Handle page requests
+    // Log island info for page requests
+    if (
+      response.headers.get("Content-Type")?.includes("text/html") &&
+      response.status === 200
+    ) {
+      // Re-render to get island info (handleRequest already rendered)
       try {
-        const result = await router.get(url.pathname);
-
+        const result = await app.render(url.pathname);
         logger.success(`Rendered page with ${result.islands.length} islands`);
         for (const island of result.islands) {
           logger.debug(
             `  - ${island.id}: ${island.componentName || "anonymous"} (${island.path})`,
           );
         }
-
-        // Use the complete HTML document rendered from JSX template
-        const html = result.document || result.html;
-
-        return new Response(html, {
-          headers: {
-            "Content-Type": "text/html; charset=utf-8",
-          },
-        });
-      } catch (routeError: unknown) {
-        if (
-          routeError instanceof Error &&
-          routeError.message?.includes("Route not found")
-        ) {
-          logger.warn(`404 Not Found: ${url.pathname}`);
-          return new Response("404 - Page Not Found", { status: 404 });
-        }
-        throw routeError; // Re-throw other errors
+      } catch {
+        // Ignore - already handled
       }
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      logger.error(`Error: ${errorMessage}`);
-
-      return new Response(`500 - Internal Server Error\n\n${errorMessage}`, {
-        status: 500,
-      });
     }
+
+    return response;
   },
 });
 
 // Display startup info (without timestamps)
 startupLogger.blank();
-startupLogger.success("🏝️  SemaJSX SSR Islands Server (Vite-powered!)");
+startupLogger.success("🏝️  SemaJSX SSR Islands Server (createApp API)");
 startupLogger.blank();
 startupLogger.info(`Server running at: http://localhost:${server.port}`);
 startupLogger.blank();
 startupLogger
   .group("Features", { borderColor: "green" })
-  .info("✓ Vite dev server for instant module transformation")
-  .info("✓ No bundling - modules loaded on demand")
-  .info("✓ Shared dependencies - semajsx loaded once")
-  .info("✓ Fast HMR-ready setup")
-  .info("✓ Browser caching for dependencies")
+  .info("✓ createApp API for simplified setup")
+  .info("✓ Full Vite config exposure")
+  .info("✓ Unified handleRequest for all routes")
+  .info("✓ Built-in build() for production")
+  .info("✓ Optional dev() for quick start")
   .groupEnd();
 startupLogger.blank();
 startupLogger
-  .group("Dev Tools", { borderColor: "cyan" })
-  .info("• Check Network tab to see module loading")
-  .info("• Notice how semajsx is loaded separately and cached")
-  .info("• Islands share the same semajsx dependency!")
+  .group("API Example", { borderColor: "cyan" })
+  .info("const app = createApp({ routes, vite, document })")
+  .info("await app.prepare()  // Initialize")
+  .info("await app.render('/')  // SSR render")
+  .info("await app.build({ outDir: 'dist' })  // Production build")
   .groupEnd();
 startupLogger.blank();
 
-// Cleanup on exit (with flag to prevent double execution)
+// Cleanup on exit
 let isShuttingDown = false;
 process.on("SIGINT", async () => {
   if (isShuttingDown) return;
@@ -194,7 +125,7 @@ process.on("SIGINT", async () => {
 
   logger.blank();
   logger.warn("Shutting down...");
-  await router.close();
+  await app.close();
   server.stop();
   process.exit(0);
 });

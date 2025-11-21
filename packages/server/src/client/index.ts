@@ -9,3 +9,10 @@ export {
   getIslandIds,
   markIslandHydrated,
 } from "./hydrate";
+
+export {
+  island,
+  isIslandComponent,
+  isIslandVNode,
+  getIslandMetadata,
+} from "./island";

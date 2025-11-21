@@ -1,4 +1,5 @@
 import type { JSXNode, VNode } from "@semajsx/core/types";
+import type { UserConfig as ViteUserConfig, ViteDevServer } from "vite";
 
 /**
  * Island metadata collected during SSR rendering
@@ -40,10 +41,45 @@ export interface IslandMarker {
   props: any;
 }
 
+// ========================
+// Route Param Type Inference
+// ========================
+
 /**
- * Route handler function
+ * Extract route params from a route pattern
+ * e.g., "/post/:id" -> { id: string }
+ * e.g., "/user/:userId/post/:postId" -> { userId: string; postId: string }
  */
-export type RouteHandler = (params?: Record<string, string>) => VNode;
+export type ExtractRouteParams<T extends string> =
+  T extends `${string}:${infer Param}/${infer Rest}`
+    ? { [K in Param]: string } & ExtractRouteParams<Rest>
+    : T extends `${string}:${infer Param}`
+      ? { [K in Param]: string }
+      : {};
+
+/**
+ * Simplify intersection types for better IDE display
+ */
+type Prettify<T> = { [K in keyof T]: T[K] } & {};
+
+/**
+ * Route handler function (basic)
+ */
+export type RouteHandler = (params: Record<string, string>) => VNode;
+
+/**
+ * Route handler with inferred params
+ */
+export type RouteHandlerWithParams<T extends string> = (
+  params: Prettify<ExtractRouteParams<T>>,
+) => VNode;
+
+/**
+ * Routes object with type-safe handlers
+ */
+export type TypedRoutes<T extends Record<string, RouteHandler>> = {
+  [K in keyof T]: K extends string ? RouteHandlerWithParams<K> : never;
+};
 
 /**
  * Document template function for rendering complete HTML documents
@@ -86,4 +122,149 @@ export interface RouterConfig {
   title?: string;
   /** Additional metadata (passed to document template) */
   meta?: Record<string, any>;
+}
+
+// ========================
+// App API Types
+// ========================
+
+/**
+ * App configuration
+ */
+export interface AppConfig {
+  /** Route definitions (use app.route() for type-safe params) */
+  routes?: Record<string, RouteHandler>;
+
+  /** Vite configuration (fully exposed) */
+  vite?: ViteUserConfig;
+
+  /** Island configuration */
+  islands?: {
+    /** Base path for island scripts (default: '/islands') */
+    basePath?: string;
+    /** Enable caching (default: true) */
+    cache?: boolean;
+    /** Maximum cache size (default: 1000) */
+    cacheSize?: number;
+  };
+
+  /** HTML document template */
+  document?: DocumentTemplate;
+
+  /** Default page title */
+  title?: string;
+
+  /** Additional metadata */
+  meta?: Record<string, any>;
+
+  /** Project root directory */
+  root?: string;
+}
+
+/**
+ * Build options for production
+ */
+export interface BuildOptions {
+  /** Output directory (default: 'dist') */
+  outDir?: string;
+
+  /** Build mode */
+  mode?: "full" | "on-demand";
+
+  /** Minify output (default: true) */
+  minify?: boolean;
+
+  /** Generate sourcemaps (default: false) */
+  sourcemap?: boolean;
+
+  /** Additional Vite build config */
+  vite?: ViteUserConfig;
+
+  /** Callback when an island is built */
+  onIslandBuilt?: (island: IslandMetadata) => void;
+}
+
+/**
+ * Development server options
+ */
+export interface DevOptions {
+  /** Server port (default: 3000) */
+  port?: number;
+
+  /** Server host (default: 'localhost') */
+  host?: string;
+
+  /** Open browser on start */
+  open?: boolean;
+}
+
+/**
+ * Build result
+ */
+export interface BuildResult {
+  /** Output directory path */
+  outDir: string;
+
+  /** Built islands */
+  islands: Array<{
+    id: string;
+    path: string;
+    outputPath: string;
+  }>;
+
+  /** Build manifest */
+  manifest: {
+    islands: Record<string, string>;
+    routes: string[];
+  };
+}
+
+/**
+ * Render result (same as SSRResult)
+ */
+export type RenderResult = SSRResult;
+
+/**
+ * App interface
+ */
+export interface App {
+  /** App configuration */
+  readonly config: AppConfig;
+
+  /** Register a route with type-safe params */
+  route<T extends string>(path: T, handler: RouteHandlerWithParams<T>): this;
+
+  /** Register multiple routes */
+  routes<T extends Record<string, RouteHandler>>(
+    routes: T & TypedRoutes<T>,
+  ): this;
+
+  /** Initialize the app (Vite dev server) */
+  prepare(): Promise<void>;
+
+  /** Close and cleanup resources */
+  close(): Promise<void>;
+
+  /** Render a path to HTML */
+  render(path: string): Promise<RenderResult>;
+
+  /** Start development server */
+  dev(
+    options?: DevOptions,
+  ): Promise<{ port: number; close: () => Promise<void> }>;
+
+  /** Build for production */
+  build(options?: BuildOptions): Promise<BuildResult>;
+
+  /** Handle HTTP request (for custom server integration) */
+  handleRequest(request: Request): Promise<Response>;
+
+  /** Get Vite dev server instance */
+  getViteServer(): ViteDevServer | null;
+
+  /** Get island entry point code */
+  getIslandEntryPoint(islandId: string): Promise<string>;
+
+  /** Get island metadata */
+  getIsland(islandId: string): IslandMetadata | undefined;
 }

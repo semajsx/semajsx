@@ -1,5 +1,6 @@
 /** @jsxImportSource @semajsx/dom */
 
+import { Fragment } from "@semajsx/core";
 import type { DocumentTemplate } from "./shared/types";
 
 /**
@@ -60,7 +61,12 @@ function renderDocumentVNode(vnode: any): string {
   }
 
   if (typeof vnode === "string" || typeof vnode === "number") {
-    return escapeHTML(String(vnode));
+    const str = String(vnode);
+    // Check if it's already rendered HTML (starts with < or contains HTML tags)
+    if (str.startsWith("<") || str.includes("</")) {
+      return str;
+    }
+    return escapeHTML(str);
   }
 
   if (typeof vnode === "boolean") {
@@ -82,7 +88,33 @@ function renderDocumentVNode(vnode: any): string {
     return props.dangerouslySetInnerHTML.__html;
   }
 
+  // Handle Fragment (Symbol type)
+  if (type === Fragment) {
+    return (children || [])
+      .map((child: any) => renderDocumentVNode(child))
+      .join("");
+  }
+
+  // Handle special VNode types
   if (typeof type === "string") {
+    // Handle internal node types like #text, #signal
+    if (type.startsWith("#")) {
+      if (type === "#text") {
+        const value = props?.nodeValue ?? "";
+        // Check if it's already rendered HTML
+        if (
+          typeof value === "string" &&
+          (value.startsWith("<") || value.includes("</"))
+        ) {
+          return value;
+        }
+        return escapeHTML(String(value));
+      }
+      // For #signal and other special types, render children
+      return (children || [])
+        .map((child: any) => renderDocumentVNode(child))
+        .join("");
+    }
     return renderElement(type, props, children);
   }
 

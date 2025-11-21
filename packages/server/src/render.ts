@@ -1,7 +1,7 @@
 import type { JSXNode, VNode } from "@semajsx/core/types";
 import type { IslandMetadata, SSRResult } from "./shared/types";
 import { Fragment } from "@semajsx/core/types";
-import { getIslandMetadata, isIslandVNode } from "./island";
+import { getIslandMetadata, isIslandVNode } from "./client/island";
 import { isSignal, unwrap } from "@semajsx/signal/utils";
 
 /**

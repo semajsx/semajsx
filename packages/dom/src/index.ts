@@ -22,3 +22,6 @@ export { hydrate } from "./hydrate";
 
 export { createPortal, PortalComponent } from "./portal";
 export type { PortalProps } from "./portal";
+
+// Re-export h from core for convenience (used in island hydration)
+export { h } from "@semajsx/core";
