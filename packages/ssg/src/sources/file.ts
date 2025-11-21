@@ -116,6 +116,7 @@ export class FileSource<T = unknown> extends BaseSource<T> {
  */
 export function fileSource<T = unknown>(
   options: FileSourceOptions,
-): (contentRoot?: string) => FileSource<T> {
-  return (contentRoot?: string) => new FileSource<T>(options, contentRoot);
+  contentRoot?: string,
+): FileSource<T> {
+  return new FileSource<T>(options, contentRoot);
 }

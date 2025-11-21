@@ -11,6 +11,7 @@ import type {
   BuildState,
   WatchOptions,
   Watcher,
+  DocumentProps,
 } from "./types";
 import { MDXProcessor } from "./mdx";
 
@@ -104,7 +105,7 @@ export class SSG implements SSGInstance {
    * Build the static site
    */
   async build(options: BuildOptions = {}): Promise<BuildResult> {
-    const { incremental = false } = options;
+    const { incremental = false, state: prevState } = options;
     const outDir = this.config.outDir;
 
     // Initialize build state
@@ -134,24 +135,56 @@ export class SSG implements SSGInstance {
 
     // Generate all paths
     const allPaths = await this.generateAllPaths();
+    const currentPaths = new Set(allPaths.map((p) => p.path));
+
+    // Delete removed pages in incremental mode
+    if (incremental && prevState) {
+      for (const oldPath of Object.keys(prevState.pageHashes)) {
+        if (!currentPaths.has(oldPath)) {
+          const filePath = this.pathToFilePath(oldPath);
+          const fullPath = join(outDir, filePath);
+          try {
+            await rm(fullPath);
+            stats.deleted++;
+          } catch {
+            // File might not exist
+          }
+        }
+      }
+    }
 
     // Build each path
     for (const { path, props } of allPaths) {
       const html = await this.renderPath(path, props);
-      const filePath = this.pathToFilePath(path);
-      const fullPath = join(outDir, filePath);
+      const hash = this.hashContent(html);
 
-      // Ensure directory exists
-      await mkdir(dirname(fullPath), { recursive: true });
+      // Check if we need to write this file
+      const prevHash = prevState?.pageHashes[path];
+      const needsWrite = !incremental || !prevHash || prevHash !== hash;
 
-      // Write HTML file
-      await writeFile(fullPath, html);
+      if (needsWrite) {
+        const filePath = this.pathToFilePath(path);
+        const fullPath = join(outDir, filePath);
 
-      builtPaths.push(path);
-      stats.added++;
+        // Ensure directory exists
+        await mkdir(dirname(fullPath), { recursive: true });
+
+        // Write HTML file
+        await writeFile(fullPath, html);
+
+        builtPaths.push(path);
+
+        if (!prevHash) {
+          stats.added++;
+        } else {
+          stats.updated++;
+        }
+      } else {
+        stats.unchanged++;
+      }
 
       // Update state
-      state.pageHashes[path] = this.hashContent(html);
+      state.pageHashes[path] = hash;
     }
 
     // Update cursors for each collection
@@ -257,18 +290,26 @@ export class SSG implements SSGInstance {
     const result = renderToString(vnode);
 
     // Generate full HTML document
-    return this.generateDocument(result.html, props);
+    const documentProps: DocumentProps = {
+      content: result.html,
+      title: props.title as string | undefined,
+      base: this.config.base ?? "/",
+      path,
+      props,
+    };
+
+    if (this.config.document) {
+      return this.config.document(documentProps);
+    }
+
+    return this.defaultDocument(documentProps);
   }
 
   /**
-   * Generate HTML document wrapper
+   * Default document template
    */
-  private generateDocument(
-    content: string,
-    props: Record<string, unknown>,
-  ): string {
-    const title = (props.title as string) ?? "SSG Page";
-    const base = this.config.base ?? "/";
+  private defaultDocument(props: DocumentProps): string {
+    const { content, title = "SSG Page", base } = props;
 
     return `<!DOCTYPE html>
 <html lang="en">

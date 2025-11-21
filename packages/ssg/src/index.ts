@@ -53,6 +53,10 @@ export type {
 
   // MDX types
   MDXConfig,
+
+  // Document types
+  DocumentProps,
+  DocumentTemplate,
 } from "./types";
 
 export type {

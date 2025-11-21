@@ -136,6 +136,7 @@ export class GitSource<T = unknown> extends BaseSource<T> {
  */
 export function gitSource<T = unknown>(
   options: GitSourceOptions,
-): (cwd?: string) => GitSource<T> {
-  return (cwd?: string) => new GitSource<T>(options, cwd);
+  cwd?: string,
+): GitSource<T> {
+  return new GitSource<T>(options, cwd);
 }

@@ -107,6 +107,25 @@ export interface MDXConfig {
 }
 
 // =============================================================================
+// Document Template
+// =============================================================================
+
+export interface DocumentProps {
+  /** Rendered page content */
+  content: string;
+  /** Page title */
+  title?: string;
+  /** Base URL path */
+  base: string;
+  /** Route path */
+  path: string;
+  /** Route props */
+  props: Record<string, unknown>;
+}
+
+export type DocumentTemplate = (props: DocumentProps) => string;
+
+// =============================================================================
 // SSG Configuration
 // =============================================================================
 
@@ -121,6 +140,8 @@ export interface SSGConfig {
   routes?: RouteConfig[];
   /** MDX configuration */
   mdx?: MDXConfig;
+  /** Custom document template */
+  document?: DocumentTemplate;
 }
 
 // =============================================================================
