@@ -44,12 +44,14 @@ const BlogIndex = ({
 
 const BlogPost = ({
   post,
+  content,
 }: {
-  post: { data: { title: string }; body: string };
+  post: { data: { title: string } };
+  content: string;
 }): VNode => (
   <article>
     <h1>{post.data.title}</h1>
-    <div>{post.body}</div>
+    <div dangerouslySetInnerHTML={{ __html: content }} />
   </article>
 );
 
@@ -76,10 +78,16 @@ const ssg = createSSG({
       component: BlogPost as (props: Record<string, unknown>) => VNode,
       getStaticPaths: async (ssg) => {
         const posts = await ssg.getCollection("blog");
-        return posts.map((post) => ({
-          params: { slug: post.slug },
-          props: { post, title: post.data.title },
-        }));
+        return Promise.all(
+          posts.map(async (post) => {
+            // For now, just use body as content (MDX rendering TODO)
+            const content = post.body;
+            return {
+              params: { slug: post.slug },
+              props: { post, content, title: post.data.title },
+            };
+          }),
+        );
       },
     },
   ],

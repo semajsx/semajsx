@@ -280,6 +280,12 @@ function renderElement(vnode: VNode, context: RenderContext): string {
   const tag = vnode.type as string;
   const props = vnode.props || {};
 
+  // Handle dangerouslySetInnerHTML
+  if (props.dangerouslySetInnerHTML?.__html != null) {
+    const attrs = renderAttributes(props);
+    return `<${tag}${attrs}>${props.dangerouslySetInnerHTML.__html}</${tag}>`;
+  }
+
   // Self-closing tags
   const selfClosing = [
     "area",
@@ -322,7 +328,12 @@ function renderAttributes(props: Record<string, any>): string {
 
   for (const [key, value] of Object.entries(props)) {
     // Skip special props
-    if (key === "children" || key === "key" || key === "ref") {
+    if (
+      key === "children" ||
+      key === "key" ||
+      key === "ref" ||
+      key === "dangerouslySetInnerHTML"
+    ) {
       continue;
     }
 
