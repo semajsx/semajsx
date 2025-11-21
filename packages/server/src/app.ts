@@ -350,11 +350,14 @@ class AppImpl implements App {
       throw new Error(`Island not found: ${islandId}`);
     }
 
+    // Normalize the component path for Vite
+    const componentPath = this._normalizeModulePath(island.path);
+
     // Generate entry point code (use h() instead of JSX since this is runtime-generated)
     const entryCode = `
 import { hydrate, h } from '@semajsx/dom';
 import { markIslandHydrated } from '@semajsx/server/client';
-import Component from '${island.path}';
+import Component from '${componentPath}';
 
 const container = document.querySelector('[data-island-id="${islandId}"]');
 if (container) {
@@ -431,6 +434,29 @@ if (container) {
     return params;
   }
 
+  /**
+   * Normalize module path (convert file:// URLs to paths Vite can resolve)
+   */
+  private _normalizeModulePath(path: string): string {
+    if (path.startsWith("file://")) {
+      // Convert file:// URL to filesystem path
+      const fsPath = new URL(path).pathname;
+
+      // Make path relative to app root
+      const root = this.config.root || process.cwd();
+      if (root && fsPath.startsWith(root)) {
+        // Path is within root, make it relative
+        const relativePath = fsPath.slice(root.length);
+        // Ensure it starts with / for Vite to resolve from root
+        return relativePath.startsWith("/") ? relativePath : `/${relativePath}`;
+      }
+
+      // Path is outside root, use @fs protocol
+      return `/@fs${fsPath}`;
+    }
+    return path;
+  }
+
   private async _handleModuleRequest(
     url: string,
   ): Promise<{ code: string } | null> {
@@ -450,6 +476,7 @@ if (container) {
 
   private _createVirtualIslandsPlugin() {
     const islandCache = this._islandCache;
+    const normalizeModulePath = this._normalizeModulePath.bind(this);
 
     return {
       name: "semajsx-virtual-islands",
@@ -468,10 +495,12 @@ if (container) {
             return null;
           }
 
+          const componentPath = normalizeModulePath(island.path);
+
           return `
 import { hydrate, h } from '@semajsx/dom';
 import { markIslandHydrated } from '@semajsx/server/client';
-import Component from '${island.path}';
+import Component from '${componentPath}';
 
 const container = document.querySelector('[data-island-id="${islandId}"]');
 if (container) {
