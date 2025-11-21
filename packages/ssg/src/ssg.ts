@@ -1,5 +1,6 @@
 import { mkdir, writeFile, rm } from "fs/promises";
 import { join, dirname } from "path";
+import { renderToString } from "@semajsx/server";
 import type {
   SSGConfig,
   SSGInstance,
@@ -11,6 +12,7 @@ import type {
   WatchOptions,
   Watcher,
 } from "./types";
+import { MDXProcessor } from "./mdx";
 
 /**
  * SSG (Static Site Generator) core class
@@ -19,6 +21,7 @@ export class SSG implements SSGInstance {
   private config: SSGConfig;
   private collections: Map<string, Collection>;
   private entriesCache: Map<string, CollectionEntry[]>;
+  private mdxProcessor: MDXProcessor;
 
   constructor(config: SSGConfig) {
     this.config = {
@@ -27,6 +30,7 @@ export class SSG implements SSGInstance {
     };
     this.collections = new Map();
     this.entriesCache = new Map();
+    this.mdxProcessor = new MDXProcessor(config.mdx);
 
     // Register collections
     for (const collection of config.collections ?? []) {
@@ -53,7 +57,7 @@ export class SSG implements SSGInstance {
     // Load entries
     const entries = await collection.source.getEntries();
 
-    // Validate with schema
+    // Validate with schema and enhance render function
     const validatedEntries = entries.map((entry) => {
       const result = collection.schema.safeParse(entry.data);
       if (!result.success) {
@@ -61,9 +65,21 @@ export class SSG implements SSGInstance {
           `Validation error in ${name}/${entry.id}: ${result.error.message}`,
         );
       }
+
+      // Create enhanced entry with MDX rendering capability
       return {
         ...entry,
         data: result.data,
+        render: async () => {
+          const compiled = await this.mdxProcessor.compile(
+            entry.body,
+            entry.data as Record<string, unknown>,
+          );
+          return {
+            Content: compiled.Content,
+            headings: compiled.headings,
+          };
+        },
       };
     });
 
@@ -236,20 +252,34 @@ export class SSG implements SSGInstance {
       throw new Error(`No route found for path: ${path}`);
     }
 
-    // TODO: Use @semajsx/server to render
-    // For now, return a placeholder
-    route.component(props);
+    // Render the component using @semajsx/server
+    const vnode = route.component(props);
+    const result = renderToString(vnode);
 
-    // This will be replaced with actual server rendering
+    // Generate full HTML document
+    return this.generateDocument(result.html, props);
+  }
+
+  /**
+   * Generate HTML document wrapper
+   */
+  private generateDocument(
+    content: string,
+    props: Record<string, unknown>,
+  ): string {
+    const title = (props.title as string) ?? "SSG Page";
+    const base = this.config.base ?? "/";
+
     return `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>SSG Page</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <base href="${base}">
+  <title>${title}</title>
 </head>
 <body>
-  <!-- TODO: Implement actual rendering with @semajsx/server -->
-  <div id="root"></div>
+  <div id="root">${content}</div>
 </body>
 </html>`;
   }

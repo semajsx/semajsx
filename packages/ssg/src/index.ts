@@ -17,6 +17,12 @@ export {
   CustomSource,
 } from "./sources";
 
+// MDX
+export { MDXProcessor, createMDXProcessor } from "./mdx";
+
+// Webhook
+export { createWebhookHandler, verifyWebhookSignature } from "./watcher";
+
 // Re-export zod for convenience
 export { z } from "zod";
 
@@ -59,3 +65,16 @@ export type {
   WebhookConfig,
   CustomSourceOptions,
 } from "./sources";
+
+export type {
+  // MDX types
+  MDXCompileResult,
+  Heading,
+} from "./mdx";
+
+export type {
+  // Webhook types
+  WebhookHandlerOptions,
+  WebhookRequest,
+  WebhookResponse,
+} from "./watcher";
