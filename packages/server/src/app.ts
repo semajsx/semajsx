@@ -89,19 +89,6 @@ class AppImpl implements App {
           "@semajsx/dom",
           "@semajsx/signal",
           "@semajsx/server",
-          // Exclude native/Node.js modules that shouldn't be in browser
-          "lightningcss",
-          "fsevents",
-          "rollup",
-          "vite",
-          // Exclude terminal-related packages (from @semajsx/logger -> @semajsx/terminal)
-          "yoga-layout-prebuilt",
-          "chalk",
-          "cli-boxes",
-          "slice-ansi",
-          "string-width",
-          "wrap-ansi",
-          "ansi-escapes",
         ],
       },
       resolve: {
