@@ -1,5 +1,6 @@
 /** @jsxImportSource @semajsx/dom */
 
+import { Fragment } from "@semajsx/core";
 import type { DocumentTemplate } from "./shared/types";
 
 /**
@@ -87,9 +88,16 @@ function renderDocumentVNode(vnode: any): string {
     return props.dangerouslySetInnerHTML.__html;
   }
 
+  // Handle Fragment (Symbol type)
+  if (type === Fragment) {
+    return (children || [])
+      .map((child: any) => renderDocumentVNode(child))
+      .join("");
+  }
+
   // Handle special VNode types
   if (typeof type === "string") {
-    // Handle internal node types like #text, #signal, #fragment
+    // Handle internal node types like #text, #signal
     if (type.startsWith("#")) {
       if (type === "#text") {
         const value = props?.nodeValue ?? "";
@@ -102,12 +110,7 @@ function renderDocumentVNode(vnode: any): string {
         }
         return escapeHTML(String(value));
       }
-      if (type === "#fragment") {
-        return (children || [])
-          .map((child: any) => renderDocumentVNode(child))
-          .join("");
-      }
-      // For other special types, render children
+      // For #signal and other special types, render children
       return (children || [])
         .map((child: any) => renderDocumentVNode(child))
         .join("");
