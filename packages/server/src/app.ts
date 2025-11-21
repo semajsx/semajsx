@@ -1,0 +1,500 @@
+/**
+ * App - Main entry point for SemaJSX server applications
+ *
+ * Provides a unified API for:
+ * - Route management
+ * - SSR rendering with islands
+ * - Development server with Vite
+ * - Production builds
+ */
+
+import { createServer, build as viteBuild, mergeConfig } from "vite";
+import type { ViteDevServer, UserConfig as ViteUserConfig } from "vite";
+import { renderToString } from "./render";
+import { renderDocument } from "./document";
+import { LRUCache } from "./lru-cache";
+import { createLogger } from "@semajsx/logger";
+import type {
+  App,
+  AppConfig,
+  BuildOptions,
+  BuildResult,
+  DevOptions,
+  IslandMetadata,
+  RenderResult,
+  RouteHandler,
+} from "./shared/types";
+
+const logger = createLogger({ prefix: "App" });
+
+/**
+ * Internal App implementation
+ */
+class AppImpl implements App {
+  readonly config: AppConfig;
+
+  private _routes: Map<string, RouteHandler> = new Map();
+  private _viteServer: ViteDevServer | null = null;
+  private _islandCache: LRUCache<string, IslandMetadata>;
+  private _initialized = false;
+
+  constructor(config: AppConfig = {}) {
+    this.config = {
+      root: process.cwd(),
+      ...config,
+      islands: {
+        basePath: "/islands",
+        cache: true,
+        cacheSize: 1000,
+        ...config.islands,
+      },
+    };
+
+    this._islandCache = new LRUCache(this.config.islands?.cacheSize ?? 1000);
+
+    // Register initial routes
+    if (config.routes) {
+      this.routes(config.routes);
+    }
+  }
+
+  route(path: string, handler: RouteHandler): this {
+    this._routes.set(path, handler);
+    return this;
+  }
+
+  routes(routes: Record<string, RouteHandler>): this {
+    for (const [path, handler] of Object.entries(routes)) {
+      this._routes.set(path, handler);
+    }
+    return this;
+  }
+
+  async prepare(): Promise<void> {
+    if (this._initialized) return;
+
+    logger.info("Initializing app with Vite dev server...");
+
+    const baseViteConfig: ViteUserConfig = {
+      root: this.config.root,
+      server: {
+        middlewareMode: true,
+      },
+      appType: "custom",
+      optimizeDeps: {
+        // Don't pre-bundle semajsx packages - load from source
+        exclude: [
+          "@semajsx/core",
+          "@semajsx/dom",
+          "@semajsx/signal",
+          "@semajsx/server",
+        ],
+      },
+      resolve: {
+        conditions: ["browser", "development", "import"],
+      },
+      plugins: [this._createVirtualIslandsPlugin()],
+    };
+
+    // Merge user Vite config
+    const finalConfig = this.config.vite
+      ? mergeConfig(baseViteConfig, this.config.vite)
+      : baseViteConfig;
+
+    this._viteServer = await createServer(finalConfig);
+    this._initialized = true;
+
+    logger.info("App initialized successfully");
+  }
+
+  async close(): Promise<void> {
+    if (this._viteServer) {
+      await this._viteServer.close();
+      this._viteServer = null;
+    }
+    this._initialized = false;
+    logger.info("App closed");
+  }
+
+  async render(path: string): Promise<RenderResult> {
+    // Match route
+    const { handler, params } = this._matchRoute(path);
+    if (!handler) {
+      throw new Error(`No route found for path: ${path}`);
+    }
+
+    // Execute handler to get VNode
+    const vnode = handler(params);
+
+    // Render to string with island detection
+    const result = renderToString(vnode, {
+      islandBasePath: this.config.islands?.basePath,
+    });
+
+    // Cache islands
+    if (this.config.islands?.cache) {
+      for (const island of result.islands) {
+        this._islandCache.set(island.id, island);
+      }
+    }
+
+    // Render with document template if provided
+    if (this.config.document) {
+      const documentVNode = this.config.document({
+        children: result.html,
+        scripts: result.scripts,
+        islands: result.islands,
+        path,
+        title: this.config.title,
+        meta: this.config.meta,
+      });
+
+      return {
+        ...result,
+        document: renderDocument(documentVNode),
+      };
+    }
+
+    return result;
+  }
+
+  async dev(
+    options: DevOptions = {},
+  ): Promise<{ port: number; close: () => Promise<void> }> {
+    const { port = 3000, host = "localhost", open = false } = options;
+
+    await this.prepare();
+
+    // Create HTTP server
+    const server = Bun.serve({
+      port,
+      hostname: host,
+      fetch: async (req) => this.handleRequest(req),
+    });
+
+    logger.info(`Development server running at http://${host}:${port}`);
+
+    if (open) {
+      // Open browser (platform-specific)
+      const openCmd =
+        process.platform === "darwin"
+          ? "open"
+          : process.platform === "win32"
+            ? "start"
+            : "xdg-open";
+      Bun.spawn([openCmd, `http://${host}:${port}`]);
+    }
+
+    return {
+      port,
+      close: async () => {
+        server.stop();
+        await this.close();
+      },
+    };
+  }
+
+  async build(options: BuildOptions = {}): Promise<BuildResult> {
+    const {
+      outDir = "dist",
+      mode = "full",
+      minify = true,
+      sourcemap = false,
+      onIslandBuilt,
+    } = options;
+
+    logger.info(`Building for production (mode: ${mode})...`);
+
+    const builtIslands: BuildResult["islands"] = [];
+    const manifest: BuildResult["manifest"] = {
+      islands: {},
+      routes: Array.from(this._routes.keys()),
+    };
+
+    if (mode === "full") {
+      // Pre-render all routes to collect islands
+      const allIslands = new Map<string, IslandMetadata>();
+
+      for (const [path] of this._routes) {
+        try {
+          const result = await this.render(path);
+          for (const island of result.islands) {
+            if (!allIslands.has(island.path)) {
+              allIslands.set(island.path, island);
+            }
+          }
+        } catch (error) {
+          logger.warn(`Failed to pre-render route ${path}: ${String(error)}`);
+        }
+      }
+
+      // Build each island
+      for (const [, island] of allIslands) {
+        const outputPath = `${outDir}/islands/${island.id}.js`;
+
+        const baseConfig: ViteUserConfig = {
+          root: this.config.root,
+          build: {
+            outDir: `${outDir}/islands`,
+            lib: {
+              entry: island.path.replace("file://", ""),
+              name: island.id,
+              fileName: island.id,
+              formats: ["es"],
+            },
+            minify,
+            sourcemap,
+            rollupOptions: {
+              external: ["@semajsx/core", "@semajsx/dom", "@semajsx/signal"],
+            },
+          },
+        };
+
+        const finalConfig = options.vite
+          ? mergeConfig(baseConfig, options.vite)
+          : baseConfig;
+
+        await viteBuild(finalConfig);
+
+        builtIslands.push({
+          id: island.id,
+          path: island.path,
+          outputPath,
+        });
+
+        manifest.islands[island.id] = outputPath;
+
+        if (onIslandBuilt) {
+          onIslandBuilt(island);
+        }
+
+        logger.info(`Built island: ${island.id}`);
+      }
+    }
+
+    logger.info(`Build complete. Output: ${outDir}`);
+
+    return {
+      outDir,
+      islands: builtIslands,
+      manifest,
+    };
+  }
+
+  async handleRequest(request: Request): Promise<Response> {
+    const url = new URL(request.url);
+    const pathname = url.pathname;
+
+    // Handle Vite module requests (/@fs/, /@vite/, /node_modules/, etc.)
+    if (
+      pathname.startsWith("/@") ||
+      pathname.startsWith("/node_modules/") ||
+      pathname.includes("@vite")
+    ) {
+      const result = await this._handleModuleRequest(pathname);
+      if (result) {
+        return new Response(result.code, {
+          headers: { "Content-Type": "application/javascript" },
+        });
+      }
+    }
+
+    // Handle island entry points
+    const islandBasePath = this.config.islands?.basePath ?? "/islands";
+    if (pathname.startsWith(islandBasePath)) {
+      const match = pathname.match(new RegExp(`${islandBasePath}/(.+)\\.js`));
+      if (match && match[1]) {
+        const islandId = match[1];
+        try {
+          const code = await this.getIslandEntryPoint(islandId);
+          return new Response(code, {
+            headers: { "Content-Type": "application/javascript" },
+          });
+        } catch {
+          return new Response("Island not found", { status: 404 });
+        }
+      }
+    }
+
+    // Handle page requests
+    try {
+      const result = await this.render(pathname);
+      return new Response(result.document || result.html, {
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("No route found")) {
+        return new Response("Not Found", { status: 404 });
+      }
+      logger.error(`Request error: ${String(error)}`);
+      return new Response("Internal Server Error", { status: 500 });
+    }
+  }
+
+  getViteServer(): ViteDevServer | null {
+    return this._viteServer;
+  }
+
+  async getIslandEntryPoint(islandId: string): Promise<string> {
+    const island = this._islandCache.get(islandId);
+    if (!island) {
+      throw new Error(`Island not found: ${islandId}`);
+    }
+
+    // Generate entry point code
+    const entryCode = `
+import { hydrate } from '@semajsx/dom';
+import { markIslandHydrated } from '@semajsx/server/client';
+import Component from '${island.path}';
+
+const container = document.querySelector('[data-island-id="${islandId}"]');
+if (container) {
+  const props = JSON.parse(container.getAttribute('data-island-props') || '{}');
+  hydrate(<Component {...props} />, container);
+  markIslandHydrated('${islandId}');
+}
+`;
+
+    // Transform through Vite if available
+    if (this._viteServer) {
+      const result = await this._viteServer.transformRequest(
+        `virtual:island-entry:${islandId}`,
+      );
+      if (result) {
+        return result.code;
+      }
+    }
+
+    return entryCode;
+  }
+
+  getIsland(islandId: string): IslandMetadata | undefined {
+    return this._islandCache.get(islandId);
+  }
+
+  // Private methods
+
+  private _matchRoute(path: string): {
+    handler: RouteHandler | undefined;
+    params: Record<string, string>;
+  } {
+    // Exact match first
+    const exactHandler = this._routes.get(path);
+    if (exactHandler) {
+      return { handler: exactHandler, params: {} };
+    }
+
+    // Dynamic route matching
+    for (const [pattern, handler] of this._routes) {
+      const params = this._matchDynamicRoute(pattern, path);
+      if (params) {
+        return { handler, params };
+      }
+    }
+
+    return { handler: undefined, params: {} };
+  }
+
+  private _matchDynamicRoute(
+    pattern: string,
+    path: string,
+  ): Record<string, string> | null {
+    const patternParts = pattern.split("/").filter(Boolean);
+    const pathParts = path.split("/").filter(Boolean);
+
+    if (patternParts.length !== pathParts.length) {
+      return null;
+    }
+
+    const params: Record<string, string> = {};
+
+    for (let i = 0; i < patternParts.length; i++) {
+      const patternPart = patternParts[i]!;
+      const pathPart = pathParts[i]!;
+
+      if (patternPart.startsWith(":")) {
+        params[patternPart.slice(1)] = pathPart;
+      } else if (patternPart !== pathPart) {
+        return null;
+      }
+    }
+
+    return params;
+  }
+
+  private async _handleModuleRequest(
+    url: string,
+  ): Promise<{ code: string } | null> {
+    if (!this._viteServer) return null;
+
+    try {
+      const result = await this._viteServer.transformRequest(url);
+      if (result) {
+        return { code: result.code };
+      }
+    } catch (error) {
+      logger.error(`Failed to transform module ${url}: ${String(error)}`);
+    }
+
+    return null;
+  }
+
+  private _createVirtualIslandsPlugin() {
+    const islandCache = this._islandCache;
+
+    return {
+      name: "semajsx-virtual-islands",
+      resolveId(id: string) {
+        if (id.startsWith("virtual:island-entry:")) {
+          return id;
+        }
+        return null;
+      },
+      load(id: string) {
+        if (id.startsWith("virtual:island-entry:")) {
+          const islandId = id.replace("virtual:island-entry:", "");
+          const island = islandCache.get(islandId);
+
+          if (!island) {
+            return null;
+          }
+
+          return `
+import { hydrate } from '@semajsx/dom';
+import { markIslandHydrated } from '@semajsx/server/client';
+import Component from '${island.path}';
+
+const container = document.querySelector('[data-island-id="${islandId}"]');
+if (container) {
+  const props = JSON.parse(container.getAttribute('data-island-props') || '{}');
+  hydrate(<Component {...props} />, container);
+  markIslandHydrated('${islandId}');
+}
+`;
+        }
+        return null;
+      },
+    };
+  }
+}
+
+/**
+ * Create app from build output (for production)
+ */
+async function fromBuild(_buildDir: string): Promise<App> {
+  // TODO: Implement loading from build manifest
+  throw new Error("fromBuild is not yet implemented");
+}
+
+/**
+ * Create a new SemaJSX app
+ */
+export const createApp: {
+  (config?: AppConfig): App;
+  fromBuild: typeof fromBuild;
+} = Object.assign(
+  function (config?: AppConfig): App {
+    return new AppImpl(config);
+  },
+  { fromBuild },
+);

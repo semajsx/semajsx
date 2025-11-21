@@ -2,13 +2,16 @@
  * Server-side utilities for SSR with Island architecture
  */
 
+// Main App API (recommended)
+export { createApp } from "./app";
+
 // Island marking
 export { island, isIslandComponent, isIslandVNode } from "./island";
 
 // SSR rendering
 export { renderToString } from "./render";
 
-// Router (Vite-powered)
+// Router (Vite-powered) - legacy API, use createApp instead
 export { createViteRouter, ViteRouter } from "./vite-router";
 
 // Builder (for advanced usage)
@@ -30,4 +33,11 @@ export type {
   RouteHandler,
   RouterConfig,
   DocumentTemplate,
+  // New App API types
+  App,
+  AppConfig,
+  BuildOptions,
+  DevOptions,
+  BuildResult,
+  RenderResult,
 } from "./shared/types";
