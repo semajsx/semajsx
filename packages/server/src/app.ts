@@ -308,6 +308,17 @@ class AppImpl implements App {
       }
     }
 
+    // Handle source file requests (.ts, .tsx, .js, .jsx)
+    if (/\.(tsx?|jsx?)$/.test(pathname)) {
+      const result = await this._handleModuleRequest(pathname);
+      if (result) {
+        return new Response(result.code, {
+          headers: { "Content-Type": "application/javascript" },
+        });
+      }
+      return new Response("Not Found", { status: 404 });
+    }
+
     // Handle island entry points
     const islandBasePath = this.config.islands?.basePath ?? "/islands";
     if (pathname.startsWith(islandBasePath)) {
