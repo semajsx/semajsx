@@ -41,10 +41,45 @@ export interface IslandMarker {
   props: any;
 }
 
+// ========================
+// Route Param Type Inference
+// ========================
+
 /**
- * Route handler function
+ * Extract route params from a route pattern
+ * e.g., "/post/:id" -> { id: string }
+ * e.g., "/user/:userId/post/:postId" -> { userId: string; postId: string }
  */
-export type RouteHandler = (params?: Record<string, string>) => VNode;
+export type ExtractRouteParams<T extends string> =
+  T extends `${string}:${infer Param}/${infer Rest}`
+    ? { [K in Param]: string } & ExtractRouteParams<Rest>
+    : T extends `${string}:${infer Param}`
+      ? { [K in Param]: string }
+      : {};
+
+/**
+ * Simplify intersection types for better IDE display
+ */
+type Prettify<T> = { [K in keyof T]: T[K] } & {};
+
+/**
+ * Route handler function (basic)
+ */
+export type RouteHandler = (params: Record<string, string>) => VNode;
+
+/**
+ * Route handler with inferred params
+ */
+export type RouteHandlerWithParams<T extends string> = (
+  params: Prettify<ExtractRouteParams<T>>,
+) => VNode;
+
+/**
+ * Routes object with type-safe handlers
+ */
+export type TypedRoutes<T extends Record<string, RouteHandler>> = {
+  [K in keyof T]: K extends string ? RouteHandlerWithParams<K> : never;
+};
 
 /**
  * Document template function for rendering complete HTML documents
@@ -97,7 +132,7 @@ export interface RouterConfig {
  * App configuration
  */
 export interface AppConfig {
-  /** Route definitions */
+  /** Route definitions (use app.route() for type-safe params) */
   routes?: Record<string, RouteHandler>;
 
   /** Vite configuration (fully exposed) */
@@ -196,11 +231,13 @@ export interface App {
   /** App configuration */
   readonly config: AppConfig;
 
-  /** Register a route */
-  route(path: string, handler: RouteHandler): this;
+  /** Register a route with type-safe params */
+  route<T extends string>(path: T, handler: RouteHandlerWithParams<T>): this;
 
   /** Register multiple routes */
-  routes(routes: Record<string, RouteHandler>): this;
+  routes<T extends Record<string, RouteHandler>>(
+    routes: T & TypedRoutes<T>,
+  ): this;
 
   /** Initialize the app (Vite dev server) */
   prepare(): Promise<void>;

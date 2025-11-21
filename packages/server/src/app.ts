@@ -23,6 +23,8 @@ import type {
   IslandMetadata,
   RenderResult,
   RouteHandler,
+  RouteHandlerWithParams,
+  TypedRoutes,
 } from "./shared/types";
 
 const logger = createLogger({ prefix: "App" });
@@ -58,12 +60,14 @@ class AppImpl implements App {
     }
   }
 
-  route(path: string, handler: RouteHandler): this {
-    this._routes.set(path, handler);
+  route<T extends string>(path: T, handler: RouteHandlerWithParams<T>): this {
+    this._routes.set(path, handler as unknown as RouteHandler);
     return this;
   }
 
-  routes(routes: Record<string, RouteHandler>): this {
+  routes<T extends Record<string, RouteHandler>>(
+    routes: T & TypedRoutes<T>,
+  ): this {
     for (const [path, handler] of Object.entries(routes)) {
       this._routes.set(path, handler);
     }
