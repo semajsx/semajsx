@@ -82,49 +82,20 @@ class AppImpl implements App {
       },
       appType: "custom",
       optimizeDeps: {
-        // Include semajsx packages for pre-bundling (better browser compatibility)
-        include: [
+        // Disable optimization for semajsx to use source directly in development
+        exclude: [
+          "semajsx",
           "@semajsx/core",
           "@semajsx/dom",
           "@semajsx/signal",
-          "@semajsx/server/client",
+          "@semajsx/server",
         ],
-        // Exclude native modules that cause issues
-        exclude: ["lightningcss", "fsevents", "rollup"],
       },
       resolve: {
-        conditions: ["browser", "development", "import"],
+        // Ensure Vite respects package.json "exports" field with conditions
+        conditions: ["browser", "development", "module", "import", "default"],
       },
-      plugins: [
-        this._createVirtualIslandsPlugin(),
-        // Prevent Rollup and Node.js built-ins from being loaded in browser
-        {
-          name: "semajsx-browser-externals",
-          enforce: "pre" as const,
-          resolveId(id: string) {
-            // Block Rollup from being loaded in browser
-            if (id.includes("rollup") || id.includes("parseAst")) {
-              return { id: "\0empty-module", external: false };
-            }
-            // Block Node.js built-ins
-            if (
-              id.startsWith("node:") ||
-              id === "path" ||
-              id === "fs" ||
-              id === "url"
-            ) {
-              return { id: "\0empty-module", external: false };
-            }
-            return null;
-          },
-          load(id: string) {
-            if (id === "\0empty-module") {
-              return "export default {};";
-            }
-            return null;
-          },
-        },
-      ],
+      plugins: [this._createVirtualIslandsPlugin()],
       // Exclude problematic native modules from SSR bundling
       ssr: {
         noExternal: ["@semajsx/core", "@semajsx/dom", "@semajsx/signal"],
