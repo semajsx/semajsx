@@ -88,12 +88,21 @@ class AppImpl implements App {
           "@semajsx/dom",
           "@semajsx/signal",
           "@semajsx/server",
+          // Exclude native modules that cause issues
+          "lightningcss",
+          "fsevents",
+          "rollup",
         ],
       },
       resolve: {
         conditions: ["browser", "development", "import"],
       },
       plugins: [this._createVirtualIslandsPlugin()],
+      // Exclude problematic native modules from SSR bundling
+      ssr: {
+        noExternal: ["@semajsx/core", "@semajsx/dom", "@semajsx/signal"],
+        external: ["lightningcss", "fsevents"],
+      },
     };
 
     // Merge user Vite config
