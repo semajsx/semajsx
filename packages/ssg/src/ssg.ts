@@ -1,5 +1,5 @@
 import { mkdir, writeFile, rm } from "fs/promises";
-import { join, dirname } from "path";
+import { join, dirname, resolve } from "path";
 import { renderToString, renderDocument } from "@semajsx/server";
 import { DefaultDocument } from "./document";
 import {
@@ -22,14 +22,20 @@ import { MDXProcessor } from "./mdx";
  */
 export class SSG implements SSGInstance {
   private config: SSGConfig;
+  private rootDir: string;
   private collections: Map<string, Collection>;
   private entriesCache: Map<string, CollectionEntry[]>;
   private mdxProcessor: MDXProcessor;
 
   constructor(config: SSGConfig) {
+    // Resolve rootDir - defaults to process.cwd() but should be set to script location
+    this.rootDir = config.rootDir ?? process.cwd();
+
     this.config = {
       base: "/",
       ...config,
+      // Resolve outDir relative to rootDir
+      outDir: resolve(this.rootDir, config.outDir),
     };
     this.collections = new Map();
     this.entriesCache = new Map();
@@ -39,6 +45,13 @@ export class SSG implements SSGInstance {
     for (const collection of config.collections ?? []) {
       this.collections.set(collection.name, collection);
     }
+  }
+
+  /**
+   * Get the root directory for resolving paths
+   */
+  getRootDir(): string {
+    return this.rootDir;
   }
 
   /**

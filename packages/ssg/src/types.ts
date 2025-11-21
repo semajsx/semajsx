@@ -149,6 +149,8 @@ export type DocumentTemplate = (props: DocumentProps) => VNode;
 export interface SSGConfig {
   /** Output directory for built files */
   outDir: string;
+  /** Root directory for resolving relative paths (defaults to script location) */
+  rootDir?: string;
   /** Base URL path */
   base?: string;
   /** Collections to include */
@@ -218,6 +220,9 @@ export interface Watcher {
 // =============================================================================
 
 export interface SSGInstance {
+  /** Get the root directory for resolving paths */
+  getRootDir(): string;
+
   /** Get all entries from a collection */
   getCollection<T = unknown>(name: string): Promise<CollectionEntry<T>[]>;
 

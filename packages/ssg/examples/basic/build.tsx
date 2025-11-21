@@ -3,12 +3,18 @@
 import { createSSG, defineCollection, fileSource, z } from "@semajsx/ssg";
 import type { VNode } from "@semajsx/core";
 
+// Get the directory where this script is located
+const rootDir = import.meta.dir;
+
 // Define blog collection
 const blog = defineCollection({
   name: "blog",
-  source: fileSource({
-    directory: "content/blog",
-  }),
+  source: fileSource(
+    {
+      directory: "content/blog",
+    },
+    rootDir,
+  ),
   schema: z.object({
     title: z.string(),
     date: z.coerce.date(),
@@ -55,6 +61,7 @@ const BlogPost = ({
 
 // Create SSG instance
 const ssg = createSSG({
+  rootDir,
   outDir: "./dist",
   collections: [blog],
   routes: [

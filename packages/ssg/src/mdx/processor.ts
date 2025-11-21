@@ -33,10 +33,14 @@ export class MDXProcessor {
       jsxImportSource: "@semajsx/dom",
     });
 
+    // Dynamic import of JSX runtime
+    const jsxRuntime = await import("@semajsx/dom/jsx-runtime");
+
     // Create the Content component
     const Content = this.createComponent(
       String(compiled),
       this.config.components ?? {},
+      jsxRuntime,
     );
 
     return {
@@ -52,14 +56,12 @@ export class MDXProcessor {
   private createComponent(
     code: string,
     components: Record<string, (props: Record<string, unknown>) => VNode>,
+    jsxRuntime: unknown,
   ): (props?: Record<string, unknown>) => VNode {
     // Import JSX runtime
     // This will be resolved at runtime
     return (props: Record<string, unknown> = {}) => {
       try {
-        // Dynamic import of JSX runtime
-        const jsxRuntime = require("@semajsx/dom/jsx-runtime");
-
         // Create a function that returns the MDX content
         // MDX compiled code expects jsx runtime in arguments[0]
         // eslint-disable-next-line @typescript-eslint/no-implied-eval
