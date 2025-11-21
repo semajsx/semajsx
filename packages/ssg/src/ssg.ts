@@ -3,6 +3,7 @@ import { join, dirname, resolve } from "path";
 import { createApp, renderDocument } from "@semajsx/server";
 import type { App, RouteContext } from "@semajsx/server";
 import { DefaultDocument } from "./document";
+import type { VNode } from "@semajsx/core";
 import {
   RawHTML,
   type SSGConfig,
@@ -28,6 +29,7 @@ export class SSG implements SSGInstance {
   private collections: Map<string, Collection>;
   private entriesCache: Map<string, CollectionEntry[]>;
   private app: App;
+  private mdxModules: Map<string, string> = new Map();
 
   constructor(config: SSGConfig) {
     // Resolve rootDir
@@ -41,11 +43,29 @@ export class SSG implements SSGInstance {
     this.collections = new Map();
     this.entriesCache = new Map();
 
-    // Create App with MDX plugin
+    // Create App with MDX plugins
     this.app = createApp({
       root: this.rootDir,
       vite: {
-        plugins: [viteMDXPlugin(config.mdx ?? {})],
+        plugins: [
+          // Virtual MDX content modules
+          {
+            name: "ssg-virtual-mdx",
+            resolveId: (id: string) => {
+              if (id.startsWith("virtual:mdx:")) {
+                return "\0" + id;
+              }
+            },
+            load: (id: string) => {
+              if (id.startsWith("\0virtual:mdx:")) {
+                const mdxId = id.replace("\0virtual:mdx:", "");
+                return this.mdxModules.get(mdxId);
+              }
+            },
+          },
+          // MDX compiler plugin
+          viteMDXPlugin(config.mdx ?? {}),
+        ],
       },
     });
 
@@ -85,29 +105,37 @@ export class SSG implements SSGInstance {
         ...entry,
         data: result.data,
         render: async () => {
-          // TODO: Use Vite to transform MDX with imports
-          // For now, return a simple component from body
-          const { h } = await import("@semajsx/dom");
+          // Get Vite server from app
+          const vite = this.app.getViteServer();
+          if (!vite) {
+            throw new Error("Vite server not initialized");
+          }
 
-          // Parse markdown to simple HTML (basic implementation)
-          const html = entry.body
-            .replace(/^### (.+)$/gm, "<h3>$1</h3>")
-            .replace(/^## (.+)$/gm, "<h2>$1</h2>")
-            .replace(/^# (.+)$/gm, "<h1>$1</h1>")
-            .replace(/\n\n/g, "</p><p>")
-            .replace(/^(.+)$/gm, "<p>$1</p>")
-            .replace(/<p><h/g, "<h")
-            .replace(/<\/h(\d)><\/p>/g, "</h$1>");
+          // Store MDX content as virtual module
+          const mdxId = `${name}/${entry.id}.mdx`;
+          this.mdxModules.set(mdxId, entry.body);
 
-          const Content = () =>
-            h("div", {
-              dangerouslySetInnerHTML: { __html: html },
-            });
+          try {
+            // Load module through Vite SSR
+            const moduleExports = (await vite.ssrLoadModule(
+              `virtual:mdx:${mdxId}`,
+            )) as {
+              default: (props: Record<string, unknown>) => unknown;
+            };
 
-          return {
-            Content,
-            headings: this.extractHeadings(entry.body),
-          };
+            const Content = (props: Record<string, unknown> = {}): VNode =>
+              moduleExports.default({
+                ...props,
+                components: this.config.mdx?.components ?? {},
+              }) as VNode;
+
+            return {
+              Content,
+              headings: this.extractHeadings(entry.body),
+            };
+          } finally {
+            this.mdxModules.delete(mdxId);
+          }
         },
       };
     });
