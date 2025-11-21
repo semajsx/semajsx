@@ -90,7 +90,7 @@ export interface RouterConfig {
 }
 
 // ========================
-// New App API Types
+// App API Types
 // ========================
 
 /**

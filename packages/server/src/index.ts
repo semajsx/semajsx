@@ -33,7 +33,7 @@ export type {
   RouteHandler,
   RouterConfig,
   DocumentTemplate,
-  // New App API types
+  // App API types
   App,
   AppConfig,
   BuildOptions,

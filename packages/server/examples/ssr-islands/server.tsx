@@ -12,7 +12,7 @@ const startupLogger = createLogger({
 
 /**
  * SSR Islands Server with Vite
- * Uses the new createApp API for simplified setup
+ * Uses the createApp API for simplified setup
  */
 
 // Custom HTML document template (JSX!)
@@ -101,7 +101,7 @@ startupLogger.info(`Server running at: http://localhost:${server.port}`);
 startupLogger.blank();
 startupLogger
   .group("Features", { borderColor: "green" })
-  .info("✓ New createApp API for simplified setup")
+  .info("✓ createApp API for simplified setup")
   .info("✓ Full Vite config exposure")
   .info("✓ Unified handleRequest for all routes")
   .info("✓ Built-in build() for production")
