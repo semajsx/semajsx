@@ -42,44 +42,23 @@ export interface IslandMarker {
 }
 
 // ========================
-// Route Param Type Inference
+// Route Context Types
 // ========================
 
 /**
- * Extract route params from a route pattern
- * e.g., "/post/:id" -> { id: string }
- * e.g., "/user/:userId/post/:postId" -> { userId: string; postId: string }
+ * Route context passed to route handlers
  */
-export type ExtractRouteParams<T extends string> =
-  T extends `${string}:${infer Param}/${infer Rest}`
-    ? { [K in Param]: string } & ExtractRouteParams<Rest>
-    : T extends `${string}:${infer Param}`
-      ? { [K in Param]: string }
-      : {};
+export interface RouteContext {
+  /** Route parameters (e.g., /post/:id → { id: "123" }) */
+  params: Record<string, string>;
+  /** Query string parameters (e.g., ?q=test → { q: "test" }) */
+  query: Record<string, string>;
+}
 
 /**
- * Simplify intersection types for better IDE display
+ * Route handler function
  */
-type Prettify<T> = { [K in keyof T]: T[K] } & {};
-
-/**
- * Route handler function (basic)
- */
-export type RouteHandler = (params: Record<string, string>) => VNode;
-
-/**
- * Route handler with inferred params
- */
-export type RouteHandlerWithParams<T extends string> = (
-  params: Prettify<ExtractRouteParams<T>>,
-) => VNode;
-
-/**
- * Routes object with type-safe handlers
- */
-export type TypedRoutes<T extends Record<string, RouteHandler>> = {
-  [K in keyof T]: K extends string ? RouteHandlerWithParams<K> : never;
-};
+export type RouteHandler = (context: RouteContext) => VNode;
 
 /**
  * Document template function for rendering complete HTML documents
@@ -231,13 +210,11 @@ export interface App {
   /** App configuration */
   readonly config: AppConfig;
 
-  /** Register a route with type-safe params */
-  route<T extends string>(path: T, handler: RouteHandlerWithParams<T>): this;
+  /** Register a route */
+  route(path: string, handler: RouteHandler): this;
 
   /** Register multiple routes */
-  routes<T extends Record<string, RouteHandler>>(
-    routes: T & TypedRoutes<T>,
-  ): this;
+  routes(routes: Record<string, RouteHandler>): this;
 
   /** Initialize the app (Vite dev server) */
   prepare(): Promise<void>;

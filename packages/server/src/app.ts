@@ -22,9 +22,8 @@ import type {
   DevOptions,
   IslandMetadata,
   RenderResult,
+  RouteContext,
   RouteHandler,
-  RouteHandlerWithParams,
-  TypedRoutes,
 } from "./shared/types";
 
 const logger = createLogger({ prefix: "App" });
@@ -60,14 +59,12 @@ class AppImpl implements App {
     }
   }
 
-  route<T extends string>(path: T, handler: RouteHandlerWithParams<T>): this {
-    this._routes.set(path, handler as unknown as RouteHandler);
+  route(path: string, handler: RouteHandler): this {
+    this._routes.set(path, handler);
     return this;
   }
 
-  routes<T extends Record<string, RouteHandler>>(
-    routes: T & TypedRoutes<T>,
-  ): this {
+  routes(routes: Record<string, RouteHandler>): this {
     for (const [path, handler] of Object.entries(routes)) {
       this._routes.set(path, handler);
     }
@@ -128,14 +125,25 @@ class AppImpl implements App {
   }
 
   async render(path: string): Promise<RenderResult> {
+    // Parse path and query string
+    const [pathname, queryString] = path.split("?");
+    const query: Record<string, string> = {};
+    if (queryString) {
+      const searchParams = new URLSearchParams(queryString);
+      for (const [key, value] of searchParams) {
+        query[key] = value;
+      }
+    }
+
     // Match route
-    const { handler, params } = this._matchRoute(path);
+    const { handler, params } = this._matchRoute(pathname || "/");
     if (!handler) {
       throw new Error(`No route found for path: ${path}`);
     }
 
     // Execute handler to get VNode
-    const vnode = handler(params);
+    const context: RouteContext = { params, query };
+    const vnode = handler(context);
 
     // Render to string with island detection
     const result = renderToString(vnode, {
