@@ -96,6 +96,14 @@ class AppImpl implements App {
       },
       resolve: {
         conditions: ["browser", "development", "import"],
+        alias: {
+          // Stub out Node.js built-ins for browser
+          "node:path": "/@id/__vite-browser-external:path",
+          "node:fs": "/@id/__vite-browser-external:fs",
+          "node:url": "/@id/__vite-browser-external:url",
+          path: "/@id/__vite-browser-external:path",
+          fs: "/@id/__vite-browser-external:fs",
+        },
       },
       plugins: [this._createVirtualIslandsPlugin()],
       // Exclude problematic native modules from SSR bundling
