@@ -377,8 +377,7 @@ class AppImpl implements App {
 
     // Generate entry point code (use h() instead of JSX since this is runtime-generated)
     const entryCode = `
-import { hydrate } from '@semajsx/dom';
-import { h } from '@semajsx/core';
+import { hydrate, h } from '@semajsx/dom';
 import { markIslandHydrated } from '@semajsx/server/client';
 import Component from '${componentPath}';
 
@@ -521,8 +520,7 @@ if (container) {
           const componentPath = normalizeModulePath(island.path);
 
           return `
-import { hydrate } from '@semajsx/dom';
-import { h } from '@semajsx/core';
+import { hydrate, h } from '@semajsx/dom';
 import { markIslandHydrated } from '@semajsx/server/client';
 import Component from '${componentPath}';
 
