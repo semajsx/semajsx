@@ -8,10 +8,7 @@
   "types": "./dist/index.d.mts",
   "exports": {
     ".": "./src/index.ts",
-    "./client": {
-      "browser": "./src/client/browser.ts",
-      "default": "./src/client/index.ts"
-    },
+    "./client": "./src/client/index.ts",
     "./package.json": "./package.json"
   },
   "files": [
