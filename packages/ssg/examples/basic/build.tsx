@@ -50,12 +50,14 @@ const BlogIndex = ({
 
 const BlogPost = ({
   post,
+  content,
 }: {
   post: { data: { title: string }; body: string };
+  content: VNode;
 }): VNode => (
   <article>
     <h1>{post.data.title}</h1>
-    <pre>{post.body}</pre>
+    <div>{content}</div>
   </article>
 );
 
@@ -85,9 +87,10 @@ const ssg = createSSG({
         const posts = await ssg.getCollection("blog");
         return Promise.all(
           posts.map(async (post) => {
+            const { Content } = await post.render();
             return {
               params: { slug: post.slug },
-              props: { post, title: post.data.title },
+              props: { post, content: Content(), title: post.data.title },
             };
           }),
         );

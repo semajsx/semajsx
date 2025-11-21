@@ -62,17 +62,19 @@ export class MDXProcessor {
     // This will be resolved at runtime
     return (props: Record<string, unknown> = {}) => {
       try {
-        // Create a function that returns the MDX content
+        // Create a function from the MDX compiled code
         // MDX compiled code expects jsx runtime in arguments[0]
+        // By using new Function() with no parameters, we can pass
+        // the runtime via call() and it becomes arguments[0]
         // eslint-disable-next-line @typescript-eslint/no-implied-eval
-        const fn = new Function(
-          "arguments",
-          `${code}
-          return MDXContent;`,
-        );
+        const fn = new Function(code + "\nreturn MDXContent;");
 
-        const MDXContent = fn([jsxRuntime]);
-        return MDXContent({ ...props, components });
+        // Call with jsxRuntime as arguments[0]
+        // MDX returns an object with default export
+        const result = fn.call(null, jsxRuntime) as {
+          default: (props: Record<string, unknown>) => VNode;
+        };
+        return result.default({ ...props, components });
       } catch (e) {
         // Fallback for when runtime is not available
         throw new Error(`MDX rendering failed: ${(e as Error).message}`);
