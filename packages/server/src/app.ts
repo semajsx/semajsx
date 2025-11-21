@@ -95,7 +95,36 @@ class AppImpl implements App {
       resolve: {
         conditions: ["browser", "development", "import"],
       },
-      plugins: [this._createVirtualIslandsPlugin()],
+      plugins: [
+        this._createVirtualIslandsPlugin(),
+        // Prevent Rollup and Node.js built-ins from being loaded in browser
+        {
+          name: "semajsx-browser-externals",
+          enforce: "pre" as const,
+          resolveId(id: string) {
+            // Block Rollup from being loaded in browser
+            if (id.includes("rollup") || id.includes("parseAst")) {
+              return { id: "\0empty-module", external: false };
+            }
+            // Block Node.js built-ins
+            if (
+              id.startsWith("node:") ||
+              id === "path" ||
+              id === "fs" ||
+              id === "url"
+            ) {
+              return { id: "\0empty-module", external: false };
+            }
+            return null;
+          },
+          load(id: string) {
+            if (id === "\0empty-module") {
+              return "export default {};";
+            }
+            return null;
+          },
+        },
+      ],
       // Exclude problematic native modules from SSR bundling
       ssr: {
         noExternal: ["@semajsx/core", "@semajsx/dom", "@semajsx/signal"],
