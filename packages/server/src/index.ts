@@ -27,6 +27,7 @@ export { DefaultDocument, renderDocument } from "./document";
 export type {
   IslandMetadata,
   SSRResult,
+  RouteContext,
   RouteHandler,
   RouterConfig,
   DocumentTemplate,
