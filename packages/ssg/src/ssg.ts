@@ -1,6 +1,7 @@
 import { mkdir, writeFile, rm } from "fs/promises";
 import { join, dirname } from "path";
-import { renderToString } from "@semajsx/server";
+import { renderToString, renderDocument } from "@semajsx/server";
+import { h } from "@semajsx/core";
 import type {
   SSGConfig,
   SSGInstance,
@@ -289,40 +290,46 @@ export class SSG implements SSGInstance {
     const vnode = route.component(props);
     const result = renderToString(vnode);
 
-    // Generate full HTML document
+    // Create document props
     const documentProps: DocumentProps = {
-      content: result.html,
+      children: result.html,
       title: props.title as string | undefined,
       base: this.config.base ?? "/",
       path,
       props,
     };
 
-    if (this.config.document) {
-      return this.config.document(documentProps);
-    }
+    // Use custom or default document template
+    const documentVNode = this.config.document
+      ? this.config.document(documentProps)
+      : this.defaultDocument(documentProps);
 
-    return this.defaultDocument(documentProps);
+    return renderDocument(documentVNode);
   }
 
   /**
    * Default document template
    */
-  private defaultDocument(props: DocumentProps): string {
-    const { content, title = "SSG Page", base } = props;
+  private defaultDocument(props: DocumentProps): ReturnType<typeof h> {
+    const { children, title = "SSG Page", base } = props;
 
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <base href="${base}">
-  <title>${title}</title>
-</head>
-<body>
-  <div id="root">${content}</div>
-</body>
-</html>`;
+    return h("html", { lang: "en" }, [
+      h("head", {}, [
+        h("meta", { charSet: "UTF-8" }),
+        h("meta", {
+          name: "viewport",
+          content: "width=device-width, initial-scale=1.0",
+        }),
+        h("base", { href: base }),
+        h("title", {}, [title]),
+      ]),
+      h("body", {}, [
+        h("div", {
+          id: "root",
+          dangerouslySetInnerHTML: { __html: children as string },
+        }),
+      ]),
+    ]);
   }
 
   /**

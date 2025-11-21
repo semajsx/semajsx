@@ -111,8 +111,8 @@ export interface MDXConfig {
 // =============================================================================
 
 export interface DocumentProps {
-  /** Rendered page content */
-  content: string;
+  /** Rendered page content (as JSX/VNode) */
+  children: VNode | string;
   /** Page title */
   title?: string;
   /** Base URL path */
@@ -123,7 +123,7 @@ export interface DocumentProps {
   props: Record<string, unknown>;
 }
 
-export type DocumentTemplate = (props: DocumentProps) => string;
+export type DocumentTemplate = (props: DocumentProps) => VNode;
 
 // =============================================================================
 // SSG Configuration
