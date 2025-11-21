@@ -362,14 +362,21 @@ class AppImpl implements App {
     // Normalize the component path for Vite
     const componentPath = this._normalizeModulePath(island.path);
 
+    // Get component name for import
+    const componentName = island.componentName;
+
     // Generate entry point code (use h() instead of JSX since this is runtime-generated)
     const entryCode = `
 import { hydrate, h } from '@semajsx/dom';
 import { markIslandHydrated } from '@semajsx/server/client';
-import Component from '${componentPath}';
+import * as ComponentModule from '${componentPath}';
+
+// Get the component (try named export first, then default, then first function)
+const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName} || ` : ""}ComponentModule.default ||
+                  Object.values(ComponentModule).find(exp => typeof exp === 'function');
 
 const container = document.querySelector('[data-island-id="${islandId}"]');
-if (container) {
+if (container && Component) {
   const props = JSON.parse(container.getAttribute('data-island-props') || '{}');
   hydrate(h(Component, props), container);
   markIslandHydrated('${islandId}');
@@ -505,14 +512,19 @@ if (container) {
           }
 
           const componentPath = normalizeModulePath(island.path);
+          const componentName = island.componentName;
 
           return `
 import { hydrate, h } from '@semajsx/dom';
 import { markIslandHydrated } from '@semajsx/server/client';
-import Component from '${componentPath}';
+import * as ComponentModule from '${componentPath}';
+
+// Get the component (try named export first, then default, then first function)
+const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName} || ` : ""}ComponentModule.default ||
+                  Object.values(ComponentModule).find(exp => typeof exp === 'function');
 
 const container = document.querySelector('[data-island-id="${islandId}"]');
-if (container) {
+if (container && Component) {
   const props = JSON.parse(container.getAttribute('data-island-props') || '{}');
   hydrate(h(Component, props), container);
   markIslandHydrated('${islandId}');
