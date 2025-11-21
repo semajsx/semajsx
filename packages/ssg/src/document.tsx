@@ -15,6 +15,6 @@ export const DefaultDocument: DocumentTemplate = ({
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>{title}</title>
     </head>
-    <body>{children.toVNode()}</body>
+    <body>{children}</body>
   </html>
 );

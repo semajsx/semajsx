@@ -111,27 +111,24 @@ export interface MDXConfig {
 // =============================================================================
 
 /**
- * Raw HTML content that can be used directly in JSX or converted to string
+ * Raw HTML VNode that can be used directly in JSX or converted to string
  */
 export class RawHTML {
-  constructor(public readonly html: string) {}
+  public readonly type = "div";
+  public readonly props: { dangerouslySetInnerHTML: { __html: string } };
+  public readonly children: never[] = [];
+
+  constructor(public readonly html: string) {
+    this.props = { dangerouslySetInnerHTML: { __html: html } };
+  }
 
   toString(): string {
     return this.html;
   }
-
-  /** Get a VNode that renders the raw HTML */
-  toVNode(): VNode {
-    return {
-      type: "div",
-      props: { dangerouslySetInnerHTML: { __html: this.html } },
-      children: [],
-    } as VNode;
-  }
 }
 
 export interface DocumentProps {
-  /** Rendered page content */
+  /** Rendered page content (VNode with toString) */
   children: RawHTML;
   /** Page title */
   title?: string;
