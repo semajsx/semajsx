@@ -14,6 +14,7 @@ export { createViteRouter, ViteRouter } from "./vite-router";
 // Builder (for advanced usage)
 export {
   createViteIslandBuilder,
+  ViteIslandBuilder,
   type ViteBuilderOptions,
 } from "./vite-builder";
 
