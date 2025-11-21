@@ -1,0 +1,326 @@
+import { mkdir, writeFile, rm } from "fs/promises";
+import { join, dirname } from "path";
+import type {
+  SSGConfig,
+  SSGInstance,
+  Collection,
+  CollectionEntry,
+  BuildOptions,
+  BuildResult,
+  BuildState,
+  WatchOptions,
+  Watcher,
+} from "./types";
+
+/**
+ * SSG (Static Site Generator) core class
+ */
+export class SSG implements SSGInstance {
+  private config: SSGConfig;
+  private collections: Map<string, Collection>;
+  private entriesCache: Map<string, CollectionEntry[]>;
+
+  constructor(config: SSGConfig) {
+    this.config = {
+      base: "/",
+      ...config,
+    };
+    this.collections = new Map();
+    this.entriesCache = new Map();
+
+    // Register collections
+    for (const collection of config.collections ?? []) {
+      this.collections.set(collection.name, collection);
+    }
+  }
+
+  /**
+   * Get all entries from a collection
+   */
+  async getCollection<T = unknown>(
+    name: string,
+  ): Promise<CollectionEntry<T>[]> {
+    const collection = this.collections.get(name);
+    if (!collection) {
+      throw new Error(`Collection "${name}" not found`);
+    }
+
+    // Check cache
+    if (this.entriesCache.has(name)) {
+      return this.entriesCache.get(name) as CollectionEntry<T>[];
+    }
+
+    // Load entries
+    const entries = await collection.source.getEntries();
+
+    // Validate with schema
+    const validatedEntries = entries.map((entry) => {
+      const result = collection.schema.safeParse(entry.data);
+      if (!result.success) {
+        throw new Error(
+          `Validation error in ${name}/${entry.id}: ${result.error.message}`,
+        );
+      }
+      return {
+        ...entry,
+        data: result.data,
+      };
+    });
+
+    // Cache entries
+    this.entriesCache.set(name, validatedEntries);
+
+    return validatedEntries as CollectionEntry<T>[];
+  }
+
+  /**
+   * Get a single entry from a collection
+   */
+  async getEntry<T = unknown>(
+    name: string,
+    id: string,
+  ): Promise<CollectionEntry<T> | null> {
+    const entries = await this.getCollection<T>(name);
+    return entries.find((e) => e.id === id || e.slug === id) ?? null;
+  }
+
+  /**
+   * Build the static site
+   */
+  async build(options: BuildOptions = {}): Promise<BuildResult> {
+    const { incremental = false } = options;
+    const outDir = this.config.outDir;
+
+    // Initialize build state
+    const state: BuildState = {
+      cursors: {},
+      pageHashes: {},
+      timestamp: Date.now(),
+    };
+
+    const stats = {
+      added: 0,
+      updated: 0,
+      deleted: 0,
+      unchanged: 0,
+    };
+
+    const builtPaths: string[] = [];
+
+    // Clear output directory (unless incremental)
+    if (!incremental) {
+      await rm(outDir, { recursive: true, force: true });
+    }
+    await mkdir(outDir, { recursive: true });
+
+    // Clear cache to ensure fresh data
+    this.entriesCache.clear();
+
+    // Generate all paths
+    const allPaths = await this.generateAllPaths();
+
+    // Build each path
+    for (const { path, props } of allPaths) {
+      const html = await this.renderPath(path, props);
+      const filePath = this.pathToFilePath(path);
+      const fullPath = join(outDir, filePath);
+
+      // Ensure directory exists
+      await mkdir(dirname(fullPath), { recursive: true });
+
+      // Write HTML file
+      await writeFile(fullPath, html);
+
+      builtPaths.push(path);
+      stats.added++;
+
+      // Update state
+      state.pageHashes[path] = this.hashContent(html);
+    }
+
+    // Update cursors for each collection
+    for (const [name, collection] of this.collections) {
+      if (collection.source.getChanges) {
+        state.cursors[name] = Date.now().toString();
+      }
+    }
+
+    return {
+      state,
+      paths: builtPaths,
+      stats,
+    };
+  }
+
+  /**
+   * Watch for changes and rebuild
+   */
+  watch(options: WatchOptions = {}): Watcher {
+    const unsubscribers: (() => void)[] = [];
+
+    // Watch each collection
+    for (const [name, collection] of this.collections) {
+      if (collection.source.watch) {
+        const unsubscribe = collection.source.watch(async (_changes) => {
+          try {
+            // Clear cache for this collection
+            this.entriesCache.delete(name);
+
+            // Incremental rebuild
+            const result = await this.build({ incremental: true });
+            options.onRebuild?.(result);
+          } catch (error) {
+            options.onError?.(error as Error);
+          }
+        });
+        unsubscribers.push(unsubscribe);
+      }
+    }
+
+    return {
+      close: () => {
+        for (const unsubscribe of unsubscribers) {
+          unsubscribe();
+        }
+      },
+    };
+  }
+
+  /**
+   * Generate all static paths from routes
+   */
+  private async generateAllPaths(): Promise<
+    Array<{ path: string; props: Record<string, unknown> }>
+  > {
+    const paths: Array<{ path: string; props: Record<string, unknown> }> = [];
+    const routes = this.config.routes ?? [];
+
+    for (const route of routes) {
+      if (route.getStaticPaths) {
+        // Dynamic route
+        const staticPaths = await route.getStaticPaths(this);
+        for (const sp of staticPaths) {
+          const path = this.applyParams(route.path, sp.params);
+          const props = {
+            ...sp.props,
+            params: sp.params,
+          };
+          paths.push({ path, props });
+        }
+      } else {
+        // Static route
+        let props: Record<string, unknown> = {};
+        if (typeof route.props === "function") {
+          props = await route.props(this);
+        } else if (route.props) {
+          props = route.props;
+        }
+        paths.push({ path: route.path, props });
+      }
+    }
+
+    return paths;
+  }
+
+  /**
+   * Render a path to HTML
+   */
+  private async renderPath(
+    path: string,
+    props: Record<string, unknown>,
+  ): Promise<string> {
+    const routes = this.config.routes ?? [];
+    const route = routes.find((r) => this.matchRoute(r.path, path));
+
+    if (!route) {
+      throw new Error(`No route found for path: ${path}`);
+    }
+
+    // TODO: Use @semajsx/server to render
+    // For now, return a placeholder
+    route.component(props);
+
+    // This will be replaced with actual server rendering
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>SSG Page</title>
+</head>
+<body>
+  <!-- TODO: Implement actual rendering with @semajsx/server -->
+  <div id="root"></div>
+</body>
+</html>`;
+  }
+
+  /**
+   * Convert URL path to file path
+   */
+  private pathToFilePath(urlPath: string): string {
+    if (urlPath === "/") {
+      return "index.html";
+    }
+    // /blog/post -> blog/post/index.html
+    return `${urlPath.slice(1)}/index.html`;
+  }
+
+  /**
+   * Apply params to route pattern
+   */
+  private applyParams(pattern: string, params: Record<string, string>): string {
+    let path = pattern;
+    for (const [key, value] of Object.entries(params)) {
+      path = path.replace(`:${key}`, value);
+    }
+    return path;
+  }
+
+  /**
+   * Check if route pattern matches path
+   */
+  private matchRoute(pattern: string, path: string): boolean {
+    const patternParts = pattern.split("/").filter(Boolean);
+    const pathParts = path.split("/").filter(Boolean);
+
+    if (patternParts.length !== pathParts.length) {
+      return false;
+    }
+
+    for (let i = 0; i < patternParts.length; i++) {
+      const patternPart = patternParts[i];
+      const pathPart = pathParts[i];
+
+      if (patternPart?.startsWith(":")) {
+        continue; // Dynamic segment matches anything
+      }
+
+      if (patternPart !== pathPart) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Hash content for change detection
+   */
+  private hashContent(content: string): string {
+    // Simple hash for now
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash;
+    }
+    return hash.toString(16);
+  }
+}
+
+/**
+ * Create an SSG instance
+ */
+export function createSSG(config: SSGConfig): SSGInstance {
+  return new SSG(config);
+}
