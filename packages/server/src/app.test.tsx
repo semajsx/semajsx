@@ -108,13 +108,29 @@ describe("createApp", () => {
 
       app = createApp({
         routes: {
-          "/post/:id": ({ id }) => <Post id={id!} />,
+          "/post/:id": ({ params }) => <Post id={params.id} />,
         },
       });
 
       const result = await app.render("/post/123");
 
       expect(result.html).toContain("Post 123");
+    });
+
+    it("should handle query parameters", async () => {
+      const Search = ({ query }: { query: string }) => (
+        <div>Search: {query}</div>
+      );
+
+      app = createApp({
+        routes: {
+          "/search": ({ query }) => <Search query={query.q || ""} />,
+        },
+      });
+
+      const result = await app.render("/search?q=hello");
+
+      expect(result.html).toContain("Search: hello");
     });
 
     it("should throw error for unknown routes", async () => {

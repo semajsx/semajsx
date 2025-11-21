@@ -3,6 +3,7 @@ export type {
   IslandMetadata,
   IslandMarker,
   SSRResult,
+  RouteContext,
   RouteHandler,
   RouterConfig,
   DocumentTemplate,

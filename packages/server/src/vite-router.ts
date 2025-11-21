@@ -1,4 +1,5 @@
 import type {
+  RouteContext,
   RouteHandler,
   RouterConfig,
   SSRResult,
@@ -116,14 +117,25 @@ export class ViteRouter {
   async get(path: string): Promise<SSRResult> {
     await this.initialize();
 
+    // Parse path and query string
+    const [pathname, queryString] = path.split("?");
+    const query: Record<string, string> = {};
+    if (queryString) {
+      const searchParams = new URLSearchParams(queryString);
+      for (const [key, value] of searchParams) {
+        query[key] = value;
+      }
+    }
+
     // Find matching route
-    const match = this.matchRoute(path);
+    const match = this.matchRoute(pathname || "/");
     if (!match) {
       throw new Error(`Route not found: ${path}`);
     }
 
     // Call the route handler to get VNode
-    const vnode = match.handler(match.params);
+    const context: RouteContext = { params: match.params, query };
+    const vnode = match.handler(context);
 
     // Render to HTML with islands
     const result = renderToString(vnode, {
