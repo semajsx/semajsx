@@ -3,6 +3,12 @@
 import { Counter } from "./Counter";
 import { TodoList } from "./TodoList";
 import { Pagination } from "./Pagination";
+import {
+  AsyncCounter,
+  SignalComponent,
+  StreamingComponent,
+  ConditionalComponent,
+} from "./SpecialComponents";
 
 /**
  * Main App component with static and interactive content
@@ -109,6 +115,26 @@ export function App() {
         >
           <Pagination total={10} />
         </div>
+
+        <h2>🧪 Special Component Types</h2>
+        <div class="static-content">
+          <p>
+            These components test special rendering patterns: async loading,
+            signal reactivity, streaming updates, and conditional rendering.
+          </p>
+        </div>
+
+        {/* Island 4: Async Component */}
+        <AsyncCounter delay={500} />
+
+        {/* Island 5: Signal Return Component */}
+        <SignalComponent initial="Hello World" />
+
+        {/* Island 6: Streaming Component */}
+        <StreamingComponent total={3} />
+
+        {/* Island 7: Conditional Component */}
+        <ConditionalComponent showInitially={true} />
 
         <h2>🎯 Key Benefits</h2>
         <div class="static-content">
