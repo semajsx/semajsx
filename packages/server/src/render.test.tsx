@@ -41,7 +41,9 @@ describe("renderToString", () => {
       </div>
     );
 
-    const result = renderToString(app);
+    const result = renderToString(app, {
+      transformIslandScript: defaultTransformer,
+    });
 
     expect(result.islands).toHaveLength(1);
     expect(result.islands[0]?.id).toBe("counter-component-0");
@@ -50,7 +52,7 @@ describe("renderToString", () => {
     expect(result.html).toContain("data-island-props=");
   });
 
-  it("should not generate scripts by default (static HTML only)", () => {
+  it("should not generate scripts or markers by default (static HTML only)", () => {
     const Counter = island(() => <button>Click</button>, "/Counter.tsx");
 
     const app = <Counter />;
@@ -59,8 +61,13 @@ describe("renderToString", () => {
 
     // No scripts without transformer
     expect(result.scripts).toBe("");
-    // But islands are still collected
-    expect(result.islands).toHaveLength(1);
+    // No islands collected without transformer
+    expect(result.islands).toHaveLength(0);
+    // No hydration markers in HTML
+    expect(result.html).not.toContain("data-island-id");
+    expect(result.html).not.toContain("data-island-props");
+    // But content is still rendered
+    expect(result.html).toContain("<button>Click</button>");
   });
 
   it("should generate scripts with custom transformer", () => {
@@ -136,7 +143,9 @@ describe("renderToString", () => {
 
     const app = <SingleBtn count={5} />;
 
-    const result = renderToString(app);
+    const result = renderToString(app, {
+      transformIslandScript: defaultTransformer,
+    });
 
     // Should inject attrs directly on button, not wrap in div
     expect(result.html).toMatch(/<button data-island-id="[^"]+"/);
@@ -158,7 +167,9 @@ describe("renderToString", () => {
 
     const app = <FragmentIsland />;
 
-    const result = renderToString(app);
+    const result = renderToString(app, {
+      transformIslandScript: defaultTransformer,
+    });
 
     // Should use comment markers for fragment
     expect(result.html).toMatch(/<!--island:[^>]+-->/);
@@ -271,7 +282,9 @@ describe("renderToString", () => {
       </div>
     );
 
-    const result = renderToString(app);
+    const result = renderToString(app, {
+      transformIslandScript: defaultTransformer,
+    });
 
     expect(result.html).toContain("<h1>Static Header</h1>");
     expect(result.html).toContain("<p>Some static content</p>");
@@ -339,7 +352,9 @@ describe("renderToString", () => {
 
     const app = <Counter />;
 
-    const result = renderToString(app);
+    const result = renderToString(app, {
+      transformIslandScript: defaultTransformer,
+    });
 
     // HTML should NOT contain the file path
     expect(result.html).not.toContain("/home/user");

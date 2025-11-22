@@ -16,6 +16,8 @@ interface RenderContext {
   islands: IslandMetadata[];
   islandCounter: number;
   islandBasePath: string;
+  // Whether to generate hydration markers (only when transformer is provided)
+  enableHydration: boolean;
   // Cache for component render results to avoid duplicate rendering
   renderCache: WeakMap<VNode, string>;
 }
@@ -54,6 +56,8 @@ export function renderToString(
     islands: [],
     islandCounter: 0,
     islandBasePath,
+    // Only enable hydration markers when transformer is provided
+    enableHydration: !!transformIslandScript,
     renderCache: new WeakMap(),
   };
 
@@ -286,9 +290,8 @@ function injectIslandAttrs(
 /**
  * Render an island component
  * - Renders the full HTML content on server (for SEO and no-JS users)
- * - For single elements: injects hydration attrs directly (no wrapper div)
- * - For Fragments: uses comment markers + script tag
- * - Collects island metadata for client-side hydration
+ * - If hydration disabled: renders as plain HTML (no markers)
+ * - If hydration enabled: adds markers for client-side hydration
  */
 function renderIsland(vnode: VNode, context: RenderContext): string {
   const metadata = getIslandMetadata(vnode);
@@ -302,8 +305,23 @@ function renderIsland(vnode: VNode, context: RenderContext): string {
       ? metadata.component.name || "Anonymous"
       : "Unknown";
 
+  // Render the island's content on the server
+  let content = "";
+  let result: VNode | JSXNode;
+  try {
+    result = metadata.component(metadata.props || {});
+    content = renderVNodeToHTML(result, context);
+  } catch (error) {
+    console.error(`[SSR] Error rendering island (${componentName}):`, error);
+    return renderErrorFallback(error, vnode);
+  }
+
+  // If hydration is disabled, just return the plain HTML
+  if (!context.enableHydration) {
+    return content;
+  }
+
   // Generate unique island ID using component name
-  // Example: "Counter-0", "TodoList-1", "Anonymous-2"
   const islandId = generateIslandId(componentName, context.islandCounter++);
 
   // Serialize props for hydration
@@ -317,20 +335,6 @@ function renderIsland(vnode: VNode, context: RenderContext): string {
     componentName,
   };
   context.islands.push(islandMetadata);
-
-  // Render the island's content on the server
-  let content = "";
-  let result: VNode | JSXNode;
-  try {
-    result = metadata.component(metadata.props || {});
-    content = renderVNodeToHTML(result, context);
-  } catch (error) {
-    console.error(
-      `[SSR] Error rendering island "${islandId}" (${componentName}):`,
-      error,
-    );
-    return renderErrorFallback(error, vnode);
-  }
 
   const propsJson = JSON.stringify(serializedProps);
 
