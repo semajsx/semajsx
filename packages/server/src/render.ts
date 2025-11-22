@@ -198,7 +198,12 @@ function renderVNodeToHTML(
   // Handle function components
   if (typeof vnodeTyped.type === "function") {
     try {
-      const result = vnodeTyped.type(vnodeTyped.props || {});
+      // Pass children to component as part of props
+      const props =
+        vnodeTyped.children && vnodeTyped.children.length > 0
+          ? { ...vnodeTyped.props, children: vnodeTyped.children }
+          : vnodeTyped.props || {};
+      const result = vnodeTyped.type(props);
       return renderVNodeToHTML(result, context);
     } catch (error) {
       console.error("Error rendering component:", error);
