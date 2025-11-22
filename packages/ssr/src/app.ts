@@ -14,7 +14,7 @@ import { renderToString } from "./render";
 import { renderDocument } from "./document";
 import { LRUCache } from "./lru-cache";
 import { createLogger } from "@semajsx/logger";
-import { buildCSS, transformCSSForDev } from "./css-builder";
+import { buildCSS, transformCSSForDev, analyzeCSSChunks } from "./css-builder";
 import { buildAssets } from "./asset-builder";
 import type {
   App,
@@ -249,7 +249,7 @@ class AppImpl implements App {
     if (mode === "full") {
       // Pre-render all routes to collect islands, CSS, and assets (by ID, not path)
       const allIslands = new Map<string, IslandMetadata>();
-      const allCSS = new Set<string>();
+      const cssPerRoute = new Map<string, string[]>();
       const allAssets = new Set<string>();
 
       for (const [path] of this._routes) {
@@ -261,10 +261,8 @@ class AppImpl implements App {
               allIslands.set(island.id, island);
             }
           }
-          // Collect CSS
-          for (const css of result.css) {
-            allCSS.add(css);
-          }
+          // Collect CSS per route for chunk analysis
+          cssPerRoute.set(path, result.css);
           // Collect assets
           for (const asset of result.assets) {
             allAssets.add(asset);
@@ -273,6 +271,18 @@ class AppImpl implements App {
           logger.warn(`Failed to pre-render route ${path}: ${String(error)}`);
         }
       }
+
+      // Analyze CSS chunks to extract shared CSS
+      const { shared: sharedCSS, perEntry: cssPerEntry } = analyzeCSSChunks(
+        cssPerRoute,
+        2, // threshold: CSS used by 2+ routes goes to shared
+      );
+
+      // Collect all unique CSS files
+      const allCSS = new Set<string>([
+        ...sharedCSS,
+        ...Array.from(cssPerEntry.values()).flat(),
+      ]);
 
       // Build assets first (for CSS url() rewriting)
       let assetManifest: Map<string, string> | undefined;
@@ -301,6 +311,14 @@ class AppImpl implements App {
         for (const [original, output] of cssResult.mapping) {
           manifest.css[original] = output;
           this._cssManifest.set(original, output);
+        }
+
+        // Add shared CSS info to manifest
+        if (sharedCSS.length > 0) {
+          manifest.sharedCSS = sharedCSS.map(
+            (css) => cssResult.mapping.get(css) || css,
+          );
+          logger.info(`Extracted ${sharedCSS.length} shared CSS files`);
         }
 
         logger.info(`Built ${allCSS.size} CSS files`);
