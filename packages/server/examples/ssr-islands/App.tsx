@@ -49,6 +49,19 @@ export function App() {
               margin: 20px 0;
               box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             }
+            button {
+              padding: 8px 16px;
+              font-size: 14px;
+              cursor: pointer;
+              border: 1px solid #d1d5db;
+              border-radius: 4px;
+              background: white;
+              color: #1f2937;
+            }
+            button:disabled {
+              opacity: 0.5;
+              cursor: not-allowed;
+            }
             @media (prefers-color-scheme: dark) {
               body {
                 background: #111827;
@@ -66,6 +79,11 @@ export function App() {
               .static-content {
                 background: #1f2937;
                 box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+              }
+              button {
+                background: #374151;
+                color: #f9fafb;
+                border-color: #4b5563;
               }
             }
           `}
