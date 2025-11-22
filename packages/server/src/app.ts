@@ -248,14 +248,24 @@ class AppImpl implements App {
         }
       }
 
-      // Build each island with hydration entry point
-      for (const [, island] of allIslands) {
-        const outputPath = `${outDir}/islands/${island.id}.js`;
-        const componentPath = this._normalizeModulePath(island.path);
-        const componentName = island.componentName;
+      // Build all islands with hydration entry points in one build
+      if (allIslands.size > 0) {
+        const { writeFile, rm, mkdir } = await import("fs/promises");
+        const { join } = await import("path");
+        const tempDir = join(
+          this.config.root || process.cwd(),
+          ".island-entries",
+        );
+        await mkdir(tempDir, { recursive: true });
 
-        // Generate hydration entry point code
-        const entryCode = `
+        // Generate entry files for all islands
+        const entryPoints: Record<string, string> = {};
+
+        for (const [, island] of allIslands) {
+          const componentPath = this._normalizeModulePath(island.path);
+          const componentName = island.componentName;
+
+          const entryCode = `
 import { hydrate, h } from '@semajsx/dom';
 import { markIslandHydrated } from '@semajsx/server/client';
 import * as ComponentModule from '${componentPath}';
@@ -271,39 +281,25 @@ if (container && Component) {
 }
 `;
 
-        // Create virtual module plugin for this island
-        const virtualEntryId = `virtual:island-build-entry:${island.id}`;
-        const resolvedVirtualId = `\0${virtualEntryId}`;
+          const entryFile = join(tempDir, `${island.id}.ts`);
+          await writeFile(entryFile, entryCode);
+          entryPoints[island.id] = entryFile;
+        }
 
+        // Build all islands at once
         const baseConfig: ViteUserConfig = {
           root: this.config.root,
-          plugins: [
-            {
-              name: `island-entry-${island.id}`,
-              resolveId(id: string) {
-                if (id === virtualEntryId) {
-                  return resolvedVirtualId;
-                }
-              },
-              load(id: string) {
-                if (id === resolvedVirtualId) {
-                  return entryCode;
-                }
-              },
-            },
-          ],
           build: {
             outDir: `${outDir}/islands`,
-            lib: {
-              entry: virtualEntryId,
-              name: island.id,
-              fileName: island.id,
-              formats: ["es"],
-            },
+            emptyOutDir: true,
             minify,
             sourcemap,
             rollupOptions: {
-              // Don't externalize - bundle everything for client
+              input: entryPoints,
+              output: {
+                format: "es",
+                entryFileNames: "[name].js",
+              },
               external: [],
             },
           },
@@ -315,19 +311,27 @@ if (container && Component) {
 
         await viteBuild(finalConfig);
 
-        builtIslands.push({
-          id: island.id,
-          path: island.path,
-          outputPath,
-        });
+        // Clean up temp directory
+        await rm(tempDir, { recursive: true, force: true });
 
-        manifest.islands[island.id] = outputPath;
+        // Record built islands
+        for (const [, island] of allIslands) {
+          const outputPath = `${outDir}/islands/${island.id}.js`;
 
-        if (onIslandBuilt) {
-          onIslandBuilt(island);
+          builtIslands.push({
+            id: island.id,
+            path: island.path,
+            outputPath,
+          });
+
+          manifest.islands[island.id] = outputPath;
+
+          if (onIslandBuilt) {
+            onIslandBuilt(island);
+          }
         }
 
-        logger.info(`Built island: ${island.id}`);
+        logger.info(`Built ${allIslands.size} islands`);
       }
     }
 
