@@ -61,7 +61,7 @@ export interface ResourceTools {
  *
  * @example
  * ```tsx
- * import { resource } from '@semajsx/server';
+ * import { resource } from '@semajsx/ssr';
  *
  * const { Style, Link, Asset, url, island } = resource(import.meta.url);
  *
