@@ -80,7 +80,9 @@ export interface CollectionConfig<T extends z.ZodType = z.ZodType> {
 export interface Collection<T = unknown> {
   name: string;
   source: CollectionSource<unknown>;
-  schema: z.ZodType<T>;
+  schema: z.ZodType;
+  /** Type-only field for inference */
+  _outputType?: T;
 }
 
 // =============================================================================
