@@ -146,8 +146,12 @@ class AppImpl implements App {
     const vnode = handler(context);
 
     // Render to string with island detection
+    const basePath = this.config.islands?.basePath || "/islands";
     const result = renderToString(vnode, {
-      islandBasePath: this.config.islands?.basePath,
+      islandBasePath: basePath,
+      // Default transformer generates standard script tags
+      transformIslandScript: (island) =>
+        `<script type="module" src="${island.basePath}/${island.id}.js" async></script>`,
     });
 
     // Cache islands
