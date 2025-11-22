@@ -36,6 +36,16 @@ export {
   type AssetProps,
 } from "./client/resource";
 
+// CSS builder (for advanced usage)
+export {
+  buildCSS,
+  transformCSSForDev,
+  bundleCSSFile,
+  analyzeCSSChunks,
+  type CSSBuildOptions,
+  type CSSBuildResult,
+} from "./css-builder";
+
 // Re-export shared types
 export type {
   IslandMetadata,

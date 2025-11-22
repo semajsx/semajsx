@@ -14,6 +14,7 @@ import { renderToString } from "./render";
 import { renderDocument } from "./document";
 import { LRUCache } from "./lru-cache";
 import { createLogger } from "@semajsx/logger";
+import { buildCSS, transformCSSForDev } from "./css-builder";
 import type {
   App,
   AppConfig,
@@ -232,11 +233,13 @@ class AppImpl implements App {
     const manifest: BuildResult["manifest"] = {
       islands: {},
       routes: Array.from(this._routes.keys()),
+      css: {},
     };
 
     if (mode === "full") {
-      // Pre-render all routes to collect islands (by ID, not path)
+      // Pre-render all routes to collect islands and CSS (by ID, not path)
       const allIslands = new Map<string, IslandMetadata>();
+      const allCSS = new Set<string>();
 
       for (const [path] of this._routes) {
         try {
@@ -247,9 +250,28 @@ class AppImpl implements App {
               allIslands.set(island.id, island);
             }
           }
+          // Collect CSS
+          for (const css of result.css) {
+            allCSS.add(css);
+          }
         } catch (error) {
           logger.warn(`Failed to pre-render route ${path}: ${String(error)}`);
         }
+      }
+
+      // Build CSS with lightningcss
+      if (allCSS.size > 0) {
+        const cssResult = await buildCSS(allCSS, outDir, {
+          minify,
+          sourceMap: sourcemap,
+        });
+
+        // Add to manifest
+        for (const [original, output] of cssResult.mapping) {
+          manifest.css[original] = output;
+        }
+
+        logger.info(`Built ${allCSS.size} CSS files`);
       }
 
       // Build all islands with hydration entry points in one build
@@ -348,6 +370,22 @@ if (Component) {
   async handleRequest(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const pathname = url.pathname;
+
+    // Handle CSS requests in development
+    if (pathname.endsWith(".css")) {
+      try {
+        const cssPath = this._resolveCSSPath(pathname);
+        if (cssPath) {
+          const code = await transformCSSForDev(cssPath);
+          return new Response(code, {
+            headers: { "Content-Type": "text/css" },
+          });
+        }
+      } catch (error) {
+        logger.error(`Failed to load CSS ${pathname}: ${error}`);
+        return new Response("CSS not found", { status: 404 });
+      }
+    }
 
     // Handle Vite module requests (/@fs/, /@vite/, /node_modules/, etc.)
     if (
@@ -539,6 +577,21 @@ if (Component) {
       }
     } catch (error) {
       logger.error(`Failed to transform module ${url}: ${String(error)}`);
+    }
+
+    return null;
+  }
+
+  /**
+   * Resolve CSS URL path to filesystem path
+   */
+  private _resolveCSSPath(urlPath: string): string | null {
+    const root = this.config.root || process.cwd();
+
+    // Handle absolute paths (e.g., /src/styles/page.css)
+    if (urlPath.startsWith("/")) {
+      const { join } = require("path");
+      return join(root, urlPath);
     }
 
     return null;

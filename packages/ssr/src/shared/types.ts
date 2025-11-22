@@ -254,6 +254,7 @@ export interface BuildResult {
   manifest: {
     islands: Record<string, string>;
     routes: string[];
+    css: Record<string, string>;
   };
 }
 

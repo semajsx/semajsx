@@ -26,7 +26,8 @@
     "@semajsx/core": "workspace:*",
     "@semajsx/dom": "workspace:*",
     "@semajsx/logger": "workspace:*",
-    "@semajsx/signal": "workspace:*"
+    "@semajsx/signal": "workspace:*",
+    "lightningcss": "^1.30.2"
   },
   "devDependencies": {
     "@semajsx/configs": "workspace:*",
