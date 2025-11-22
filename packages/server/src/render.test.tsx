@@ -1,8 +1,8 @@
 /** @jsxImportSource @semajsx/dom */
 
 import { describe, expect, it } from "vitest";
-import { renderToString } from "@semajsx/server";
-import { island } from "@semajsx/server";
+import { renderToString } from "./render";
+import { island } from "./client/island";
 import { signal } from "@semajsx/signal";
 
 describe("renderToString", () => {

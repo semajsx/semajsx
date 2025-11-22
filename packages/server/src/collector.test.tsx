@@ -1,8 +1,8 @@
 /** @jsxImportSource @semajsx/dom */
 
 import { describe, expect, it } from "vitest";
-import { createIslandCollector } from "@semajsx/server";
-import { island } from "@semajsx/server";
+import { createIslandCollector } from "./collector";
+import { island } from "./client/island";
 import { signal } from "@semajsx/signal";
 
 describe("IslandCollector", () => {

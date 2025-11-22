@@ -1,7 +1,7 @@
 /** @jsxImportSource @semajsx/dom */
 
 import { describe, it, expect } from "vitest";
-import { island, isIslandComponent, isIslandVNode } from "@semajsx/server";
+import { island, isIslandComponent, isIslandVNode } from "./client/island";
 import { signal } from "@semajsx/signal";
 
 describe("island", () => {
