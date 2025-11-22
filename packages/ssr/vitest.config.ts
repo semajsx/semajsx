@@ -7,5 +7,8 @@ export default defineProject({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    exclude: [
+      "src/client/**/*.test.tsx", // Browser tests excluded - run separately
+    ],
   },
 });
