@@ -11,7 +11,7 @@ const defaultTransformer: IslandScriptTransformer = (island) =>
   `<script type="module" src="${island.basePath}/${island.id}.js" async></script>`;
 
 describe("renderToString", () => {
-  it("should render simple HTML", () => {
+  it("should render simple HTML", async () => {
     const app = (
       <div>
         <h1>Hello</h1>
@@ -19,7 +19,7 @@ describe("renderToString", () => {
       </div>
     );
 
-    const result = renderToString(app);
+    const result = await renderToString(app);
 
     expect(result.html).toContain("<div>");
     expect(result.html).toContain("<h1>Hello</h1>");
@@ -28,7 +28,7 @@ describe("renderToString", () => {
     expect(result.islands).toHaveLength(0);
   });
 
-  it("should render islands as placeholders", () => {
+  it("should render islands as placeholders", async () => {
     const Counter = island(function CounterComponent({ initial = 0 }) {
       const count = signal(initial);
       return <button>{count}</button>;
@@ -41,7 +41,7 @@ describe("renderToString", () => {
       </div>
     );
 
-    const result = renderToString(app, {
+    const result = await renderToString(app, {
       transformIslandScript: defaultTransformer,
     });
 
@@ -52,12 +52,12 @@ describe("renderToString", () => {
     expect(result.html).toContain("data-island-props=");
   });
 
-  it("should not generate scripts or markers by default (static HTML only)", () => {
+  it("should not generate scripts or markers by default (static HTML only)", async () => {
     const Counter = island(() => <button>Click</button>, "/Counter.tsx");
 
     const app = <Counter />;
 
-    const result = renderToString(app);
+    const result = await renderToString(app);
 
     // No scripts without transformer
     expect(result.scripts).toBe("");
@@ -70,12 +70,12 @@ describe("renderToString", () => {
     expect(result.html).toContain("<button>Click</button>");
   });
 
-  it("should generate scripts with custom transformer", () => {
+  it("should generate scripts with custom transformer", async () => {
     const Counter = island(() => <button>Click</button>, "/Counter.tsx");
 
     const app = <Counter />;
 
-    const result = renderToString(app, {
+    const result = await renderToString(app, {
       islandBasePath: "/islands",
       transformIslandScript: defaultTransformer,
     });
@@ -84,7 +84,7 @@ describe("renderToString", () => {
     expect(result.scripts).toContain('src="/islands/anonymous-0.js"');
   });
 
-  it("should pass correct context to transformer", () => {
+  it("should pass correct context to transformer", async () => {
     const Counter = island(function MyCounter({ count = 0 }) {
       return <button>{count}</button>;
     }, "/components/Counter.tsx");
@@ -92,7 +92,7 @@ describe("renderToString", () => {
     const app = <Counter count={10} />;
 
     let capturedContext: any = null;
-    const result = renderToString(app, {
+    const result = await renderToString(app, {
       islandBasePath: "/custom",
       transformIslandScript: (ctx) => {
         capturedContext = ctx;
@@ -110,7 +110,7 @@ describe("renderToString", () => {
     expect(result.scripts).toContain('src="/components/Counter.tsx"');
   });
 
-  it("should handle multiple islands", () => {
+  it("should handle multiple islands", async () => {
     const Counter = island(() => <button>Count</button>, "/Counter.tsx");
     const TodoList = island(() => <ul></ul>, "/TodoList.tsx");
 
@@ -122,7 +122,7 @@ describe("renderToString", () => {
       </div>
     );
 
-    const result = renderToString(app, {
+    const result = await renderToString(app, {
       transformIslandScript: defaultTransformer,
     });
 
@@ -136,14 +136,14 @@ describe("renderToString", () => {
     expect(result.scripts).toContain("anonymous-2.js");
   });
 
-  it("should inject attrs directly on single element islands (no wrapper div)", () => {
+  it("should inject attrs directly on single element islands (no wrapper div)", async () => {
     const SingleBtn = island(function SingleBtn({ count = 0 }) {
       return <button>{count}</button>;
     }, "/SingleBtn.tsx");
 
     const app = <SingleBtn count={5} />;
 
-    const result = renderToString(app, {
+    const result = await renderToString(app, {
       transformIslandScript: defaultTransformer,
     });
 
@@ -155,7 +155,7 @@ describe("renderToString", () => {
     expect(result.html).not.toMatch(/<div[^>]*data-island-id/);
   });
 
-  it("should use comment markers for fragment islands", () => {
+  it("should use comment markers for fragment islands", async () => {
     const FragmentIsland = island(function FragmentIsland() {
       return (
         <>
@@ -167,13 +167,13 @@ describe("renderToString", () => {
 
     const app = <FragmentIsland />;
 
-    const result = renderToString(app, {
+    const result = await renderToString(app, {
       transformIslandScript: defaultTransformer,
     });
 
     // Should use comment markers for fragment
     expect(result.html).toMatch(/<!--island:[^>]+-->/);
-    expect(result.html).toContain("<!--/island-->");
+    expect(result.html).toMatch(/<!--\/island:[^>]+-->/); // End marker includes island ID
     expect(result.html).toContain("<button>Prev</button>");
     expect(result.html).toContain("<button>Next</button>");
     // Props in script tag
@@ -182,7 +182,7 @@ describe("renderToString", () => {
     );
   });
 
-  it("should render nested elements correctly", () => {
+  it("should render nested elements correctly", async () => {
     const app = (
       <div className="container">
         <header>
@@ -196,7 +196,7 @@ describe("renderToString", () => {
       </div>
     );
 
-    const result = renderToString(app);
+    const result = await renderToString(app);
 
     expect(result.html).toContain('<div class="container">');
     expect(result.html).toContain("<header>");
@@ -206,7 +206,7 @@ describe("renderToString", () => {
     expect(result.html).toContain("<p>Content</p>");
   });
 
-  it("should handle attributes correctly", () => {
+  it("should handle attributes correctly", async () => {
     const app = (
       <div>
         <a href="/about" target="_blank" rel="noopener">
@@ -216,7 +216,7 @@ describe("renderToString", () => {
       </div>
     );
 
-    const result = renderToString(app);
+    const result = await renderToString(app);
 
     expect(result.html).toContain('href="/about"');
     expect(result.html).toContain('target="_blank"');
@@ -226,28 +226,28 @@ describe("renderToString", () => {
     expect(result.html).toContain("disabled");
   });
 
-  it("should handle className attribute", () => {
+  it("should handle className attribute", async () => {
     const app = <div className="container main-content">Content</div>;
 
-    const result = renderToString(app);
+    const result = await renderToString(app);
 
     expect(result.html).toContain('class="container main-content"');
   });
 
-  it("should escape HTML in text content", () => {
+  it("should escape HTML in text content", async () => {
     const app = (
       <div>
         <p>{"<script>alert('xss')</script>"}</p>
       </div>
     );
 
-    const result = renderToString(app);
+    const result = await renderToString(app);
 
     expect(result.html).not.toContain("<script>alert");
     expect(result.html).toContain("&lt;script&gt;");
   });
 
-  it("should handle self-closing tags", () => {
+  it("should handle self-closing tags", async () => {
     const app = (
       <div>
         <img src="/logo.png" alt="Logo" />
@@ -257,7 +257,7 @@ describe("renderToString", () => {
       </div>
     );
 
-    const result = renderToString(app);
+    const result = await renderToString(app);
 
     expect(result.html).toContain("<img");
     expect(result.html).toContain('src="/logo.png"');
@@ -265,7 +265,7 @@ describe("renderToString", () => {
     expect(result.html).toContain("<hr />");
   });
 
-  it("should handle mixed static and island content", () => {
+  it("should handle mixed static and island content", async () => {
     const Counter = island(() => <button>Count</button>, "/Counter.tsx");
 
     const app = (
@@ -282,7 +282,7 @@ describe("renderToString", () => {
       </div>
     );
 
-    const result = renderToString(app, {
+    const result = await renderToString(app, {
       transformIslandScript: defaultTransformer,
     });
 
@@ -294,12 +294,12 @@ describe("renderToString", () => {
     expect(result.islands).toHaveLength(1);
   });
 
-  it("should use custom island base path", () => {
+  it("should use custom island base path", async () => {
     const Counter = island(() => <button>Count</button>, "/Counter.tsx");
 
     const app = <Counter />;
 
-    const result = renderToString(app, {
+    const result = await renderToString(app, {
       islandBasePath: "/custom/path",
       transformIslandScript: defaultTransformer,
     });
@@ -307,7 +307,7 @@ describe("renderToString", () => {
     expect(result.scripts).toContain('src="/custom/path/anonymous-0.js"');
   });
 
-  it("should handle array children", () => {
+  it("should handle array children", async () => {
     const items = ["Apple", "Banana", "Cherry"];
 
     const app = (
@@ -318,14 +318,14 @@ describe("renderToString", () => {
       </ul>
     );
 
-    const result = renderToString(app);
+    const result = await renderToString(app);
 
     expect(result.html).toContain("<li>Apple</li>");
     expect(result.html).toContain("<li>Banana</li>");
     expect(result.html).toContain("<li>Cherry</li>");
   });
 
-  it("should handle null and undefined children", () => {
+  it("should handle null and undefined children", async () => {
     const app = (
       <div>
         <p>Before</p>
@@ -335,7 +335,7 @@ describe("renderToString", () => {
       </div>
     );
 
-    const result = renderToString(app);
+    const result = await renderToString(app);
 
     expect(result.html).toContain("<p>Before</p>");
     expect(result.html).toContain("<p>After</p>");
@@ -343,7 +343,7 @@ describe("renderToString", () => {
     expect(result.html).not.toContain("undefined");
   });
 
-  it("should not expose file paths in HTML (security)", () => {
+  it("should not expose file paths in HTML (security)", async () => {
     // Test with absolute path
     const Counter = island(
       () => <button>Click</button>,
@@ -352,7 +352,7 @@ describe("renderToString", () => {
 
     const app = <Counter />;
 
-    const result = renderToString(app, {
+    const result = await renderToString(app, {
       transformIslandScript: defaultTransformer,
     });
 

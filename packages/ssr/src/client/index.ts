@@ -21,3 +21,17 @@ export {
   isIslandVNode,
   getIslandMetadata,
 } from "./island";
+
+export {
+  resource,
+  isStyleVNode,
+  isLinkVNode,
+  isAssetVNode,
+  STYLE_MARKER,
+  LINK_MARKER,
+  ASSET_MARKER,
+  type ResourceTools,
+  type StyleProps,
+  type LinkProps,
+  type AssetProps,
+} from "./resource";

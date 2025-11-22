@@ -65,6 +65,27 @@ export interface SSRResult {
   scripts: string;
   /** Complete HTML document (if document template was provided) */
   document?: string;
+  /** Collected CSS file paths */
+  css: string[];
+  /** Collected asset file paths */
+  assets: string[];
+}
+
+/**
+ * Link resource metadata
+ */
+export interface LinkMetadata {
+  href: string;
+  rel: string;
+  as?: string;
+}
+
+/**
+ * Asset resource metadata
+ */
+export interface AssetMetadata {
+  src: string;
+  type: "image" | "font" | "script";
 }
 
 /**

@@ -7,6 +7,7 @@ import type {
 } from "./shared/types";
 import { Fragment } from "@semajsx/core/types";
 import { getIslandMetadata, isIslandVNode } from "./client/island";
+import { STYLE_MARKER, LINK_MARKER, ASSET_MARKER } from "./client/resource";
 import { isSignal, unwrap } from "@semajsx/signal/utils";
 
 /**
@@ -20,6 +21,10 @@ interface RenderContext {
   enableHydration: boolean;
   // Cache for component render results to avoid duplicate rendering
   renderCache: WeakMap<VNode, string>;
+  // Collected CSS file paths
+  css: Set<string>;
+  // Collected asset file paths
+  assets: Set<string>;
 }
 
 /**
@@ -59,6 +64,8 @@ export async function renderToString(
     // Only enable hydration markers when transformer is provided
     enableHydration: !!transformIslandScript,
     renderCache: new WeakMap(),
+    css: new Set(),
+    assets: new Set(),
   };
 
   // Render HTML and collect islands in one pass (fixes duplicate rendering)
@@ -75,6 +82,8 @@ export async function renderToString(
     html,
     islands: context.islands,
     scripts,
+    css: Array.from(context.css),
+    assets: Array.from(context.assets),
   };
 }
 
@@ -220,6 +229,34 @@ async function renderVNodeToHTML(
   // Handle islands - render content AND mark for hydration
   if (isIslandVNode(vnodeTyped)) {
     return renderIsland(vnodeTyped, context);
+  }
+
+  // Handle Style resource - collect CSS path, render nothing
+  if (vnodeTyped.type === STYLE_MARKER) {
+    const href = vnodeTyped.props?.href;
+    if (href && typeof href === "string") {
+      context.css.add(href);
+    }
+    return "";
+  }
+
+  // Handle Link resource - collect CSS path for stylesheets
+  if (vnodeTyped.type === LINK_MARKER) {
+    const href = vnodeTyped.props?.href;
+    const rel = vnodeTyped.props?.rel;
+    if (href && typeof href === "string" && rel === "stylesheet") {
+      context.css.add(href);
+    }
+    return "";
+  }
+
+  // Handle Asset resource - collect asset path
+  if (vnodeTyped.type === ASSET_MARKER) {
+    const src = vnodeTyped.props?.src;
+    if (src && typeof src === "string") {
+      context.assets.add(src);
+    }
+    return "";
   }
 
   // Handle fragments
