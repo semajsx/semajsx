@@ -1,6 +1,7 @@
 /** @jsxImportSource @semajsx/dom */
 
 import { createSSG, defineCollection, fileSource, z } from "@semajsx/ssg";
+import { resource } from "@semajsx/ssr";
 import type { VNode } from "@semajsx/core";
 
 // Import MDX components
@@ -8,6 +9,9 @@ import { Callout, CodeBlock, Counter } from "./components";
 
 // Get the directory where this script is located
 const rootDir = import.meta.dir;
+
+// Create resource tools for CSS
+const { Style } = resource(import.meta.url);
 
 // Define blog collection
 const blog = defineCollection({
@@ -28,6 +32,7 @@ const blog = defineCollection({
 // Components
 const HomePage = (): VNode => (
   <div>
+    <Style href="./styles.css" />
     <h1>Welcome to My Blog</h1>
     <p>This is a static site built with @semajsx/ssg</p>
   </div>
@@ -39,6 +44,7 @@ const BlogIndex = ({
   posts: Array<{ slug: string; data: { title: string; date: Date } }>;
 }): VNode => (
   <div>
+    <Style href="./styles.css" />
     <h1>Blog Posts</h1>
     <ul>
       {posts.map((post) => (
@@ -59,6 +65,7 @@ const BlogPost = ({
   content: VNode;
 }): VNode => (
   <article>
+    <Style href="./styles.css" />
     <h1>{post.data.title}</h1>
     <div>{content}</div>
   </article>
