@@ -32,7 +32,7 @@ export class SSG<
   private rootDir: string;
   private collections: Map<string, Collection>;
   private entriesCache: Map<string, CollectionEntry[]>;
-  private app: App;
+  private app: App | null = null;
   private mdxModules: Map<string, string> = new Map();
 
   constructor(config: SSGConfig) {
@@ -47,36 +47,57 @@ export class SSG<
     this.collections = new Map();
     this.entriesCache = new Map();
 
-    // Create App with MDX plugins
-    this.app = createApp({
-      root: this.rootDir,
-      vite: {
-        plugins: [
-          // Virtual MDX content modules
-          {
-            name: "ssg-virtual-mdx",
-            resolveId: (id: string) => {
-              if (id.startsWith("virtual:mdx:")) {
-                return "\0" + id;
-              }
-            },
-            load: (id: string) => {
-              if (id.startsWith("\0virtual:mdx:")) {
-                const mdxId = id.replace("\0virtual:mdx:", "");
-                return this.mdxModules.get(mdxId);
-              }
-            },
-          },
-          // MDX compiler plugin
-          viteMDXPlugin(config.mdx ?? {}),
-        ],
-      },
-    });
-
     // Register collections
     for (const collection of config.collections ?? []) {
       this.collections.set(collection.name, collection);
     }
+  }
+
+  private async initApp(): Promise<App> {
+    if (this.app) return this.app;
+
+    // Build plugins array
+    const plugins = [
+      // Virtual MDX content modules
+      {
+        name: "ssg-virtual-mdx",
+        resolveId: (id: string) => {
+          if (id.startsWith("virtual:mdx:")) {
+            return "\0" + id;
+          }
+        },
+        load: (id: string) => {
+          if (id.startsWith("\0virtual:mdx:")) {
+            const mdxId = id.replace("\0virtual:mdx:", "");
+            return this.mdxModules.get(mdxId);
+          }
+        },
+      },
+      // MDX compiler plugin
+      viteMDXPlugin(this.config.mdx ?? {}),
+    ];
+
+    // Add Tailwind CSS plugin if enabled
+    if (this.config.tailwind) {
+      try {
+        const tailwindcss = await import("@tailwindcss/vite");
+        plugins.push(tailwindcss.default());
+      } catch {
+        console.warn(
+          "Tailwind CSS enabled but @tailwindcss/vite not installed. Run: bun add tailwindcss @tailwindcss/vite",
+        );
+      }
+    }
+
+    // Create App with plugins
+    this.app = createApp({
+      root: this.rootDir,
+      vite: {
+        plugins,
+      },
+    });
+
+    return this.app;
   }
 
   getRootDir(): string {
@@ -110,7 +131,8 @@ export class SSG<
         data: result.data,
         render: async () => {
           // Get Vite server from app
-          const vite = this.app.getViteServer();
+          const app = await this.initApp();
+          const vite = app.getViteServer();
           if (!vite) {
             throw new Error("Vite server not initialized");
           }
@@ -161,7 +183,8 @@ export class SSG<
     const outDir = this.config.outDir;
 
     // Initialize App (starts Vite)
-    await this.app.prepare();
+    const app = await this.initApp();
+    await app.prepare();
 
     try {
       // Register routes with App
@@ -171,7 +194,7 @@ export class SSG<
       const result = await this.buildPages(incremental, prevState, outDir);
 
       // Build islands for client-side hydration
-      await this.app.build({
+      await app.build({
         outDir,
         mode: "full",
         minify: true,
@@ -187,7 +210,7 @@ export class SSG<
 
       return result;
     } finally {
-      await this.app.close();
+      await app.close();
     }
   }
 
@@ -202,7 +225,7 @@ export class SSG<
           const path = this.applyParams(route.path, sp.params);
           const props = { ...sp.props, params: sp.params };
 
-          this.app.route(path, (_context: RouteContext) => {
+          this.app!.route(path, (_context: RouteContext) => {
             return route.component(props);
           });
         }
@@ -215,7 +238,7 @@ export class SSG<
           props = route.props;
         }
 
-        this.app.route(route.path, (_context: RouteContext) => {
+        this.app!.route(route.path, (_context: RouteContext) => {
           return route.component(props);
         });
       }
@@ -304,7 +327,7 @@ export class SSG<
     props: Record<string, unknown>,
   ): Promise<string> {
     // Use App to render the page
-    const result = await this.app.render(path);
+    const result = await this.app!.render(path);
 
     // Wrap with document template
     const documentProps: DocumentProps = {

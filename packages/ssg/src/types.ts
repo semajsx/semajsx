@@ -182,6 +182,8 @@ export interface SSGConfig<
   mdx?: MDXConfig;
   /** Custom document template */
   document?: DocumentTemplate;
+  /** Enable Tailwind CSS support (auto-configures @tailwindcss/vite plugin) */
+  tailwind?: boolean;
 }
 
 // =============================================================================
