@@ -15,6 +15,7 @@ import { renderDocument } from "./document";
 import { LRUCache } from "./lru-cache";
 import { createLogger } from "@semajsx/logger";
 import { buildCSS, transformCSSForDev } from "./css-builder";
+import { buildAssets } from "./asset-builder";
 import type {
   App,
   AppConfig,
@@ -246,9 +247,10 @@ class AppImpl implements App {
     };
 
     if (mode === "full") {
-      // Pre-render all routes to collect islands and CSS (by ID, not path)
+      // Pre-render all routes to collect islands, CSS, and assets (by ID, not path)
       const allIslands = new Map<string, IslandMetadata>();
       const allCSS = new Set<string>();
+      const allAssets = new Set<string>();
 
       for (const [path] of this._routes) {
         try {
@@ -263,16 +265,36 @@ class AppImpl implements App {
           for (const css of result.css) {
             allCSS.add(css);
           }
+          // Collect assets
+          for (const asset of result.assets) {
+            allAssets.add(asset);
+          }
         } catch (error) {
           logger.warn(`Failed to pre-render route ${path}: ${String(error)}`);
         }
       }
 
-      // Build CSS with lightningcss
+      // Build assets first (for CSS url() rewriting)
+      let assetManifest: Map<string, string> | undefined;
+      if (allAssets.size > 0) {
+        const assetResult = await buildAssets(allAssets, outDir);
+        assetManifest = assetResult.mapping;
+
+        // Add to manifest
+        for (const [original, output] of assetResult.mapping) {
+          manifest.assets = manifest.assets || {};
+          manifest.assets[original] = output;
+        }
+
+        logger.info(`Built ${allAssets.size} assets`);
+      }
+
+      // Build CSS with lightningcss (with asset URL rewriting)
       if (allCSS.size > 0) {
         const cssResult = await buildCSS(allCSS, outDir, {
           minify,
           sourceMap: sourcemap,
+          assetManifest,
         });
 
         // Add to manifest and store for runtime mapping
@@ -367,6 +389,14 @@ if (Component) {
         logger.info(`Built ${allIslands.size} islands`);
       }
     }
+
+    // Write manifest to disk
+    const { writeFile } = await import("fs/promises");
+    const { join } = await import("path");
+    await writeFile(
+      join(outDir, "manifest.json"),
+      JSON.stringify(manifest, null, 2),
+    );
 
     logger.info(`Build complete. Output: ${outDir}`);
 
@@ -665,9 +695,99 @@ if (Component) {
 /**
  * Create app from build output (for production)
  */
-async function fromBuild(_buildDir: string): Promise<App> {
-  // TODO: Implement loading from build manifest
-  throw new Error("fromBuild is not yet implemented");
+async function fromBuild(buildDir: string): Promise<App> {
+  const { readFile, readdir, stat } = await import("fs/promises");
+  const { join } = await import("path");
+
+  // Load manifest
+  const manifestPath = join(buildDir, "manifest.json");
+  let manifest: {
+    islands: Record<string, string>;
+    routes: string[];
+    css: Record<string, string>;
+    assets?: Record<string, string>;
+  };
+
+  try {
+    const manifestContent = await readFile(manifestPath, "utf-8");
+    manifest = JSON.parse(manifestContent);
+  } catch (error) {
+    throw new Error(`Failed to load manifest from ${manifestPath}: ${error}`);
+  }
+
+  // Create app with routes from manifest
+  const app = new AppImpl({
+    root: buildDir,
+  });
+
+  // Set up CSS manifest for path mapping
+  for (const [original, output] of Object.entries(manifest.css)) {
+    app["_cssManifest"].set(original, output);
+  }
+
+  // Override handleRequest for production serving
+  const originalHandleRequest = app.handleRequest.bind(app);
+  app.handleRequest = async (request: Request): Promise<Response> => {
+    const url = new URL(request.url);
+    const pathname = url.pathname;
+
+    // Serve static files from build output
+    const staticPaths = ["/css/", "/assets/", "/islands/"];
+    for (const prefix of staticPaths) {
+      if (pathname.startsWith(prefix)) {
+        const filePath = join(buildDir, pathname);
+        try {
+          const content = await readFile(filePath);
+          const contentType = getContentType(pathname);
+          return new Response(content, {
+            headers: {
+              "Content-Type": contentType,
+              "Cache-Control": "public, max-age=31536000, immutable",
+            },
+          });
+        } catch {
+          return new Response("Not Found", { status: 404 });
+        }
+      }
+    }
+
+    // For routes, use render (which will use CSS manifest mapping)
+    return originalHandleRequest(request);
+  };
+
+  logger.info(`Loaded production app from ${buildDir}`);
+
+  return app;
+}
+
+/**
+ * Get content type for a file path
+ */
+function getContentType(filepath: string): string {
+  const ext = filepath.split(".").pop()?.toLowerCase();
+  switch (ext) {
+    case "js":
+      return "application/javascript";
+    case "css":
+      return "text/css";
+    case "html":
+      return "text/html";
+    case "json":
+      return "application/json";
+    case "png":
+      return "image/png";
+    case "jpg":
+    case "jpeg":
+      return "image/jpeg";
+    case "svg":
+      return "image/svg+xml";
+    case "woff":
+      return "font/woff";
+    case "woff2":
+      return "font/woff2";
+    default:
+      return "application/octet-stream";
+  }
 }
 
 /**

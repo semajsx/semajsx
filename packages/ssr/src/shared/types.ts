@@ -257,6 +257,7 @@ export interface BuildResult {
     islands: Record<string, string>;
     routes: string[];
     css: Record<string, string>;
+    assets?: Record<string, string>;
   };
 }
 

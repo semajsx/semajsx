@@ -245,9 +245,9 @@ describe("createApp", () => {
   });
 
   describe("fromBuild", () => {
-    it("should throw not implemented error", async () => {
-      await expect(createApp.fromBuild("./dist")).rejects.toThrow(
-        "fromBuild is not yet implemented",
+    it("should throw when manifest is missing", async () => {
+      await expect(createApp.fromBuild("./nonexistent")).rejects.toThrow(
+        "Failed to load manifest",
       );
     });
   });

@@ -31,6 +31,8 @@ export interface CSSBuildOptions {
     safari?: number;
     edge?: number;
   };
+  /** Asset manifest for URL rewriting */
+  assetManifest?: Map<string, string>;
 }
 
 /**
@@ -56,7 +58,7 @@ export async function buildCSS(
   outDir: string,
   options: CSSBuildOptions = {},
 ): Promise<CSSBuildResult> {
-  const { minify = true, sourceMap = false, targets } = options;
+  const { minify = true, sourceMap = false, targets, assetManifest } = options;
 
   const mapping = new Map<string, string>();
   let totalSize = 0;
@@ -69,6 +71,7 @@ export async function buildCSS(
     try {
       const content = await readFile(cssPath);
       const filename = path.basename(cssPath);
+      const cssDir = path.dirname(cssPath);
 
       // Transform with lightningcss
       const result = transform({
@@ -86,6 +89,40 @@ export async function buildCSS(
           : undefined,
         drafts: {
           customMedia: true,
+        },
+        // Rewrite url() paths
+        visitor: {
+          Url(url) {
+            // Skip data URLs and absolute URLs
+            if (
+              url.url.startsWith("data:") ||
+              url.url.startsWith("http://") ||
+              url.url.startsWith("https://") ||
+              url.url.startsWith("//")
+            ) {
+              return url;
+            }
+
+            // Resolve relative path to absolute
+            let absolutePath: string;
+            if (url.url.startsWith("/")) {
+              absolutePath = url.url;
+            } else {
+              absolutePath = path.resolve(cssDir, url.url);
+            }
+
+            // Check if asset has a mapped output path
+            if (assetManifest && assetManifest.has(absolutePath)) {
+              return { ...url, url: assetManifest.get(absolutePath)! };
+            }
+
+            // Convert to web path (relative to project root)
+            if (absolutePath.startsWith("/")) {
+              return { ...url, url: `/assets${absolutePath}` };
+            }
+
+            return url;
+          },
         },
       });
 
