@@ -155,7 +155,7 @@ import * as ComponentModule from '${componentPath}';
 
 // Get the component
 // Try to find by name first (most reliable), then fall back to default or first function
-const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName} || ` : ""}ComponentModule.default ||
+const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName}` : "ComponentModule.default"} ||
                   Object.values(ComponentModule).find(exp => typeof exp === 'function');
 
 if (!Component) {
