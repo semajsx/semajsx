@@ -7,6 +7,7 @@ import type { VNode } from "@semajsx/core";
 import { Fragment } from "@semajsx/core";
 import { setProperty } from "./properties";
 import { isSignal } from "@semajsx/signal";
+import { render } from "./render";
 
 /**
  * Hydrate a server-rendered DOM tree with client-side interactivity
@@ -512,7 +513,7 @@ export function hydrateIsland(
       node.parentNode?.removeChild(node);
     }
 
-    // Render new content after start comment
+    // Render new content with full reactivity
     const vnode: VNode = {
       type: Component as VNode["type"],
       props,
@@ -520,20 +521,14 @@ export function hydrateIsland(
     };
     const parent = startComment.parentNode;
     if (parent) {
-      // Create temp container to render into
+      // Create temp container and use full render for reactivity
       const temp = document.createElement("div");
-      const newNode = renderNode(vnode, temp);
+      render(vnode, temp);
 
       // Move rendered nodes after start comment
-      if (newNode) {
-        if (newNode.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
-          const children = Array.from(newNode.childNodes);
-          for (const child of children) {
-            parent.insertBefore(child, endComment);
-          }
-        } else {
-          parent.insertBefore(newNode, endComment);
-        }
+      const children = Array.from(temp.childNodes);
+      for (const child of children) {
+        parent.insertBefore(child, endComment);
       }
     }
 
