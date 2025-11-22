@@ -2,6 +2,13 @@
 
 import { Counter } from "./Counter";
 import { TodoList } from "./TodoList";
+import { Pagination } from "./Pagination";
+import {
+  AsyncCounter,
+  SignalComponent,
+  StreamingComponent,
+  ConditionalComponent,
+} from "./SpecialComponents";
 
 /**
  * Main App component with static and interactive content
@@ -21,6 +28,7 @@ export function App() {
               margin: 0 auto;
               padding: 20px;
               background: #f9fafb;
+              color: #1f2937;
             }
             h1 {
               color: #1f2937;
@@ -31,12 +39,52 @@ export function App() {
               color: #374151;
               margin-top: 30px;
             }
+            p, li {
+              color: #374151;
+            }
             .static-content {
               background: white;
               padding: 20px;
               border-radius: 8px;
               margin: 20px 0;
               box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            button {
+              padding: 8px 16px;
+              font-size: 14px;
+              cursor: pointer;
+              border: 1px solid #d1d5db;
+              border-radius: 4px;
+              background: white;
+              color: #1f2937;
+            }
+            button:disabled {
+              opacity: 0.5;
+              cursor: not-allowed;
+            }
+            @media (prefers-color-scheme: dark) {
+              body {
+                background: #111827;
+                color: #f9fafb;
+              }
+              h1 {
+                color: #f9fafb;
+              }
+              h2 {
+                color: #e5e7eb;
+              }
+              p, li {
+                color: #d1d5db;
+              }
+              .static-content {
+                background: #1f2937;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+              }
+              button {
+                background: #374151;
+                color: #f9fafb;
+                border-color: #4b5563;
+              }
             }
           `}
         </style>
@@ -88,6 +136,46 @@ export function App() {
 
         {/* Island 2: TodoList */}
         <TodoList />
+
+        <div class="static-content">
+          <p>
+            <strong>Fragment Island:</strong> The pagination below returns
+            multiple elements without a wrapper (Fragment). This tests comment
+            marker hydration.
+          </p>
+        </div>
+
+        {/* Island 3: Pagination (Fragment island) */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            margin: "20px 0",
+          }}
+        >
+          <Pagination total={10} />
+        </div>
+
+        <h2>🧪 Special Component Types</h2>
+        <div class="static-content">
+          <p>
+            These components test special rendering patterns: async loading,
+            signal reactivity, streaming updates, and conditional rendering.
+          </p>
+        </div>
+
+        {/* Island 4: Async Component */}
+        <AsyncCounter delay={500} />
+
+        {/* Island 5: Signal Return Component */}
+        <SignalComponent initial="Hello World" />
+
+        {/* Island 6: Streaming Component */}
+        <StreamingComponent total={3} />
+
+        {/* Island 7: Conditional Component */}
+        <ConditionalComponent showInitially={true} />
 
         <h2>🎯 Key Benefits</h2>
         <div class="static-content">

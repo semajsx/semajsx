@@ -4,6 +4,11 @@ import { describe, expect, it } from "vitest";
 import { renderToString } from "./render";
 import { island } from "./client/island";
 import { signal } from "@semajsx/signal";
+import type { IslandScriptTransformer } from "./shared/types";
+
+// Default transformer for tests that need scripts
+const defaultTransformer: IslandScriptTransformer = (island) =>
+  `<script type="module" src="${island.basePath}/${island.id}.js" async></script>`;
 
 describe("renderToString", () => {
   it("should render simple HTML", () => {
@@ -36,7 +41,9 @@ describe("renderToString", () => {
       </div>
     );
 
-    const result = renderToString(app);
+    const result = renderToString(app, {
+      transformIslandScript: defaultTransformer,
+    });
 
     expect(result.islands).toHaveLength(1);
     expect(result.islands[0]?.id).toBe("counter-component-0");
@@ -45,15 +52,62 @@ describe("renderToString", () => {
     expect(result.html).toContain("data-island-props=");
   });
 
-  it("should generate scripts for islands", () => {
+  it("should not generate scripts or markers by default (static HTML only)", () => {
     const Counter = island(() => <button>Click</button>, "/Counter.tsx");
 
     const app = <Counter />;
 
-    const result = renderToString(app, { islandBasePath: "/islands" });
+    const result = renderToString(app);
+
+    // No scripts without transformer
+    expect(result.scripts).toBe("");
+    // No islands collected without transformer
+    expect(result.islands).toHaveLength(0);
+    // No hydration markers in HTML
+    expect(result.html).not.toContain("data-island-id");
+    expect(result.html).not.toContain("data-island-props");
+    // But content is still rendered
+    expect(result.html).toContain("<button>Click</button>");
+  });
+
+  it("should generate scripts with custom transformer", () => {
+    const Counter = island(() => <button>Click</button>, "/Counter.tsx");
+
+    const app = <Counter />;
+
+    const result = renderToString(app, {
+      islandBasePath: "/islands",
+      transformIslandScript: defaultTransformer,
+    });
 
     expect(result.scripts).toContain('type="module"');
     expect(result.scripts).toContain('src="/islands/anonymous-0.js"');
+  });
+
+  it("should pass correct context to transformer", () => {
+    const Counter = island(function MyCounter({ count = 0 }) {
+      return <button>{count}</button>;
+    }, "/components/Counter.tsx");
+
+    const app = <Counter count={10} />;
+
+    let capturedContext: any = null;
+    const result = renderToString(app, {
+      islandBasePath: "/custom",
+      transformIslandScript: (ctx) => {
+        capturedContext = ctx;
+        return `<script src="${ctx.path}"></script>`;
+      },
+    });
+
+    expect(capturedContext).toEqual({
+      id: "my-counter-0",
+      path: "/components/Counter.tsx",
+      props: { count: 10 },
+      componentName: "MyCounter",
+      basePath: "/custom",
+    });
+    expect(result.scripts).toContain('src="/components/Counter.tsx"');
   });
 
   it("should handle multiple islands", () => {
@@ -68,7 +122,9 @@ describe("renderToString", () => {
       </div>
     );
 
-    const result = renderToString(app);
+    const result = renderToString(app, {
+      transformIslandScript: defaultTransformer,
+    });
 
     expect(result.islands).toHaveLength(3);
     expect(result.islands[0]?.id).toBe("anonymous-0");
@@ -78,6 +134,52 @@ describe("renderToString", () => {
     expect(result.scripts).toContain("anonymous-0.js");
     expect(result.scripts).toContain("anonymous-1.js");
     expect(result.scripts).toContain("anonymous-2.js");
+  });
+
+  it("should inject attrs directly on single element islands (no wrapper div)", () => {
+    const SingleBtn = island(function SingleBtn({ count = 0 }) {
+      return <button>{count}</button>;
+    }, "/SingleBtn.tsx");
+
+    const app = <SingleBtn count={5} />;
+
+    const result = renderToString(app, {
+      transformIslandScript: defaultTransformer,
+    });
+
+    // Should inject attrs directly on button, not wrap in div
+    expect(result.html).toMatch(/<button data-island-id="[^"]+"/);
+    expect(result.html).toContain("data-island-props=");
+    expect(result.html).toContain(">5</button>");
+    // Should NOT have a wrapper div
+    expect(result.html).not.toMatch(/<div[^>]*data-island-id/);
+  });
+
+  it("should use comment markers for fragment islands", () => {
+    const FragmentIsland = island(function FragmentIsland() {
+      return (
+        <>
+          <button>Prev</button>
+          <button>Next</button>
+        </>
+      );
+    }, "/FragmentIsland.tsx");
+
+    const app = <FragmentIsland />;
+
+    const result = renderToString(app, {
+      transformIslandScript: defaultTransformer,
+    });
+
+    // Should use comment markers for fragment
+    expect(result.html).toMatch(/<!--island:[^>]+-->/);
+    expect(result.html).toContain("<!--/island-->");
+    expect(result.html).toContain("<button>Prev</button>");
+    expect(result.html).toContain("<button>Next</button>");
+    // Props in script tag
+    expect(result.html).toMatch(
+      /<script type="application\/json" data-island="[^"]+"/,
+    );
   });
 
   it("should render nested elements correctly", () => {
@@ -180,7 +282,9 @@ describe("renderToString", () => {
       </div>
     );
 
-    const result = renderToString(app);
+    const result = renderToString(app, {
+      transformIslandScript: defaultTransformer,
+    });
 
     expect(result.html).toContain("<h1>Static Header</h1>");
     expect(result.html).toContain("<p>Some static content</p>");
@@ -195,7 +299,10 @@ describe("renderToString", () => {
 
     const app = <Counter />;
 
-    const result = renderToString(app, { islandBasePath: "/custom/path" });
+    const result = renderToString(app, {
+      islandBasePath: "/custom/path",
+      transformIslandScript: defaultTransformer,
+    });
 
     expect(result.scripts).toContain('src="/custom/path/anonymous-0.js"');
   });
@@ -245,7 +352,9 @@ describe("renderToString", () => {
 
     const app = <Counter />;
 
-    const result = renderToString(app);
+    const result = renderToString(app, {
+      transformIslandScript: defaultTransformer,
+    });
 
     // HTML should NOT contain the file path
     expect(result.html).not.toContain("/home/user");

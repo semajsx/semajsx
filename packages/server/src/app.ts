@@ -146,8 +146,12 @@ class AppImpl implements App {
     const vnode = handler(context);
 
     // Render to string with island detection
-    const result = renderToString(vnode, {
-      islandBasePath: this.config.islands?.basePath,
+    const basePath = this.config.islands?.basePath || "/islands";
+    const result = await renderToString(vnode, {
+      islandBasePath: basePath,
+      // Default transformer generates standard script tags
+      transformIslandScript: (island) =>
+        `<script type="module" src="${island.basePath}/${island.id}.js" async></script>`,
     });
 
     // Cache islands
@@ -266,18 +270,15 @@ class AppImpl implements App {
           const componentName = island.componentName;
 
           const entryCode = `
-import { hydrate, h } from '@semajsx/dom';
+import { hydrateIsland } from '@semajsx/dom';
 import { markIslandHydrated } from '@semajsx/server/client';
 import * as ComponentModule from '${componentPath}';
 
 const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName} || ` : ""}ComponentModule.default ||
                   Object.values(ComponentModule).find(exp => typeof exp === 'function');
 
-const container = document.querySelector('[data-island-id="${island.id}"]');
-if (container && Component) {
-  const props = JSON.parse(container.getAttribute('data-island-props') || '{}');
-  hydrate(h(Component, props), container);
-  markIslandHydrated('${island.id}');
+if (Component) {
+  hydrateIsland('${island.id}', Component, markIslandHydrated);
 }
 `;
 
@@ -421,9 +422,9 @@ if (container && Component) {
     // Get component name for import
     const componentName = island.componentName;
 
-    // Generate entry point code (use h() instead of JSX since this is runtime-generated)
+    // Generate entry point code
     const entryCode = `
-import { hydrate, h } from '@semajsx/dom';
+import { hydrateIsland } from '@semajsx/dom';
 import { markIslandHydrated } from '@semajsx/server/client';
 import * as ComponentModule from '${componentPath}';
 
@@ -431,11 +432,8 @@ import * as ComponentModule from '${componentPath}';
 const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName} || ` : ""}ComponentModule.default ||
                   Object.values(ComponentModule).find(exp => typeof exp === 'function');
 
-const container = document.querySelector('[data-island-id="${islandId}"]');
-if (container && Component) {
-  const props = JSON.parse(container.getAttribute('data-island-props') || '{}');
-  hydrate(h(Component, props), container);
-  markIslandHydrated('${islandId}');
+if (Component) {
+  hydrateIsland('${islandId}', Component, markIslandHydrated);
 }
 `;
 
@@ -571,7 +569,7 @@ if (container && Component) {
           const componentName = island.componentName;
 
           return `
-import { hydrate, h } from '@semajsx/dom';
+import { hydrateIsland } from '@semajsx/dom';
 import { markIslandHydrated } from '@semajsx/server/client';
 import * as ComponentModule from '${componentPath}';
 
@@ -579,11 +577,8 @@ import * as ComponentModule from '${componentPath}';
 const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName} || ` : ""}ComponentModule.default ||
                   Object.values(ComponentModule).find(exp => typeof exp === 'function');
 
-const container = document.querySelector('[data-island-id="${islandId}"]');
-if (container && Component) {
-  const props = JSON.parse(container.getAttribute('data-island-props') || '{}');
-  hydrate(h(Component, props), container);
-  markIslandHydrated('${islandId}');
+if (Component) {
+  hydrateIsland('${islandId}', Component, markIslandHydrated);
 }
 `;
         }

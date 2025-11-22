@@ -27,6 +27,9 @@ export { DefaultDocument, renderDocument } from "./document";
 // Re-export shared types
 export type {
   IslandMetadata,
+  IslandScriptContext,
+  IslandScriptTransformer,
+  RenderToStringOptions,
   SSRResult,
   RouteContext,
   RouteHandler,
