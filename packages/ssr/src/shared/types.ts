@@ -129,6 +129,8 @@ export type DocumentTemplate = (props: {
   scripts: JSXNode;
   /** Island metadata (for custom processing) */
   islands: IslandMetadata[];
+  /** Collected CSS file paths */
+  css: string[];
   /** Current route path */
   path: string;
   /** Page title (optional, should be provided by user) */

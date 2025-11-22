@@ -168,6 +168,7 @@ class AppImpl implements App {
         children: result.html,
         scripts: result.scripts,
         islands: result.islands,
+        css: result.css,
         path,
         title: this.config.title,
         meta: this.config.meta,

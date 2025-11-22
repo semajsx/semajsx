@@ -20,6 +20,7 @@ import type { DocumentTemplate } from "./shared/types";
 export const DefaultDocument: DocumentTemplate = ({
   children,
   scripts,
+  css,
   title,
 }) => (
   <html lang="en">
@@ -27,6 +28,9 @@ export const DefaultDocument: DocumentTemplate = ({
       <meta charSet="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       {title && <title>{title}</title>}
+      {css.map((href) => (
+        <link key={href} rel="stylesheet" href={href} />
+      ))}
     </head>
     <body>
       {children}

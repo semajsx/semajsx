@@ -169,6 +169,7 @@ export class ViteRouter {
           children: [],
         },
         islands: result.islands,
+        css: result.css,
         path,
         title: this.config.title,
         meta: this.config.meta,
