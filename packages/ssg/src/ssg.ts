@@ -348,6 +348,7 @@ export class SSG<
 
   /**
    * Build CSS for each page based on rendered HTML content
+   * Generates base.css (shared) + per-page utilities
    */
   private async buildPageCSS(outDir: string): Promise<void> {
     if (!this.config.tailwind || this.pageHtmlContent.size === 0) {
@@ -366,11 +367,40 @@ export class SSG<
       const cssOutDir = join(outDir, "css");
       await mkdir(cssOutDir, { recursive: true });
 
-      // Generate CSS entry for each page
-      const entryPoints: Record<string, string> = {};
+      const tailwindcss = await import("@tailwindcss/vite");
 
+      // 1. Build base.css with theme and preflight (no utilities)
+      const baseCssContent = `@import "tailwindcss/theme" layer(theme);\n@import "tailwindcss/preflight" layer(base);`;
+      const baseCssFile = join(tempDir, "base.css");
+      await writeFile(baseCssFile, baseCssContent);
+
+      await viteBuild({
+        root: this.rootDir,
+        plugins: [tailwindcss.default()],
+        build: {
+          outDir: cssOutDir,
+          emptyOutDir: false,
+          rollupOptions: {
+            input: { base: baseCssFile },
+            output: {
+              assetFileNames: "[name][extname]",
+              entryFileNames: "[name].js",
+            },
+          },
+          minify: true,
+        },
+        logLevel: "silent",
+      });
+
+      // Clean up base.js
+      try {
+        await rm(join(cssOutDir, "base.js"));
+      } catch {
+        // ignore
+      }
+
+      // 2. Build per-page utilities
       for (const [pagePath, html] of this.pageHtmlContent) {
-        // Generate page name for CSS file
         const pageName =
           pagePath === "/" ? "index" : pagePath.slice(1).replace(/\//g, "-");
 
@@ -378,18 +408,11 @@ export class SSG<
         const htmlFile = join(tempDir, `${pageName}.html`);
         await writeFile(htmlFile, html);
 
-        // Create CSS entry that sources from the HTML file
-        const cssContent = `@import "tailwindcss";\n@source "${htmlFile}";`;
+        // Create CSS entry with only utilities layer
+        const cssContent = `@import "tailwindcss/utilities" layer(utilities);\n@source "${htmlFile}";`;
         const cssFile = join(tempDir, `${pageName}.css`);
-
         await writeFile(cssFile, cssContent);
-        entryPoints[pageName] = cssFile;
-      }
 
-      // Build each page CSS separately to get per-page output
-      const tailwindcss = await import("@tailwindcss/vite");
-
-      for (const [pageName, cssFile] of Object.entries(entryPoints)) {
         await viteBuild({
           root: this.rootDir,
           plugins: [tailwindcss.default()],
@@ -409,11 +432,10 @@ export class SSG<
         });
 
         // Clean up generated JS file
-        const jsFile = join(cssOutDir, `${pageName}.js`);
         try {
-          await rm(jsFile);
+          await rm(join(cssOutDir, `${pageName}.js`));
         } catch {
-          // File might not exist
+          // ignore
         }
       }
 
@@ -436,12 +458,14 @@ export class SSG<
       this.pageHtmlContent.set(path, result.html);
     }
 
-    // Generate styles - page-specific CSS
+    // Generate styles - base.css (shared) + page-specific utilities
     // CSS file names use - instead of / for paths (e.g., /blog/hello-world -> blog-hello-world.css)
     const cssFileName =
       path === "/" ? "index" : path.slice(1).replace(/\//g, "-");
     const styles = this.config.tailwind
-      ? new RawHTML(`<link rel="stylesheet" href="/css/${cssFileName}.css" />`)
+      ? new RawHTML(
+          `<link rel="stylesheet" href="/css/base.css" />\n    <link rel="stylesheet" href="/css/${cssFileName}.css" />`,
+        )
       : undefined;
 
     // Wrap with document template
