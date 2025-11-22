@@ -475,7 +475,7 @@ function renderNode(vnode: any, parentElement: Element): Node | null {
  * @example
  * ```tsx
  * import { hydrateIsland, h } from '@semajsx/dom';
- * import { markIslandHydrated } from '@semajsx/server/client';
+ * import { markIslandHydrated } from '@semajsx/ssr/client';
  * import Counter from './Counter';
  *
  * hydrateIsland('counter-0', Counter, markIslandHydrated);

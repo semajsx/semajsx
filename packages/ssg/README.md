@@ -4,7 +4,7 @@ Static Site Generation with Collections and MDX support for SemaJSX.
 
 ## Overview
 
-`@semajsx/ssg` is a static site generator that builds on top of `@semajsx/server`, providing:
+`@semajsx/ssg` is a static site generator that builds on top of `@semajsx/ssr`, providing:
 
 - **Collections** - Type-safe content management with multiple data sources
 - **MDX Support** - Write content in MDX with custom components
@@ -377,7 +377,7 @@ MDX Processor (if applicable)
     ↓
 Route Generation (getStaticPaths)
     ↓
-SSR Rendering (@semajsx/server)
+SSR Rendering (@semajsx/ssr)
     ↓
 Static HTML + Island Bundles
 ```

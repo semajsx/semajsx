@@ -22,7 +22,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@semajsx/server": "workspace:*",
+    "@semajsx/ssr": "workspace:*",
     "@semajsx/dom": "workspace:*",
     "@semajsx/core": "workspace:*",
     "@semajsx/signal": "workspace:*",

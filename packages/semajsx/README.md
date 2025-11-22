@@ -12,7 +12,7 @@ This package currently contains the entire SemaJSX codebase. It will be graduall
 - `@semajsx/core` - Runtime core (VNode, helpers)
 - `@semajsx/dom` - DOM rendering
 - `@semajsx/terminal` - Terminal rendering
-- `@semajsx/server` - SSR and Island architecture
+- `@semajsx/ssr` - SSR and Island architecture
 - `@semajsx/logger` - Logging utilities
 - `@semajsx/utils` - Shared utilities
 

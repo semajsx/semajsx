@@ -18,7 +18,7 @@ export default defineConfig({
   external: [
     "@semajsx/core",
     "@semajsx/dom",
-    "@semajsx/server",
+    "@semajsx/ssr",
     "@semajsx/signal",
     "@semajsx/terminal",
     "@semajsx/utils",
