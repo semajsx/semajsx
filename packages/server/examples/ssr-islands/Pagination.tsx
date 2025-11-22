@@ -1,6 +1,6 @@
 /** @jsxImportSource @semajsx/dom */
 
-import { signal } from "@semajsx/signal";
+import { signal, computed } from "@semajsx/signal";
 import { island } from "@semajsx/server/client";
 
 /**
@@ -10,13 +10,15 @@ import { island } from "@semajsx/server/client";
 export const Pagination = island(
   function Pagination({ total = 5 }: { total?: number }) {
     const current = signal(1);
+    const isPrevDisabled = computed(() => current.value === 1);
+    const isNextDisabled = computed(() => current.value === total);
 
     // Return a fragment - multiple elements without a wrapper
     return (
       <>
         <button
           onClick={() => current.value > 1 && current.value--}
-          disabled={current.value === 1}
+          disabled={isPrevDisabled}
         >
           ← Prev
         </button>
@@ -30,7 +32,7 @@ export const Pagination = island(
         </span>
         <button
           onClick={() => current.value < total && current.value++}
-          disabled={current.value === total}
+          disabled={isNextDisabled}
         >
           Next →
         </button>
