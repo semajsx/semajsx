@@ -44,7 +44,7 @@ const BlogIndex = ({
       {posts.map((post) => (
         <li key={post.slug}>
           <a href={`/blog/${post.slug}`}>{post.data.title}</a>
-          <span> - {post.data.date.toLocaleDateString()}</span>
+          <span>- {post.data.date.toLocaleDateString()}</span>
         </li>
       ))}
     </ul>
@@ -72,9 +72,9 @@ const ssg = createSSG({
   // MDX configuration with custom components
   mdx: {
     components: {
-      Callout: Callout as (props: Record<string, unknown>) => VNode,
-      CodeBlock: CodeBlock as (props: Record<string, unknown>) => VNode,
-      Counter: Counter as (props: Record<string, unknown>) => VNode,
+      Callout,
+      CodeBlock,
+      Counter,
     },
   },
   routes: [
