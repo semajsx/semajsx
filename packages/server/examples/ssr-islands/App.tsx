@@ -2,6 +2,7 @@
 
 import { Counter } from "./Counter";
 import { TodoList } from "./TodoList";
+import { Pagination } from "./Pagination";
 
 /**
  * Main App component with static and interactive content
@@ -88,6 +89,26 @@ export function App() {
 
         {/* Island 2: TodoList */}
         <TodoList />
+
+        <div class="static-content">
+          <p>
+            <strong>Fragment Island:</strong> The pagination below returns
+            multiple elements without a wrapper (Fragment). This tests comment
+            marker hydration.
+          </p>
+        </div>
+
+        {/* Island 3: Pagination (Fragment island) */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            margin: "20px 0",
+          }}
+        >
+          <Pagination total={10} />
+        </div>
 
         <h2>🎯 Key Benefits</h2>
         <div class="static-content">
