@@ -306,6 +306,19 @@ export class SSG<
     // Use App to render the page
     const result = await this.app.render(path);
 
+    // Parse CSS paths from result
+    const cssLinks: string[] = [];
+    if (result.css) {
+      // Extract href from <link rel="stylesheet" href="..."> tags
+      const linkRegex = /<link[^>]+href="([^"]+)"[^>]*>/g;
+      let match;
+      while ((match = linkRegex.exec(result.css)) !== null) {
+        if (match[1]) {
+          cssLinks.push(match[1]);
+        }
+      }
+    }
+
     // Wrap with document template
     const documentProps: DocumentProps = {
       children: new RawHTML(result.html),
@@ -314,6 +327,7 @@ export class SSG<
       path,
       props,
       scripts: result.scripts ? new RawHTML(result.scripts) : undefined,
+      css: cssLinks.length > 0 ? cssLinks : undefined,
     };
 
     const template = this.config.document ?? DefaultDocument;
