@@ -390,6 +390,17 @@ if (container && Component) {
       return new Response("Not Found", { status: 404 });
     }
 
+    // Handle CSS file requests
+    if (pathname.endsWith(".css")) {
+      const result = await this._handleModuleRequest(pathname);
+      if (result) {
+        return new Response(result.code, {
+          headers: { "Content-Type": "text/css" },
+        });
+      }
+      return new Response("Not Found", { status: 404 });
+    }
+
     // Handle page requests
     try {
       const result = await this.render(pathname);

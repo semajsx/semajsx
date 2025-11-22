@@ -48,25 +48,7 @@ await app.prepare();
 // Create HTTP server
 const server = Bun.serve({
   port: 3000,
-  async fetch(req: Request) {
-    const url = new URL(req.url);
-
-    // Serve CSS file through Vite
-    if (url.pathname === "/style.css") {
-      const vite = app.getViteServer();
-      if (vite) {
-        const result = await vite.transformRequest("/style.css");
-        if (result) {
-          return new Response(result.code, {
-            headers: { "Content-Type": "text/css" },
-          });
-        }
-      }
-    }
-
-    // Handle all other requests through the app
-    return app.handleRequest(req);
-  },
+  fetch: (req: Request) => app.handleRequest(req),
 });
 
 // Display startup info
