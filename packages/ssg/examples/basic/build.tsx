@@ -25,11 +25,13 @@ const blog = defineCollection({
   }),
 });
 
-// Components
+// Components with Tailwind CSS
 const HomePage = (): VNode => (
-  <div>
-    <h1>Welcome to My Blog</h1>
-    <p>This is a static site built with @semajsx/ssg</p>
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold text-gray-900 border-b-4 border-blue-500 pb-4 mb-8">
+      Welcome to My Blog
+    </h1>
+    <p class="text-gray-600">This is a static site built with @semajsx/ssg</p>
   </div>
 );
 
@@ -38,13 +40,20 @@ const BlogIndex = ({
 }: {
   posts: Array<{ slug: string; data: { title: string; date: Date } }>;
 }): VNode => (
-  <div>
-    <h1>Blog Posts</h1>
-    <ul>
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">Blog Posts</h1>
+    <ul class="space-y-4">
       {posts.map((post) => (
-        <li key={post.slug}>
-          <a href={`/blog/${post.slug}`}>{post.data.title}</a>
-          <span>- {post.data.date.toLocaleDateString()}</span>
+        <li key={post.slug} class="bg-white rounded-lg shadow p-4">
+          <a
+            href={`/blog/${post.slug}`}
+            class="text-blue-600 hover:underline font-medium"
+          >
+            {post.data.title}
+          </a>
+          <span class="text-gray-500 ml-2">
+            - {post.data.date.toLocaleDateString()}
+          </span>
         </li>
       ))}
     </ul>
@@ -58,17 +67,18 @@ const BlogPost = ({
   post: { data: { title: string }; body: string };
   content: VNode;
 }): VNode => (
-  <article>
-    <h1>{post.data.title}</h1>
-    <div>{content}</div>
+  <article class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">{post.data.title}</h1>
+    <div class="prose">{content}</div>
   </article>
 );
 
-// Create SSG instance
+// Create SSG instance with Tailwind
 const ssg = createSSG({
   rootDir,
   outDir: "./dist",
   collections: [blog],
+  tailwind: true,
   // MDX configuration with custom components
   mdx: {
     components: {
