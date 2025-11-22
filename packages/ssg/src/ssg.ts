@@ -87,7 +87,7 @@ export class SSG<
         plugins.push({
           name: "ssg-virtual-tailwind",
           resolveId(id: string) {
-            if (id === "virtual:tailwind.css" || id === "/@tailwind.css") {
+            if (id === "virtual:tailwind.css" || id === "/tailwind.css") {
               return "\0virtual:tailwind.css";
             }
           },
@@ -342,18 +342,39 @@ export class SSG<
     return { state, paths: builtPaths, stats };
   }
 
-  private async buildTailwindCSS(app: App, outDir: string): Promise<void> {
-    const vite = app.getViteServer();
-    if (!vite) return;
+  private async buildTailwindCSS(_app: App, outDir: string): Promise<void> {
+    const { build: viteBuild } = await import("vite");
 
     try {
-      // Transform the virtual Tailwind CSS through Vite
-      const result = await vite.transformRequest("/@tailwind.css");
-      if (result) {
-        // Write CSS to output directory
-        const cssPath = join(outDir, "@tailwind.css");
-        await writeFile(cssPath, result.code);
-      }
+      // Create temporary CSS entry file
+      const tempDir = join(this.rootDir, ".ssg-temp");
+      await mkdir(tempDir, { recursive: true });
+
+      const cssEntry = join(tempDir, "tailwind.css");
+      await writeFile(cssEntry, '@import "tailwindcss";');
+
+      // Build CSS through Vite with Tailwind plugin
+      const tailwindcss = await import("@tailwindcss/vite");
+
+      await viteBuild({
+        root: this.rootDir,
+        plugins: [tailwindcss.default()],
+        build: {
+          outDir,
+          emptyOutDir: false,
+          rollupOptions: {
+            input: { tailwind: cssEntry },
+            output: {
+              assetFileNames: "[name][extname]",
+            },
+          },
+          cssCodeSplit: false,
+        },
+        logLevel: "silent",
+      });
+
+      // Clean up temp directory
+      await rm(tempDir, { recursive: true, force: true });
     } catch (error) {
       console.warn("Failed to build Tailwind CSS:", error);
     }
@@ -368,7 +389,7 @@ export class SSG<
 
     // Generate styles (Tailwind CSS link if enabled)
     const styles = this.config.tailwind
-      ? new RawHTML('<link rel="stylesheet" href="/@tailwind.css" />')
+      ? new RawHTML('<link rel="stylesheet" href="/tailwind.css" />')
       : undefined;
 
     // Wrap with document template
