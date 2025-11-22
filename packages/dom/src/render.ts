@@ -53,6 +53,12 @@ function collectNodes(rendered: RenderedNode<Node>): Node[] {
   // Regular elements and text nodes: just the node itself
   if (rendered.node) {
     nodes.push(rendered.node);
+  } else if (rendered.children.length > 0) {
+    // Component returned Fragment or other node-less structure
+    // Need to collect from children
+    for (const child of rendered.children) {
+      nodes.push(...collectNodes(child));
+    }
   }
   return nodes;
 }
