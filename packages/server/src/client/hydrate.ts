@@ -48,13 +48,13 @@ function findAllIslands(): IslandInfo[] {
     const match = comment.textContent?.match(/^island:(.+)$/);
     if (match && match[1]) {
       const id = match[1];
-      // Find end comment
+      // Find end comment (matches /island:${id})
       let endComment: Comment | null = null;
       let sibling = comment.nextSibling;
       while (sibling) {
         if (
           sibling.nodeType === Node.COMMENT_NODE &&
-          sibling.textContent === "/island"
+          sibling.textContent === `/island:${id}`
         ) {
           endComment = sibling as Comment;
           break;
