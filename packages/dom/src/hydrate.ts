@@ -498,7 +498,7 @@ export function hydrateIsland(
     while (sibling) {
       if (
         sibling.nodeType === Node.COMMENT_NODE &&
-        sibling.textContent === "/island"
+        sibling.textContent === `/island:${islandId}`
       ) {
         endComment = sibling as Comment;
         break;

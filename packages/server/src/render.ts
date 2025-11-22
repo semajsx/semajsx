@@ -398,7 +398,8 @@ async function renderIsland(
   }
 
   // Fragment or other: use comment markers + script tag
-  return `<!--island:${islandId}-->${content}<!--/island--><script type="application/json" data-island="${islandId}">${propsJson}</script>`;
+  // Use unique end marker to support nested islands
+  return `<!--island:${islandId}-->${content}<!--/island:${islandId}--><script type="application/json" data-island="${islandId}">${propsJson}</script>`;
 }
 
 /**
