@@ -48,7 +48,6 @@ class AppImpl implements App {
       root: process.cwd(),
       ...config,
       islands: {
-        basePath: "/islands",
         cache: true,
         cacheSize: 1000,
         ...config.islands,
@@ -150,9 +149,7 @@ class AppImpl implements App {
     const vnode = handler(context);
 
     // Render to string with island detection
-    const basePath = this.config.islands?.basePath || "/islands";
     const result = await renderToString(vnode, {
-      islandBasePath: basePath,
       // Default transformer generates standard script tags
       transformIslandScript: (island) =>
         `<script type="module" src="${island.basePath}/${island.id}.js" async></script>`,
@@ -372,7 +369,7 @@ if (Component) {
         const baseConfig: ViteUserConfig = {
           root: this.config.root,
           build: {
-            outDir: `${outDir}/islands`,
+            outDir: `${outDir}/_semajsx/islands`,
             emptyOutDir: true,
             minify,
             sourcemap,
@@ -398,8 +395,8 @@ if (Component) {
 
         // Record built islands
         for (const [, island] of allIslands) {
-          // Use web-absolute path (starting with /) for consistency with CSS
-          const webPath = `/islands/${island.id}.js`;
+          // Use web-absolute path under /_semajsx/ namespace
+          const webPath = `/_semajsx/islands/${island.id}.js`;
 
           builtIslands.push({
             id: island.id,
@@ -470,9 +467,8 @@ if (Component) {
     }
 
     // Handle island entry points (must be before source file handler)
-    const islandBasePath = this.config.islands?.basePath ?? "/islands";
-    if (pathname.startsWith(islandBasePath)) {
-      const match = pathname.match(new RegExp(`${islandBasePath}/(.+)\\.js`));
+    if (pathname.startsWith("/_semajsx/islands/")) {
+      const match = pathname.match(/\/_semajsx\/islands\/(.+)\.js/);
       if (match && match[1]) {
         const islandId = match[1];
         try {
@@ -759,23 +755,20 @@ async function fromBuild(buildDir: string): Promise<App> {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
-    // Serve static files from build output
-    const staticPaths = ["/css/", "/assets/", "/islands/"];
-    for (const prefix of staticPaths) {
-      if (pathname.startsWith(prefix)) {
-        const filePath = join(buildDir, pathname);
-        try {
-          const content = await readFile(filePath);
-          const contentType = getContentType(pathname);
-          return new Response(content, {
-            headers: {
-              "Content-Type": contentType,
-              "Cache-Control": "public, max-age=31536000, immutable",
-            },
-          });
-        } catch {
-          return new Response("Not Found", { status: 404 });
-        }
+    // Serve static files from build output (under /_semajsx/ namespace)
+    if (pathname.startsWith("/_semajsx/")) {
+      const filePath = join(buildDir, pathname);
+      try {
+        const content = await readFile(filePath);
+        const contentType = getContentType(pathname);
+        return new Response(content, {
+          headers: {
+            "Content-Type": contentType,
+            "Cache-Control": "public, max-age=31536000, immutable",
+          },
+        });
+      } catch {
+        return new Response("Not Found", { status: 404 });
       }
     }
 

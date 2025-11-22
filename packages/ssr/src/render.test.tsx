@@ -76,12 +76,11 @@ describe("renderToString", () => {
     const app = <Counter />;
 
     const result = await renderToString(app, {
-      islandBasePath: "/islands",
       transformIslandScript: defaultTransformer,
     });
 
     expect(result.scripts).toContain('type="module"');
-    expect(result.scripts).toContain('src="/islands/anonymous-0.js"');
+    expect(result.scripts).toContain('src="/_semajsx/islands/anonymous-0.js"');
   });
 
   it("should pass correct context to transformer", async () => {
@@ -91,9 +90,8 @@ describe("renderToString", () => {
 
     const app = <Counter count={10} />;
 
-    let capturedContext: any = null;
+    let capturedContext: unknown = null;
     const result = await renderToString(app, {
-      islandBasePath: "/custom",
       transformIslandScript: (ctx) => {
         capturedContext = ctx;
         return `<script src="${ctx.path}"></script>`;
@@ -105,7 +103,7 @@ describe("renderToString", () => {
       path: "/components/Counter.tsx",
       props: { count: 10 },
       componentName: "MyCounter",
-      basePath: "/custom",
+      basePath: "/_semajsx/islands",
     });
     expect(result.scripts).toContain('src="/components/Counter.tsx"');
   });
@@ -292,19 +290,6 @@ describe("renderToString", () => {
     expect(result.html).toContain("<p>More static content</p>");
     expect(result.html).toContain("Static Footer");
     expect(result.islands).toHaveLength(1);
-  });
-
-  it("should use custom island base path", async () => {
-    const Counter = island(() => <button>Count</button>, "/Counter.tsx");
-
-    const app = <Counter />;
-
-    const result = await renderToString(app, {
-      islandBasePath: "/custom/path",
-      transformIslandScript: defaultTransformer,
-    });
-
-    expect(result.scripts).toContain('src="/custom/path/anonymous-0.js"');
   });
 
   it("should handle array children", async () => {

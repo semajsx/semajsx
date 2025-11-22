@@ -50,8 +50,8 @@ export async function buildAssets(
   const mapping = new Map<string, string>();
   let totalSize = 0;
 
-  // Create output directory
-  const assetsOutDir = path.join(outDir, subdir);
+  // Create output directory under /_semajsx/ namespace
+  const assetsOutDir = path.join(outDir, "_semajsx", subdir);
   await mkdir(assetsOutDir, { recursive: true });
 
   for (const assetPath of assetFiles) {
@@ -70,8 +70,8 @@ export async function buildAssets(
       await writeFile(outputPath, content);
       totalSize += content.length;
 
-      // Record mapping (use web path)
-      mapping.set(assetPath, `/${subdir}/${outputName}`);
+      // Record mapping (use web path under /_semajsx/ namespace)
+      mapping.set(assetPath, `/_semajsx/${subdir}/${outputName}`);
 
       logger.debug(
         `Built ${assetPath} -> ${outputName} (${content.length} bytes)`,

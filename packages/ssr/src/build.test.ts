@@ -35,15 +35,18 @@ describe("CSS Builder", () => {
     expect(result.mapping.size).toBe(1);
     const outputPath = result.mapping.get(cssPath);
     expect(outputPath).toBeDefined();
-    expect(outputPath).toMatch(/\/css\/styles-[a-f0-9]{8}\.css$/);
+    expect(outputPath).toMatch(/\/_semajsx\/css\/styles-[a-f0-9]{8}\.css$/);
 
     // Verify file was created
-    const files = await readdir(join(OUT_DIR, "css"));
+    const files = await readdir(join(OUT_DIR, "_semajsx", "css"));
     expect(files.length).toBe(1);
     expect(files[0]).toMatch(/^styles-[a-f0-9]{8}\.css$/);
 
     // Verify content is minified
-    const content = await readFile(join(OUT_DIR, "css", files[0]), "utf-8");
+    const content = await readFile(
+      join(OUT_DIR, "_semajsx", "css", files[0]),
+      "utf-8",
+    );
     expect(content).toBe(".test{color:red}");
   });
 
@@ -71,7 +74,7 @@ describe("CSS Builder", () => {
 
     // Create asset manifest
     const assetManifest = new Map([
-      [join(TEST_DIR, "image.png"), "/assets/image-abc123.png"],
+      [join(TEST_DIR, "image.png"), "/_semajsx/assets/image-abc123.png"],
     ]);
 
     const result = await buildCSS(new Set([cssPath]), OUT_DIR, {
@@ -79,11 +82,14 @@ describe("CSS Builder", () => {
       assetManifest,
     });
 
-    const files = await readdir(join(OUT_DIR, "css"));
-    const content = await readFile(join(OUT_DIR, "css", files[0]), "utf-8");
+    const files = await readdir(join(OUT_DIR, "_semajsx", "css"));
+    const content = await readFile(
+      join(OUT_DIR, "_semajsx", "css", files[0]),
+      "utf-8",
+    );
 
     // URL should be rewritten to hashed asset path (lightningcss adds quotes)
-    expect(content).toContain('url("/assets/image-abc123.png")');
+    expect(content).toContain('url("/_semajsx/assets/image-abc123.png")');
   });
 
   it("should skip external URLs in url() rewriting", async () => {
@@ -97,8 +103,11 @@ describe("CSS Builder", () => {
       minify: false,
     });
 
-    const files = await readdir(join(OUT_DIR, "css"));
-    const content = await readFile(join(OUT_DIR, "css", files[0]), "utf-8");
+    const files = await readdir(join(OUT_DIR, "_semajsx", "css"));
+    const content = await readFile(
+      join(OUT_DIR, "_semajsx", "css", files[0]),
+      "utf-8",
+    );
 
     // External URL should remain unchanged (lightningcss adds quotes)
     expect(content).toContain('url("https://example.com/image.png")');
@@ -123,15 +132,18 @@ describe("Asset Builder", () => {
     // Check mapping
     expect(result.mapping.size).toBe(1);
     const outputPath = result.mapping.get(assetPath);
-    expect(outputPath).toMatch(/\/assets\/logo-[a-f0-9]{8}\.png$/);
+    expect(outputPath).toMatch(/\/_semajsx\/assets\/logo-[a-f0-9]{8}\.png$/);
 
     // Verify file exists
-    const files = await readdir(join(OUT_DIR, "assets"));
+    const files = await readdir(join(OUT_DIR, "_semajsx", "assets"));
     expect(files.length).toBe(1);
     expect(files[0]).toMatch(/^logo-[a-f0-9]{8}\.png$/);
 
     // Verify content
-    const content = await readFile(join(OUT_DIR, "assets", files[0]), "utf-8");
+    const content = await readFile(
+      join(OUT_DIR, "_semajsx", "assets", files[0]),
+      "utf-8",
+    );
     expect(content).toBe("fake-png-content");
   });
 
@@ -245,9 +257,9 @@ describe("Build Integration", () => {
     });
 
     // Verify CSS contains rewritten URL
-    const cssFiles = await readdir(join(OUT_DIR, "css"));
+    const cssFiles = await readdir(join(OUT_DIR, "_semajsx", "css"));
     const cssContent = await readFile(
-      join(OUT_DIR, "css", cssFiles[0]),
+      join(OUT_DIR, "_semajsx", "css", cssFiles[0]),
       "utf-8",
     );
 
@@ -273,7 +285,7 @@ describe("fromBuild", () => {
       islands: {},
       routes: ["/", "/about"],
       css: {
-        "/src/styles.css": "/css/styles-abc123.css",
+        "/src/styles.css": "/_semajsx/css/styles-abc123.css",
       },
       assets: {},
     };
@@ -297,14 +309,17 @@ describe("fromBuild", () => {
     await writeFile(join(OUT_DIR, "manifest.json"), JSON.stringify(manifest));
 
     // Create CSS directory and file
-    await mkdir(join(OUT_DIR, "css"), { recursive: true });
-    await writeFile(join(OUT_DIR, "css", "test.css"), ".test { color: red; }");
+    await mkdir(join(OUT_DIR, "_semajsx", "css"), { recursive: true });
+    await writeFile(
+      join(OUT_DIR, "_semajsx", "css", "test.css"),
+      ".test { color: red; }",
+    );
 
     const { createApp } = await import("./app");
     const app = await createApp.fromBuild(OUT_DIR);
 
     // Test serving CSS file
-    const request = new Request("http://localhost/css/test.css");
+    const request = new Request("http://localhost/_semajsx/css/test.css");
     const response = await app.handleRequest(request);
 
     expect(response.status).toBe(200);
@@ -326,7 +341,7 @@ describe("fromBuild", () => {
     const { createApp } = await import("./app");
     const app = await createApp.fromBuild(OUT_DIR);
 
-    const request = new Request("http://localhost/css/missing.css");
+    const request = new Request("http://localhost/_semajsx/css/missing.css");
     const response = await app.handleRequest(request);
 
     expect(response.status).toBe(404);
@@ -410,11 +425,11 @@ describe("App Build Integration", () => {
     expect(Object.keys(result.manifest.css).length).toBe(1);
     const relCssPath = relative(TEST_DIR, cssPath);
     expect(result.manifest.css[relCssPath]).toMatch(
-      /\/css\/styles-[a-f0-9]+\.css$/,
+      /\/_semajsx\/css\/styles-[a-f0-9]+\.css$/,
     );
 
     // Check CSS file was created
-    const cssFiles = await readdir(join(OUT_DIR, "css"));
+    const cssFiles = await readdir(join(OUT_DIR, "_semajsx", "css"));
     expect(cssFiles.length).toBe(1);
   });
 
@@ -543,11 +558,11 @@ describe("App Build Integration", () => {
     expect(result.manifest.assets).toBeDefined();
     const relAssetPath = relative(TEST_DIR, assetPath);
     expect(result.manifest.assets?.[relAssetPath]).toMatch(
-      /\/assets\/image-[a-f0-9]+\.png$/,
+      /\/_semajsx\/assets\/image-[a-f0-9]+\.png$/,
     );
 
     // Check asset file was created
-    const assetFiles = await readdir(join(OUT_DIR, "assets"));
+    const assetFiles = await readdir(join(OUT_DIR, "_semajsx", "assets"));
     expect(assetFiles.length).toBe(1);
   });
 
@@ -597,51 +612,54 @@ describe("getContentType", () => {
     );
 
     // Create various file types
-    await mkdir(join(OUT_DIR, "css"), { recursive: true });
-    await mkdir(join(OUT_DIR, "assets"), { recursive: true });
+    await mkdir(join(OUT_DIR, "_semajsx", "css"), { recursive: true });
+    await mkdir(join(OUT_DIR, "_semajsx", "assets"), { recursive: true });
 
-    await writeFile(join(OUT_DIR, "css", "test.css"), "body{}");
-    await writeFile(join(OUT_DIR, "assets", "test.js"), "console.log()");
-    await writeFile(join(OUT_DIR, "assets", "test.json"), "{}");
-    await writeFile(join(OUT_DIR, "assets", "test.png"), "png");
-    await writeFile(join(OUT_DIR, "assets", "test.svg"), "<svg>");
-    await writeFile(join(OUT_DIR, "assets", "test.woff2"), "font");
+    await writeFile(join(OUT_DIR, "_semajsx", "css", "test.css"), "body{}");
+    await writeFile(
+      join(OUT_DIR, "_semajsx", "assets", "test.js"),
+      "console.log()",
+    );
+    await writeFile(join(OUT_DIR, "_semajsx", "assets", "test.json"), "{}");
+    await writeFile(join(OUT_DIR, "_semajsx", "assets", "test.png"), "png");
+    await writeFile(join(OUT_DIR, "_semajsx", "assets", "test.svg"), "<svg>");
+    await writeFile(join(OUT_DIR, "_semajsx", "assets", "test.woff2"), "font");
 
     const app = await createApp.fromBuild(OUT_DIR);
 
     // Test CSS
     let response = await app.handleRequest(
-      new Request("http://localhost/css/test.css"),
+      new Request("http://localhost/_semajsx/css/test.css"),
     );
     expect(response.headers.get("Content-Type")).toBe("text/css");
 
     // Test JS
     response = await app.handleRequest(
-      new Request("http://localhost/assets/test.js"),
+      new Request("http://localhost/_semajsx/assets/test.js"),
     );
     expect(response.headers.get("Content-Type")).toBe("application/javascript");
 
     // Test JSON
     response = await app.handleRequest(
-      new Request("http://localhost/assets/test.json"),
+      new Request("http://localhost/_semajsx/assets/test.json"),
     );
     expect(response.headers.get("Content-Type")).toBe("application/json");
 
     // Test PNG
     response = await app.handleRequest(
-      new Request("http://localhost/assets/test.png"),
+      new Request("http://localhost/_semajsx/assets/test.png"),
     );
     expect(response.headers.get("Content-Type")).toBe("image/png");
 
     // Test SVG
     response = await app.handleRequest(
-      new Request("http://localhost/assets/test.svg"),
+      new Request("http://localhost/_semajsx/assets/test.svg"),
     );
     expect(response.headers.get("Content-Type")).toBe("image/svg+xml");
 
     // Test WOFF2
     response = await app.handleRequest(
-      new Request("http://localhost/assets/test.woff2"),
+      new Request("http://localhost/_semajsx/assets/test.woff2"),
     );
     expect(response.headers.get("Content-Type")).toBe("font/woff2");
   });
@@ -656,7 +674,7 @@ describe("Manifest path formats", () => {
     await rm(TEST_DIR, { recursive: true, force: true });
   });
 
-  it("CSS paths should be web-absolute (start with /)", async () => {
+  it("CSS paths should be under /_semajsx/ namespace", async () => {
     const cssPath = join(TEST_DIR, "styles.css");
     await writeFile(cssPath, ".test { color: red; }");
 
@@ -664,10 +682,10 @@ describe("Manifest path formats", () => {
 
     const outputPath = result.mapping.get(cssPath);
     expect(outputPath).toBeDefined();
-    expect(outputPath).toMatch(/^\/css\//);
+    expect(outputPath).toMatch(/^\/_semajsx\/css\//);
   });
 
-  it("Asset paths should be web-absolute (start with /)", async () => {
+  it("Asset paths should be under /_semajsx/ namespace", async () => {
     const assetPath = join(TEST_DIR, "image.png");
     await writeFile(assetPath, "fake png content");
 
@@ -675,6 +693,6 @@ describe("Manifest path formats", () => {
 
     const outputPath = result.mapping.get(assetPath);
     expect(outputPath).toBeDefined();
-    expect(outputPath).toMatch(/^\/assets\//);
+    expect(outputPath).toMatch(/^\/_semajsx\/assets\//);
   });
 });

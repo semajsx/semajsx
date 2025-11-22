@@ -54,7 +54,10 @@ export async function renderToString(
   vnode: VNode,
   options: RenderToStringOptions = {},
 ): Promise<SSRResult> {
-  const { islandBasePath = "/islands", transformIslandScript } = options;
+  const { transformIslandScript } = options;
+
+  // Fixed path for all static assets under /_semajsx/ namespace
+  const islandBasePath = "/_semajsx/islands";
 
   // Create render context to collect islands during single traversal
   const context: RenderContext = {

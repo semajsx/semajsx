@@ -43,8 +43,6 @@ export type IslandScriptTransformer = (
  * Options for renderToString
  */
 export interface RenderToStringOptions {
-  /** Base path for island scripts (default: '/islands') */
-  islandBasePath?: string;
   /**
    * Custom transformer for island scripts.
    * If not provided, no client-side scripts are generated (static HTML only).
@@ -143,8 +141,6 @@ export type DocumentTemplate = (props: {
  * Router configuration
  */
 export interface RouterConfig {
-  /** Base path for island scripts */
-  islandBasePath?: string;
   /** Enable code caching */
   enableCache?: boolean;
   /** Development mode (uses Vite for module transformation) */
@@ -180,8 +176,6 @@ export interface AppConfig {
 
   /** Island configuration */
   islands?: {
-    /** Base path for island scripts (default: '/islands') */
-    basePath?: string;
     /** Enable caching (default: true) */
     cache?: boolean;
     /** Maximum cache size (default: 1000) */

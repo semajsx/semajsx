@@ -63,8 +63,8 @@ export async function buildCSS(
   const mapping = new Map<string, string>();
   let totalSize = 0;
 
-  // Create output directory
-  const cssOutDir = path.join(outDir, "css");
+  // Create output directory under /_semajsx/ namespace
+  const cssOutDir = path.join(outDir, "_semajsx", "css");
   await mkdir(cssOutDir, { recursive: true });
 
   for (const cssPath of cssFiles) {
@@ -145,8 +145,8 @@ export async function buildCSS(
         await writeFile(`${outputPath}.map`, result.map);
       }
 
-      // Record mapping (use web path)
-      mapping.set(cssPath, `/css/${outputName}`);
+      // Record mapping (use web path under /_semajsx/ namespace)
+      mapping.set(cssPath, `/_semajsx/css/${outputName}`);
 
       logger.debug(
         `Built ${cssPath} -> ${outputName} (${result.code.length} bytes)`,
@@ -224,7 +224,7 @@ export async function bundleCSSFile(
 
   const baseName = path.basename(entryPath, ".css");
   const outputName = `${baseName}-${hash}.css`;
-  const cssOutDir = path.join(outDir, "css");
+  const cssOutDir = path.join(outDir, "_semajsx", "css");
   const outputPath = path.join(cssOutDir, outputName);
 
   await mkdir(cssOutDir, { recursive: true });
@@ -234,7 +234,7 @@ export async function bundleCSSFile(
     await writeFile(`${outputPath}.map`, result.map);
   }
 
-  return `/css/${outputName}`;
+  return `/_semajsx/css/${outputName}`;
 }
 
 /**
