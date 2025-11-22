@@ -39,6 +39,7 @@ class AppImpl implements App {
   private _viteServer: ViteDevServer | null = null;
   private _islandCache: LRUCache<string, IslandMetadata>;
   private _initialized = false;
+  private _cssManifest: Map<string, string> = new Map();
 
   constructor(config: AppConfig = {}) {
     this.config = {
@@ -162,13 +163,16 @@ class AppImpl implements App {
       }
     }
 
+    // Apply CSS manifest mapping for production builds
+    const mappedCSS = this._applyCSSTManifest(result.css);
+
     // Render with document template if provided
     if (this.config.document) {
       const documentVNode = this.config.document({
         children: result.html,
         scripts: result.scripts,
         islands: result.islands,
-        css: result.css,
+        css: mappedCSS,
         path,
         title: this.config.title,
         meta: this.config.meta,
@@ -176,11 +180,15 @@ class AppImpl implements App {
 
       return {
         ...result,
+        css: mappedCSS,
         document: renderDocument(documentVNode),
       };
     }
 
-    return result;
+    return {
+      ...result,
+      css: mappedCSS,
+    };
   }
 
   async dev(
@@ -267,9 +275,10 @@ class AppImpl implements App {
           sourceMap: sourcemap,
         });
 
-        // Add to manifest
+        // Add to manifest and store for runtime mapping
         for (const [original, output] of cssResult.mapping) {
           manifest.css[original] = output;
+          this._cssManifest.set(original, output);
         }
 
         logger.info(`Built ${allCSS.size} CSS files`);
@@ -596,6 +605,17 @@ if (Component) {
     }
 
     return null;
+  }
+
+  /**
+   * Apply CSS manifest mapping to convert source paths to hashed output paths
+   */
+  private _applyCSSTManifest(cssPaths: string[]): string[] {
+    if (this._cssManifest.size === 0) {
+      return cssPaths;
+    }
+
+    return cssPaths.map((cssPath) => this._cssManifest.get(cssPath) || cssPath);
   }
 
   private _createVirtualIslandsPlugin() {
