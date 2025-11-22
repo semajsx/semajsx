@@ -490,35 +490,29 @@ export function hydrateIsland(
   const element = document.querySelector(`[data-island-id="${islandId}"]`);
 
   if (element) {
-    // Single-element island: render into the element
+    // Single-element island: replace the element with rendered content
     const props = JSON.parse(element.getAttribute("data-island-props") || "{}");
+    const parent = element.parentNode;
+    if (!parent) return;
 
-    // Call component to get result
-    let result = Component(props);
+    // Create VNode for the component
+    const vnode: VNode = {
+      type: Component as VNode["type"],
+      props,
+      children: [],
+    };
 
-    // Handle async component
-    if (result instanceof Promise) {
-      result.then((resolved) => {
-        element.innerHTML = "";
-        render(resolved as VNode, element);
-        markHydrated(islandId);
-      });
-      return;
+    // Render into temp container
+    const temp = document.createElement("div");
+    render(vnode, temp);
+
+    // Replace original element with rendered content
+    const children = Array.from(temp.childNodes);
+    for (const child of children) {
+      parent.insertBefore(child, element);
     }
+    parent.removeChild(element);
 
-    // Handle streaming component
-    if (isAsyncIterator(result)) {
-      result.next().then(({ value }) => {
-        element.innerHTML = "";
-        render(value as VNode, element);
-        markHydrated(islandId);
-      });
-      return;
-    }
-
-    // Normal component: render directly
-    element.innerHTML = "";
-    render(result as VNode, element);
     markHydrated(islandId);
     return;
   }
