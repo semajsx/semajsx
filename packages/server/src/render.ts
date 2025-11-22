@@ -1,5 +1,10 @@
 import type { JSXNode, VNode } from "@semajsx/core/types";
-import type { IslandMetadata, SSRResult } from "./shared/types";
+import type {
+  IslandMetadata,
+  IslandScriptTransformer,
+  RenderToStringOptions,
+  SSRResult,
+} from "./shared/types";
 import { Fragment } from "@semajsx/core/types";
 import { getIslandMetadata, isIslandVNode } from "./client/island";
 import { isSignal, unwrap } from "@semajsx/signal/utils";
@@ -11,6 +16,8 @@ interface RenderContext {
   islands: IslandMetadata[];
   islandCounter: number;
   islandBasePath: string;
+  // Whether to generate hydration markers (only when transformer is provided)
+  enableHydration: boolean;
   // Cache for component render results to avoid duplicate rendering
   renderCache: WeakMap<VNode, string>;
 }
@@ -24,33 +31,45 @@ interface RenderContext {
  *
  * @example
  * ```tsx
+ * // Static HTML only (no client-side scripts)
  * const result = renderToString(<App />)
  * console.log(result.html) // HTML string
  * console.log(result.islands) // Island metadata
- * console.log(result.scripts) // Script tags to load islands
+ * console.log(result.scripts) // Empty string
+ *
+ * // With custom hydration scripts
+ * const result = renderToString(<App />, {
+ *   transformIslandScript: (island) => {
+ *     return `<script type="module" src="${island.basePath}/${island.id}.js"></script>`
+ *   }
+ * })
  * ```
  */
-export function renderToString(
+export async function renderToString(
   vnode: VNode,
-  options: {
-    islandBasePath?: string;
-  } = {},
-): SSRResult {
-  const { islandBasePath = "/islands" } = options;
+  options: RenderToStringOptions = {},
+): Promise<SSRResult> {
+  const { islandBasePath = "/islands", transformIslandScript } = options;
 
   // Create render context to collect islands during single traversal
   const context: RenderContext = {
     islands: [],
     islandCounter: 0,
     islandBasePath,
+    // Only enable hydration markers when transformer is provided
+    enableHydration: !!transformIslandScript,
     renderCache: new WeakMap(),
   };
 
   // Render HTML and collect islands in one pass (fixes duplicate rendering)
-  const html = renderVNodeToHTML(vnode, context);
+  const html = await renderVNodeToHTML(vnode, context);
 
-  // Generate script tags for islands
-  const scripts = generateIslandScripts(context.islands, islandBasePath);
+  // Generate script tags for islands (only if transformer is provided)
+  const scripts = generateIslandScripts(
+    context.islands,
+    islandBasePath,
+    transformIslandScript,
+  );
 
   return {
     html,
@@ -128,12 +147,24 @@ function serializeProps(props: any): Record<string, any> {
 }
 
 /**
+ * Check if a value is an async iterator
+ */
+function isAsyncIterator(value: any): value is AsyncIterableIterator<any> {
+  return (
+    value &&
+    typeof value === "object" &&
+    (typeof value[Symbol.asyncIterator] === "function" ||
+      (typeof value.next === "function" && typeof value.return === "function"))
+  );
+}
+
+/**
  * Render VNode to HTML string
  */
-function renderVNodeToHTML(
+async function renderVNodeToHTML(
   vnode: VNode | JSXNode,
   context: RenderContext,
-): string {
+): Promise<string> {
   // Handle null/undefined
   if (vnode == null) {
     return "";
@@ -155,7 +186,10 @@ function renderVNodeToHTML(
 
   // Handle arrays
   if (Array.isArray(vnode)) {
-    return vnode.map((child) => renderVNodeToHTML(child, context)).join("");
+    const results = await Promise.all(
+      vnode.map((child) => renderVNodeToHTML(child, context)),
+    );
+    return results.join("");
   }
 
   // Must be a VNode at this point
@@ -175,7 +209,7 @@ function renderVNodeToHTML(
     const signal = vnodeTyped.props?.signal;
     if (signal && isSignal<VNode>(signal)) {
       const unwrapped = unwrap(signal);
-      const rendered = renderVNodeToHTML(unwrapped, context);
+      const rendered = await renderVNodeToHTML(unwrapped, context);
       // If signal renders to empty content, use a comment marker for hydration
       // This ensures the client can find a DOM node to attach the signal subscription to
       return rendered || "<!--signal-empty-->";
@@ -190,9 +224,10 @@ function renderVNodeToHTML(
 
   // Handle fragments
   if (vnodeTyped.type === Fragment) {
-    return vnodeTyped.children
-      .map((child) => renderVNodeToHTML(child, context))
-      .join("");
+    const results = await Promise.all(
+      vnodeTyped.children.map((child) => renderVNodeToHTML(child, context)),
+    );
+    return results.join("");
   }
 
   // Handle function components
@@ -203,7 +238,25 @@ function renderVNodeToHTML(
         vnodeTyped.children && vnodeTyped.children.length > 0
           ? { ...vnodeTyped.props, children: vnodeTyped.children }
           : vnodeTyped.props || {};
-      const result = vnodeTyped.type(props);
+
+      let result = vnodeTyped.type(props);
+
+      // Handle async component - await the Promise
+      if (result instanceof Promise) {
+        result = await result;
+      }
+
+      // Handle async iterator - take only the first yield
+      if (isAsyncIterator(result)) {
+        const { value } = await result.next();
+        result = value;
+      }
+
+      // Handle signal return - unwrap the value
+      if (isSignal(result)) {
+        result = unwrap(result);
+      }
+
       return renderVNodeToHTML(result, context);
     } catch (error) {
       console.error("Error rendering component:", error);
@@ -221,12 +274,63 @@ function renderVNodeToHTML(
 }
 
 /**
+ * Check if a VNode result is a single DOM element (not Fragment, array, or primitive)
+ */
+function isSingleElement(result: VNode | JSXNode): result is VNode {
+  if (result == null || typeof result !== "object") {
+    return false;
+  }
+  if (Array.isArray(result)) {
+    return false;
+  }
+  if (!("type" in result)) {
+    return false;
+  }
+  const vnode = result as VNode;
+  // Must be a string type (DOM element), not Fragment or function component
+  return typeof vnode.type === "string";
+}
+
+/**
+ * Inject island attributes into the first tag of rendered HTML
+ */
+function injectIslandAttrs(
+  html: string,
+  islandId: string,
+  propsJson: string,
+): string {
+  // Find the first > of the opening tag
+  const firstTagEnd = html.indexOf(">");
+  if (firstTagEnd === -1) {
+    return html;
+  }
+
+  const escapedProps = escapeHTML(propsJson);
+  const attrs = ` data-island-id="${islandId}" data-island-props="${escapedProps}"`;
+
+  // Handle self-closing tags
+  if (html[firstTagEnd - 1] === "/") {
+    return (
+      html.slice(0, firstTagEnd - 1) +
+      attrs +
+      " />" +
+      html.slice(firstTagEnd + 1)
+    );
+  }
+
+  return html.slice(0, firstTagEnd) + attrs + html.slice(firstTagEnd);
+}
+
+/**
  * Render an island component
  * - Renders the full HTML content on server (for SEO and no-JS users)
- * - Wraps content in a hydration marker
- * - Collects island metadata for client-side hydration
+ * - If hydration disabled: renders as plain HTML (no markers)
+ * - If hydration enabled: adds markers for client-side hydration
  */
-function renderIsland(vnode: VNode, context: RenderContext): string {
+async function renderIsland(
+  vnode: VNode,
+  context: RenderContext,
+): Promise<string> {
   const metadata = getIslandMetadata(vnode);
   if (!metadata) {
     return "";
@@ -238,8 +342,40 @@ function renderIsland(vnode: VNode, context: RenderContext): string {
       ? metadata.component.name || "Anonymous"
       : "Unknown";
 
+  // Render the island's content on the server
+  let content = "";
+  let result: VNode | JSXNode;
+  try {
+    result = metadata.component(metadata.props || {});
+
+    // Handle async component - await the Promise
+    if (result instanceof Promise) {
+      result = await result;
+    }
+
+    // Handle async iterator - take only the first yield
+    if (isAsyncIterator(result)) {
+      const { value } = await result.next();
+      result = value;
+    }
+
+    // Handle signal return - unwrap the value
+    if (isSignal(result)) {
+      result = unwrap(result);
+    }
+
+    content = await renderVNodeToHTML(result, context);
+  } catch (error) {
+    console.error(`[SSR] Error rendering island (${componentName}):`, error);
+    return renderErrorFallback(error, vnode);
+  }
+
+  // If hydration is disabled, just return the plain HTML
+  if (!context.enableHydration) {
+    return content;
+  }
+
   // Generate unique island ID using component name
-  // Example: "Counter-0", "TodoList-1", "Anonymous-2"
   const islandId = generateIslandId(componentName, context.islandCounter++);
 
   // Serialize props for hydration
@@ -254,34 +390,25 @@ function renderIsland(vnode: VNode, context: RenderContext): string {
   };
   context.islands.push(islandMetadata);
 
-  // Render the island's content on the server
-  let content = "";
-  try {
-    const result = metadata.component(metadata.props || {});
-    content = renderVNodeToHTML(result, context);
-  } catch (error) {
-    console.error(
-      `[SSR] Error rendering island "${islandId}" (${componentName}):`,
-      error,
-    );
-    content = renderErrorFallback(error, vnode);
+  const propsJson = JSON.stringify(serializedProps);
+
+  // Single DOM element: inject attrs directly (no wrapper div)
+  if (isSingleElement(result)) {
+    return injectIslandAttrs(content, islandId, propsJson);
   }
 
-  // Wrap content in island marker for hydration
-  // The marker includes:
-  // - data-island-id: unique identifier
-  // - data-island-props: serialized props (for hydration)
-  // - Server-rendered HTML content (for SEO and progressive enhancement)
-  const propsJson = JSON.stringify(serializedProps);
-  const escapedProps = escapeHTML(propsJson);
-
-  return `<div data-island-id="${islandId}" data-island-props="${escapedProps}">${content}</div>`;
+  // Fragment or other: use comment markers + script tag
+  // Use unique end marker to support nested islands
+  return `<!--island:${islandId}-->${content}<!--/island:${islandId}--><script type="application/json" data-island="${islandId}">${propsJson}</script>`;
 }
 
 /**
  * Render a DOM element to HTML
  */
-function renderElement(vnode: VNode, context: RenderContext): string {
+async function renderElement(
+  vnode: VNode,
+  context: RenderContext,
+): Promise<string> {
   const tag = vnode.type as string;
   const props = vnode.props || {};
 
@@ -318,9 +445,10 @@ function renderElement(vnode: VNode, context: RenderContext): string {
   }
 
   // Regular tag with children
-  const children = (vnode.children || [])
-    .map((child) => renderVNodeToHTML(child, context))
-    .join("");
+  const childResults = await Promise.all(
+    (vnode.children || []).map((child) => renderVNodeToHTML(child, context)),
+  );
+  const children = childResults.join("");
 
   return `<${tag}${attrs}>${children}</${tag}>`;
 }
@@ -392,19 +520,35 @@ function renderAttributes(props: Record<string, any>): string {
 
 /**
  * Generate script tags for loading islands
+ *
+ * If no transformer is provided, returns empty string (static HTML only).
+ * If transformer is provided, calls it for each island to generate custom scripts.
  */
 function generateIslandScripts(
   islands: IslandMetadata[],
   basePath: string,
+  transformer?: IslandScriptTransformer,
 ): string {
-  if (islands.length === 0) {
+  // No islands or no transformer = no scripts (static HTML only)
+  if (islands.length === 0 || !transformer) {
     return "";
   }
 
-  const scripts = islands.map(
-    (island) =>
-      `<script type="module" src="${basePath}/${island.id}.js" async></script>`,
-  );
+  const scripts: string[] = [];
+
+  for (const island of islands) {
+    const script = transformer({
+      id: island.id,
+      path: island.path,
+      props: island.props,
+      componentName: island.componentName || "Unknown",
+      basePath,
+    });
+
+    if (script) {
+      scripts.push(script);
+    }
+  }
 
   return scripts.join("\n");
 }

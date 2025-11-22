@@ -5,6 +5,7 @@ import {
   createRenderer,
   isAsyncIterator,
   isPromise,
+  Fragment,
   type RenderedNode,
   type RenderStrategy,
   type ContextMap,
@@ -21,6 +22,46 @@ import {
   getParent,
   getNextSibling,
 } from "./operations";
+
+/**
+ * Helper to recursively collect all actual DOM nodes from a rendered node
+ * Handles fragments and signal nodes that may not have their own DOM node
+ */
+function collectNodes(rendered: RenderedNode<Node>): Node[] {
+  const nodes: Node[] = [];
+
+  // Fragment: no node, only children
+  if (rendered.vnode.type === Fragment) {
+    for (const child of rendered.children) {
+      nodes.push(...collectNodes(child));
+    }
+    return nodes;
+  }
+
+  // Signal marker: include marker node + content children
+  if (rendered.vnode.type === "#signal") {
+    if (rendered.node) {
+      nodes.push(rendered.node); // marker
+    }
+    // Collect content children (after marker)
+    for (const child of rendered.children) {
+      nodes.push(...collectNodes(child));
+    }
+    return nodes;
+  }
+
+  // Regular elements and text nodes: just the node itself
+  if (rendered.node) {
+    nodes.push(rendered.node);
+  } else if (rendered.children.length > 0) {
+    // Component returned Fragment or other node-less structure
+    // Need to collect from children
+    for (const child of rendered.children) {
+      nodes.push(...collectNodes(child));
+    }
+  }
+  return nodes;
+}
 
 /**
  * Result returned by the render function
@@ -120,8 +161,10 @@ export function render(
     // Handle sync VNode
     rendered = renderNode(element, initialContext);
 
-    if (rendered.node) {
-      appendChild(container, rendered.node);
+    // Collect all nodes (handles Fragments with multiple children)
+    const nodes = collectNodes(rendered);
+    for (const node of nodes) {
+      appendChild(container, node);
     }
   }
 
