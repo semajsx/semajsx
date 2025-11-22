@@ -231,15 +231,16 @@ class AppImpl implements App {
     };
 
     if (mode === "full") {
-      // Pre-render all routes to collect islands
+      // Pre-render all routes to collect islands (by ID, not path)
       const allIslands = new Map<string, IslandMetadata>();
 
       for (const [path] of this._routes) {
         try {
           const result = await this.render(path);
           for (const island of result.islands) {
-            if (!allIslands.has(island.path)) {
-              allIslands.set(island.path, island);
+            // Use island.id as key to keep all instances
+            if (!allIslands.has(island.id)) {
+              allIslands.set(island.id, island);
             }
           }
         } catch (error) {
@@ -247,16 +248,54 @@ class AppImpl implements App {
         }
       }
 
-      // Build each island
+      // Build each island with hydration entry point
       for (const [, island] of allIslands) {
         const outputPath = `${outDir}/islands/${island.id}.js`;
+        const componentPath = this._normalizeModulePath(island.path);
+        const componentName = island.componentName;
+
+        // Generate hydration entry point code
+        const entryCode = `
+import { hydrate, h } from '@semajsx/dom';
+import { markIslandHydrated } from '@semajsx/server/client';
+import * as ComponentModule from '${componentPath}';
+
+const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName} || ` : ""}ComponentModule.default ||
+                  Object.values(ComponentModule).find(exp => typeof exp === 'function');
+
+const container = document.querySelector('[data-island-id="${island.id}"]');
+if (container && Component) {
+  const props = JSON.parse(container.getAttribute('data-island-props') || '{}');
+  hydrate(h(Component, props), container);
+  markIslandHydrated('${island.id}');
+}
+`;
+
+        // Create virtual module plugin for this island
+        const virtualEntryId = `virtual:island-build-entry:${island.id}`;
+        const resolvedVirtualId = `\0${virtualEntryId}`;
 
         const baseConfig: ViteUserConfig = {
           root: this.config.root,
+          plugins: [
+            {
+              name: `island-entry-${island.id}`,
+              resolveId(id: string) {
+                if (id === virtualEntryId) {
+                  return resolvedVirtualId;
+                }
+              },
+              load(id: string) {
+                if (id === resolvedVirtualId) {
+                  return entryCode;
+                }
+              },
+            },
+          ],
           build: {
             outDir: `${outDir}/islands`,
             lib: {
-              entry: island.path.replace("file://", ""),
+              entry: virtualEntryId,
               name: island.id,
               fileName: island.id,
               formats: ["es"],
@@ -264,7 +303,8 @@ class AppImpl implements App {
             minify,
             sourcemap,
             rollupOptions: {
-              external: ["@semajsx/core", "@semajsx/dom", "@semajsx/signal"],
+              // Don't externalize - bundle everything for client
+              external: [],
             },
           },
         };
