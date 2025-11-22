@@ -1,0 +1,400 @@
+import { mkdir, writeFile, rm } from "fs/promises";
+import { join, dirname, resolve } from "path";
+import { createApp, renderDocument } from "@semajsx/server";
+import type { App, RouteContext } from "@semajsx/server";
+import { DefaultDocument } from "./document";
+import type { VNode } from "@semajsx/core";
+import {
+  RawHTML,
+  type SSGConfig,
+  type SSGInstance,
+  type Collection,
+  type CollectionEntry,
+  type BuildOptions,
+  type BuildResult,
+  type BuildState,
+  type WatchOptions,
+  type Watcher,
+  type DocumentProps,
+} from "./types";
+import { viteMDXPlugin } from "./mdx";
+
+/**
+ * SSG (Static Site Generator) core class
+ * Built on top of server's createApp
+ */
+export class SSG implements SSGInstance {
+  private config: SSGConfig;
+  private rootDir: string;
+  private collections: Map<string, Collection>;
+  private entriesCache: Map<string, CollectionEntry[]>;
+  private app: App;
+  private mdxModules: Map<string, string> = new Map();
+
+  constructor(config: SSGConfig) {
+    // Resolve rootDir
+    this.rootDir = config.rootDir ?? process.cwd();
+
+    this.config = {
+      base: "/",
+      ...config,
+      outDir: resolve(this.rootDir, config.outDir),
+    };
+    this.collections = new Map();
+    this.entriesCache = new Map();
+
+    // Create App with MDX plugins
+    this.app = createApp({
+      root: this.rootDir,
+      vite: {
+        plugins: [
+          // Virtual MDX content modules
+          {
+            name: "ssg-virtual-mdx",
+            resolveId: (id: string) => {
+              if (id.startsWith("virtual:mdx:")) {
+                return "\0" + id;
+              }
+            },
+            load: (id: string) => {
+              if (id.startsWith("\0virtual:mdx:")) {
+                const mdxId = id.replace("\0virtual:mdx:", "");
+                return this.mdxModules.get(mdxId);
+              }
+            },
+          },
+          // MDX compiler plugin
+          viteMDXPlugin(config.mdx ?? {}),
+        ],
+      },
+    });
+
+    // Register collections
+    for (const collection of config.collections ?? []) {
+      this.collections.set(collection.name, collection);
+    }
+  }
+
+  getRootDir(): string {
+    return this.rootDir;
+  }
+
+  async getCollection<T = unknown>(
+    name: string,
+  ): Promise<CollectionEntry<T>[]> {
+    const collection = this.collections.get(name);
+    if (!collection) {
+      throw new Error(`Collection "${name}" not found`);
+    }
+
+    if (this.entriesCache.has(name)) {
+      return this.entriesCache.get(name) as CollectionEntry<T>[];
+    }
+
+    const entries = await collection.source.getEntries();
+
+    const validatedEntries = entries.map((entry) => {
+      const result = collection.schema.safeParse(entry.data);
+      if (!result.success) {
+        throw new Error(
+          `Validation error in ${name}/${entry.id}: ${result.error.message}`,
+        );
+      }
+
+      return {
+        ...entry,
+        data: result.data,
+        render: async () => {
+          // Get Vite server from app
+          const vite = this.app.getViteServer();
+          if (!vite) {
+            throw new Error("Vite server not initialized");
+          }
+
+          // Store MDX content as virtual module
+          const mdxId = `${name}/${entry.id}.mdx`;
+          this.mdxModules.set(mdxId, entry.body);
+
+          try {
+            // Load module through Vite SSR
+            const moduleExports = (await vite.ssrLoadModule(
+              `virtual:mdx:${mdxId}`,
+            )) as {
+              default: (props: Record<string, unknown>) => unknown;
+            };
+
+            const Content = (props: Record<string, unknown> = {}): VNode =>
+              moduleExports.default({
+                ...props,
+                components: this.config.mdx?.components ?? {},
+              }) as VNode;
+
+            return {
+              Content,
+              headings: this.extractHeadings(entry.body),
+            };
+          } finally {
+            this.mdxModules.delete(mdxId);
+          }
+        },
+      };
+    });
+
+    this.entriesCache.set(name, validatedEntries);
+    return validatedEntries as CollectionEntry<T>[];
+  }
+
+  async getEntry<T = unknown>(
+    name: string,
+    id: string,
+  ): Promise<CollectionEntry<T> | null> {
+    const entries = await this.getCollection<T>(name);
+    return entries.find((e) => e.id === id || e.slug === id) ?? null;
+  }
+
+  async build(options: BuildOptions = {}): Promise<BuildResult> {
+    const { incremental = false, state: prevState } = options;
+    const outDir = this.config.outDir;
+
+    // Initialize App (starts Vite)
+    await this.app.prepare();
+
+    try {
+      // Register routes with App
+      await this.registerRoutes();
+
+      // Build all pages
+      return await this.buildPages(incremental, prevState, outDir);
+    } finally {
+      await this.app.close();
+    }
+  }
+
+  private async registerRoutes(): Promise<void> {
+    const routes = this.config.routes ?? [];
+
+    for (const route of routes) {
+      if (route.getStaticPaths) {
+        // Dynamic route - register each path
+        const staticPaths = await route.getStaticPaths(this);
+        for (const sp of staticPaths) {
+          const path = this.applyParams(route.path, sp.params);
+          const props = { ...sp.props, params: sp.params };
+
+          this.app.route(path, (_context: RouteContext) => {
+            return route.component(props);
+          });
+        }
+      } else {
+        // Static route
+        let props: Record<string, unknown> = {};
+        if (typeof route.props === "function") {
+          props = await route.props(this);
+        } else if (route.props) {
+          props = route.props;
+        }
+
+        this.app.route(route.path, (_context: RouteContext) => {
+          return route.component(props);
+        });
+      }
+    }
+  }
+
+  private async buildPages(
+    incremental: boolean,
+    prevState: BuildState | undefined,
+    outDir: string,
+  ): Promise<BuildResult> {
+    const state: BuildState = {
+      cursors: {},
+      pageHashes: {},
+      timestamp: Date.now(),
+    };
+
+    const stats = { added: 0, updated: 0, deleted: 0, unchanged: 0 };
+    const builtPaths: string[] = [];
+
+    if (!incremental) {
+      await rm(outDir, { recursive: true, force: true });
+    }
+    await mkdir(outDir, { recursive: true });
+
+    this.entriesCache.clear();
+
+    // Get all paths to build
+    const allPaths = await this.generateAllPaths();
+    const currentPaths = new Set(allPaths.map((p) => p.path));
+
+    // Delete removed pages
+    if (incremental && prevState) {
+      for (const oldPath of Object.keys(prevState.pageHashes)) {
+        if (!currentPaths.has(oldPath)) {
+          const filePath = this.pathToFilePath(oldPath);
+          try {
+            await rm(join(outDir, filePath));
+            stats.deleted++;
+          } catch {
+            // ignore
+          }
+        }
+      }
+    }
+
+    // Build each page
+    for (const { path, props } of allPaths) {
+      const html = await this.renderPage(path, props);
+      const hash = this.hashContent(html);
+
+      const prevHash = prevState?.pageHashes[path];
+      const needsWrite = !incremental || !prevHash || prevHash !== hash;
+
+      if (needsWrite) {
+        const filePath = this.pathToFilePath(path);
+        const fullPath = join(outDir, filePath);
+
+        await mkdir(dirname(fullPath), { recursive: true });
+        await writeFile(fullPath, html);
+
+        builtPaths.push(path);
+        if (!prevHash) {
+          stats.added++;
+        } else {
+          stats.updated++;
+        }
+      } else {
+        stats.unchanged++;
+      }
+
+      state.pageHashes[path] = hash;
+    }
+
+    for (const [name, collection] of this.collections) {
+      if (collection.source.getChanges) {
+        state.cursors[name] = Date.now().toString();
+      }
+    }
+
+    return { state, paths: builtPaths, stats };
+  }
+
+  private async renderPage(
+    path: string,
+    props: Record<string, unknown>,
+  ): Promise<string> {
+    // Use App to render the page
+    const result = await this.app.render(path);
+
+    // Wrap with document template
+    const documentProps: DocumentProps = {
+      children: new RawHTML(result.html),
+      title: props.title as string | undefined,
+      base: this.config.base ?? "/",
+      path,
+      props,
+    };
+
+    const template = this.config.document ?? DefaultDocument;
+    const documentVNode = template(documentProps);
+
+    return renderDocument(documentVNode);
+  }
+
+  private async generateAllPaths(): Promise<
+    Array<{ path: string; props: Record<string, unknown> }>
+  > {
+    const paths: Array<{ path: string; props: Record<string, unknown> }> = [];
+    const routes = this.config.routes ?? [];
+
+    for (const route of routes) {
+      if (route.getStaticPaths) {
+        const staticPaths = await route.getStaticPaths(this);
+        for (const sp of staticPaths) {
+          const path = this.applyParams(route.path, sp.params);
+          paths.push({ path, props: { ...sp.props, params: sp.params } });
+        }
+      } else {
+        let props: Record<string, unknown> = {};
+        if (typeof route.props === "function") {
+          props = await route.props(this);
+        } else if (route.props) {
+          props = route.props;
+        }
+        paths.push({ path: route.path, props });
+      }
+    }
+
+    return paths;
+  }
+
+  watch(options: WatchOptions = {}): Watcher {
+    const unsubscribers: (() => void)[] = [];
+
+    for (const [name, collection] of this.collections) {
+      if (collection.source.watch) {
+        const unsubscribe = collection.source.watch(async () => {
+          try {
+            this.entriesCache.delete(name);
+            const result = await this.build({ incremental: true });
+            options.onRebuild?.(result);
+          } catch (error) {
+            options.onError?.(error as Error);
+          }
+        });
+        unsubscribers.push(unsubscribe);
+      }
+    }
+
+    return {
+      close: () => unsubscribers.forEach((fn) => fn()),
+    };
+  }
+
+  private pathToFilePath(urlPath: string): string {
+    if (urlPath === "/") return "index.html";
+    return `${urlPath.slice(1)}/index.html`;
+  }
+
+  private applyParams(pattern: string, params: Record<string, string>): string {
+    let path = pattern;
+    for (const [key, value] of Object.entries(params)) {
+      path = path.replace(`:${key}`, value);
+    }
+    return path;
+  }
+
+  private hashContent(content: string): string {
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash;
+    }
+    return hash.toString(16);
+  }
+
+  private extractHeadings(
+    content: string,
+  ): Array<{ depth: number; text: string; slug: string }> {
+    const headings: Array<{ depth: number; text: string; slug: string }> = [];
+    const regex = /^(#{1,6})\s+(.+)$/gm;
+
+    let match;
+    while ((match = regex.exec(content)) !== null) {
+      if (!match[1] || !match[2]) continue;
+      const depth = match[1].length;
+      const text = match[2].trim();
+      const slug = text
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-");
+      headings.push({ depth, text, slug });
+    }
+
+    return headings;
+  }
+}
+
+export function createSSG(config: SSGConfig): SSGInstance {
+  return new SSG(config);
+}

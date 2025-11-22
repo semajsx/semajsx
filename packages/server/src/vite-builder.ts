@@ -1,5 +1,5 @@
 import type { IslandMetadata } from "./shared/types";
-import { createServer, type ViteDevServer } from "vite";
+import { createServer, type ViteDevServer, type PluginOption } from "vite";
 import { logger } from "@semajsx/logger";
 
 /**
@@ -26,6 +26,32 @@ export class ViteIslandBuilder {
       return;
     }
 
+    // Build plugins array
+    const plugins: PluginOption[] = [
+      // Virtual islands plugin
+      {
+        name: "semajsx-virtual-islands",
+        resolveId(id: string) {
+          if (id.startsWith("virtual:island-")) {
+            return "\0" + id;
+          }
+        },
+        load: (id: string) => {
+          if (id.startsWith("\0virtual:island-")) {
+            const islandId = id
+              .replace("\0virtual:island-", "")
+              .replace(".js", "");
+            return this.entryPoints.get(islandId);
+          }
+        },
+      },
+    ];
+
+    // Add custom plugins
+    if (this.options.plugins) {
+      plugins.push(...this.options.plugins);
+    }
+
     this.vite = await createServer({
       root: this.options.root,
       server: {
@@ -44,30 +70,7 @@ export class ViteIslandBuilder {
         // Disable optimization for semajsx to use source directly in development
         exclude: ["semajsx", "@semajsx/dom", "@semajsx/signal"],
       },
-      plugins: [
-        {
-          name: "semajsx-virtual-islands",
-          resolveId(id: string) {
-            // Handle virtual island modules
-            if (id.startsWith("virtual:island-")) {
-              return "\0" + id; // \0 prefix indicates virtual module
-            }
-          },
-          load: (id: string) => {
-            // Provide the code for virtual island modules
-            if (id.startsWith("\0virtual:island-")) {
-              const islandId = id
-                .replace("\0virtual:island-", "")
-                .replace(".js", "");
-              // Get the raw code from the entry points map
-              const rawCode = this.entryPoints.get(islandId);
-              if (rawCode) {
-                return rawCode;
-              }
-            }
-          },
-        },
-      ],
+      plugins,
     });
 
     logger.success("Vite dev server initialized");
@@ -235,6 +238,8 @@ export interface ViteBuilderOptions {
   dev?: boolean;
   /** Project root directory */
   root?: string;
+  /** Additional Vite plugins */
+  plugins?: PluginOption[];
 }
 
 /**
