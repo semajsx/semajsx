@@ -20,7 +20,8 @@
     "dev": "tsdown --watch",
     "typecheck": "tsc --noEmit",
     "example:ssr-islands": "bun run examples/ssr-islands/server.tsx",
-    "example:bun-server": "bun run examples/bun-server/server.tsx"
+    "example:bun-server": "bun run examples/bun-server/server.tsx",
+    "example:ssg-tailwind": "bun run examples/ssg-tailwind/server.tsx"
   },
   "dependencies": {
     "@semajsx/core": "workspace:*",
