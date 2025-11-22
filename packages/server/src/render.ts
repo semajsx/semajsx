@@ -236,9 +236,58 @@ function renderVNodeToHTML(
 }
 
 /**
+ * Check if a VNode result is a single DOM element (not Fragment, array, or primitive)
+ */
+function isSingleElement(result: VNode | JSXNode): result is VNode {
+  if (result == null || typeof result !== "object") {
+    return false;
+  }
+  if (Array.isArray(result)) {
+    return false;
+  }
+  if (!("type" in result)) {
+    return false;
+  }
+  const vnode = result as VNode;
+  // Must be a string type (DOM element), not Fragment or function component
+  return typeof vnode.type === "string";
+}
+
+/**
+ * Inject island attributes into the first tag of rendered HTML
+ */
+function injectIslandAttrs(
+  html: string,
+  islandId: string,
+  propsJson: string,
+): string {
+  // Find the first > of the opening tag
+  const firstTagEnd = html.indexOf(">");
+  if (firstTagEnd === -1) {
+    return html;
+  }
+
+  const escapedProps = escapeHTML(propsJson);
+  const attrs = ` data-island-id="${islandId}" data-island-props="${escapedProps}"`;
+
+  // Handle self-closing tags
+  if (html[firstTagEnd - 1] === "/") {
+    return (
+      html.slice(0, firstTagEnd - 1) +
+      attrs +
+      " />" +
+      html.slice(firstTagEnd + 1)
+    );
+  }
+
+  return html.slice(0, firstTagEnd) + attrs + html.slice(firstTagEnd);
+}
+
+/**
  * Render an island component
  * - Renders the full HTML content on server (for SEO and no-JS users)
- * - Wraps content in a hydration marker
+ * - For single elements: injects hydration attrs directly (no wrapper div)
+ * - For Fragments: uses comment markers + script tag
  * - Collects island metadata for client-side hydration
  */
 function renderIsland(vnode: VNode, context: RenderContext): string {
@@ -271,26 +320,27 @@ function renderIsland(vnode: VNode, context: RenderContext): string {
 
   // Render the island's content on the server
   let content = "";
+  let result: VNode | JSXNode;
   try {
-    const result = metadata.component(metadata.props || {});
+    result = metadata.component(metadata.props || {});
     content = renderVNodeToHTML(result, context);
   } catch (error) {
     console.error(
       `[SSR] Error rendering island "${islandId}" (${componentName}):`,
       error,
     );
-    content = renderErrorFallback(error, vnode);
+    return renderErrorFallback(error, vnode);
   }
 
-  // Wrap content in island marker for hydration
-  // The marker includes:
-  // - data-island-id: unique identifier
-  // - data-island-props: serialized props (for hydration)
-  // - Server-rendered HTML content (for SEO and progressive enhancement)
   const propsJson = JSON.stringify(serializedProps);
-  const escapedProps = escapeHTML(propsJson);
 
-  return `<div data-island-id="${islandId}" data-island-props="${escapedProps}">${content}</div>`;
+  // Single DOM element: inject attrs directly (no wrapper div)
+  if (isSingleElement(result)) {
+    return injectIslandAttrs(content, islandId, propsJson);
+  }
+
+  // Fragment or other: use comment markers + script tag
+  return `<!--island:${islandId}-->${content}<!--/island--><script type="application/json" data-island="${islandId}">${propsJson}</script>`;
 }
 
 /**

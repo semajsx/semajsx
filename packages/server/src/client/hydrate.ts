@@ -4,6 +4,83 @@
  */
 
 /**
+ * Island info collected from the DOM
+ */
+interface IslandInfo {
+  id: string;
+  props: Record<string, any>;
+  /** Element with data-island-id (single element islands) */
+  element?: HTMLElement;
+  /** Start comment node (fragment islands) */
+  startComment?: Comment;
+  /** End comment node (fragment islands) */
+  endComment?: Comment;
+}
+
+/**
+ * Find all islands on the page (both element and fragment types)
+ */
+function findAllIslands(): IslandInfo[] {
+  const islands: IslandInfo[] = [];
+
+  // Find element-based islands (single root element)
+  const elements = document.querySelectorAll("[data-island-id]");
+  for (const el of elements) {
+    const id = el.getAttribute("data-island-id");
+    const propsStr = el.getAttribute("data-island-props");
+    if (id) {
+      islands.push({
+        id,
+        props: propsStr ? JSON.parse(propsStr) : {},
+        element: el as HTMLElement,
+      });
+    }
+  }
+
+  // Find fragment-based islands (comment markers + script)
+  const walker = document.createTreeWalker(
+    document.body,
+    NodeFilter.SHOW_COMMENT,
+  );
+
+  let comment: Comment | null;
+  while ((comment = walker.nextNode() as Comment | null)) {
+    const match = comment.textContent?.match(/^island:(.+)$/);
+    if (match && match[1]) {
+      const id = match[1];
+      // Find end comment
+      let endComment: Comment | null = null;
+      let sibling = comment.nextSibling;
+      while (sibling) {
+        if (
+          sibling.nodeType === Node.COMMENT_NODE &&
+          sibling.textContent === "/island"
+        ) {
+          endComment = sibling as Comment;
+          break;
+        }
+        sibling = sibling.nextSibling;
+      }
+
+      // Find props from script tag
+      const script = document.querySelector(
+        `script[type="application/json"][data-island="${id}"]`,
+      );
+      const props = script ? JSON.parse(script.textContent || "{}") : {};
+
+      islands.push({
+        id,
+        props,
+        startComment: comment,
+        endComment: endComment || undefined,
+      });
+    }
+  }
+
+  return islands;
+}
+
+/**
  * Hydrate all islands on the page
  * This function is typically called once after the page loads
  *
@@ -21,19 +98,16 @@
  * ```
  */
 export async function hydrateIslands(): Promise<void> {
-  // Find all island placeholders
-  const placeholders = document.querySelectorAll("[data-island-id]");
+  const islands = findAllIslands();
 
-  if (placeholders.length === 0) {
+  if (islands.length === 0) {
     return;
   }
 
-  console.log(`[SemaJSX] Found ${placeholders.length} islands to hydrate`);
+  console.log(`[SemaJSX] Found ${islands.length} islands to hydrate`);
 
   // Hydrate islands in parallel for better performance
-  const hydrations = Array.from(placeholders).map((placeholder) =>
-    waitForIslandScript(placeholder as HTMLElement),
-  );
+  const hydrations = islands.map((island) => waitForIslandScript(island));
 
   await Promise.all(hydrations);
 
@@ -45,16 +119,18 @@ export async function hydrateIslands(): Promise<void> {
  * The actual hydration is performed by the island's entry point script
  * This function just waits for it to complete
  */
-async function waitForIslandScript(placeholder: HTMLElement): Promise<void> {
-  const islandId = placeholder.getAttribute("data-island-id");
-
-  if (!islandId) {
-    console.error("[SemaJSX] Island placeholder missing data-island-id");
-    return;
-  }
+async function waitForIslandScript(island: IslandInfo): Promise<void> {
+  const { id: islandId, element, startComment } = island;
 
   // Check if island is already hydrated
-  if (placeholder.hasAttribute("data-hydrated")) {
+  if (element?.hasAttribute("data-hydrated")) {
+    return;
+  }
+  if (
+    startComment?.parentElement?.querySelector(
+      `[data-island-hydrated="${islandId}"]`,
+    )
+  ) {
     return;
   }
 
@@ -65,7 +141,12 @@ async function waitForIslandScript(placeholder: HTMLElement): Promise<void> {
     let attempts = 0;
 
     const checkInterval = setInterval(() => {
-      if (placeholder.hasAttribute("data-hydrated")) {
+      const isHydrated = element
+        ? element.hasAttribute("data-hydrated")
+        : document.querySelector(`[data-island-hydrated="${islandId}"]`) !==
+          null;
+
+      if (isHydrated) {
         clearInterval(checkInterval);
         resolve();
       } else if (++attempts >= maxAttempts) {
@@ -75,6 +156,51 @@ async function waitForIslandScript(placeholder: HTMLElement): Promise<void> {
       }
     }, 50);
   });
+}
+
+/**
+ * Get island info by ID
+ */
+export function getIslandInfo(islandId: string): IslandInfo | null {
+  // Try element-based first
+  const element = document.querySelector(
+    `[data-island-id="${islandId}"]`,
+  ) as HTMLElement | null;
+
+  if (element) {
+    const propsStr = element.getAttribute("data-island-props");
+    return {
+      id: islandId,
+      props: propsStr ? JSON.parse(propsStr) : {},
+      element,
+    };
+  }
+
+  // Try fragment-based
+  const script = document.querySelector(
+    `script[type="application/json"][data-island="${islandId}"]`,
+  );
+
+  if (script) {
+    const props = JSON.parse(script.textContent || "{}");
+    // Find start comment
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_COMMENT,
+    );
+    let comment: Comment | null;
+    while ((comment = walker.nextNode() as Comment | null)) {
+      if (comment.textContent === `island:${islandId}`) {
+        return {
+          id: islandId,
+          props,
+          startComment: comment,
+        };
+      }
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -92,33 +218,54 @@ async function waitForIslandScript(placeholder: HTMLElement): Promise<void> {
  * ```
  */
 export async function hydrateIslandById(islandId: string): Promise<void> {
-  const placeholder = document.querySelector(
-    `[data-island-id="${islandId}"]`,
-  ) as HTMLElement;
+  const island = getIslandInfo(islandId);
 
-  if (!placeholder) {
+  if (!island) {
     console.error(`[SemaJSX] Island not found: ${islandId}`);
     return;
   }
 
-  await waitForIslandScript(placeholder);
+  await waitForIslandScript(island);
 }
 
 /**
  * Check if islands are present on the page
  */
 export function hasIslands(): boolean {
-  return document.querySelectorAll("[data-island-id]").length > 0;
+  // Check for element-based islands
+  if (document.querySelectorAll("[data-island-id]").length > 0) {
+    return true;
+  }
+  // Check for fragment-based islands
+  return (
+    document.querySelectorAll('script[type="application/json"][data-island]')
+      .length > 0
+  );
 }
 
 /**
  * Get all island IDs on the page
  */
 export function getIslandIds(): string[] {
-  const placeholders = document.querySelectorAll("[data-island-id]");
-  return Array.from(placeholders)
-    .map((el) => el.getAttribute("data-island-id"))
-    .filter((id): id is string => id !== null);
+  const ids: string[] = [];
+
+  // Element-based islands
+  const elements = document.querySelectorAll("[data-island-id]");
+  for (const el of elements) {
+    const id = el.getAttribute("data-island-id");
+    if (id) ids.push(id);
+  }
+
+  // Fragment-based islands
+  const scripts = document.querySelectorAll(
+    'script[type="application/json"][data-island]',
+  );
+  for (const script of scripts) {
+    const id = script.getAttribute("data-island");
+    if (id) ids.push(id);
+  }
+
+  return ids;
 }
 
 /**
@@ -126,8 +273,24 @@ export function getIslandIds(): string[] {
  * This should be called by the island entry point after hydration completes
  */
 export function markIslandHydrated(islandId: string): void {
-  const placeholder = document.querySelector(`[data-island-id="${islandId}"]`);
-  if (placeholder) {
-    placeholder.setAttribute("data-hydrated", "true");
+  // Try element-based first
+  const element = document.querySelector(`[data-island-id="${islandId}"]`);
+  if (element) {
+    element.setAttribute("data-hydrated", "true");
+    return;
+  }
+
+  // For fragment-based, remove the script tag (no longer needed)
+  const script = document.querySelector(
+    `script[type="application/json"][data-island="${islandId}"]`,
+  );
+  if (script) {
+    // Mark as hydrated before removal (for any watchers)
+    script.setAttribute("data-island-hydrated", islandId);
+    // Remove script - props already parsed, no longer needed
+    script.remove();
   }
 }
+
+// Export types
+export type { IslandInfo };

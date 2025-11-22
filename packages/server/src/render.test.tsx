@@ -129,6 +129,48 @@ describe("renderToString", () => {
     expect(result.scripts).toContain("anonymous-2.js");
   });
 
+  it("should inject attrs directly on single element islands (no wrapper div)", () => {
+    const SingleBtn = island(function SingleBtn({ count = 0 }) {
+      return <button>{count}</button>;
+    }, "/SingleBtn.tsx");
+
+    const app = <SingleBtn count={5} />;
+
+    const result = renderToString(app);
+
+    // Should inject attrs directly on button, not wrap in div
+    expect(result.html).toMatch(/<button data-island-id="[^"]+"/);
+    expect(result.html).toContain("data-island-props=");
+    expect(result.html).toContain(">5</button>");
+    // Should NOT have a wrapper div
+    expect(result.html).not.toMatch(/<div[^>]*data-island-id/);
+  });
+
+  it("should use comment markers for fragment islands", () => {
+    const FragmentIsland = island(function FragmentIsland() {
+      return (
+        <>
+          <button>Prev</button>
+          <button>Next</button>
+        </>
+      );
+    }, "/FragmentIsland.tsx");
+
+    const app = <FragmentIsland />;
+
+    const result = renderToString(app);
+
+    // Should use comment markers for fragment
+    expect(result.html).toMatch(/<!--island:[^>]+-->/);
+    expect(result.html).toContain("<!--/island-->");
+    expect(result.html).toContain("<button>Prev</button>");
+    expect(result.html).toContain("<button>Next</button>");
+    // Props in script tag
+    expect(result.html).toMatch(
+      /<script type="application\/json" data-island="[^"]+"/,
+    );
+  });
+
   it("should render nested elements correctly", () => {
     const app = (
       <div className="container">
