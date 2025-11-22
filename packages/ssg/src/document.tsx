@@ -8,6 +8,7 @@ import type { DocumentTemplate } from "./types";
 export const DefaultDocument: DocumentTemplate = ({
   children,
   title = "SSG Page",
+  scripts,
 }) => (
   <html lang="en">
     <head>
@@ -15,6 +16,9 @@ export const DefaultDocument: DocumentTemplate = ({
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>{title}</title>
     </head>
-    <body>{children}</body>
+    <body>
+      {children}
+      {scripts}
+    </body>
   </html>
 );

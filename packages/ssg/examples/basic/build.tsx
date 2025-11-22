@@ -3,6 +3,9 @@
 import { createSSG, defineCollection, fileSource, z } from "@semajsx/ssg";
 import type { VNode } from "@semajsx/core";
 
+// Import MDX components
+import { Callout, CodeBlock, Counter } from "./components";
+
 // Get the directory where this script is located
 const rootDir = import.meta.dir;
 
@@ -41,7 +44,7 @@ const BlogIndex = ({
       {posts.map((post) => (
         <li key={post.slug}>
           <a href={`/blog/${post.slug}`}>{post.data.title}</a>
-          <span> - {post.data.date.toLocaleDateString()}</span>
+          <span>- {post.data.date.toLocaleDateString()}</span>
         </li>
       ))}
     </ul>
@@ -66,6 +69,14 @@ const ssg = createSSG({
   rootDir,
   outDir: "./dist",
   collections: [blog],
+  // MDX configuration with custom components
+  mdx: {
+    components: {
+      Callout,
+      CodeBlock,
+      Counter,
+    },
+  },
   routes: [
     {
       path: "/",

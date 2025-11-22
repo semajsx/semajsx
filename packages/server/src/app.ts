@@ -231,15 +231,16 @@ class AppImpl implements App {
     };
 
     if (mode === "full") {
-      // Pre-render all routes to collect islands
+      // Pre-render all routes to collect islands (by ID, not path)
       const allIslands = new Map<string, IslandMetadata>();
 
       for (const [path] of this._routes) {
         try {
           const result = await this.render(path);
           for (const island of result.islands) {
-            if (!allIslands.has(island.path)) {
-              allIslands.set(island.path, island);
+            // Use island.id as key to keep all instances
+            if (!allIslands.has(island.id)) {
+              allIslands.set(island.id, island);
             }
           }
         } catch (error) {
@@ -247,24 +248,59 @@ class AppImpl implements App {
         }
       }
 
-      // Build each island
-      for (const [, island] of allIslands) {
-        const outputPath = `${outDir}/islands/${island.id}.js`;
+      // Build all islands with hydration entry points in one build
+      if (allIslands.size > 0) {
+        const { writeFile, rm, mkdir } = await import("fs/promises");
+        const { join } = await import("path");
+        const tempDir = join(
+          this.config.root || process.cwd(),
+          ".island-entries",
+        );
+        await mkdir(tempDir, { recursive: true });
 
+        // Generate entry files for all islands
+        const entryPoints: Record<string, string> = {};
+
+        for (const [, island] of allIslands) {
+          const componentPath = this._normalizeModulePath(island.path);
+          const componentName = island.componentName;
+
+          const entryCode = `
+import { hydrate, h } from '@semajsx/dom';
+import { markIslandHydrated } from '@semajsx/server/client';
+import * as ComponentModule from '${componentPath}';
+
+const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName} || ` : ""}ComponentModule.default ||
+                  Object.values(ComponentModule).find(exp => typeof exp === 'function');
+
+const container = document.querySelector('[data-island-id="${island.id}"]');
+if (container && Component) {
+  const props = JSON.parse(container.getAttribute('data-island-props') || '{}');
+  hydrate(h(Component, props), container);
+  markIslandHydrated('${island.id}');
+}
+`;
+
+          const entryFile = join(tempDir, `${island.id}.ts`);
+          await writeFile(entryFile, entryCode);
+          entryPoints[island.id] = entryFile;
+        }
+
+        // Build all islands at once
         const baseConfig: ViteUserConfig = {
           root: this.config.root,
           build: {
             outDir: `${outDir}/islands`,
-            lib: {
-              entry: island.path.replace("file://", ""),
-              name: island.id,
-              fileName: island.id,
-              formats: ["es"],
-            },
+            emptyOutDir: true,
             minify,
             sourcemap,
             rollupOptions: {
-              external: ["@semajsx/core", "@semajsx/dom", "@semajsx/signal"],
+              input: entryPoints,
+              output: {
+                format: "es",
+                entryFileNames: "[name].js",
+              },
+              external: [],
             },
           },
         };
@@ -275,19 +311,27 @@ class AppImpl implements App {
 
         await viteBuild(finalConfig);
 
-        builtIslands.push({
-          id: island.id,
-          path: island.path,
-          outputPath,
-        });
+        // Clean up temp directory
+        await rm(tempDir, { recursive: true, force: true });
 
-        manifest.islands[island.id] = outputPath;
+        // Record built islands
+        for (const [, island] of allIslands) {
+          const outputPath = `${outDir}/islands/${island.id}.js`;
 
-        if (onIslandBuilt) {
-          onIslandBuilt(island);
+          builtIslands.push({
+            id: island.id,
+            path: island.path,
+            outputPath,
+          });
+
+          manifest.islands[island.id] = outputPath;
+
+          if (onIslandBuilt) {
+            onIslandBuilt(island);
+          }
         }
 
-        logger.info(`Built island: ${island.id}`);
+        logger.info(`Built ${allIslands.size} islands`);
       }
     }
 

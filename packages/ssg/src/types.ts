@@ -1,4 +1,4 @@
-import type { VNode } from "@semajsx/core";
+import type { Component, VNode } from "@semajsx/core";
 import type { z } from "zod";
 
 // =============================================================================
@@ -117,7 +117,7 @@ export interface MDXConfig {
   /** Rehype plugins */
   rehypePlugins?: unknown[];
   /** Component mapping for MDX */
-  components?: Record<string, (props: Record<string, unknown>) => VNode>;
+  components?: Record<string, Component>;
 }
 
 // =============================================================================
@@ -152,6 +152,8 @@ export interface DocumentProps {
   path: string;
   /** Route props */
   props: Record<string, unknown>;
+  /** Script tags for islands (as RawHTML) */
+  scripts?: RawHTML;
 }
 
 export type DocumentTemplate = (props: DocumentProps) => VNode;
