@@ -399,22 +399,26 @@ export class SSG<
         // ignore
       }
 
-      // 2. Build per-page utilities
+      // 2. Build per-page utilities (each in isolated directory)
       for (const [pagePath, html] of this.pageHtmlContent) {
         const pageName =
           pagePath === "/" ? "index" : pagePath.slice(1).replace(/\//g, "-");
 
+        // Create isolated temp directory for this page
+        const pageTempDir = join(tempDir, pageName);
+        await mkdir(pageTempDir, { recursive: true });
+
         // Save HTML to temp file for Tailwind to scan
-        const htmlFile = join(tempDir, `${pageName}.html`);
+        const htmlFile = join(pageTempDir, "page.html");
         await writeFile(htmlFile, html);
 
         // Create CSS entry with only utilities layer
         const cssContent = `@import "tailwindcss/utilities" layer(utilities);\n@source "${htmlFile}";`;
-        const cssFile = join(tempDir, `${pageName}.css`);
+        const cssFile = join(pageTempDir, "styles.css");
         await writeFile(cssFile, cssContent);
 
         await viteBuild({
-          root: this.rootDir,
+          root: pageTempDir, // Use page's temp dir as root
           plugins: [tailwindcss.default()],
           build: {
             outDir: cssOutDir,

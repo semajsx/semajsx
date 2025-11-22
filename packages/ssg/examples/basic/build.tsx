@@ -25,13 +25,17 @@ const blog = defineCollection({
   }),
 });
 
-// Components with Tailwind CSS
+// Components with Tailwind CSS - each page uses different classes for CSS splitting demo
 const HomePage = (): VNode => (
   <div class="max-w-4xl mx-auto px-4 py-8">
     <h1 class="text-4xl font-bold text-gray-900 border-b-4 border-blue-500 pb-4 mb-8">
       Welcome to My Blog
     </h1>
     <p class="text-gray-600">This is a static site built with @semajsx/ssg</p>
+    {/* Unique classes for HomePage */}
+    <div class="mt-8 bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-xl shadow-lg">
+      <p class="text-lg font-semibold">Featured content area</p>
+    </div>
   </div>
 );
 
@@ -42,9 +46,16 @@ const BlogIndex = ({
 }): VNode => (
   <div class="max-w-4xl mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold text-gray-900 mb-6">Blog Posts</h1>
+    {/* Unique classes for BlogIndex */}
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+      <p class="text-yellow-700 text-sm">Browse all our blog posts below</p>
+    </div>
     <ul class="space-y-4">
       {posts.map((post) => (
-        <li key={post.slug} class="bg-white rounded-lg shadow p-4">
+        <li
+          key={post.slug}
+          class="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow"
+        >
           <a
             href={`/blog/${post.slug}`}
             class="text-blue-600 hover:underline font-medium"
