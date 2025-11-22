@@ -52,35 +52,21 @@ function isAsyncIterator(
  * ```
  */
 export function hydrate(vnode: VNode, container: Element): Node | null {
-  // Check if this is an island container (has data-island-props attribute)
-  // In that case, the container IS the element to hydrate
-  const isIslandContainer = container.hasAttribute("data-island-props");
+  // Standard hydration: hydrate container's first child
+  const nodeToHydrate = container.firstChild;
 
-  let nodeToHydrate: Node | null;
-  let parentElement: Element;
-
-  if (isIslandContainer) {
-    // Island: hydrate the container itself
-    nodeToHydrate = container;
-    parentElement = container.parentElement || container;
-  } else {
-    // Standard hydration: hydrate container's first child
-    nodeToHydrate = container.firstChild;
-    parentElement = container;
-
-    if (!nodeToHydrate) {
-      console.warn("[Hydrate] Container is empty, falling back to render");
-      const rendered = renderNode(vnode, container);
-      if (rendered) {
-        container.appendChild(rendered);
-      }
-      return rendered;
+  if (!nodeToHydrate) {
+    console.warn("[Hydrate] Container is empty, falling back to render");
+    const rendered = renderNode(vnode, container);
+    if (rendered) {
+      container.appendChild(rendered);
     }
+    return rendered;
   }
 
   // Hydrate the VNode tree onto the existing DOM
   try {
-    hydrateNode(vnode, nodeToHydrate, parentElement);
+    hydrateNode(vnode, nodeToHydrate, container);
     return nodeToHydrate;
   } catch (error) {
     console.error("[Hydrate] Error during hydration:", error);
