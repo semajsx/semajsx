@@ -398,16 +398,16 @@ if (Component) {
 
         // Record built islands
         for (const [, island] of allIslands) {
-          // Use relative path for portability
-          const relativeOutputPath = `islands/${island.id}.js`;
+          // Use web-absolute path (starting with /) for consistency with CSS
+          const webPath = `/islands/${island.id}.js`;
 
           builtIslands.push({
             id: island.id,
             path: island.path,
-            outputPath: relativeOutputPath,
+            outputPath: webPath,
           });
 
-          manifest.islands[island.id] = relativeOutputPath;
+          manifest.islands[island.id] = webPath;
 
           if (onIslandBuilt) {
             onIslandBuilt(island);

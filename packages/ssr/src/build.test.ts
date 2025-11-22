@@ -646,3 +646,35 @@ describe("getContentType", () => {
     expect(response.headers.get("Content-Type")).toBe("font/woff2");
   });
 });
+
+describe("Manifest path formats", () => {
+  beforeEach(async () => {
+    await mkdir(TEST_DIR, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(TEST_DIR, { recursive: true, force: true });
+  });
+
+  it("CSS paths should be web-absolute (start with /)", async () => {
+    const cssPath = join(TEST_DIR, "styles.css");
+    await writeFile(cssPath, ".test { color: red; }");
+
+    const result = await buildCSS(new Set([cssPath]), OUT_DIR);
+
+    const outputPath = result.mapping.get(cssPath);
+    expect(outputPath).toBeDefined();
+    expect(outputPath).toMatch(/^\/css\//);
+  });
+
+  it("Asset paths should be web-absolute (start with /)", async () => {
+    const assetPath = join(TEST_DIR, "image.png");
+    await writeFile(assetPath, "fake png content");
+
+    const result = await buildAssets(new Set([assetPath]), OUT_DIR);
+
+    const outputPath = result.mapping.get(assetPath);
+    expect(outputPath).toBeDefined();
+    expect(outputPath).toMatch(/^\/assets\//);
+  });
+});
