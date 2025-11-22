@@ -490,14 +490,35 @@ export function hydrateIsland(
   const element = document.querySelector(`[data-island-id="${islandId}"]`);
 
   if (element) {
-    // Single-element island: hydrate the element itself
+    // Single-element island: render into the element
     const props = JSON.parse(element.getAttribute("data-island-props") || "{}");
-    const vnode: VNode = {
-      type: Component as VNode["type"],
-      props,
-      children: [],
-    };
-    hydrate(vnode, element);
+
+    // Call component to get result
+    let result = Component(props);
+
+    // Handle async component
+    if (result instanceof Promise) {
+      result.then((resolved) => {
+        element.innerHTML = "";
+        render(resolved as VNode, element);
+        markHydrated(islandId);
+      });
+      return;
+    }
+
+    // Handle streaming component
+    if (isAsyncIterator(result)) {
+      result.next().then(({ value }) => {
+        element.innerHTML = "";
+        render(value as VNode, element);
+        markHydrated(islandId);
+      });
+      return;
+    }
+
+    // Normal component: render directly
+    element.innerHTML = "";
+    render(result as VNode, element);
     markHydrated(islandId);
     return;
   }
