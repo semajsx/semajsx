@@ -208,6 +208,11 @@ export class SSG<
       // Build all pages
       const result = await this.buildPages(incremental, prevState, outDir);
 
+      // Build Tailwind CSS if enabled
+      if (this.config.tailwind) {
+        await this.buildTailwindCSS(app, outDir);
+      }
+
       // Build islands for client-side hydration
       await app.build({
         outDir,
@@ -335,6 +340,23 @@ export class SSG<
     }
 
     return { state, paths: builtPaths, stats };
+  }
+
+  private async buildTailwindCSS(app: App, outDir: string): Promise<void> {
+    const vite = app.getViteServer();
+    if (!vite) return;
+
+    try {
+      // Transform the virtual Tailwind CSS through Vite
+      const result = await vite.transformRequest("/@tailwind.css");
+      if (result) {
+        // Write CSS to output directory
+        const cssPath = join(outDir, "@tailwind.css");
+        await writeFile(cssPath, result.code);
+      }
+    } catch (error) {
+      console.warn("Failed to build Tailwind CSS:", error);
+    }
   }
 
   private async renderPage(
