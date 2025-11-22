@@ -201,6 +201,20 @@ export class SSG<
     const app = await this.initApp();
     await app.prepare();
 
+    // Create temp CSS entry for Tailwind if enabled
+    let tempDir: string | null = null;
+    let cssEntry: string | null = null;
+    if (this.config.tailwind) {
+      tempDir = join(this.rootDir, ".ssg-temp");
+      await mkdir(tempDir, { recursive: true });
+      cssEntry = join(tempDir, "tailwind.css");
+      // Include @source directive to scan the project root
+      await writeFile(
+        cssEntry,
+        `@import "tailwindcss";\n@source "${this.rootDir}/**/*.{ts,tsx,js,jsx,html,mdx,md}";`,
+      );
+    }
+
     try {
       // Register routes with App
       await this.registerRoutes();
@@ -208,28 +222,53 @@ export class SSG<
       // Build all pages
       const result = await this.buildPages(incremental, prevState, outDir);
 
-      // Build Tailwind CSS if enabled
+      // Build islands for client-side hydration (includes Tailwind CSS)
+      const buildViteConfig: Record<string, unknown> = {
+        build: {
+          rollupOptions: {
+            // Don't externalize for SSG - bundle everything
+            external: [],
+            // Include Tailwind CSS entry if enabled
+            ...(cssEntry && {
+              input: {
+                tailwind: cssEntry,
+              },
+              output: {
+                assetFileNames: (assetInfo: { name?: string }) => {
+                  if (assetInfo.name?.endsWith(".css")) {
+                    return "[name][extname]";
+                  }
+                  return "assets/[name]-[hash][extname]";
+                },
+              },
+            }),
+          },
+        },
+      };
+
+      // Add Tailwind plugin to build config if enabled
       if (this.config.tailwind) {
-        await this.buildTailwindCSS(app, outDir);
+        try {
+          const tailwindcss = await import("@tailwindcss/vite");
+          buildViteConfig.plugins = [tailwindcss.default()];
+        } catch {
+          // Ignore - warning already shown in initApp
+        }
       }
 
-      // Build islands for client-side hydration
       await app.build({
         outDir,
         mode: "full",
         minify: true,
-        vite: {
-          build: {
-            rollupOptions: {
-              // Don't externalize for SSG - bundle everything
-              external: [],
-            },
-          },
-        },
+        vite: buildViteConfig,
       });
 
       return result;
     } finally {
+      // Clean up temp directory
+      if (tempDir) {
+        await rm(tempDir, { recursive: true, force: true });
+      }
       await app.close();
     }
   }
@@ -342,44 +381,6 @@ export class SSG<
     return { state, paths: builtPaths, stats };
   }
 
-  private async buildTailwindCSS(_app: App, outDir: string): Promise<void> {
-    const { build: viteBuild } = await import("vite");
-
-    try {
-      // Create temporary CSS entry file
-      const tempDir = join(this.rootDir, ".ssg-temp");
-      await mkdir(tempDir, { recursive: true });
-
-      const cssEntry = join(tempDir, "tailwind.css");
-      await writeFile(cssEntry, '@import "tailwindcss";');
-
-      // Build CSS through Vite with Tailwind plugin
-      const tailwindcss = await import("@tailwindcss/vite");
-
-      await viteBuild({
-        root: this.rootDir,
-        plugins: [tailwindcss.default()],
-        build: {
-          outDir,
-          emptyOutDir: false,
-          rollupOptions: {
-            input: { tailwind: cssEntry },
-            output: {
-              assetFileNames: "[name][extname]",
-            },
-          },
-          cssCodeSplit: false,
-        },
-        logLevel: "silent",
-      });
-
-      // Clean up temp directory
-      await rm(tempDir, { recursive: true, force: true });
-    } catch (error) {
-      console.warn("Failed to build Tailwind CSS:", error);
-    }
-  }
-
   private async renderPage(
     path: string,
     props: Record<string, unknown>,
@@ -389,7 +390,7 @@ export class SSG<
 
     // Generate styles (Tailwind CSS link if enabled)
     const styles = this.config.tailwind
-      ? new RawHTML('<link rel="stylesheet" href="/tailwind.css" />')
+      ? new RawHTML('<link rel="stylesheet" href="/islands/tailwind.css" />')
       : undefined;
 
     // Wrap with document template
