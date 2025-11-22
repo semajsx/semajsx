@@ -2,6 +2,18 @@ import type { VNode } from "@semajsx/core";
 import type { z } from "zod";
 
 // =============================================================================
+// Collection Registry (for type inference)
+// =============================================================================
+
+/**
+ * Infer a registry type from an array of collections
+ * Maps collection names to their data types
+ */
+export type InferCollections<T extends readonly Collection[]> = {
+  [K in T[number] as K["name"]]: K extends Collection<infer D> ? D : unknown;
+};
+
+// =============================================================================
 // Collection Entry
 // =============================================================================
 
@@ -80,7 +92,9 @@ export interface StaticPath<P = Record<string, string>> {
   props?: Record<string, unknown>;
 }
 
-export interface RouteConfig {
+export interface RouteConfig<
+  TRegistry extends Record<string, unknown> = Record<string, unknown>,
+> {
   /** Route path pattern (e.g., '/blog/:slug') */
   path: string;
   /** Component to render */
@@ -88,9 +102,9 @@ export interface RouteConfig {
   /** Static props for the route */
   props?:
     | Record<string, unknown>
-    | ((ssg: SSGInstance) => Promise<Record<string, unknown>>);
+    | ((ssg: SSGInstance<TRegistry>) => Promise<Record<string, unknown>>);
   /** Generate static paths for dynamic routes */
-  getStaticPaths?: (ssg: SSGInstance) => Promise<StaticPath[]>;
+  getStaticPaths?: (ssg: SSGInstance<TRegistry>) => Promise<StaticPath[]>;
 }
 
 // =============================================================================
@@ -146,7 +160,10 @@ export type DocumentTemplate = (props: DocumentProps) => VNode;
 // SSG Configuration
 // =============================================================================
 
-export interface SSGConfig {
+export interface SSGConfig<
+  TCollections extends readonly Collection[] = Collection[],
+  TRegistry extends Record<string, unknown> = InferCollections<TCollections>,
+> {
   /** Output directory for built files */
   outDir: string;
   /** Root directory for resolving relative paths (defaults to script location) */
@@ -154,9 +171,9 @@ export interface SSGConfig {
   /** Base URL path */
   base?: string;
   /** Collections to include */
-  collections?: Collection[];
+  collections?: TCollections;
   /** Route definitions */
-  routes?: RouteConfig[];
+  routes?: RouteConfig<TRegistry>[];
   /** MDX configuration */
   mdx?: MDXConfig;
   /** Custom document template */
@@ -219,18 +236,22 @@ export interface Watcher {
 // SSG Instance
 // =============================================================================
 
-export interface SSGInstance {
+export interface SSGInstance<
+  TRegistry extends Record<string, unknown> = Record<string, unknown>,
+> {
   /** Get the root directory for resolving paths */
   getRootDir(): string;
 
   /** Get all entries from a collection */
-  getCollection<T = unknown>(name: string): Promise<CollectionEntry<T>[]>;
+  getCollection<K extends keyof TRegistry & string>(
+    name: K,
+  ): Promise<CollectionEntry<TRegistry[K]>[]>;
 
   /** Get a single entry from a collection */
-  getEntry<T = unknown>(
-    name: string,
+  getEntry<K extends keyof TRegistry & string>(
+    name: K,
     id: string,
-  ): Promise<CollectionEntry<T> | null>;
+  ): Promise<CollectionEntry<TRegistry[K]> | null>;
 
   /** Build the static site */
   build(options?: BuildOptions): Promise<BuildResult>;

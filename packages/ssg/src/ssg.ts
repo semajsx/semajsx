@@ -16,6 +16,7 @@ import {
   type WatchOptions,
   type Watcher,
   type DocumentProps,
+  type InferCollections,
 } from "./types";
 import { viteMDXPlugin } from "./mdx";
 
@@ -23,7 +24,10 @@ import { viteMDXPlugin } from "./mdx";
  * SSG (Static Site Generator) core class
  * Built on top of server's createApp
  */
-export class SSG implements SSGInstance {
+export class SSG<
+  TRegistry extends Record<string, unknown> = Record<string, unknown>,
+> implements SSGInstance<TRegistry>
+{
   private config: SSGConfig;
   private rootDir: string;
   private collections: Map<string, Collection>;
@@ -79,16 +83,16 @@ export class SSG implements SSGInstance {
     return this.rootDir;
   }
 
-  async getCollection<T = unknown>(
-    name: string,
-  ): Promise<CollectionEntry<T>[]> {
+  async getCollection<K extends keyof TRegistry & string>(
+    name: K,
+  ): Promise<CollectionEntry<TRegistry[K]>[]> {
     const collection = this.collections.get(name);
     if (!collection) {
       throw new Error(`Collection "${name}" not found`);
     }
 
     if (this.entriesCache.has(name)) {
-      return this.entriesCache.get(name) as CollectionEntry<T>[];
+      return this.entriesCache.get(name) as CollectionEntry<TRegistry[K]>[];
     }
 
     const entries = await collection.source.getEntries();
@@ -141,14 +145,14 @@ export class SSG implements SSGInstance {
     });
 
     this.entriesCache.set(name, validatedEntries);
-    return validatedEntries as CollectionEntry<T>[];
+    return validatedEntries as CollectionEntry<TRegistry[K]>[];
   }
 
-  async getEntry<T = unknown>(
-    name: string,
+  async getEntry<K extends keyof TRegistry & string>(
+    name: K,
     id: string,
-  ): Promise<CollectionEntry<T> | null> {
-    const entries = await this.getCollection<T>(name);
+  ): Promise<CollectionEntry<TRegistry[K]> | null> {
+    const entries = await this.getCollection(name);
     return entries.find((e) => e.id === id || e.slug === id) ?? null;
   }
 
@@ -395,6 +399,9 @@ export class SSG implements SSGInstance {
   }
 }
 
-export function createSSG(config: SSGConfig): SSGInstance {
-  return new SSG(config);
+export function createSSG<
+  const TCollections extends readonly Collection[],
+  TRegistry extends Record<string, unknown> = InferCollections<TCollections>,
+>(config: SSGConfig<TCollections, TRegistry>): SSGInstance<TRegistry> {
+  return new SSG<TRegistry>(config as unknown as SSGConfig);
 }

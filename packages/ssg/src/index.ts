@@ -39,6 +39,7 @@ export type {
   CollectionSource,
   ChangeSet,
   WatchCallback,
+  InferCollections,
 
   // Route types
   RouteConfig,
