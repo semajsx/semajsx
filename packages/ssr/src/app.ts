@@ -10,6 +10,7 @@
 
 import { createServer, build as viteBuild, mergeConfig } from "vite";
 import type { ViteDevServer, UserConfig as ViteUserConfig } from "vite";
+import { relative } from "path";
 import { renderToString } from "./render";
 import { renderDocument } from "./document";
 import { LRUCache } from "./lru-cache";
@@ -290,14 +291,16 @@ class AppImpl implements App {
 
       // Build assets first (for CSS url() rewriting)
       let assetManifest: Map<string, string> | undefined;
+      const rootDir = this.config.root || process.cwd();
       if (allAssets.size > 0) {
         const assetResult = await buildAssets(allAssets, outDir);
         assetManifest = assetResult.mapping;
 
-        // Add to manifest
+        // Add to manifest with relative paths as keys
         for (const [original, output] of assetResult.mapping) {
           manifest.assets = manifest.assets || {};
-          manifest.assets[original] = output;
+          const relPath = relative(rootDir, original);
+          manifest.assets[relPath] = output;
         }
 
         logger.info(`Built ${allAssets.size} assets`);
@@ -311,9 +314,11 @@ class AppImpl implements App {
           assetManifest,
         });
 
-        // Add to manifest and store for runtime mapping
+        // Add to manifest with relative paths as keys
         for (const [original, output] of cssResult.mapping) {
-          manifest.css[original] = output;
+          const relPath = relative(rootDir, original);
+          manifest.css[relPath] = output;
+          // Keep absolute path in runtime manifest for lookup
           this._cssManifest.set(original, output);
         }
 

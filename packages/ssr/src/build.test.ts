@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdir, writeFile, rm, readFile, readdir } from "fs/promises";
-import { join } from "path";
+import { join, relative } from "path";
 import { buildCSS, analyzeCSSChunks } from "./css-builder";
 import { buildAssets } from "./asset-builder";
 
@@ -406,9 +406,10 @@ describe("App Build Integration", () => {
 
     const result = await app.build({ outDir: OUT_DIR });
 
-    // Check CSS is in manifest
+    // Check CSS is in manifest (uses relative path as key)
     expect(Object.keys(result.manifest.css).length).toBe(1);
-    expect(result.manifest.css[cssPath]).toMatch(
+    const relCssPath = relative(TEST_DIR, cssPath);
+    expect(result.manifest.css[relCssPath]).toMatch(
       /\/css\/styles-[a-f0-9]+\.css$/,
     );
 
@@ -442,7 +443,8 @@ describe("App Build Integration", () => {
 
     // Build first
     const buildResult = await app.build({ outDir: OUT_DIR });
-    const hashedPath = buildResult.manifest.css[cssPath];
+    const relCssPath = relative(TEST_DIR, cssPath);
+    const hashedPath = buildResult.manifest.css[relCssPath];
 
     // Render after build - should use hashed path
     const renderResult = await app.render("/");
@@ -537,9 +539,10 @@ describe("App Build Integration", () => {
 
     const result = await app.build({ outDir: OUT_DIR });
 
-    // Check asset is in manifest
+    // Check asset is in manifest (uses relative path as key)
     expect(result.manifest.assets).toBeDefined();
-    expect(result.manifest.assets?.[assetPath]).toMatch(
+    const relAssetPath = relative(TEST_DIR, assetPath);
+    expect(result.manifest.assets?.[relAssetPath]).toMatch(
       /\/assets\/image-[a-f0-9]+\.png$/,
     );
 
