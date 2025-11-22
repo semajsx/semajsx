@@ -1,5 +1,5 @@
 import { mkdir, writeFile, rm } from "fs/promises";
-import { join, dirname, resolve, relative } from "path";
+import { join, dirname, resolve } from "path";
 import { createApp, renderDocument } from "@semajsx/server";
 import type { App, RouteContext } from "@semajsx/server";
 import { DefaultDocument } from "./document";
@@ -21,14 +21,6 @@ import {
 import { viteMDXPlugin } from "./mdx";
 
 /**
- * Page module dependencies for CSS splitting
- */
-interface PageModules {
-  path: string;
-  files: string[];
-}
-
-/**
  * SSG (Static Site Generator) core class
  * Built on top of server's createApp
  */
@@ -42,7 +34,7 @@ export class SSG<
   private entriesCache: Map<string, CollectionEntry[]>;
   private app: App | null = null;
   private mdxModules: Map<string, string> = new Map();
-  private pageModules: Map<string, string[]> = new Map(); // Track modules per page
+  private pageHtmlContent: Map<string, string> = new Map(); // Store rendered HTML for CSS extraction
 
   constructor(config: SSGConfig) {
     // Resolve rootDir
@@ -210,8 +202,8 @@ export class SSG<
     const app = await this.initApp();
     await app.prepare();
 
-    // Clear page modules tracking
-    this.pageModules.clear();
+    // Clear page HTML content tracking
+    this.pageHtmlContent.clear();
 
     try {
       // Register routes with App
@@ -355,23 +347,17 @@ export class SSG<
   }
 
   /**
-   * Build CSS for each page based on tracked module dependencies
+   * Build CSS for each page based on rendered HTML content
    */
   private async buildPageCSS(outDir: string): Promise<void> {
-    if (!this.config.tailwind || this.pageModules.size === 0) {
+    if (!this.config.tailwind || this.pageHtmlContent.size === 0) {
       return;
-    }
-
-    // Debug: log tracked pages
-    console.log(`Building CSS for ${this.pageModules.size} pages:`);
-    for (const [pagePath, files] of this.pageModules) {
-      console.log(`  ${pagePath}: ${files.length} files`);
     }
 
     const { build: viteBuild } = await import("vite");
 
     try {
-      // Create temp directory for CSS entries
+      // Create temp directory for HTML and CSS entries
       const tempDir = join(this.rootDir, ".ssg-css-temp");
       await mkdir(tempDir, { recursive: true });
 
@@ -382,53 +368,46 @@ export class SSG<
       // Generate CSS entry for each page
       const entryPoints: Record<string, string> = {};
 
-      for (const [pagePath, files] of this.pageModules) {
+      for (const [pagePath, html] of this.pageHtmlContent) {
         // Generate page name for CSS file
         const pageName =
           pagePath === "/" ? "index" : pagePath.slice(1).replace(/\//g, "-");
 
-        // Create @source directives for this page's files
-        const sourceDirectives =
-          files.length > 0
-            ? files.map((f) => `@source "${f}";`).join("\n")
-            : `@source "${this.rootDir}/**/*.{ts,tsx,js,jsx}";`; // Fallback to all files
+        // Save HTML to temp file for Tailwind to scan
+        const htmlFile = join(tempDir, `${pageName}.html`);
+        await writeFile(htmlFile, html);
 
-        const cssContent = `@import "tailwindcss";\n${sourceDirectives}`;
+        // Create CSS entry that sources from the HTML file
+        const cssContent = `@import "tailwindcss";\n@source "${htmlFile}";`;
         const cssFile = join(tempDir, `${pageName}.css`);
 
         await writeFile(cssFile, cssContent);
         entryPoints[pageName] = cssFile;
       }
 
-      // Build all page CSS entries together
+      // Build each page CSS separately to get per-page output
       const tailwindcss = await import("@tailwindcss/vite");
 
-      await viteBuild({
-        root: this.rootDir,
-        plugins: [tailwindcss.default()],
-        build: {
-          outDir: cssOutDir,
-          emptyOutDir: false,
-          rollupOptions: {
-            input: entryPoints,
-            output: {
-              // CSS becomes asset, we need to control naming
-              assetFileNames: "[name][extname]",
-              // JS entries (minimal, just for CSS extraction)
-              entryFileNames: "[name].js",
+      for (const [pageName, cssFile] of Object.entries(entryPoints)) {
+        await viteBuild({
+          root: this.rootDir,
+          plugins: [tailwindcss.default()],
+          build: {
+            outDir: cssOutDir,
+            emptyOutDir: false,
+            rollupOptions: {
+              input: { [pageName]: cssFile },
+              output: {
+                assetFileNames: "[name][extname]",
+                entryFileNames: "[name].js",
+              },
             },
+            minify: true,
           },
-          cssCodeSplit: true,
-          minify: true,
-        },
-        logLevel: "warn",
-      });
+          logLevel: "silent",
+        });
 
-      // Clean up temp directory
-      await rm(tempDir, { recursive: true, force: true });
-
-      // Clean up generated JS files (we only want CSS)
-      for (const pageName of Object.keys(entryPoints)) {
+        // Clean up generated JS file
         const jsFile = join(cssOutDir, `${pageName}.js`);
         try {
           await rm(jsFile);
@@ -436,6 +415,9 @@ export class SSG<
           // File might not exist
         }
       }
+
+      // Clean up temp directory
+      await rm(tempDir, { recursive: true, force: true });
     } catch (error) {
       console.warn("Failed to build page CSS:", error);
     }
@@ -445,66 +427,20 @@ export class SSG<
     path: string,
     props: Record<string, unknown>,
   ): Promise<string> {
-    const vite = this.app!.getViteServer();
-
-    // Invalidate all modules before rendering to get clean dependency tracking
-    if (vite && this.config.tailwind) {
-      const modules = [...vite.moduleGraph.idToModuleMap.values()];
-      for (const mod of modules) {
-        if (mod && mod.file && mod.file.startsWith(this.rootDir)) {
-          vite.moduleGraph.invalidateModule(mod);
-        }
-      }
-    }
-
     // Use App to render the page
     const result = await this.app!.render(path);
 
-    // Track modules loaded for this page (for CSS splitting)
-    if (vite && this.config.tailwind) {
-      const pageFiles: string[] = [];
-
-      // Get all loaded modules after rendering this page
-      for (const [moduleId, mod] of vite.moduleGraph.idToModuleMap) {
-        // Only include project source files
-        if (
-          moduleId &&
-          moduleId.startsWith(this.rootDir) &&
-          !moduleId.includes("node_modules") &&
-          (moduleId.endsWith(".tsx") ||
-            moduleId.endsWith(".ts") ||
-            moduleId.endsWith(".jsx") ||
-            moduleId.endsWith(".js") ||
-            moduleId.endsWith(".mdx"))
-        ) {
-          pageFiles.push(moduleId);
-        }
-      }
-
-      // Debug: log for first page
-      if (this.pageModules.size === 0) {
-        console.log(
-          `First page ${path} modules:`,
-          vite.moduleGraph.idToModuleMap.size,
-          "total,",
-          pageFiles.length,
-          "project files",
-        );
-        console.log("Root dir:", this.rootDir);
-        let count = 0;
-        for (const [id] of vite.moduleGraph.idToModuleMap) {
-          if (count++ < 10) console.log("  Module:", id);
-        }
-      }
-
-      this.pageModules.set(path, pageFiles);
+    // Store HTML content for CSS extraction (before wrapping with document)
+    if (this.config.tailwind) {
+      this.pageHtmlContent.set(path, result.html);
     }
 
-    // Generate styles - will be replaced with page-specific CSS after build
+    // Generate styles - page-specific CSS
+    // CSS file names use - instead of / for paths (e.g., /blog/hello-world -> blog-hello-world.css)
+    const cssFileName =
+      path === "/" ? "index" : path.slice(1).replace(/\//g, "-");
     const styles = this.config.tailwind
-      ? new RawHTML(
-          `<link rel="stylesheet" href="/css${path === "/" ? "/index" : path}.css" />`,
-        )
+      ? new RawHTML(`<link rel="stylesheet" href="/css/${cssFileName}.css" />`)
       : undefined;
 
     // Wrap with document template
