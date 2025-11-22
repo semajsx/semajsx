@@ -80,7 +80,7 @@ semajsx/
 │   │   └── tsconfig.json
 │   │
 │   ├── server/                      # SSR and Island architecture
-│   │   ├── package.json             # name: "@semajsx/server"
+│   │   ├── package.json             # name: "@semajsx/ssr"
 │   │   ├── src/
 │   │   │   ├── island.ts
 │   │   │   ├── island-noop.ts
@@ -156,7 +156,7 @@ semajsx (main package)
 │   ├── @semajsx/core
 │   ├── @semajsx/signal
 │   └── @semajsx/utils
-├── @semajsx/server
+├── @semajsx/ssr
 │   ├── @semajsx/core
 │   ├── @semajsx/signal
 │   ├── @semajsx/dom
@@ -205,7 +205,7 @@ Internal:
 - **Dependencies**: `@semajsx/core`, `@semajsx/signal`, `@semajsx/utils`, `yoga-layout-prebuilt`, `chalk`, etc.
 - **Type**: Published package
 
-#### `@semajsx/server`
+#### `@semajsx/ssr`
 
 - **Description**: SSR and Island architecture
 - **Exports**: `island`, `renderToString`, `createViteRouter`
@@ -287,8 +287,8 @@ Each package will be extracted one by one:
    - Move terminal tests and examples
    - Update imports
 
-6. **Extract `@semajsx/server`**
-   - Move `src/server/` and `src/client/` to `packages/server/src/`
+6. **Extract `@semajsx/ssr`**
+   - Move `src/server/` and `src/client/` to `packages/ssr/src/`
    - Move SSR tests and examples
    - Update imports
 
@@ -382,7 +382,7 @@ All packages except `@semajsx/configs` will be published to npm:
 - `@semajsx/signal` - Can be used standalone
 - `@semajsx/dom` - Can be used standalone
 - `@semajsx/terminal` - Can be used standalone
-- `@semajsx/server` - Requires dom package
+- `@semajsx/ssr` - Requires dom package
 - `@semajsx/logger` - Can be used standalone
 - `@semajsx/utils` - Can be used standalone
 

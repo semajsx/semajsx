@@ -1,7 +1,7 @@
 /** @jsxImportSource @semajsx/dom */
 
 import { signal, computed } from "@semajsx/signal";
-import { island } from "@semajsx/server/client";
+import { island } from "@semajsx/ssr/client";
 
 /**
  * Pagination component - returns a Fragment (no wrapper element)

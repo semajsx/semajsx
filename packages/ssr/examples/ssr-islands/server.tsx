@@ -1,6 +1,6 @@
 /** @jsxImportSource @semajsx/dom */
 
-import { createApp, type DocumentTemplate } from "@semajsx/server";
+import { createApp, type DocumentTemplate } from "@semajsx/ssr";
 import { logger, createLogger } from "@semajsx/logger";
 import { App } from "./App";
 

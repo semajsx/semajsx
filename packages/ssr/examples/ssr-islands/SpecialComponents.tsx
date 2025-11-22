@@ -2,7 +2,7 @@
 
 import { signal } from "@semajsx/signal";
 import { when } from "@semajsx/core";
-import { island } from "@semajsx/server/client";
+import { island } from "@semajsx/ssr/client";
 
 /**
  * Async component - simple async function

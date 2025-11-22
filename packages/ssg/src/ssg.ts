@@ -1,7 +1,7 @@
 import { mkdir, writeFile, rm } from "fs/promises";
 import { join, dirname, resolve } from "path";
-import { createApp, renderDocument } from "@semajsx/server";
-import type { App, RouteContext } from "@semajsx/server";
+import { createApp, renderDocument } from "@semajsx/ssr";
+import type { App, RouteContext } from "@semajsx/ssr";
 import { DefaultDocument } from "./document";
 import type { VNode } from "@semajsx/core";
 import {

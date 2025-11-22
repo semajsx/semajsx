@@ -30,7 +30,7 @@ semajsx/
 │   ├── terminal/             # @semajsx/terminal - Terminal rendering
 │   │   ├── src/
 │   │   └── examples/
-│   ├── server/               # @semajsx/server - SSR and Island architecture
+│   ├── server/               # @semajsx/ssr - SSR and Island architecture
 │   │   ├── src/
 │   │   └── examples/
 │   ├── logger/               # @semajsx/logger - Logging utilities
@@ -65,7 +65,7 @@ semajsx/
    - Flexbox layout with Yoga
    - Built-in components (Box, Text)
 
-5. **Server** (`packages/server/`)
+5. **Server** (`packages/ssr/`)
    - SSR and Island architecture
    - Vite-powered routing and building
 
@@ -132,7 +132,7 @@ bun run typecheck
 Examples are located in their respective packages:
 
 - **DOM examples**: `packages/dom/examples/`
-- **Server examples**: `packages/server/examples/`
+- **Server examples**: `packages/ssr/examples/`
 - **Terminal examples**: `packages/terminal/examples/`
 - **Logger examples**: `packages/logger/examples/`
 

@@ -1,5 +1,5 @@
 {
-  "name": "@semajsx/server",
+  "name": "@semajsx/ssr",
   "version": "0.1.0",
   "description": "Server-side rendering and Island architecture for SemaJSX",
   "type": "module",

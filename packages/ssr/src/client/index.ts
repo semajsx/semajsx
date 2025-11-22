@@ -3,12 +3,17 @@
  */
 
 export {
+  hydrate,
+  hydrateIsland,
   hydrateIslands,
   hydrateIslandById,
   hasIslands,
   getIslandIds,
+  getIslandInfo,
   markIslandHydrated,
 } from "./hydrate";
+
+export type { IslandInfo } from "./hydrate";
 
 export {
   island,

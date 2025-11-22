@@ -45,7 +45,7 @@ packages/dom/src/
 | `@semajsx/signal`   | Node        | Signal primitives, computed values |
 | `@semajsx/core`     | Browser     | VNode creation, runtime helpers    |
 | `@semajsx/dom`      | Browser     | DOM rendering, events, hydration   |
-| `@semajsx/server`   | Node        | SSR, island architecture           |
+| `@semajsx/ssr`      | Node        | SSR, island architecture           |
 | `@semajsx/terminal` | Node        | Terminal rendering                 |
 | `@semajsx/utils`    | Node        | Utility functions                  |
 

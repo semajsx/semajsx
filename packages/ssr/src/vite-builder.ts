@@ -149,8 +149,7 @@ export class ViteIslandBuilder {
     const displayName = componentName || island.id;
     return `
 // Island hydration entry point: ${displayName}
-import { hydrate } from '@semajsx/dom';
-import { markIslandHydrated } from '@semajsx/dom';
+import { hydrate, markIslandHydrated } from '@semajsx/ssr/client';
 import * as ComponentModule from '${componentPath}';
 
 // Get the component

@@ -67,8 +67,8 @@
       "dependencies": {
         "@semajsx/core": "workspace:*",
         "@semajsx/dom": "workspace:*",
-        "@semajsx/server": "workspace:*",
         "@semajsx/signal": "workspace:*",
+        "@semajsx/ssr": "workspace:*",
         "@semajsx/terminal": "workspace:*",
         "@semajsx/utils": "workspace:*",
       },
@@ -84,27 +84,6 @@
         "vite": "^7.2.4",
         "vitest": "^4.0.13",
       },
-    },
-    "packages/server": {
-      "name": "@semajsx/server",
-      "version": "0.1.0",
-      "dependencies": {
-        "@semajsx/core": "workspace:*",
-        "@semajsx/dom": "workspace:*",
-        "@semajsx/logger": "workspace:*",
-        "@semajsx/signal": "workspace:*",
-      },
-      "devDependencies": {
-        "@semajsx/configs": "workspace:*",
-        "tsdown": "^0.16.6",
-        "typescript": "^5.9.3",
-      },
-      "peerDependencies": {
-        "vite": "^7.0.0",
-      },
-      "optionalPeers": [
-        "vite",
-      ],
     },
     "packages/signal": {
       "name": "@semajsx/signal",
@@ -126,8 +105,8 @@
         "@mdx-js/mdx": "^3.0.0",
         "@semajsx/core": "workspace:*",
         "@semajsx/dom": "workspace:*",
-        "@semajsx/server": "workspace:*",
         "@semajsx/signal": "workspace:*",
+        "@semajsx/ssr": "workspace:*",
         "glob": "^13.0.0",
         "gray-matter": "^4.0.3",
         "zod": "^4.0.0",
@@ -138,6 +117,27 @@
         "tsdown": "^0.16.6",
         "typescript": "^5.9.3",
         "vitest": "^4.0.13",
+      },
+      "peerDependencies": {
+        "vite": "^7.0.0",
+      },
+      "optionalPeers": [
+        "vite",
+      ],
+    },
+    "packages/ssr": {
+      "name": "@semajsx/ssr",
+      "version": "0.1.0",
+      "dependencies": {
+        "@semajsx/core": "workspace:*",
+        "@semajsx/dom": "workspace:*",
+        "@semajsx/logger": "workspace:*",
+        "@semajsx/signal": "workspace:*",
+      },
+      "devDependencies": {
+        "@semajsx/configs": "workspace:*",
+        "tsdown": "^0.16.6",
+        "typescript": "^5.9.3",
       },
       "peerDependencies": {
         "vite": "^7.0.0",
@@ -433,11 +433,11 @@
 
     "@semajsx/logger": ["@semajsx/logger@workspace:packages/logger"],
 
-    "@semajsx/server": ["@semajsx/server@workspace:packages/server"],
-
     "@semajsx/signal": ["@semajsx/signal@workspace:packages/signal"],
 
     "@semajsx/ssg": ["@semajsx/ssg@workspace:packages/ssg"],
+
+    "@semajsx/ssr": ["@semajsx/ssr@workspace:packages/ssr"],
 
     "@semajsx/terminal": ["@semajsx/terminal@workspace:packages/terminal"],
 
@@ -657,7 +657,7 @@
 
     "find-up": ["find-up@7.0.0", "", { "dependencies": { "locate-path": "^7.2.0", "path-exists": "^5.0.0", "unicorn-magic": "^0.1.0" } }, "sha512-YyZM99iHrqLKjmt4LJDj58KI+fYyufRLBSYcqycxf//KpBk9FoewoGX0450m9nB44qrZnovzC2oeP5hUibxc/g=="],
 
-    "fsevents": ["fsevents@2.3.3", "", { "os": "darwin" }, "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw=="],
+    "fsevents": ["fsevents@2.3.2", "", { "os": "darwin" }, "sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA=="],
 
     "get-caller-file": ["get-caller-file@2.0.5", "", {}, "sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg=="],
 
@@ -1101,11 +1101,13 @@
 
     "parse-entities/@types/unist": ["@types/unist@2.0.11", "", {}, "sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA=="],
 
-    "playwright/fsevents": ["fsevents@2.3.2", "", { "os": "darwin" }, "sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA=="],
-
     "rolldown/@oxc-project/types": ["@oxc-project/types@0.98.0", "", {}, "sha512-Vzmd6FsqVuz5HQVcRC/hrx7Ujo3WEVeQP7C2UNP5uy1hUY4SQvMB+93jxkI1KRHz9a/6cni3glPOtvteN+zpsw=="],
 
+    "rollup/fsevents": ["fsevents@2.3.3", "", { "os": "darwin" }, "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw=="],
+
     "semajsx/@types/node": ["@types/node@22.19.1", "", { "dependencies": { "undici-types": "~6.21.0" } }, "sha512-LCCV0HdSZZZb34qifBsyWlUmok6W7ouER+oQIGBScS8EsZsQbrtFTUrDX4hOl+CS6p7cnNC4td+qrSVGSCTUfQ=="],
+
+    "vite/fsevents": ["fsevents@2.3.3", "", { "os": "darwin" }, "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw=="],
 
     "vitest/tinyexec": ["tinyexec@0.3.2", "", {}, "sha512-KQQR9yN7R5+OSwaK0XQoj22pwHoTlgYqmUscPYoknOoWCWfj/5/ABTMRi69FrKU5ffPVh5QcFikpWJI/P1ocHA=="],
 
