@@ -40,5 +40,12 @@
     "vite": {
       "optional": true
     }
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.mjs",
+      "./client": "./dist/client/index.mjs",
+      "./package.json": "./package.json"
+    }
   }
 }
