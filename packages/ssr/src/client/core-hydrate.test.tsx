@@ -1,7 +1,7 @@
 /** @jsxImportSource @semajsx/dom */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { hydrate } from "../src/hydrate";
+import { hydrate } from "./core-hydrate";
 import { signal } from "@semajsx/signal";
 
 describe("hydrate", () => {

@@ -270,7 +270,7 @@ class AppImpl implements App {
           const componentName = island.componentName;
 
           const entryCode = `
-import { hydrateIsland } from '@semajsx/dom';
+import { hydrateIsland } from '@semajsx/ssr/client';
 import { markIslandHydrated } from '@semajsx/ssr/client';
 import * as ComponentModule from '${componentPath}';
 
@@ -424,7 +424,7 @@ if (Component) {
 
     // Generate entry point code
     const entryCode = `
-import { hydrateIsland } from '@semajsx/dom';
+import { hydrateIsland } from '@semajsx/ssr/client';
 import { markIslandHydrated } from '@semajsx/ssr/client';
 import * as ComponentModule from '${componentPath}';
 
@@ -569,7 +569,7 @@ if (Component) {
           const componentName = island.componentName;
 
           return `
-import { hydrateIsland } from '@semajsx/dom';
+import { hydrateIsland } from '@semajsx/ssr/client';
 import { markIslandHydrated } from '@semajsx/ssr/client';
 import * as ComponentModule from '${componentPath}';
 

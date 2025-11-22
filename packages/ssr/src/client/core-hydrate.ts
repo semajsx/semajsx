@@ -5,9 +5,8 @@
 
 import type { VNode } from "@semajsx/core";
 import { Fragment } from "@semajsx/core";
-import { setProperty } from "./properties";
+import { setProperty, render } from "@semajsx/dom";
 import { isSignal } from "@semajsx/signal";
-import { render } from "./render";
 
 /**
  * Type guard for async iterators
@@ -474,7 +473,7 @@ function renderNode(vnode: any, parentElement: Element): Node | null {
  *
  * @example
  * ```tsx
- * import { hydrateIsland, h } from '@semajsx/dom';
+ * import { hydrateIsland, h } from '@semajsx/ssr/client';
  * import { markIslandHydrated } from '@semajsx/ssr/client';
  * import Counter from './Counter';
  *

@@ -10,6 +10,8 @@ export {
   markIslandHydrated,
 } from "./hydrate";
 
+export { hydrate, hydrateIsland } from "./core-hydrate";
+
 export {
   island,
   isIslandComponent,

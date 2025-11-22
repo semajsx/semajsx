@@ -87,7 +87,7 @@ function findAllIslands(): IslandInfo[] {
  * @example
  * ```tsx
  * // In your client entry point
- * import { hydrateIslands } from '@semajsx/dom'
+ * import { hydrateIslands } from '@semajsx/ssr/client'
  *
  * // Wait for DOM to be ready
  * if (document.readyState === 'loading') {
