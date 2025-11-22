@@ -398,15 +398,16 @@ if (Component) {
 
         // Record built islands
         for (const [, island] of allIslands) {
-          const outputPath = `${outDir}/islands/${island.id}.js`;
+          // Use relative path for portability
+          const relativeOutputPath = `islands/${island.id}.js`;
 
           builtIslands.push({
             id: island.id,
             path: island.path,
-            outputPath,
+            outputPath: relativeOutputPath,
           });
 
-          manifest.islands[island.id] = outputPath;
+          manifest.islands[island.id] = relativeOutputPath;
 
           if (onIslandBuilt) {
             onIslandBuilt(island);
