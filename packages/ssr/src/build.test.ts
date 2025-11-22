@@ -416,4 +416,230 @@ describe("App Build Integration", () => {
     const cssFiles = await readdir(join(OUT_DIR, "css"));
     expect(cssFiles.length).toBe(1);
   });
+
+  it("should use hashed CSS paths in render after build", async () => {
+    const { createApp } = await import("./app");
+    const { STYLE_MARKER } = await import("./client/resource");
+
+    app = createApp({ root: TEST_DIR });
+
+    // Create CSS file
+    const cssPath = join(TEST_DIR, "styles.css");
+    await writeFile(cssPath, ".test { color: red; }");
+
+    // Route with CSS
+    app.route("/", () => ({
+      type: "div",
+      props: {},
+      children: [
+        {
+          type: STYLE_MARKER as unknown as string,
+          props: { href: cssPath },
+          children: [],
+        },
+      ],
+    }));
+
+    // Build first
+    const buildResult = await app.build({ outDir: OUT_DIR });
+    const hashedPath = buildResult.manifest.css[cssPath];
+
+    // Render after build - should use hashed path
+    const renderResult = await app.render("/");
+
+    expect(renderResult.css).toContain(hashedPath);
+    expect(renderResult.css).not.toContain(cssPath);
+  });
+
+  it("should extract shared CSS when multiple routes use same CSS", async () => {
+    const { createApp } = await import("./app");
+    const { STYLE_MARKER } = await import("./client/resource");
+
+    app = createApp({ root: TEST_DIR });
+
+    // Create shared and per-route CSS files
+    const sharedCss = join(TEST_DIR, "shared.css");
+    const homeCss = join(TEST_DIR, "home.css");
+    const aboutCss = join(TEST_DIR, "about.css");
+
+    await writeFile(sharedCss, ".shared { color: black; }");
+    await writeFile(homeCss, ".home { color: blue; }");
+    await writeFile(aboutCss, ".about { color: green; }");
+
+    // Home route uses shared + home CSS
+    app.route("/", () => ({
+      type: "div",
+      props: {},
+      children: [
+        {
+          type: STYLE_MARKER as unknown as string,
+          props: { href: sharedCss },
+          children: [],
+        },
+        {
+          type: STYLE_MARKER as unknown as string,
+          props: { href: homeCss },
+          children: [],
+        },
+      ],
+    }));
+
+    // About route uses shared + about CSS
+    app.route("/about", () => ({
+      type: "div",
+      props: {},
+      children: [
+        {
+          type: STYLE_MARKER as unknown as string,
+          props: { href: sharedCss },
+          children: [],
+        },
+        {
+          type: STYLE_MARKER as unknown as string,
+          props: { href: aboutCss },
+          children: [],
+        },
+      ],
+    }));
+
+    const result = await app.build({ outDir: OUT_DIR });
+
+    // Shared CSS should be extracted (used by 2 routes)
+    expect(result.manifest.sharedCSS).toBeDefined();
+    expect(result.manifest.sharedCSS?.length).toBe(1);
+
+    // All CSS files should be in manifest
+    expect(Object.keys(result.manifest.css).length).toBe(3);
+  });
+
+  it("should collect and build assets", async () => {
+    const { createApp } = await import("./app");
+    const { ASSET_MARKER } = await import("./client/resource");
+
+    app = createApp({ root: TEST_DIR });
+
+    // Create asset file
+    const assetPath = join(TEST_DIR, "image.png");
+    await writeFile(assetPath, "fake-png-data");
+
+    // Route with asset
+    app.route("/", () => ({
+      type: "div",
+      props: {},
+      children: [
+        {
+          type: ASSET_MARKER as unknown as string,
+          props: { src: assetPath },
+          children: [],
+        },
+      ],
+    }));
+
+    const result = await app.build({ outDir: OUT_DIR });
+
+    // Check asset is in manifest
+    expect(result.manifest.assets).toBeDefined();
+    expect(result.manifest.assets?.[assetPath]).toMatch(
+      /\/assets\/image-[a-f0-9]+\.png$/,
+    );
+
+    // Check asset file was created
+    const assetFiles = await readdir(join(OUT_DIR, "assets"));
+    expect(assetFiles.length).toBe(1);
+  });
+
+  it("should handle build errors gracefully", async () => {
+    const { createApp } = await import("./app");
+    const { STYLE_MARKER } = await import("./client/resource");
+
+    app = createApp({ root: TEST_DIR });
+
+    // Route with non-existent CSS file
+    const nonExistentCss = join(TEST_DIR, "nonexistent.css");
+    app.route("/", () => ({
+      type: "div",
+      props: {},
+      children: [
+        {
+          type: STYLE_MARKER as unknown as string,
+          props: { href: nonExistentCss },
+          children: [],
+        },
+      ],
+    }));
+
+    // Build should fail gracefully (CSS file doesn't exist)
+    await expect(app.build({ outDir: OUT_DIR })).rejects.toThrow();
+  });
+});
+
+describe("getContentType", () => {
+  beforeEach(async () => {
+    await mkdir(TEST_DIR, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(TEST_DIR, { recursive: true, force: true });
+  });
+
+  it("should return correct content types", async () => {
+    // Import the module to access getContentType indirectly through fromBuild
+    const { createApp } = await import("./app");
+
+    // Create test files
+    await mkdir(OUT_DIR, { recursive: true });
+    await writeFile(
+      join(OUT_DIR, "manifest.json"),
+      JSON.stringify({ islands: {}, routes: [], css: {} }),
+    );
+
+    // Create various file types
+    await mkdir(join(OUT_DIR, "css"), { recursive: true });
+    await mkdir(join(OUT_DIR, "assets"), { recursive: true });
+
+    await writeFile(join(OUT_DIR, "css", "test.css"), "body{}");
+    await writeFile(join(OUT_DIR, "assets", "test.js"), "console.log()");
+    await writeFile(join(OUT_DIR, "assets", "test.json"), "{}");
+    await writeFile(join(OUT_DIR, "assets", "test.png"), "png");
+    await writeFile(join(OUT_DIR, "assets", "test.svg"), "<svg>");
+    await writeFile(join(OUT_DIR, "assets", "test.woff2"), "font");
+
+    const app = await createApp.fromBuild(OUT_DIR);
+
+    // Test CSS
+    let response = await app.handleRequest(
+      new Request("http://localhost/css/test.css"),
+    );
+    expect(response.headers.get("Content-Type")).toBe("text/css");
+
+    // Test JS
+    response = await app.handleRequest(
+      new Request("http://localhost/assets/test.js"),
+    );
+    expect(response.headers.get("Content-Type")).toBe("application/javascript");
+
+    // Test JSON
+    response = await app.handleRequest(
+      new Request("http://localhost/assets/test.json"),
+    );
+    expect(response.headers.get("Content-Type")).toBe("application/json");
+
+    // Test PNG
+    response = await app.handleRequest(
+      new Request("http://localhost/assets/test.png"),
+    );
+    expect(response.headers.get("Content-Type")).toBe("image/png");
+
+    // Test SVG
+    response = await app.handleRequest(
+      new Request("http://localhost/assets/test.svg"),
+    );
+    expect(response.headers.get("Content-Type")).toBe("image/svg+xml");
+
+    // Test WOFF2
+    response = await app.handleRequest(
+      new Request("http://localhost/assets/test.woff2"),
+    );
+    expect(response.headers.get("Content-Type")).toBe("font/woff2");
+  });
 });
