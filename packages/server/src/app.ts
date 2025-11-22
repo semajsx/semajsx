@@ -76,6 +76,22 @@ class AppImpl implements App {
 
     logger.info("Initializing app with Vite dev server...");
 
+    // Build plugins array
+    const plugins = [this._createVirtualIslandsPlugin()];
+
+    // Add Tailwind CSS plugin if enabled
+    if (this.config.tailwind) {
+      try {
+        const tailwindcss = await import("@tailwindcss/vite");
+        plugins.push(tailwindcss.default());
+        logger.info("Tailwind CSS plugin enabled");
+      } catch {
+        logger.warn(
+          "Tailwind CSS enabled but @tailwindcss/vite not installed. Run: bun add tailwindcss @tailwindcss/vite",
+        );
+      }
+    }
+
     const baseViteConfig: ViteUserConfig = {
       root: this.config.root,
       server: {
@@ -96,7 +112,7 @@ class AppImpl implements App {
         // Ensure Vite respects package.json "exports" field with conditions
         conditions: ["browser", "development", "module", "import", "default"],
       },
-      plugins: [this._createVirtualIslandsPlugin()],
+      plugins,
       // Exclude problematic native modules from SSR bundling
       ssr: {
         noExternal: ["@semajsx/core", "@semajsx/dom", "@semajsx/signal"],

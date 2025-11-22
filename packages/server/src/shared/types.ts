@@ -117,6 +117,9 @@ export interface AppConfig {
   /** Vite configuration (fully exposed) */
   vite?: ViteUserConfig;
 
+  /** Enable Tailwind CSS support (auto-configures @tailwindcss/vite plugin) */
+  tailwind?: boolean;
+
   /** Island configuration */
   islands?: {
     /** Base path for island scripts (default: '/islands') */

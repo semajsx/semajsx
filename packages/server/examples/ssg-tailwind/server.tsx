@@ -2,7 +2,6 @@
 
 import { createApp, type DocumentTemplate } from "@semajsx/server";
 import { createLogger } from "@semajsx/logger";
-import tailwindcss from "@tailwindcss/vite";
 import { App } from "./App";
 
 const startupLogger = createLogger({
@@ -26,14 +25,12 @@ const Document: DocumentTemplate = ({ children, scripts, title }) => (
   </html>
 );
 
-// Create app with Tailwind CSS plugin
+// Create app with Tailwind CSS support
 const app = createApp({
   routes: {
     "/": () => <App />,
   },
-  vite: {
-    plugins: [tailwindcss()],
-  },
+  tailwind: true,
   islands: {
     basePath: "/islands",
   },

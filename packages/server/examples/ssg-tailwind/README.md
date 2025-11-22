@@ -4,21 +4,17 @@ This example demonstrates how to use Tailwind CSS with SemaJSX SSG (Static Site 
 
 ## Setup
 
-1. Install dependencies (already included in the root package):
+1. Install Tailwind dependencies:
 
 ```bash
 bun add tailwindcss @tailwindcss/vite -D
 ```
 
-2. Configure the Tailwind plugin in your app:
+2. Enable Tailwind in your app:
 
 ```typescript
-import tailwindcss from "@tailwindcss/vite";
-
 const app = createApp({
-  vite: {
-    plugins: [tailwindcss()],
-  },
+  tailwind: true,
   // ... other config
 });
 ```
