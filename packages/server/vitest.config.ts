@@ -2,7 +2,7 @@ import { defineProject } from "vitest/config";
 
 export default defineProject({
   esbuild: {
-    jsxImportSource: "semajsx",
+    jsxImportSource: "@semajsx/dom",
   },
   test: {
     environment: "node",

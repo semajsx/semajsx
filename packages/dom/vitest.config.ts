@@ -3,7 +3,7 @@ import { playwright } from "@vitest/browser-playwright";
 
 export default defineProject({
   esbuild: {
-    jsxImportSource: "semajsx",
+    jsxImportSource: "@semajsx/dom",
   },
   test: {
     browser: {
