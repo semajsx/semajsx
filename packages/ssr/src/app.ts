@@ -17,6 +17,7 @@ import { LRUCache } from "./lru-cache";
 import { createLogger } from "@semajsx/logger";
 import { buildCSS, transformCSSForDev, analyzeCSSChunks } from "./css-builder";
 import { buildAssets } from "./asset-builder";
+import { collectResources, getEntryFiles } from "./resource-collector";
 import type {
   App,
   AppConfig,
@@ -280,15 +281,47 @@ class AppImpl implements App {
         2, // threshold: CSS used by 2+ routes goes to shared
       );
 
-      // Collect all unique CSS files
+      // Collect all unique CSS files from render
       const allCSS = new Set<string>([
         ...sharedCSS,
         ...Array.from(cssPerEntry.values()).flat(),
       ]);
 
+      const rootDir = this.config.root || process.cwd();
+
+      // Collect additional resources from config patterns
+      if (this.config.resources) {
+        // Get entry files from islands
+        const islandPaths = Array.from(allIslands.values()).map((i) => {
+          // Convert file:// URL to path
+          if (i.path.startsWith("file://")) {
+            return new URL(i.path).pathname;
+          }
+          return i.path;
+        });
+        const entryFiles = getEntryFiles(islandPaths);
+
+        const collectedResources = await collectResources(
+          entryFiles,
+          this.config.resources,
+          rootDir,
+        );
+
+        // Merge collected resources
+        for (const css of collectedResources.css) {
+          allCSS.add(css);
+        }
+        for (const asset of collectedResources.assets) {
+          allAssets.add(asset);
+        }
+
+        logger.info(
+          `Collected ${collectedResources.css.size} CSS and ${collectedResources.assets.size} assets from patterns`,
+        );
+      }
+
       // Build assets first (for CSS url() rewriting)
       let assetManifest: Map<string, string> | undefined;
-      const rootDir = this.config.root || process.cwd();
       if (allAssets.size > 0) {
         const assetResult = await buildAssets(allAssets, outDir);
         assetManifest = assetResult.mapping;

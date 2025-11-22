@@ -160,6 +160,36 @@ export interface RouterConfig {
   meta?: Record<string, any>;
 }
 
+/**
+ * Resource collection configuration
+ */
+export interface ResourceConfig {
+  /**
+   * Capture patterns based on source file types (like VSCode file nesting)
+   * Keys are glob patterns, values are arrays of capture patterns
+   * ${capture} is replaced with the base filename (without extension)
+   *
+   * @example
+   * {
+   *   '**\/*.tsx': ['${capture}.css', '${capture}.module.css'],
+   *   'src/components/**\/*.tsx': ['${capture}.styles.css']
+   * }
+   */
+  capture?: Record<string, string[]>;
+
+  /**
+   * Additional glob patterns to include
+   * @example ['src/styles/**\/*.css']
+   */
+  include?: string[];
+
+  /**
+   * Glob patterns to exclude
+   * @example ['**\/*.test.*', 'node_modules/**']
+   */
+  exclude?: string[];
+}
+
 // ========================
 // App API Types
 // ========================
@@ -193,6 +223,9 @@ export interface AppConfig {
 
   /** Project root directory */
   root?: string;
+
+  /** Resource collection configuration */
+  resources?: ResourceConfig;
 }
 
 /**
