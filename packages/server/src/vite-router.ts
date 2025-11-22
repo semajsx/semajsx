@@ -139,7 +139,7 @@ export class ViteRouter {
 
     // Render to HTML with islands
     const basePath = this.config.islandBasePath || "/islands";
-    const result = renderToString(vnode, {
+    const result = await renderToString(vnode, {
       islandBasePath: basePath,
       // Default transformer generates standard script tags
       transformIslandScript: (island) =>

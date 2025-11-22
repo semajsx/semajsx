@@ -147,7 +147,7 @@ class AppImpl implements App {
 
     // Render to string with island detection
     const basePath = this.config.islands?.basePath || "/islands";
-    const result = renderToString(vnode, {
+    const result = await renderToString(vnode, {
       islandBasePath: basePath,
       // Default transformer generates standard script tags
       transformIslandScript: (island) =>
