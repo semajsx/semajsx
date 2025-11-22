@@ -156,6 +156,8 @@ export interface DocumentProps {
   props: Record<string, unknown>;
   /** Script tags for islands (as RawHTML) */
   scripts?: RawHTML;
+  /** Style tags/links (as RawHTML) */
+  styles?: RawHTML;
 }
 
 export type DocumentTemplate = (props: DocumentProps) => VNode;

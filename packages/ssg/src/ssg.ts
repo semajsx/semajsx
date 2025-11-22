@@ -344,6 +344,11 @@ export class SSG<
     // Use App to render the page
     const result = await this.app!.render(path);
 
+    // Generate styles (Tailwind CSS link if enabled)
+    const styles = this.config.tailwind
+      ? new RawHTML('<link rel="stylesheet" href="/@tailwind.css" />')
+      : undefined;
+
     // Wrap with document template
     const documentProps: DocumentProps = {
       children: new RawHTML(result.html),
@@ -352,6 +357,7 @@ export class SSG<
       path,
       props,
       scripts: result.scripts ? new RawHTML(result.scripts) : undefined,
+      styles,
     };
 
     const template = this.config.document ?? DefaultDocument;
