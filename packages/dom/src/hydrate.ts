@@ -10,6 +10,20 @@ import { isSignal } from "@semajsx/signal";
 import { render } from "./render";
 
 /**
+ * Type guard for async iterators
+ */
+function isAsyncIterator(
+  value: unknown,
+): value is AsyncIterableIterator<unknown> {
+  if (!value || typeof value !== "object") return false;
+  const obj = value as Record<string | symbol, unknown>;
+  return (
+    typeof obj[Symbol.asyncIterator] === "function" ||
+    (typeof obj.next === "function" && typeof obj.return === "function")
+  );
+}
+
+/**
  * Hydrate a server-rendered DOM tree with client-side interactivity
  * Unlike render(), this preserves existing DOM and only attaches event listeners
  *
@@ -124,7 +138,22 @@ function hydrateNode(
 
   // Handle function components - render and hydrate result
   if (typeof vnodeTyped.type === "function") {
-    const result = vnodeTyped.type(vnodeTyped.props || {});
+    let result = vnodeTyped.type(vnodeTyped.props || {});
+
+    // Handle async component
+    if (result instanceof Promise) {
+      result.then((resolved) => hydrateNode(resolved, domNode, parentElement));
+      return;
+    }
+
+    // Handle async iterator (streaming component)
+    if (isAsyncIterator(result)) {
+      result.next().then(({ value }) => {
+        hydrateNode(value, domNode, parentElement);
+      });
+      return;
+    }
+
     hydrateNode(result, domNode, parentElement);
     return;
   }
