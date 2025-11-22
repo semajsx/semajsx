@@ -24,28 +24,10 @@ import { isSignal } from "@semajsx/signal";
  * ```
  */
 export function hydrate(vnode: VNode, container: Element): Node | null {
-  // Check if this is a single-element island where attrs are injected directly
-  // In this case, the container IS the element to hydrate, not a wrapper
-  const isSingleElementIsland = container.hasAttribute("data-island-props");
-
-  // Determine what to hydrate
-  let nodeToHydrate: Node;
-  let parentElement: Element;
-
-  if (isSingleElementIsland) {
-    // Single-element island: hydrate the container itself
-    nodeToHydrate = container;
-    parentElement = container.parentElement || container;
-  } else {
-    // Traditional container: hydrate the first child
-    const existingNode = container.firstChild;
-    if (!existingNode) {
-      console.warn("[Hydrate] No existing content to hydrate");
-      return null;
-    }
-    nodeToHydrate = existingNode;
-    parentElement = container;
-  }
+  // For single-element islands, the container IS the element to hydrate
+  // (detected by data-island-props attribute injected during SSR)
+  const nodeToHydrate = container;
+  const parentElement = container.parentElement || container;
 
   // Hydrate the VNode tree onto the existing DOM
   try {

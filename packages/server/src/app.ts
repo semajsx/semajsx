@@ -427,7 +427,7 @@ if (container && Component) {
 
     // Generate entry point code (use h() instead of JSX since this is runtime-generated)
     const entryCode = `
-import { hydrate, h } from '@semajsx/dom';
+import { hydrate, render, h } from '@semajsx/dom';
 import { markIslandHydrated } from '@semajsx/server/client';
 import * as ComponentModule from '${componentPath}';
 
@@ -435,11 +435,70 @@ import * as ComponentModule from '${componentPath}';
 const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName} || ` : ""}ComponentModule.default ||
                   Object.values(ComponentModule).find(exp => typeof exp === 'function');
 
-const container = document.querySelector('[data-island-id="${islandId}"]');
-if (container && Component) {
-  const props = JSON.parse(container.getAttribute('data-island-props') || '{}');
-  hydrate(h(Component, props), container);
-  markIslandHydrated('${islandId}');
+if (Component) {
+  // Try single-element island first (has data-island-id on root element)
+  const element = document.querySelector('[data-island-id="${islandId}"]');
+
+  if (element) {
+    // Single-element island: hydrate the element itself
+    const props = JSON.parse(element.getAttribute('data-island-props') || '{}');
+    hydrate(h(Component, props), element);
+    markIslandHydrated('${islandId}');
+  } else {
+    // Fragment island: find by comment marker
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_COMMENT);
+    let startComment = null;
+    let comment;
+    while ((comment = walker.nextNode())) {
+      if (comment.textContent === 'island:${islandId}') {
+        startComment = comment;
+        break;
+      }
+    }
+
+    if (startComment) {
+      // Get props from script tag
+      const script = document.querySelector('script[data-island="${islandId}"]');
+      const props = script ? JSON.parse(script.textContent || '{}') : {};
+
+      // Find end comment and collect nodes between markers
+      const nodesToRemove = [];
+      let sibling = startComment.nextSibling;
+      let endComment = null;
+      while (sibling) {
+        if (sibling.nodeType === Node.COMMENT_NODE && sibling.textContent === '/island') {
+          endComment = sibling;
+          break;
+        }
+        nodesToRemove.push(sibling);
+        sibling = sibling.nextSibling;
+      }
+
+      // Remove old nodes
+      nodesToRemove.forEach(node => node.remove());
+
+      // Render new content after start comment
+      const vnode = h(Component, props);
+      const parent = startComment.parentNode;
+      if (parent) {
+        // Create temp container to render into
+        const temp = document.createElement('div');
+        render(vnode, temp);
+
+        // Move rendered nodes after start comment
+        while (temp.firstChild) {
+          parent.insertBefore(temp.firstChild, endComment);
+        }
+      }
+
+      // Remove markers and script
+      startComment.remove();
+      if (endComment) endComment.remove();
+      if (script) script.remove();
+
+      markIslandHydrated('${islandId}');
+    }
+  }
 }
 `;
 
