@@ -256,3 +256,164 @@ describe("Build Integration", () => {
     expect(cssContent).toContain(`url(${assetOutputPath})`);
   });
 });
+
+describe("fromBuild", () => {
+  beforeEach(async () => {
+    await mkdir(TEST_DIR, { recursive: true });
+    await mkdir(OUT_DIR, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(TEST_DIR, { recursive: true, force: true });
+  });
+
+  it("should load manifest and set up CSS mapping", async () => {
+    // Create manifest
+    const manifest = {
+      islands: {},
+      routes: ["/", "/about"],
+      css: {
+        "/src/styles.css": "/css/styles-abc123.css",
+      },
+      assets: {},
+    };
+    await writeFile(join(OUT_DIR, "manifest.json"), JSON.stringify(manifest));
+
+    // Import createApp
+    const { createApp } = await import("./app");
+    const app = await createApp.fromBuild(OUT_DIR);
+
+    expect(app).toBeDefined();
+    expect(app.config.root).toBe(OUT_DIR);
+  });
+
+  it("should serve static files with correct content type", async () => {
+    // Create manifest and static files
+    const manifest = {
+      islands: {},
+      routes: [],
+      css: {},
+    };
+    await writeFile(join(OUT_DIR, "manifest.json"), JSON.stringify(manifest));
+
+    // Create CSS directory and file
+    await mkdir(join(OUT_DIR, "css"), { recursive: true });
+    await writeFile(join(OUT_DIR, "css", "test.css"), ".test { color: red; }");
+
+    const { createApp } = await import("./app");
+    const app = await createApp.fromBuild(OUT_DIR);
+
+    // Test serving CSS file
+    const request = new Request("http://localhost/css/test.css");
+    const response = await app.handleRequest(request);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("text/css");
+    expect(response.headers.get("Cache-Control")).toContain("immutable");
+
+    const content = await response.text();
+    expect(content).toBe(".test { color: red; }");
+  });
+
+  it("should return 404 for missing static files", async () => {
+    const manifest = {
+      islands: {},
+      routes: [],
+      css: {},
+    };
+    await writeFile(join(OUT_DIR, "manifest.json"), JSON.stringify(manifest));
+
+    const { createApp } = await import("./app");
+    const app = await createApp.fromBuild(OUT_DIR);
+
+    const request = new Request("http://localhost/css/missing.css");
+    const response = await app.handleRequest(request);
+
+    expect(response.status).toBe(404);
+  });
+
+  it("should throw error for missing manifest", async () => {
+    const { createApp } = await import("./app");
+
+    await expect(
+      createApp.fromBuild(join(TEST_DIR, "nonexistent")),
+    ).rejects.toThrow("Failed to load manifest");
+  });
+});
+
+describe("App Build Integration", () => {
+  let app: Awaited<ReturnType<typeof import("./app").createApp>>;
+
+  beforeEach(async () => {
+    await mkdir(TEST_DIR, { recursive: true });
+  });
+
+  afterEach(async () => {
+    if (app) {
+      await app.close();
+    }
+    await rm(TEST_DIR, { recursive: true, force: true });
+  });
+
+  it("should write manifest.json with routes", async () => {
+    const { createApp } = await import("./app");
+    app = createApp({ root: TEST_DIR });
+
+    app.route("/", () => ({ type: "div", props: {}, children: ["Home"] }));
+    app.route("/about", () => ({
+      type: "div",
+      props: {},
+      children: ["About"],
+    }));
+
+    const result = await app.build({ outDir: OUT_DIR });
+
+    // Check manifest file exists
+    const manifestContent = await readFile(
+      join(OUT_DIR, "manifest.json"),
+      "utf-8",
+    );
+    const manifest = JSON.parse(manifestContent);
+
+    expect(manifest.routes).toContain("/");
+    expect(manifest.routes).toContain("/about");
+    expect(result.manifest.routes).toEqual(manifest.routes);
+  });
+
+  it("should include CSS in manifest when routes use CSS", async () => {
+    const { createApp } = await import("./app");
+    const { STYLE_MARKER } = await import("./client/resource");
+
+    app = createApp({ root: TEST_DIR });
+
+    // Create a CSS file
+    const cssPath = join(TEST_DIR, "styles.css");
+    await writeFile(cssPath, ".test { color: red; }");
+
+    // Route that returns CSS marker
+    app.route("/", () => ({
+      type: "div",
+      props: {},
+      children: [
+        {
+          type: STYLE_MARKER as unknown as string,
+          props: { href: cssPath },
+          children: [],
+        },
+        "Content",
+      ],
+    }));
+
+    const result = await app.build({ outDir: OUT_DIR });
+
+    // Check CSS is in manifest
+    expect(Object.keys(result.manifest.css).length).toBe(1);
+    expect(result.manifest.css[cssPath]).toMatch(
+      /\/css\/styles-[a-f0-9]+\.css$/,
+    );
+
+    // Check CSS file was created
+    const cssFiles = await readdir(join(OUT_DIR, "css"));
+    expect(cssFiles.length).toBe(1);
+  });
+});

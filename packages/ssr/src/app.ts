@@ -239,6 +239,10 @@ class AppImpl implements App {
 
     logger.info(`Building for production (mode: ${mode})...`);
 
+    // Ensure output directory exists
+    const { mkdir } = await import("fs/promises");
+    await mkdir(outDir, { recursive: true });
+
     const builtIslands: BuildResult["islands"] = [];
     const manifest: BuildResult["manifest"] = {
       islands: {},
