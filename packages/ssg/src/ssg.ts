@@ -358,7 +358,8 @@ export class SSG<
 
     try {
       // Create temp directory for HTML and CSS entries
-      const tempDir = join(this.rootDir, ".ssg-css-temp");
+      // Use node_modules/.cache to avoid Vite file watching
+      const tempDir = join(this.rootDir, "node_modules", ".cache", "ssg-css");
       await mkdir(tempDir, { recursive: true });
 
       // Create CSS output directory
