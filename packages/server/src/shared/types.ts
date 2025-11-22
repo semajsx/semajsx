@@ -16,6 +16,44 @@ export interface IslandMetadata {
 }
 
 /**
+ * Context passed to island script transformer
+ */
+export interface IslandScriptContext {
+  /** Unique identifier for this island instance */
+  id: string;
+  /** Module path to the island component */
+  path: string;
+  /** Serialized props for the island */
+  props: Record<string, any>;
+  /** Component name */
+  componentName: string;
+  /** Base path for islands */
+  basePath: string;
+}
+
+/**
+ * Function to transform island metadata into custom script code
+ * Return null or empty string to skip script generation for this island
+ */
+export type IslandScriptTransformer = (
+  context: IslandScriptContext,
+) => string | null;
+
+/**
+ * Options for renderToString
+ */
+export interface RenderToStringOptions {
+  /** Base path for island scripts (default: '/islands') */
+  islandBasePath?: string;
+  /**
+   * Custom transformer for island scripts.
+   * If not provided, no client-side scripts are generated (static HTML only).
+   * Provide this to enable client-side hydration with custom script generation.
+   */
+  transformIslandScript?: IslandScriptTransformer;
+}
+
+/**
  * Result of SSR rendering with islands
  */
 export interface SSRResult {

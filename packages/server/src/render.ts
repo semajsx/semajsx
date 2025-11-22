@@ -1,5 +1,10 @@
 import type { JSXNode, VNode } from "@semajsx/core/types";
-import type { IslandMetadata, SSRResult } from "./shared/types";
+import type {
+  IslandMetadata,
+  IslandScriptTransformer,
+  RenderToStringOptions,
+  SSRResult,
+} from "./shared/types";
 import { Fragment } from "@semajsx/core/types";
 import { getIslandMetadata, isIslandVNode } from "./client/island";
 import { isSignal, unwrap } from "@semajsx/signal/utils";
@@ -24,19 +29,25 @@ interface RenderContext {
  *
  * @example
  * ```tsx
+ * // Static HTML only (no client-side scripts)
  * const result = renderToString(<App />)
  * console.log(result.html) // HTML string
  * console.log(result.islands) // Island metadata
- * console.log(result.scripts) // Script tags to load islands
+ * console.log(result.scripts) // Empty string
+ *
+ * // With custom hydration scripts
+ * const result = renderToString(<App />, {
+ *   transformIslandScript: (island) => {
+ *     return `<script type="module" src="${island.basePath}/${island.id}.js"></script>`
+ *   }
+ * })
  * ```
  */
 export function renderToString(
   vnode: VNode,
-  options: {
-    islandBasePath?: string;
-  } = {},
+  options: RenderToStringOptions = {},
 ): SSRResult {
-  const { islandBasePath = "/islands" } = options;
+  const { islandBasePath = "/islands", transformIslandScript } = options;
 
   // Create render context to collect islands during single traversal
   const context: RenderContext = {
@@ -49,8 +60,12 @@ export function renderToString(
   // Render HTML and collect islands in one pass (fixes duplicate rendering)
   const html = renderVNodeToHTML(vnode, context);
 
-  // Generate script tags for islands
-  const scripts = generateIslandScripts(context.islands, islandBasePath);
+  // Generate script tags for islands (only if transformer is provided)
+  const scripts = generateIslandScripts(
+    context.islands,
+    islandBasePath,
+    transformIslandScript,
+  );
 
   return {
     html,
@@ -392,19 +407,35 @@ function renderAttributes(props: Record<string, any>): string {
 
 /**
  * Generate script tags for loading islands
+ *
+ * If no transformer is provided, returns empty string (static HTML only).
+ * If transformer is provided, calls it for each island to generate custom scripts.
  */
 function generateIslandScripts(
   islands: IslandMetadata[],
   basePath: string,
+  transformer?: IslandScriptTransformer,
 ): string {
-  if (islands.length === 0) {
+  // No islands or no transformer = no scripts (static HTML only)
+  if (islands.length === 0 || !transformer) {
     return "";
   }
 
-  const scripts = islands.map(
-    (island) =>
-      `<script type="module" src="${basePath}/${island.id}.js" async></script>`,
-  );
+  const scripts: string[] = [];
+
+  for (const island of islands) {
+    const script = transformer({
+      id: island.id,
+      path: island.path,
+      props: island.props,
+      componentName: island.componentName || "Unknown",
+      basePath,
+    });
+
+    if (script) {
+      scripts.push(script);
+    }
+  }
 
   return scripts.join("\n");
 }

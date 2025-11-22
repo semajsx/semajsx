@@ -4,6 +4,11 @@ import { describe, expect, it } from "vitest";
 import { renderToString } from "./render";
 import { island } from "./client/island";
 import { signal } from "@semajsx/signal";
+import type { IslandScriptTransformer } from "./shared/types";
+
+// Default transformer for tests that need scripts
+const defaultTransformer: IslandScriptTransformer = (island) =>
+  `<script type="module" src="${island.basePath}/${island.id}.js" async></script>`;
 
 describe("renderToString", () => {
   it("should render simple HTML", () => {
@@ -45,15 +50,57 @@ describe("renderToString", () => {
     expect(result.html).toContain("data-island-props=");
   });
 
-  it("should generate scripts for islands", () => {
+  it("should not generate scripts by default (static HTML only)", () => {
     const Counter = island(() => <button>Click</button>, "/Counter.tsx");
 
     const app = <Counter />;
 
-    const result = renderToString(app, { islandBasePath: "/islands" });
+    const result = renderToString(app);
+
+    // No scripts without transformer
+    expect(result.scripts).toBe("");
+    // But islands are still collected
+    expect(result.islands).toHaveLength(1);
+  });
+
+  it("should generate scripts with custom transformer", () => {
+    const Counter = island(() => <button>Click</button>, "/Counter.tsx");
+
+    const app = <Counter />;
+
+    const result = renderToString(app, {
+      islandBasePath: "/islands",
+      transformIslandScript: defaultTransformer,
+    });
 
     expect(result.scripts).toContain('type="module"');
     expect(result.scripts).toContain('src="/islands/anonymous-0.js"');
+  });
+
+  it("should pass correct context to transformer", () => {
+    const Counter = island(function MyCounter({ count = 0 }) {
+      return <button>{count}</button>;
+    }, "/components/Counter.tsx");
+
+    const app = <Counter count={10} />;
+
+    let capturedContext: any = null;
+    const result = renderToString(app, {
+      islandBasePath: "/custom",
+      transformIslandScript: (ctx) => {
+        capturedContext = ctx;
+        return `<script src="${ctx.path}"></script>`;
+      },
+    });
+
+    expect(capturedContext).toEqual({
+      id: "my-counter-0",
+      path: "/components/Counter.tsx",
+      props: { count: 10 },
+      componentName: "MyCounter",
+      basePath: "/custom",
+    });
+    expect(result.scripts).toContain('src="/components/Counter.tsx"');
   });
 
   it("should handle multiple islands", () => {
@@ -68,7 +115,9 @@ describe("renderToString", () => {
       </div>
     );
 
-    const result = renderToString(app);
+    const result = renderToString(app, {
+      transformIslandScript: defaultTransformer,
+    });
 
     expect(result.islands).toHaveLength(3);
     expect(result.islands[0]?.id).toBe("anonymous-0");
@@ -195,7 +244,10 @@ describe("renderToString", () => {
 
     const app = <Counter />;
 
-    const result = renderToString(app, { islandBasePath: "/custom/path" });
+    const result = renderToString(app, {
+      islandBasePath: "/custom/path",
+      transformIslandScript: defaultTransformer,
+    });
 
     expect(result.scripts).toContain('src="/custom/path/anonymous-0.js"');
   });
