@@ -28,6 +28,7 @@ export function App() {
               margin: 0 auto;
               padding: 20px;
               background: #f9fafb;
+              color: #1f2937;
             }
             h1 {
               color: #1f2937;
@@ -38,12 +39,34 @@ export function App() {
               color: #374151;
               margin-top: 30px;
             }
+            p, li {
+              color: #374151;
+            }
             .static-content {
               background: white;
               padding: 20px;
               border-radius: 8px;
               margin: 20px 0;
               box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            @media (prefers-color-scheme: dark) {
+              body {
+                background: #111827;
+                color: #f9fafb;
+              }
+              h1 {
+                color: #f9fafb;
+              }
+              h2 {
+                color: #e5e7eb;
+              }
+              p, li {
+                color: #d1d5db;
+              }
+              .static-content {
+                background: #1f2937;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+              }
             }
           `}
         </style>
