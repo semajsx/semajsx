@@ -3,6 +3,9 @@
 import { createSSG, defineCollection, fileSource, z } from "@semajsx/ssg";
 import type { VNode } from "@semajsx/core";
 
+// Import MDX components
+import { Callout, CodeBlock, Counter } from "./components";
+
 // Get the directory where this script is located
 const rootDir = import.meta.dir;
 
@@ -66,6 +69,14 @@ const ssg = createSSG({
   rootDir,
   outDir: "./dist",
   collections: [blog],
+  // MDX configuration with custom components
+  mdx: {
+    components: {
+      Callout: Callout as (props: Record<string, unknown>) => VNode,
+      CodeBlock: CodeBlock as (props: Record<string, unknown>) => VNode,
+      Counter: Counter as (props: Record<string, unknown>) => VNode,
+    },
+  },
   routes: [
     {
       path: "/",
