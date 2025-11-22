@@ -168,7 +168,24 @@ export class SSG<
       await this.registerRoutes();
 
       // Build all pages
-      return await this.buildPages(incremental, prevState, outDir);
+      const result = await this.buildPages(incremental, prevState, outDir);
+
+      // Build islands for client-side hydration
+      await this.app.build({
+        outDir,
+        mode: "full",
+        minify: true,
+        vite: {
+          build: {
+            rollupOptions: {
+              // Don't externalize for SSG - bundle everything
+              external: [],
+            },
+          },
+        },
+      });
+
+      return result;
     } finally {
       await this.app.close();
     }
@@ -296,6 +313,7 @@ export class SSG<
       base: this.config.base ?? "/",
       path,
       props,
+      scripts: result.scripts ? new RawHTML(result.scripts) : undefined,
     };
 
     const template = this.config.document ?? DefaultDocument;
