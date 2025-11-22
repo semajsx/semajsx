@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import type { Collection, CollectionConfig, CollectionSource } from "../types";
+import type { Collection, CollectionConfig } from "../types";
 
 /**
  * Define a collection with schema validation
@@ -9,7 +9,7 @@ export function defineCollection<T extends z.ZodType>(
 ): Collection<z.infer<T>> {
   return {
     name: config.name,
-    source: config.source as CollectionSource<z.infer<T>>,
+    source: config.source,
     schema: config.schema,
   };
 }

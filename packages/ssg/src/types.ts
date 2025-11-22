@@ -71,15 +71,15 @@ export interface CollectionSource<T = unknown> {
 export interface CollectionConfig<T extends z.ZodType = z.ZodType> {
   /** Collection name */
   name: string;
-  /** Data source */
-  source: CollectionSource<z.infer<T>>;
+  /** Data source (returns raw entries, validated against schema later) */
+  source: CollectionSource<unknown>;
   /** Zod schema for validation */
   schema: T;
 }
 
 export interface Collection<T = unknown> {
   name: string;
-  source: CollectionSource<T>;
+  source: CollectionSource<unknown>;
   schema: z.ZodType<T>;
 }
 
