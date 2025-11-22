@@ -82,6 +82,21 @@ export class SSG<
       try {
         const tailwindcss = await import("@tailwindcss/vite");
         plugins.push(tailwindcss.default());
+
+        // Add virtual CSS file with Tailwind import
+        plugins.push({
+          name: "ssg-virtual-tailwind",
+          resolveId(id: string) {
+            if (id === "virtual:tailwind.css" || id === "/@tailwind.css") {
+              return "\0virtual:tailwind.css";
+            }
+          },
+          load(id: string) {
+            if (id === "\0virtual:tailwind.css") {
+              return '@import "tailwindcss";';
+            }
+          },
+        });
       } catch {
         console.warn(
           "Tailwind CSS enabled but @tailwindcss/vite not installed. Run: bun add tailwindcss @tailwindcss/vite",
