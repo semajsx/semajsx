@@ -18,7 +18,7 @@ export { setProperty, setSignalProperty, setRef } from "./properties";
 export { render } from "./render";
 export type { DOMRenderResult } from "./render";
 
-export { hydrate } from "./hydrate";
+export { hydrate, hydrateIsland } from "./hydrate";
 
 export { createPortal, PortalComponent } from "./portal";
 export type { PortalProps } from "./portal";
