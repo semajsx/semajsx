@@ -10,8 +10,8 @@ import { island } from "@semajsx/server/client";
 export const Pagination = island(
   function Pagination({ total = 5 }: { total?: number }) {
     const current = signal(1);
-    const isPrevDisabled = computed(() => current.value === 1);
-    const isNextDisabled = computed(() => current.value === total);
+    const isPrevDisabled = computed(current, (c) => c === 1);
+    const isNextDisabled = computed(current, (c) => c === total);
 
     // Return a fragment - multiple elements without a wrapper
     return (
