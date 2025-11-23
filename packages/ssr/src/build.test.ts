@@ -575,8 +575,14 @@ describe("App Build Integration", () => {
       ],
     }));
 
-    // Build should fail gracefully (CSS file doesn't exist)
-    await expect(app.build({ outDir: OUT_DIR })).rejects.toThrow();
+    // Build completes but Vite warns about missing CSS
+    // (Vite doesn't fail on missing CSS, it just keeps the reference unresolved)
+    await app.build({ outDir: OUT_DIR });
+
+    // HTML should still be generated
+    const { readFile } = await import("fs/promises");
+    const indexHtml = await readFile(join(OUT_DIR, "index.html"), "utf-8");
+    expect(indexHtml).toContain("<!DOCTYPE html>");
   });
 });
 

@@ -17,6 +17,7 @@ import { LRUCache } from "./lru-cache";
 import { createLogger } from "@semajsx/logger";
 import { transformCSSForDev } from "./css-builder";
 import { collectResources, getEntryFiles } from "./resource-collector";
+import { virtualModules } from "./virtual-modules";
 import type {
   App,
   AppConfig,
@@ -237,13 +238,11 @@ class AppImpl implements App {
 
     logger.info(`Building for production (mode: ${mode})...`);
 
-    const { mkdir, writeFile, rm, copyFile } = await import("fs/promises");
+    const { mkdir, writeFile } = await import("fs/promises");
     const rootDir = this.config.root || process.cwd();
-    const tempDir = join(rootDir, ".build-temp");
 
-    // Ensure directories exist
+    // Ensure output directory exists
     await mkdir(outDir, { recursive: true });
-    await mkdir(tempDir, { recursive: true });
 
     const builtIslands: BuildResult["islands"] = [];
     const manifest: BuildResult["manifest"] = {
@@ -257,7 +256,10 @@ class AppImpl implements App {
       const allIslands = new Map<string, IslandMetadata>();
       const allCSS = new Set<string>();
       const allAssets = new Set<string>();
-      const htmlEntries: Record<string, string> = {};
+
+      // Virtual modules for Vite build
+      const modules: Record<string, string> = {};
+      const htmlInputs: Record<string, string> = {};
 
       // Render all routes
       for (const [path] of this._routes) {
@@ -282,26 +284,16 @@ class AppImpl implements App {
           }
 
           // Generate HTML with resource references
-          const htmlFileName = path === "/" ? "index" : path.replace(/^\//, "");
-          const htmlPath = join(tempDir, `${htmlFileName}.html`);
+          const htmlFileName =
+            path === "/" ? "index.html" : `${path.replace(/^\//, "")}.html`;
 
-          // Ensure directory exists for nested routes
-          await mkdir(dirname(htmlPath), { recursive: true });
+          // CSS paths - use absolute paths that Vite can resolve
+          const cssRefs = result.css;
 
-          // Calculate relative path from HTML file to temp root
-          const htmlDir = dirname(htmlPath);
-          const toTempRoot = relative(htmlDir, tempDir) || ".";
-
-          // Convert CSS paths to relative paths for HTML
-          const cssRefs = result.css.map((cssPath) => {
-            const relPath = relative(rootDir, cssPath);
-            return `${toTempRoot}/${relPath}`;
-          });
-
-          // Generate island script references (relative to HTML location)
+          // Island script references
           const islandScripts = result.islands.map(
             (island) =>
-              `<script type="module" src="${toTempRoot}/islands/${island.id}.ts"></script>`,
+              `<script type="module" src="/islands/${island.id}.ts"></script>`,
           );
 
           // Generate HTML
@@ -319,10 +311,12 @@ class AppImpl implements App {
 </body>
 </html>`;
 
-          await writeFile(htmlPath, html);
-          htmlEntries[htmlFileName] = htmlPath;
+          // Use absolute path for virtual module so Vite can resolve it
+          const absoluteHtmlPath = join(rootDir, htmlFileName);
+          modules[absoluteHtmlPath] = html;
+          htmlInputs[htmlFileName.replace(".html", "")] = absoluteHtmlPath;
 
-          logger.debug(`Rendered ${path} -> ${htmlPath}`);
+          logger.debug(`Rendered ${path} -> ${htmlFileName} (virtual)`);
         } catch (error) {
           logger.warn(`Failed to pre-render route ${path}: ${String(error)}`);
         }
@@ -352,28 +346,8 @@ class AppImpl implements App {
         }
       }
 
-      // Copy CSS files to temp directory
-      for (const cssPath of allCSS) {
-        const relPath = relative(rootDir, cssPath);
-        const destPath = join(tempDir, relPath);
-        await mkdir(dirname(destPath), { recursive: true });
-        await copyFile(cssPath, destPath);
-      }
-
-      // Copy asset files to temp directory
-      for (const assetPath of allAssets) {
-        const relPath = relative(rootDir, assetPath);
-        const destPath = join(tempDir, relPath);
-        await mkdir(dirname(destPath), { recursive: true });
-        await copyFile(assetPath, destPath);
-      }
-
-      // Generate island entry files
-      const islandsDir = join(tempDir, "islands");
-      await mkdir(islandsDir, { recursive: true });
-
+      // Generate virtual island entry modules
       for (const [, island] of allIslands) {
-        // Use absolute path for component import (works from temp directory)
         let componentPath = island.path;
         if (componentPath.startsWith("file://")) {
           componentPath = new URL(componentPath).pathname;
@@ -393,24 +367,26 @@ if (Component) {
 }
 `;
 
-        await writeFile(join(islandsDir, `${island.id}.ts`), entryCode);
+        // Use absolute path for island entry
+        modules[join(rootDir, `islands/${island.id}.ts`)] = entryCode;
       }
 
       logger.info(
-        `Phase 1 complete: ${Object.keys(htmlEntries).length} pages, ${allCSS.size} CSS, ${allAssets.size} assets, ${allIslands.size} islands`,
+        `Phase 1 complete: ${Object.keys(htmlInputs).length} pages, ${allCSS.size} CSS, ${allAssets.size} assets, ${allIslands.size} islands`,
       );
 
-      // Phase 2: Vite build with HTML entries
+      // Phase 2: Vite build with virtual modules
       const viteConfig: ViteUserConfig = {
-        root: tempDir,
+        root: rootDir,
         base: "/",
+        plugins: [virtualModules(modules)],
         build: {
           outDir: resolve(outDir),
           emptyOutDir: true,
           minify,
           sourcemap,
           rollupOptions: {
-            input: htmlEntries,
+            input: htmlInputs,
           },
         },
         // Merge user's Vite config (for PostCSS/Tailwind support)
@@ -428,7 +404,6 @@ if (Component) {
 
       // Record built islands
       for (const [, island] of allIslands) {
-        // Vite will output islands to assets directory with hash
         const webPath = `/_semajsx/islands/${island.id}.js`;
 
         builtIslands.push({
@@ -443,9 +418,6 @@ if (Component) {
           onIslandBuilt(island);
         }
       }
-
-      // Clean up temp directory
-      await rm(tempDir, { recursive: true, force: true });
     }
 
     // Write manifest to disk
