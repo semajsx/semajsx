@@ -288,16 +288,20 @@ class AppImpl implements App {
           // Ensure directory exists for nested routes
           await mkdir(dirname(htmlPath), { recursive: true });
 
+          // Calculate relative path from HTML file to temp root
+          const htmlDir = dirname(htmlPath);
+          const toTempRoot = relative(htmlDir, tempDir) || ".";
+
           // Convert CSS paths to relative paths for HTML
           const cssRefs = result.css.map((cssPath) => {
             const relPath = relative(rootDir, cssPath);
-            return relPath;
+            return `${toTempRoot}/${relPath}`;
           });
 
-          // Generate island script references
+          // Generate island script references (relative to HTML location)
           const islandScripts = result.islands.map(
             (island) =>
-              `<script type="module" src="./islands/${island.id}.ts"></script>`,
+              `<script type="module" src="${toTempRoot}/islands/${island.id}.ts"></script>`,
           );
 
           // Generate HTML
@@ -307,7 +311,7 @@ class AppImpl implements App {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Page</title>
-  ${cssRefs.map((href) => `<link rel="stylesheet" href="./${href}">`).join("\n  ")}
+  ${cssRefs.map((href) => `<link rel="stylesheet" href="${href}">`).join("\n  ")}
 </head>
 <body>
   ${result.html}
