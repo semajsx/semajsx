@@ -239,7 +239,10 @@ class AppImpl implements App {
     logger.info(`Building for production (mode: ${mode})...`);
 
     const { mkdir, writeFile } = await import("fs/promises");
-    const rootDir = this.config.root || process.cwd();
+    // Ensure rootDir is always absolute
+    const rootDir = this.config.root
+      ? resolve(this.config.root)
+      : process.cwd();
 
     // Ensure output directory exists
     await mkdir(outDir, { recursive: true });
