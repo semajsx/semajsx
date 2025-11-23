@@ -383,7 +383,12 @@ class AppImpl implements App {
           const entryCode = `
 import { hydrateIsland } from '@semajsx/ssr/client';
 import { markIslandHydrated } from '@semajsx/ssr/client';
+import { setManifest } from '@semajsx/ssr/client';
+import manifest from '../manifest.js';
 import * as ComponentModule from '${componentPath}';
+
+// Set manifest for client-side resource loading
+setManifest(manifest);
 
 const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName} || ` : ""}ComponentModule.default ||
                   Object.values(ComponentModule).find(exp => typeof exp === 'function');
@@ -449,11 +454,23 @@ if (Component) {
     }
 
     // Write manifest to disk
-    const { writeFile } = await import("fs/promises");
+    const { writeFile, mkdir: mkdirFs } = await import("fs/promises");
     const { join } = await import("path");
     await writeFile(
       join(outDir, "manifest.json"),
       JSON.stringify(manifest, null, 2),
+    );
+
+    // Write client manifest for runtime resource loading
+    const clientManifest = {
+      css: manifest.css,
+      assets: manifest.assets || {},
+    };
+    // Ensure _semajsx directory exists
+    await mkdirFs(join(outDir, "_semajsx"), { recursive: true });
+    await writeFile(
+      join(outDir, "_semajsx", "manifest.js"),
+      `export default ${JSON.stringify(clientManifest)};`,
     );
 
     logger.info(`Build complete. Output: ${outDir}`);
@@ -753,7 +770,7 @@ if (Component) {
  * Create app from build output (for production)
  */
 async function fromBuild(buildDir: string): Promise<App> {
-  const { readFile, readdir, stat } = await import("fs/promises");
+  const { readFile } = await import("fs/promises");
   const { join } = await import("path");
 
   // Load manifest

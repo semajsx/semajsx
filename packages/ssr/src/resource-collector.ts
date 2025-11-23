@@ -121,7 +121,7 @@ function sortCaptureRulesBySpecificity(
 function applyCapturePatterns(
   entryFile: string,
   patterns: string[],
-  rootDir: string,
+  _rootDir: string,
 ): string[] {
   const collected: string[] = [];
   const dir = dirname(entryFile);

@@ -35,3 +35,14 @@ export {
   type LinkProps,
   type AssetProps,
 } from "./resource";
+
+export {
+  clientResource,
+  setManifest,
+  getManifest,
+  resolveCSS,
+  resolveAsset,
+  loadStylesheet,
+  type ClientManifest,
+  type ClientResourceTools,
+} from "./client-resource";

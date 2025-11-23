@@ -7,7 +7,7 @@
  * - Creates manifest for URL rewriting
  */
 
-import { readFile, writeFile, mkdir, copyFile } from "fs/promises";
+import { readFile, writeFile, mkdir } from "fs/promises";
 import { createHash } from "crypto";
 import path from "path";
 import { createLogger } from "@semajsx/logger";
