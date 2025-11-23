@@ -312,7 +312,7 @@ class AppImpl implements App {
 </html>`;
 
           // Use absolute path for virtual module so Vite can resolve it
-          const absoluteHtmlPath = join(rootDir, htmlFileName);
+          const absoluteHtmlPath = resolve(rootDir, htmlFileName);
           modules[absoluteHtmlPath] = html;
           htmlInputs[htmlFileName.replace(".html", "")] = absoluteHtmlPath;
 
@@ -368,7 +368,7 @@ if (Component) {
 `;
 
         // Use absolute path for island entry
-        modules[join(rootDir, `islands/${island.id}.ts`)] = entryCode;
+        modules[resolve(rootDir, `islands/${island.id}.ts`)] = entryCode;
       }
 
       logger.info(

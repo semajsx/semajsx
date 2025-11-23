@@ -55,8 +55,14 @@ export function virtualModules(modules: VirtualModulesOptions): Plugin {
 
   return {
     name: "semajsx-virtual-modules",
+    enforce: "pre", // Run before other plugins
 
     resolveId(id, importer) {
+      // Direct check for absolute paths (entry points)
+      if (id in modules) {
+        return id;
+      }
+
       if (isVirtualModule(id)) {
         return id;
       }
