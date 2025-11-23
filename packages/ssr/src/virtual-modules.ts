@@ -2,10 +2,9 @@
  * Virtual modules plugin for Vite
  *
  * Allows build entries to be virtual (in-memory) instead of on disk.
- * This avoids temporary directory management and simplifies path handling.
  */
 
-import { resolve, normalize } from "path";
+import { resolve, dirname } from "path";
 import type { Plugin } from "vite";
 
 export interface VirtualModulesOptions {
@@ -16,46 +15,66 @@ export interface VirtualModulesOptions {
  * Create a Vite plugin for virtual modules
  */
 export function virtualModules(modules: VirtualModulesOptions): Plugin {
-  // Normalize all paths and create lookup maps
-  const normalizedModules = new Map<string, string>();
+  // Map to store resolved paths (will be built in configResolved)
+  const resolvedIds = new Map<string, string>();
 
-  Object.keys(modules).forEach((id) => {
-    // Normalize and resolve to absolute path
-    const normalizedId = normalize(resolve(id));
-    normalizedModules.set(normalizedId, modules[id]!);
-  });
-
-  function findModuleContent(id: string): string | null {
-    // Normalize the incoming id
-    const normalizedId = normalize(resolve(id));
-
-    // Check normalized map
-    if (normalizedModules.has(normalizedId)) {
-      return normalizedModules.get(normalizedId)!;
-    }
-
-    return null;
+  // Find module content by trying multiple id variations
+  function find(id: string): string | undefined {
+    return (
+      modules[id] ||
+      modules[id.replace(/^\//, "")] ||
+      modules[`/${id}`] ||
+      resolvedIds.get(id)
+    );
   }
+
+  let viteRoot = process.cwd();
 
   return {
     name: "semajsx-virtual-modules",
-    enforce: "pre", // Run before other plugins
+    enforce: "pre",
 
-    resolveId(id) {
-      const content = findModuleContent(id);
-      if (content !== null) {
-        // Return the normalized absolute path
-        return normalize(resolve(id));
+    configResolved(config) {
+      viteRoot = config.root;
+
+      // Build resolvedIds with the correct root
+      Object.keys(modules).forEach((id) => {
+        const resolved = resolve(viteRoot, id);
+        resolvedIds.set(resolved, modules[id]!);
+      });
+    },
+
+    resolveId(id, importer) {
+      // Direct match or variations
+      const content = find(id);
+      if (content) {
+        // Return resolved absolute path relative to Vite root
+        return resolve(viteRoot, id);
+      }
+
+      // Try resolving relative imports from importer
+      if (importer) {
+        const abs = resolve(dirname(importer), id);
+        if (resolvedIds.has(abs)) {
+          return abs;
+        }
       }
 
       return null;
     },
 
     load(id) {
-      const content = findModuleContent(id);
-      if (content !== null) {
+      // First try direct find
+      let content = find(id);
+      if (content) {
         return content;
       }
+
+      // Try finding by the resolved path
+      if (resolvedIds.has(id)) {
+        return resolvedIds.get(id);
+      }
+
       return null;
     },
   };

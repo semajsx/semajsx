@@ -260,7 +260,7 @@ class AppImpl implements App {
       const allCSS = new Set<string>();
       const allAssets = new Set<string>();
 
-      // Virtual modules for Vite build
+      // Virtual modules (use simple file names as keys)
       const modules: Record<string, string> = {};
       const htmlInputs: Record<string, string> = {};
 
@@ -314,10 +314,9 @@ class AppImpl implements App {
 </body>
 </html>`;
 
-          // Use absolute path for virtual module so Vite can resolve it
-          const absoluteHtmlPath = resolve(rootDir, htmlFileName);
-          modules[absoluteHtmlPath] = html;
-          htmlInputs[htmlFileName.replace(".html", "")] = absoluteHtmlPath;
+          // Store virtual HTML with simple file name as key
+          modules[htmlFileName] = html;
+          htmlInputs[htmlFileName.replace(".html", "")] = htmlFileName;
 
           logger.debug(`Rendered ${path} -> ${htmlFileName} (virtual)`);
         } catch (error) {
@@ -370,8 +369,8 @@ if (Component) {
 }
 `;
 
-        // Use absolute path for island entry
-        modules[resolve(rootDir, `islands/${island.id}.ts`)] = entryCode;
+        // Store virtual island entry with simple file name
+        modules[`islands/${island.id}.ts`] = entryCode;
       }
 
       logger.info(
@@ -379,21 +378,24 @@ if (Component) {
       );
 
       // Phase 2: Vite build with virtual modules
+      const userViteConfig = this.config.vite || {};
       const viteConfig: ViteUserConfig = {
+        ...userViteConfig,
         root: rootDir,
         base: "/",
-        plugins: [virtualModules(modules)],
+        // Merge plugins - our virtual modules plugin must be included
+        plugins: [virtualModules(modules), ...(userViteConfig.plugins || [])],
         build: {
+          ...userViteConfig.build,
           outDir: resolve(outDir),
           emptyOutDir: true,
           minify,
           sourcemap,
           rollupOptions: {
+            ...userViteConfig.build?.rollupOptions,
             input: htmlInputs,
           },
         },
-        // Merge user's Vite config (for PostCSS/Tailwind support)
-        ...this.config.vite,
       };
 
       // Apply options.vite if provided
