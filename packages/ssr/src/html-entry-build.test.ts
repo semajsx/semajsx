@@ -179,37 +179,6 @@ describe("HTML Entry Build Output", () => {
     }
   });
 
-  it("should generate manifest.json", async () => {
-    const { createApp } = await import("./app");
-
-    app = createApp({ root: TEST_DIR });
-
-    app.route("/", () => ({
-      type: "div",
-      props: {},
-      children: ["Test"],
-    }));
-
-    app.route("/about", () => ({
-      type: "div",
-      props: {},
-      children: ["About"],
-    }));
-
-    await app.build({ outDir: OUT_DIR });
-
-    // Check manifest exists
-    const manifestJson = await readFile(
-      join(OUT_DIR, "manifest.json"),
-      "utf-8",
-    );
-    const manifest = JSON.parse(manifestJson);
-
-    expect(manifest.routes).toContain("/");
-    expect(manifest.routes).toContain("/about");
-    expect(manifest.islands).toBeDefined();
-  });
-
   it("should clean up temp directory after build", async () => {
     const { createApp } = await import("./app");
 

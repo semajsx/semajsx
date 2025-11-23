@@ -11,7 +11,6 @@
 import { createServer, build as viteBuild, mergeConfig } from "vite";
 import type { ViteDevServer, UserConfig as ViteUserConfig } from "vite";
 import { relative, dirname, join, resolve } from "path";
-import { writeFile } from "fs/promises";
 import { renderToString } from "./render";
 import { renderDocument } from "./document";
 import { LRUCache } from "./lru-cache";
@@ -382,24 +381,6 @@ if (Component) {
           onIslandBuilt(island);
         }
       }
-
-      // Generate manifest.json for production loading
-      const islandsMap: Record<string, string> = {};
-      for (const island of builtIslands) {
-        islandsMap[island.id] = island.outputPath;
-      }
-
-      const manifest = {
-        routes,
-        islands: islandsMap,
-        css: {} as Record<string, string>,
-        assets: {} as Record<string, string>,
-      };
-
-      await writeFile(
-        join(outDir, "manifest.json"),
-        JSON.stringify(manifest, null, 2),
-      );
     }
 
     logger.info(`Build complete. Output: ${outDir}`);
@@ -696,109 +677,8 @@ if (Component) {
 }
 
 /**
- * Create app from build output (for production)
- */
-async function fromBuild(buildDir: string): Promise<App> {
-  const { readFile } = await import("fs/promises");
-  const { join } = await import("path");
-
-  // Load manifest
-  const manifestPath = join(buildDir, "manifest.json");
-  let manifest: {
-    islands: Record<string, string>;
-    routes: string[];
-    css: Record<string, string>;
-    assets?: Record<string, string>;
-  };
-
-  try {
-    const manifestContent = await readFile(manifestPath, "utf-8");
-    manifest = JSON.parse(manifestContent);
-  } catch (error) {
-    throw new Error(`Failed to load manifest from ${manifestPath}: ${error}`);
-  }
-
-  // Create app with routes from manifest
-  const app = new AppImpl({
-    root: buildDir,
-  });
-
-  // Set up CSS manifest for path mapping
-  for (const [original, output] of Object.entries(manifest.css)) {
-    app["_cssManifest"].set(original, output);
-  }
-
-  // Override handleRequest for production serving
-  const originalHandleRequest = app.handleRequest.bind(app);
-  app.handleRequest = async (request: Request): Promise<Response> => {
-    const url = new URL(request.url);
-    const pathname = url.pathname;
-
-    // Serve static files from build output (under /_semajsx/ namespace)
-    if (pathname.startsWith("/_semajsx/")) {
-      const filePath = join(buildDir, pathname);
-      try {
-        const content = await readFile(filePath);
-        const contentType = getContentType(pathname);
-        return new Response(content, {
-          headers: {
-            "Content-Type": contentType,
-            "Cache-Control": "public, max-age=31536000, immutable",
-          },
-        });
-      } catch {
-        return new Response("Not Found", { status: 404 });
-      }
-    }
-
-    // For routes, use render (which will use CSS manifest mapping)
-    return originalHandleRequest(request);
-  };
-
-  logger.info(`Loaded production app from ${buildDir}`);
-
-  return app;
-}
-
-/**
- * Get content type for a file path
- */
-function getContentType(filepath: string): string {
-  const ext = filepath.split(".").pop()?.toLowerCase();
-  switch (ext) {
-    case "js":
-      return "application/javascript";
-    case "css":
-      return "text/css";
-    case "html":
-      return "text/html";
-    case "json":
-      return "application/json";
-    case "png":
-      return "image/png";
-    case "jpg":
-    case "jpeg":
-      return "image/jpeg";
-    case "svg":
-      return "image/svg+xml";
-    case "woff":
-      return "font/woff";
-    case "woff2":
-      return "font/woff2";
-    default:
-      return "application/octet-stream";
-  }
-}
-
-/**
  * Create a new SemaJSX app
  */
-export const createApp: {
-  (config?: AppConfig): App;
-  fromBuild: typeof fromBuild;
-} = Object.assign(
-  function (config?: AppConfig): App {
-    return new AppImpl(config);
-  },
-  { fromBuild },
-);
+export function createApp(config?: AppConfig): App {
+  return new AppImpl(config);
+}

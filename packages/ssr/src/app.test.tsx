@@ -238,12 +238,4 @@ describe("createApp", () => {
       expect(app.getViteServer()).toBeNull();
     });
   });
-
-  describe("fromBuild", () => {
-    it("should throw when manifest is missing", async () => {
-      await expect(createApp.fromBuild("./nonexistent")).rejects.toThrow(
-        "Failed to load manifest",
-      );
-    });
-  });
 });
