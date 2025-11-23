@@ -373,7 +373,11 @@ class AppImpl implements App {
       await mkdir(islandsDir, { recursive: true });
 
       for (const [, island] of allIslands) {
-        const componentPath = this._normalizeModulePath(island.path);
+        // Use absolute path for component import (works from temp directory)
+        let componentPath = island.path;
+        if (componentPath.startsWith("file://")) {
+          componentPath = new URL(componentPath).pathname;
+        }
         const componentName = island.componentName;
 
         const entryCode = `
