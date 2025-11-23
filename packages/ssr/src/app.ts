@@ -249,7 +249,7 @@ class AppImpl implements App {
     const manifest: BuildResult["manifest"] = {
       islands: {},
       routes: Array.from(this._routes.keys()),
-      css: {},
+      css: {}, // Kept for backward compatibility, but Vite handles CSS
     };
 
     if (mode === "full") {
@@ -444,19 +444,6 @@ if (Component) {
     await writeFile(
       join(outDir, "manifest.json"),
       JSON.stringify(manifest, null, 2),
-    );
-
-    // Ensure _semajsx directory exists
-    await mkdir(join(outDir, "_semajsx"), { recursive: true });
-
-    // Write client manifest for runtime resource loading
-    const clientManifest = {
-      css: manifest.css,
-      assets: manifest.assets || {},
-    };
-    await writeFile(
-      join(outDir, "_semajsx", "manifest.js"),
-      `export default ${JSON.stringify(clientManifest)};`,
     );
 
     logger.info(`Build complete. Output: ${outDir}`);
