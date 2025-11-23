@@ -279,15 +279,8 @@ export interface BuildResult {
     outputPath: string;
   }>;
 
-  /** Build manifest */
-  manifest: {
-    islands: Record<string, string>;
-    routes: string[];
-    css: Record<string, string>;
-    assets?: Record<string, string>;
-    /** Shared CSS files (used by multiple routes) */
-    sharedCSS?: string[];
-  };
+  /** Routes in the build */
+  routes: string[];
 }
 
 /**

@@ -11,12 +11,13 @@
 import { createServer, build as viteBuild, mergeConfig } from "vite";
 import type { ViteDevServer, UserConfig as ViteUserConfig } from "vite";
 import { relative, dirname, join, resolve } from "path";
+import { writeFile } from "fs/promises";
 import { renderToString } from "./render";
 import { renderDocument } from "./document";
 import { LRUCache } from "./lru-cache";
 import { createLogger } from "@semajsx/logger";
 import { transformCSSForDev } from "./css-builder";
-import { collectResources, getEntryFiles } from "./resource-collector";
+// Resource collector no longer needed - Vite handles all resources
 import { virtualModules } from "./virtual-modules";
 import type {
   App,
@@ -248,17 +249,11 @@ class AppImpl implements App {
     await mkdir(outDir, { recursive: true });
 
     const builtIslands: BuildResult["islands"] = [];
-    const manifest: BuildResult["manifest"] = {
-      islands: {},
-      routes: Array.from(this._routes.keys()),
-      css: {}, // Kept for backward compatibility, but Vite handles CSS
-    };
+    const routes = Array.from(this._routes.keys());
 
     if (mode === "full") {
       // Phase 1: Pre-render all routes and collect resources
       const allIslands = new Map<string, IslandMetadata>();
-      const allCSS = new Set<string>();
-      const allAssets = new Set<string>();
 
       // Virtual modules (use simple file names as keys)
       const modules: Record<string, string> = {};
@@ -274,16 +269,6 @@ class AppImpl implements App {
             if (!allIslands.has(island.id)) {
               allIslands.set(island.id, island);
             }
-          }
-
-          // Collect CSS
-          for (const css of result.css) {
-            allCSS.add(css);
-          }
-
-          // Collect assets
-          for (const asset of result.assets) {
-            allAssets.add(asset);
           }
 
           // Generate HTML with resource references
@@ -324,30 +309,6 @@ class AppImpl implements App {
         }
       }
 
-      // Collect additional resources from config patterns
-      if (this.config.resources) {
-        const islandPaths = Array.from(allIslands.values()).map((i) => {
-          if (i.path.startsWith("file://")) {
-            return new URL(i.path).pathname;
-          }
-          return i.path;
-        });
-        const entryFiles = getEntryFiles(islandPaths);
-
-        const collectedResources = await collectResources(
-          entryFiles,
-          this.config.resources,
-          rootDir,
-        );
-
-        for (const css of collectedResources.css) {
-          allCSS.add(css);
-        }
-        for (const asset of collectedResources.assets) {
-          allAssets.add(asset);
-        }
-      }
-
       // Generate virtual island entry modules
       for (const [, island] of allIslands) {
         let componentPath = island.path;
@@ -374,7 +335,7 @@ if (Component) {
       }
 
       logger.info(
-        `Phase 1 complete: ${Object.keys(htmlInputs).length} pages, ${allCSS.size} CSS, ${allAssets.size} assets, ${allIslands.size} islands`,
+        `Phase 1 complete: ${Object.keys(htmlInputs).length} pages, ${allIslands.size} islands`,
       );
 
       // Phase 2: Vite build with virtual modules
@@ -417,26 +378,36 @@ if (Component) {
           outputPath: webPath,
         });
 
-        manifest.islands[island.id] = webPath;
-
         if (onIslandBuilt) {
           onIslandBuilt(island);
         }
       }
-    }
 
-    // Write manifest to disk
-    await writeFile(
-      join(outDir, "manifest.json"),
-      JSON.stringify(manifest, null, 2),
-    );
+      // Generate manifest.json for production loading
+      const islandsMap: Record<string, string> = {};
+      for (const island of builtIslands) {
+        islandsMap[island.id] = island.outputPath;
+      }
+
+      const manifest = {
+        routes,
+        islands: islandsMap,
+        css: {} as Record<string, string>,
+        assets: {} as Record<string, string>,
+      };
+
+      await writeFile(
+        join(outDir, "manifest.json"),
+        JSON.stringify(manifest, null, 2),
+      );
+    }
 
     logger.info(`Build complete. Output: ${outDir}`);
 
     return {
       outDir,
       islands: builtIslands,
-      manifest,
+      routes,
     };
   }
 

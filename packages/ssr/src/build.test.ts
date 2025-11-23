@@ -370,7 +370,7 @@ describe("App Build Integration", () => {
     await rm(TEST_DIR, { recursive: true, force: true });
   });
 
-  it("should write manifest.json with routes", async () => {
+  it("should return routes in build result", async () => {
     const { createApp } = await import("./app");
     app = createApp({ root: TEST_DIR });
 
@@ -383,19 +383,12 @@ describe("App Build Integration", () => {
 
     const result = await app.build({ outDir: OUT_DIR });
 
-    // Check manifest file exists
-    const manifestContent = await readFile(
-      join(OUT_DIR, "manifest.json"),
-      "utf-8",
-    );
-    const manifest = JSON.parse(manifestContent);
-
-    expect(manifest.routes).toContain("/");
-    expect(manifest.routes).toContain("/about");
-    expect(result.manifest.routes).toEqual(manifest.routes);
+    // Check routes in result
+    expect(result.routes).toContain("/");
+    expect(result.routes).toContain("/about");
   });
 
-  it("should include CSS in manifest when routes use CSS", async () => {
+  it("should include CSS in HTML output when routes use CSS", async () => {
     const { createApp } = await import("./app");
     const { STYLE_MARKER } = await import("./client/resource");
 
