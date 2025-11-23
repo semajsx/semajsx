@@ -10,13 +10,12 @@
 
 import { createServer, build as viteBuild, mergeConfig } from "vite";
 import type { ViteDevServer, UserConfig as ViteUserConfig } from "vite";
-import { relative } from "path";
+import { relative, dirname, join, resolve } from "path";
 import { renderToString } from "./render";
 import { renderDocument } from "./document";
 import { LRUCache } from "./lru-cache";
 import { createLogger } from "@semajsx/logger";
-import { buildCSS, transformCSSForDev, analyzeCSSChunks } from "./css-builder";
-import { buildAssets } from "./asset-builder";
+import { transformCSSForDev } from "./css-builder";
 import { collectResources, getEntryFiles } from "./resource-collector";
 import type {
   App,
@@ -238,9 +237,13 @@ class AppImpl implements App {
 
     logger.info(`Building for production (mode: ${mode})...`);
 
-    // Ensure output directory exists
-    const { mkdir } = await import("fs/promises");
+    const { mkdir, writeFile, rm, copyFile } = await import("fs/promises");
+    const rootDir = this.config.root || process.cwd();
+    const tempDir = join(rootDir, ".build-temp");
+
+    // Ensure directories exist
     await mkdir(outDir, { recursive: true });
+    await mkdir(tempDir, { recursive: true });
 
     const builtIslands: BuildResult["islands"] = [];
     const manifest: BuildResult["manifest"] = {
@@ -250,50 +253,80 @@ class AppImpl implements App {
     };
 
     if (mode === "full") {
-      // Pre-render all routes to collect islands, CSS, and assets (by ID, not path)
+      // Phase 1: Pre-render all routes and collect resources
       const allIslands = new Map<string, IslandMetadata>();
-      const cssPerRoute = new Map<string, string[]>();
+      const allCSS = new Set<string>();
       const allAssets = new Set<string>();
+      const htmlEntries: Record<string, string> = {};
 
+      // Render all routes
       for (const [path] of this._routes) {
         try {
           const result = await this.render(path);
+
+          // Collect islands
           for (const island of result.islands) {
-            // Use island.id as key to keep all instances
             if (!allIslands.has(island.id)) {
               allIslands.set(island.id, island);
             }
           }
-          // Collect CSS per route for chunk analysis
-          cssPerRoute.set(path, result.css);
+
+          // Collect CSS
+          for (const css of result.css) {
+            allCSS.add(css);
+          }
+
           // Collect assets
           for (const asset of result.assets) {
             allAssets.add(asset);
           }
+
+          // Generate HTML with resource references
+          const htmlFileName = path === "/" ? "index" : path.replace(/^\//, "");
+          const htmlPath = join(tempDir, `${htmlFileName}.html`);
+
+          // Ensure directory exists for nested routes
+          await mkdir(dirname(htmlPath), { recursive: true });
+
+          // Convert CSS paths to relative paths for HTML
+          const cssRefs = result.css.map((cssPath) => {
+            const relPath = relative(rootDir, cssPath);
+            return relPath;
+          });
+
+          // Generate island script references
+          const islandScripts = result.islands.map(
+            (island) =>
+              `<script type="module" src="./islands/${island.id}.ts"></script>`,
+          );
+
+          // Generate HTML
+          const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page</title>
+  ${cssRefs.map((href) => `<link rel="stylesheet" href="./${href}">`).join("\n  ")}
+</head>
+<body>
+  ${result.html}
+  ${islandScripts.join("\n  ")}
+</body>
+</html>`;
+
+          await writeFile(htmlPath, html);
+          htmlEntries[htmlFileName] = htmlPath;
+
+          logger.debug(`Rendered ${path} -> ${htmlPath}`);
         } catch (error) {
           logger.warn(`Failed to pre-render route ${path}: ${String(error)}`);
         }
       }
 
-      // Analyze CSS chunks to extract shared CSS
-      const { shared: sharedCSS, perEntry: cssPerEntry } = analyzeCSSChunks(
-        cssPerRoute,
-        2, // threshold: CSS used by 2+ routes goes to shared
-      );
-
-      // Collect all unique CSS files from render
-      const allCSS = new Set<string>([
-        ...sharedCSS,
-        ...Array.from(cssPerEntry.values()).flat(),
-      ]);
-
-      const rootDir = this.config.root || process.cwd();
-
       // Collect additional resources from config patterns
       if (this.config.resources) {
-        // Get entry files from islands
         const islandPaths = Array.from(allIslands.values()).map((i) => {
-          // Convert file:// URL to path
           if (i.path.startsWith("file://")) {
             return new URL(i.path).pathname;
           }
@@ -307,94 +340,42 @@ class AppImpl implements App {
           rootDir,
         );
 
-        // Merge collected resources
         for (const css of collectedResources.css) {
           allCSS.add(css);
         }
         for (const asset of collectedResources.assets) {
           allAssets.add(asset);
         }
-
-        logger.info(
-          `Collected ${collectedResources.css.size} CSS and ${collectedResources.assets.size} assets from patterns`,
-        );
       }
 
-      // Build assets first (for CSS url() rewriting)
-      let assetManifest: Map<string, string> | undefined;
-      if (allAssets.size > 0) {
-        const assetResult = await buildAssets(allAssets, outDir);
-        assetManifest = assetResult.mapping;
-
-        // Add to manifest with relative paths as keys
-        for (const [original, output] of assetResult.mapping) {
-          manifest.assets = manifest.assets || {};
-          const relPath = relative(rootDir, original);
-          manifest.assets[relPath] = output;
-        }
-
-        logger.info(`Built ${allAssets.size} assets`);
+      // Copy CSS files to temp directory
+      for (const cssPath of allCSS) {
+        const relPath = relative(rootDir, cssPath);
+        const destPath = join(tempDir, relPath);
+        await mkdir(dirname(destPath), { recursive: true });
+        await copyFile(cssPath, destPath);
       }
 
-      // Build CSS with lightningcss (with asset URL rewriting)
-      if (allCSS.size > 0) {
-        const cssResult = await buildCSS(allCSS, outDir, {
-          minify,
-          sourceMap: sourcemap,
-          assetManifest,
-        });
-
-        // Add to manifest with relative paths as keys
-        for (const [original, output] of cssResult.mapping) {
-          const relPath = relative(rootDir, original);
-          manifest.css[relPath] = output;
-          // Keep absolute path in runtime manifest for lookup
-          this._cssManifest.set(original, output);
-        }
-
-        // Add shared CSS info to manifest
-        if (sharedCSS.length > 0) {
-          manifest.sharedCSS = sharedCSS.map(
-            (css) => cssResult.mapping.get(css) || css,
-          );
-          logger.info(`Extracted ${sharedCSS.length} shared CSS files`);
-        }
-
-        logger.info(`Built ${allCSS.size} CSS files`);
+      // Copy asset files to temp directory
+      for (const assetPath of allAssets) {
+        const relPath = relative(rootDir, assetPath);
+        const destPath = join(tempDir, relPath);
+        await mkdir(dirname(destPath), { recursive: true });
+        await copyFile(assetPath, destPath);
       }
 
-      // Build all islands with hydration entry points in one build
-      if (allIslands.size > 0) {
-        const { writeFile, rm, mkdir } = await import("fs/promises");
-        const { join } = await import("path");
-        const tempDir = join(
-          this.config.root || process.cwd(),
-          ".island-entries",
-        );
-        await mkdir(tempDir, { recursive: true });
+      // Generate island entry files
+      const islandsDir = join(tempDir, "islands");
+      await mkdir(islandsDir, { recursive: true });
 
-        // Generate entry files for all islands
-        const entryPoints: Record<string, string> = {};
+      for (const [, island] of allIslands) {
+        const componentPath = this._normalizeModulePath(island.path);
+        const componentName = island.componentName;
 
-        // Prepare client manifest for inlining into island entries
-        const clientManifest = {
-          css: manifest.css,
-          assets: manifest.assets || {},
-        };
-        const manifestJson = JSON.stringify(clientManifest);
-
-        for (const [, island] of allIslands) {
-          const componentPath = this._normalizeModulePath(island.path);
-          const componentName = island.componentName;
-
-          const entryCode = `
+        const entryCode = `
 import { hydrateIsland } from '@semajsx/ssr/client';
 import { markIslandHydrated } from '@semajsx/ssr/client';
-import { setManifest } from '@semajsx/ssr/client';
 import * as ComponentModule from '${componentPath}';
-
-// Set manifest for client-side resource loading
-setManifest(${manifestJson});
 
 const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName} || ` : ""}ComponentModule.default ||
                   Object.values(ComponentModule).find(exp => typeof exp === 'function');
@@ -404,76 +385,75 @@ if (Component) {
 }
 `;
 
-          const entryFile = join(tempDir, `${island.id}.ts`);
-          await writeFile(entryFile, entryCode);
-          entryPoints[island.id] = entryFile;
-        }
-
-        // Build all islands at once
-        const baseConfig: ViteUserConfig = {
-          root: this.config.root,
-          build: {
-            outDir: `${outDir}/_semajsx/islands`,
-            emptyOutDir: true,
-            minify,
-            sourcemap,
-            rollupOptions: {
-              input: entryPoints,
-              output: {
-                format: "es",
-                entryFileNames: "[name].js",
-              },
-              external: [],
-            },
-          },
-        };
-
-        const finalConfig = options.vite
-          ? mergeConfig(baseConfig, options.vite)
-          : baseConfig;
-
-        await viteBuild(finalConfig);
-
-        // Clean up temp directory
-        await rm(tempDir, { recursive: true, force: true });
-
-        // Record built islands
-        for (const [, island] of allIslands) {
-          // Use web-absolute path under /_semajsx/ namespace
-          const webPath = `/_semajsx/islands/${island.id}.js`;
-
-          builtIslands.push({
-            id: island.id,
-            path: island.path,
-            outputPath: webPath,
-          });
-
-          manifest.islands[island.id] = webPath;
-
-          if (onIslandBuilt) {
-            onIslandBuilt(island);
-          }
-        }
-
-        logger.info(`Built ${allIslands.size} islands`);
+        await writeFile(join(islandsDir, `${island.id}.ts`), entryCode);
       }
+
+      logger.info(
+        `Phase 1 complete: ${Object.keys(htmlEntries).length} pages, ${allCSS.size} CSS, ${allAssets.size} assets, ${allIslands.size} islands`,
+      );
+
+      // Phase 2: Vite build with HTML entries
+      const viteConfig: ViteUserConfig = {
+        root: tempDir,
+        base: "/",
+        build: {
+          outDir: resolve(outDir),
+          emptyOutDir: true,
+          minify,
+          sourcemap,
+          rollupOptions: {
+            input: htmlEntries,
+          },
+        },
+        // Merge user's Vite config (for PostCSS/Tailwind support)
+        ...this.config.vite,
+      };
+
+      // Apply options.vite if provided
+      const finalConfig = options.vite
+        ? mergeConfig(viteConfig, options.vite)
+        : viteConfig;
+
+      await viteBuild(finalConfig);
+
+      logger.info("Phase 2 complete: Vite build finished");
+
+      // Record built islands
+      for (const [, island] of allIslands) {
+        // Vite will output islands to assets directory with hash
+        const webPath = `/_semajsx/islands/${island.id}.js`;
+
+        builtIslands.push({
+          id: island.id,
+          path: island.path,
+          outputPath: webPath,
+        });
+
+        manifest.islands[island.id] = webPath;
+
+        if (onIslandBuilt) {
+          onIslandBuilt(island);
+        }
+      }
+
+      // Clean up temp directory
+      await rm(tempDir, { recursive: true, force: true });
     }
 
     // Write manifest to disk
-    const { writeFile, mkdir: mkdirFs } = await import("fs/promises");
-    const { join } = await import("path");
     await writeFile(
       join(outDir, "manifest.json"),
       JSON.stringify(manifest, null, 2),
     );
+
+    // Ensure _semajsx directory exists
+    await mkdir(join(outDir, "_semajsx"), { recursive: true });
 
     // Write client manifest for runtime resource loading
     const clientManifest = {
       css: manifest.css,
       assets: manifest.assets || {},
     };
-    // Ensure _semajsx directory exists
-    await mkdirFs(join(outDir, "_semajsx"), { recursive: true });
     await writeFile(
       join(outDir, "_semajsx", "manifest.js"),
       `export default ${JSON.stringify(clientManifest)};`,
