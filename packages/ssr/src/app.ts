@@ -376,6 +376,13 @@ class AppImpl implements App {
         // Generate entry files for all islands
         const entryPoints: Record<string, string> = {};
 
+        // Prepare client manifest for inlining into island entries
+        const clientManifest = {
+          css: manifest.css,
+          assets: manifest.assets || {},
+        };
+        const manifestJson = JSON.stringify(clientManifest);
+
         for (const [, island] of allIslands) {
           const componentPath = this._normalizeModulePath(island.path);
           const componentName = island.componentName;
@@ -384,11 +391,10 @@ class AppImpl implements App {
 import { hydrateIsland } from '@semajsx/ssr/client';
 import { markIslandHydrated } from '@semajsx/ssr/client';
 import { setManifest } from '@semajsx/ssr/client';
-import manifest from '../manifest.js';
 import * as ComponentModule from '${componentPath}';
 
 // Set manifest for client-side resource loading
-setManifest(manifest);
+setManifest(${manifestJson});
 
 const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName} || ` : ""}ComponentModule.default ||
                   Object.values(ComponentModule).find(exp => typeof exp === 'function');
