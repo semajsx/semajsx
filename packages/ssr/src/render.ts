@@ -25,6 +25,8 @@ interface RenderContext {
   css: Set<string>;
   // Collected asset file paths
   assets: Set<string>;
+  // Root directory for computing component keys
+  rootDir: string;
 }
 
 /**
@@ -54,7 +56,7 @@ export async function renderToString(
   vnode: VNode,
   options: RenderToStringOptions = {},
 ): Promise<SSRResult> {
-  const { transformIslandScript } = options;
+  const { transformIslandScript, rootDir = process.cwd() } = options;
 
   // Fixed path for all static assets under /_semajsx/ namespace
   const islandBasePath = "/_semajsx/islands";
@@ -69,6 +71,7 @@ export async function renderToString(
     renderCache: new WeakMap(),
     css: new Set(),
     assets: new Set(),
+    rootDir,
   };
 
   // Render HTML and collect islands in one pass (fixes duplicate rendering)
@@ -332,11 +335,38 @@ function isSingleElement(result: VNode | JSXNode): result is VNode {
 }
 
 /**
+ * Generate a component key from path for use as identifier
+ * Example: "/home/user/project/src/components/Counter.tsx" -> "components/Counter"
+ */
+function getComponentKey(componentPath: string, rootDir: string): string {
+  // Convert file:// URL to path
+  let path = componentPath;
+  if (path.startsWith("file://")) {
+    path = new URL(path).pathname;
+  }
+
+  // Make relative to root and remove src/ prefix
+  if (path.startsWith(rootDir)) {
+    path = path.slice(rootDir.length);
+  }
+  path = path.replace(/^\/?(src\/)?/, "");
+
+  // Remove extension
+  path = path.replace(/\.\w+$/, "");
+
+  // Sanitize for use as attribute value
+  path = path.replace(/[^a-zA-Z0-9/_-]/g, "_");
+
+  return path;
+}
+
+/**
  * Inject island attributes into the first tag of rendered HTML
  */
 function injectIslandAttrs(
   html: string,
   islandId: string,
+  componentKey: string,
   propsJson: string,
 ): string {
   // Find the first > of the opening tag
@@ -346,7 +376,7 @@ function injectIslandAttrs(
   }
 
   const escapedProps = escapeHTML(propsJson);
-  const attrs = ` data-island-id="${islandId}" data-island-props="${escapedProps}"`;
+  const attrs = ` data-island-id="${islandId}" data-island-src="${componentKey}" data-island-props="${escapedProps}"`;
 
   // Handle self-closing tags
   if (html[firstTagEnd - 1] === "/") {
@@ -418,6 +448,9 @@ async function renderIsland(
   // Generate unique island ID using component name
   const islandId = generateIslandId(componentName, context.islandCounter++);
 
+  // Generate component key for grouping islands by component
+  const componentKey = getComponentKey(metadata.modulePath, context.rootDir);
+
   // Serialize props for hydration
   const serializedProps = serializeProps(metadata.props);
 
@@ -434,12 +467,12 @@ async function renderIsland(
 
   // Single DOM element: inject attrs directly (no wrapper div)
   if (isSingleElement(result)) {
-    return injectIslandAttrs(content, islandId, propsJson);
+    return injectIslandAttrs(content, islandId, componentKey, propsJson);
   }
 
   // Fragment or other: use comment markers + script tag
   // Use unique end marker to support nested islands
-  return `<!--island:${islandId}-->${content}<!--/island:${islandId}--><script type="application/json" data-island="${islandId}">${propsJson}</script>`;
+  return `<!--island:${islandId}-->${content}<!--/island:${islandId}--><script type="application/json" data-island="${islandId}" data-island-src="${componentKey}">${propsJson}</script>`;
 }
 
 /**

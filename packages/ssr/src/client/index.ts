@@ -7,6 +7,7 @@ export {
   hydrateIsland,
   hydrateIslands,
   hydrateIslandById,
+  hydrateAllIslands,
   hasIslands,
   getIslandIds,
   getIslandInfo,

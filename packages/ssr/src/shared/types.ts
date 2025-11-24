@@ -49,6 +49,11 @@ export interface RenderToStringOptions {
    * Provide this to enable client-side hydration with custom script generation.
    */
   transformIslandScript?: IslandScriptTransformer;
+  /**
+   * Root directory for computing component keys.
+   * Defaults to process.cwd().
+   */
+  rootDir?: string;
 }
 
 /**

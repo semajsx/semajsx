@@ -253,10 +253,11 @@ class AppImpl implements App {
         try {
           const result = await this.render(path);
 
-          // Collect islands
+          // Collect islands by component path (not by instance id)
           for (const island of result.islands) {
-            if (!allIslands.has(island.id)) {
-              allIslands.set(island.id, island);
+            const componentKey = this._getComponentKey(island.path, rootDir);
+            if (!allIslands.has(componentKey)) {
+              allIslands.set(componentKey, island);
             }
           }
 
@@ -267,11 +268,18 @@ class AppImpl implements App {
           // CSS paths - use absolute paths that Vite can resolve
           const cssRefs = result.css;
 
-          // Island script references
-          const islandScripts = result.islands.map(
-            (island) =>
-              `<script type="module" src="/islands/${island.id}.ts"></script>`,
-          );
+          // Island script references - deduplicate by component path
+          const seenComponents = new Set<string>();
+          const islandScripts: string[] = [];
+          for (const island of result.islands) {
+            const componentKey = this._getComponentKey(island.path, rootDir);
+            if (!seenComponents.has(componentKey)) {
+              seenComponents.add(componentKey);
+              islandScripts.push(
+                `<script type="module" src="/_semajsx/islands/${componentKey}.ts"></script>`,
+              );
+            }
+          }
 
           // Generate HTML
           const html = `<!DOCTYPE html>
@@ -298,8 +306,8 @@ class AppImpl implements App {
         }
       }
 
-      // Generate virtual island entry modules
-      for (const [, island] of allIslands) {
+      // Generate virtual island entry modules (one per component)
+      for (const [componentKey, island] of allIslands) {
         let componentPath = island.path;
         if (componentPath.startsWith("file://")) {
           componentPath = new URL(componentPath).pathname;
@@ -307,20 +315,19 @@ class AppImpl implements App {
         const componentName = island.componentName;
 
         const entryCode = `
-import { hydrateIsland } from '@semajsx/ssr/client';
-import { markIslandHydrated } from '@semajsx/ssr/client';
+import { hydrateAllIslands } from '@semajsx/ssr/client';
 import * as ComponentModule from '${componentPath}';
 
 const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName}` : "ComponentModule.default"} ||
                   Object.values(ComponentModule).find(exp => typeof exp === 'function');
 
 if (Component) {
-  hydrateIsland('${island.id}', Component, markIslandHydrated);
+  hydrateAllIslands('${componentKey}', Component);
 }
 `;
 
-        // Store virtual island entry with simple file name
-        modules[`islands/${island.id}.ts`] = entryCode;
+        // Store virtual island entry with component key
+        modules[`_semajsx/islands/${componentKey}.ts`] = entryCode;
       }
 
       logger.info(
@@ -583,6 +590,32 @@ if (Component) {
     }
 
     return null;
+  }
+
+  /**
+   * Generate a component key from path for use as file name
+   * Example: "/home/user/project/src/components/Counter.tsx" -> "components/Counter"
+   */
+  private _getComponentKey(componentPath: string, rootDir: string): string {
+    // Convert file:// URL to path
+    let path = componentPath;
+    if (path.startsWith("file://")) {
+      path = new URL(path).pathname;
+    }
+
+    // Make relative to root and remove src/ prefix
+    if (path.startsWith(rootDir)) {
+      path = path.slice(rootDir.length);
+    }
+    path = path.replace(/^\/?(src\/)?/, "");
+
+    // Remove extension
+    path = path.replace(/\.\w+$/, "");
+
+    // Sanitize for use as file name (replace problematic chars)
+    path = path.replace(/[^a-zA-Z0-9/_-]/g, "_");
+
+    return path;
   }
 
   private _createVirtualIslandsPlugin() {
