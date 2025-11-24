@@ -10,13 +10,11 @@
 
 import { createServer, build as viteBuild, mergeConfig } from "vite";
 import type { ViteDevServer, UserConfig as ViteUserConfig } from "vite";
-import { relative, dirname, join, resolve } from "path";
+import { resolve } from "path";
 import { renderToString } from "./render";
 import { renderDocument } from "./document";
 import { LRUCache } from "./lru-cache";
 import { createLogger } from "@semajsx/logger";
-import { transformCSSForDev } from "./css-builder";
-// Resource collector no longer needed - Vite handles all resources
 import { virtualModules } from "./virtual-modules";
 import type {
   App,
@@ -42,7 +40,6 @@ class AppImpl implements App {
   private _viteServer: ViteDevServer | null = null;
   private _islandCache: LRUCache<string, IslandMetadata>;
   private _initialized = false;
-  private _cssManifest: Map<string, string> = new Map();
 
   constructor(config: AppConfig = {}) {
     this.config = {
@@ -163,16 +160,13 @@ class AppImpl implements App {
       }
     }
 
-    // Apply CSS manifest mapping for production builds
-    const mappedCSS = this._applyCSSTManifest(result.css);
-
     // Render with document template if provided
     if (this.config.document) {
       const documentVNode = this.config.document({
         children: result.html,
         scripts: result.scripts,
         islands: result.islands,
-        css: mappedCSS,
+        css: result.css,
         path,
         title: this.config.title,
         meta: this.config.meta,
@@ -180,15 +174,11 @@ class AppImpl implements App {
 
       return {
         ...result,
-        css: mappedCSS,
         document: renderDocument(documentVNode),
       };
     }
 
-    return {
-      ...result,
-      css: mappedCSS,
-    };
+    return result;
   }
 
   async dev(
@@ -238,7 +228,7 @@ class AppImpl implements App {
 
     logger.info(`Building for production (mode: ${mode})...`);
 
-    const { mkdir, writeFile } = await import("fs/promises");
+    const { mkdir } = await import("fs/promises");
     // Ensure rootDir is always absolute
     const rootDir = this.config.root
       ? resolve(this.config.root)
@@ -396,32 +386,21 @@ if (Component) {
     const url = new URL(request.url);
     const pathname = url.pathname;
 
-    // Handle CSS requests in development
-    if (pathname.endsWith(".css")) {
-      try {
-        const cssPath = this._resolveCSSPath(pathname);
-        if (cssPath) {
-          const code = await transformCSSForDev(cssPath);
-          return new Response(code, {
-            headers: { "Content-Type": "text/css" },
-          });
-        }
-      } catch (error) {
-        logger.error(`Failed to load CSS ${pathname}: ${error}`);
-        return new Response("CSS not found", { status: 404 });
-      }
-    }
-
     // Handle Vite module requests (/@fs/, /@vite/, /node_modules/, etc.)
+    // This includes CSS files which Vite will process
     if (
       pathname.startsWith("/@") ||
       pathname.startsWith("/node_modules/") ||
-      pathname.includes("@vite")
+      pathname.includes("@vite") ||
+      pathname.endsWith(".css")
     ) {
       const result = await this._handleModuleRequest(pathname);
       if (result) {
+        const contentType = pathname.endsWith(".css")
+          ? "text/css"
+          : "application/javascript";
         return new Response(result.code, {
-          headers: { "Content-Type": "application/javascript" },
+          headers: { "Content-Type": contentType },
         });
       }
     }
@@ -604,32 +583,6 @@ if (Component) {
     }
 
     return null;
-  }
-
-  /**
-   * Resolve CSS URL path to filesystem path
-   */
-  private _resolveCSSPath(urlPath: string): string | null {
-    const root = this.config.root || process.cwd();
-
-    // Handle absolute paths (e.g., /src/styles/page.css)
-    if (urlPath.startsWith("/")) {
-      const { join } = require("path");
-      return join(root, urlPath);
-    }
-
-    return null;
-  }
-
-  /**
-   * Apply CSS manifest mapping to convert source paths to hashed output paths
-   */
-  private _applyCSSTManifest(cssPaths: string[]): string[] {
-    if (this._cssManifest.size === 0) {
-      return cssPaths;
-    }
-
-    return cssPaths.map((cssPath) => this._cssManifest.get(cssPath) || cssPath);
   }
 
   private _createVirtualIslandsPlugin() {
