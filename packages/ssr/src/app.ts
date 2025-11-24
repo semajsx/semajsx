@@ -10,7 +10,7 @@
 
 import { createServer, build as viteBuild, mergeConfig } from "vite";
 import type { ViteDevServer, UserConfig as ViteUserConfig } from "vite";
-import { resolve } from "path";
+import { resolve, join } from "path";
 import { renderToString } from "./render";
 import { renderDocument } from "./document";
 import { LRUCache } from "./lru-cache";
@@ -96,6 +96,10 @@ class AppImpl implements App {
       resolve: {
         // Ensure Vite respects package.json "exports" field with conditions
         conditions: ["browser", "development", "module", "import", "default"],
+        // Add @ alias for src directory
+        alias: {
+          "@": join(this.config.root || process.cwd(), "src"),
+        },
       },
       plugins: [this._createVirtualIslandsPlugin()],
       // Exclude problematic native modules from SSR bundling
