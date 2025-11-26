@@ -43,14 +43,17 @@ export type IslandScriptTransformer = (
  * Options for renderToString
  */
 export interface RenderToStringOptions {
-  /** Base path for island scripts (default: '/islands') */
-  islandBasePath?: string;
   /**
    * Custom transformer for island scripts.
    * If not provided, no client-side scripts are generated (static HTML only).
    * Provide this to enable client-side hydration with custom script generation.
    */
   transformIslandScript?: IslandScriptTransformer;
+  /**
+   * Root directory for computing component keys.
+   * Defaults to process.cwd().
+   */
+  rootDir?: string;
 }
 
 /**
@@ -65,6 +68,27 @@ export interface SSRResult {
   scripts: string;
   /** Complete HTML document (if document template was provided) */
   document?: string;
+  /** Collected CSS file paths */
+  css: string[];
+  /** Collected asset file paths */
+  assets: string[];
+}
+
+/**
+ * Link resource metadata
+ */
+export interface LinkMetadata {
+  href: string;
+  rel: string;
+  as?: string;
+}
+
+/**
+ * Asset resource metadata
+ */
+export interface AssetMetadata {
+  src: string;
+  type: "image" | "font" | "script";
 }
 
 /**
@@ -108,6 +132,8 @@ export type DocumentTemplate = (props: {
   scripts: JSXNode;
   /** Island metadata (for custom processing) */
   islands: IslandMetadata[];
+  /** Collected CSS file paths */
+  css: string[];
   /** Current route path */
   path: string;
   /** Page title (optional, should be provided by user) */
@@ -120,8 +146,6 @@ export type DocumentTemplate = (props: {
  * Router configuration
  */
 export interface RouterConfig {
-  /** Base path for island scripts */
-  islandBasePath?: string;
   /** Enable code caching */
   enableCache?: boolean;
   /** Development mode (uses Vite for module transformation) */
@@ -141,6 +165,36 @@ export interface RouterConfig {
   meta?: Record<string, any>;
 }
 
+/**
+ * Resource collection configuration
+ */
+export interface ResourceConfig {
+  /**
+   * Capture patterns based on source file types (like VSCode file nesting)
+   * Keys are glob patterns, values are arrays of capture patterns
+   * ${capture} is replaced with the base filename (without extension)
+   *
+   * @example
+   * {
+   *   '**\/*.tsx': ['${capture}.css', '${capture}.module.css'],
+   *   'src/components/**\/*.tsx': ['${capture}.styles.css']
+   * }
+   */
+  capture?: Record<string, string[]>;
+
+  /**
+   * Additional glob patterns to include
+   * @example ['src/styles/**\/*.css']
+   */
+  include?: string[];
+
+  /**
+   * Glob patterns to exclude
+   * @example ['**\/*.test.*', 'node_modules/**']
+   */
+  exclude?: string[];
+}
+
 // ========================
 // App API Types
 // ========================
@@ -157,8 +211,6 @@ export interface AppConfig {
 
   /** Island configuration */
   islands?: {
-    /** Base path for island scripts (default: '/islands') */
-    basePath?: string;
     /** Enable caching (default: true) */
     cache?: boolean;
     /** Maximum cache size (default: 1000) */
@@ -176,6 +228,9 @@ export interface AppConfig {
 
   /** Project root directory */
   root?: string;
+
+  /** Resource collection configuration */
+  resources?: ResourceConfig;
 }
 
 /**
@@ -229,11 +284,8 @@ export interface BuildResult {
     outputPath: string;
   }>;
 
-  /** Build manifest */
-  manifest: {
-    islands: Record<string, string>;
-    routes: string[];
-  };
+  /** Routes in the build */
+  routes: string[];
 }
 
 /**

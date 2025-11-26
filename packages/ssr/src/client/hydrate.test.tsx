@@ -28,13 +28,15 @@ describe("hydrate", () => {
       expect(container.innerHTML).toBe('<div class="test">Hello</div>');
     });
 
-    it("should warn and return null if container is empty", () => {
+    it("should fallback to render if container is empty", () => {
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       const vnode = <div>Content</div>;
       const result = hydrate(vnode, container);
 
-      expect(result).toBeNull();
+      // Should render content instead of returning null
+      expect(result).not.toBeNull();
+      expect(container.innerHTML).toBe("<div>Content</div>");
       expect(warnSpy).toHaveBeenCalled();
       warnSpy.mockRestore();
     });
@@ -208,22 +210,22 @@ describe("hydrate", () => {
   });
 
   describe("error handling", () => {
-    it("should handle hydration errors gracefully", () => {
-      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    it("should fallback to render for empty container", () => {
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-      // Empty container triggers warning
+      // Empty container triggers fallback to render
       const emptyContainer = document.createElement("div");
       document.body.appendChild(emptyContainer);
 
       const vnode = <div>Content</div>;
       const result = hydrate(vnode, emptyContainer);
 
-      expect(result).toBeNull();
+      // Should render content instead of returning null
+      expect(result).not.toBeNull();
+      expect(emptyContainer.innerHTML).toBe("<div>Content</div>");
       expect(warnSpy).toHaveBeenCalled();
 
       document.body.removeChild(emptyContainer);
-      errorSpy.mockRestore();
       warnSpy.mockRestore();
     });
   });

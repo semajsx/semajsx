@@ -49,9 +49,6 @@ const app = createApp({
     // plugins: [],
     // resolve: { alias: {} },
   },
-  islands: {
-    basePath: "/islands",
-  },
   document: Document,
   title: "SemaJSX SSR Islands (Vite)",
   root: import.meta.dir,

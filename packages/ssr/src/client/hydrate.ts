@@ -52,14 +52,21 @@ function isAsyncIterator(
  * ```
  */
 export function hydrate(vnode: VNode, container: Element): Node | null {
-  // For single-element islands, the container IS the element to hydrate
-  // (detected by data-island-props attribute injected during SSR)
-  const nodeToHydrate = container;
-  const parentElement = container.parentElement || container;
+  // Standard hydration: hydrate container's first child
+  const nodeToHydrate = container.firstChild;
+
+  if (!nodeToHydrate) {
+    console.warn("[Hydrate] Container is empty, falling back to render");
+    const rendered = renderNode(vnode, container);
+    if (rendered) {
+      container.appendChild(rendered);
+    }
+    return rendered;
+  }
 
   // Hydrate the VNode tree onto the existing DOM
   try {
-    hydrateNode(vnode, nodeToHydrate, parentElement);
+    hydrateNode(vnode, nodeToHydrate, container);
     return nodeToHydrate;
   } catch (error) {
     console.error("[Hydrate] Error during hydration:", error);
@@ -870,6 +877,145 @@ export function markIslandHydrated(islandId: string): void {
     // Remove script - props already parsed, no longer needed
     script.remove();
   }
+}
+
+/**
+ * Hydrate all islands with a given component source
+ * Finds all elements with data-island-src and hydrates them
+ *
+ * @param componentSrc - The component source key (e.g., "components/Counter")
+ * @param Component - The component function to render
+ *
+ * @example
+ * ```tsx
+ * import { hydrateAllIslands } from '@semajsx/ssr/client';
+ * import Counter from './Counter';
+ *
+ * hydrateAllIslands('components/Counter', Counter);
+ * ```
+ */
+export function hydrateAllIslands(
+  componentSrc: string,
+  Component: Function,
+): void {
+  // Find all elements with this component source
+  const elements = document.querySelectorAll(
+    `[data-island-src="${componentSrc}"]`,
+  );
+
+  // Also find fragment-based islands (script tags with data-island-src)
+  const scripts = document.querySelectorAll(
+    `script[type="application/json"][data-island-src="${componentSrc}"]`,
+  );
+
+  // Hydrate each element-based island
+  elements.forEach((element) => {
+    const islandId = element.getAttribute("data-island-id");
+    if (!islandId) return;
+
+    // Skip if already hydrated
+    if (element.hasAttribute("data-hydrated")) return;
+
+    const props = JSON.parse(element.getAttribute("data-island-props") || "{}");
+    const parent = element.parentNode;
+    if (!parent) return;
+
+    // Create VNode for the component
+    const vnode: VNode = {
+      type: Component as VNode["type"],
+      props,
+      children: [],
+    };
+
+    // Render into temp container
+    const temp = document.createElement("div");
+    render(vnode, temp);
+
+    // Replace original element with rendered content
+    const children = Array.from(temp.childNodes);
+    for (const child of children) {
+      parent.insertBefore(child, element);
+      // Copy island id to the first element for future reference
+      if (child instanceof Element && child === children[0]) {
+        child.setAttribute("data-island-id", islandId);
+        child.setAttribute("data-hydrated", "true");
+      }
+    }
+    element.remove();
+  });
+
+  // Hydrate each fragment-based island
+  scripts.forEach((script) => {
+    const islandId = script.getAttribute("data-island");
+    if (!islandId) return;
+
+    // Skip if already hydrated
+    if (script.hasAttribute("data-island-hydrated")) return;
+
+    const props = JSON.parse(script.textContent || "{}");
+
+    // Find the comment markers
+    const startMarker = `island:${islandId}`;
+    const endMarker = `/island:${islandId}`;
+
+    // Find and process the fragment
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_COMMENT,
+      null,
+    );
+
+    let startNode: Comment | null = null;
+    let endNode: Comment | null = null;
+    let node: Node | null;
+
+    while ((node = walker.nextNode())) {
+      if (node.nodeValue === startMarker) {
+        startNode = node as Comment;
+      } else if (node.nodeValue === endMarker) {
+        endNode = node as Comment;
+        break;
+      }
+    }
+
+    if (startNode && endNode && startNode.parentNode) {
+      // Collect all nodes between markers
+      const nodes: Node[] = [];
+      let current: Node | null = startNode.nextSibling;
+      while (current && current !== endNode) {
+        nodes.push(current);
+        current = current.nextSibling;
+      }
+
+      // Remove old nodes
+      nodes.forEach((n) => {
+        if (n.parentNode) {
+          n.parentNode.removeChild(n);
+        }
+      });
+
+      // Render new content
+      const vnode: VNode = {
+        type: Component as VNode["type"],
+        props,
+        children: [],
+      };
+
+      // Render into temp container
+      const temp = document.createElement("div");
+      render(vnode, temp);
+
+      // Insert new content
+      const newChildren = Array.from(temp.childNodes);
+      for (const child of newChildren) {
+        startNode.parentNode.insertBefore(child, endNode);
+      }
+
+      // Mark as hydrated
+      script.setAttribute("data-island-hydrated", islandId);
+      script.remove();
+    }
+  });
 }
 
 // Export types

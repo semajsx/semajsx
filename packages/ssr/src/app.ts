@@ -10,10 +10,12 @@
 
 import { createServer, build as viteBuild, mergeConfig } from "vite";
 import type { ViteDevServer, UserConfig as ViteUserConfig } from "vite";
+import { resolve } from "path";
 import { renderToString } from "./render";
 import { renderDocument } from "./document";
 import { LRUCache } from "./lru-cache";
 import { createLogger } from "@semajsx/logger";
+import { virtualModules } from "./virtual-modules";
 import type {
   App,
   AppConfig,
@@ -44,7 +46,6 @@ class AppImpl implements App {
       root: process.cwd(),
       ...config,
       islands: {
-        basePath: "/islands",
         cache: true,
         cacheSize: 1000,
         ...config.islands,
@@ -95,6 +96,10 @@ class AppImpl implements App {
       resolve: {
         // Ensure Vite respects package.json "exports" field with conditions
         conditions: ["browser", "development", "module", "import", "default"],
+        // Add @ alias for project root
+        alias: {
+          "@": this.config.root || process.cwd(),
+        },
       },
       plugins: [this._createVirtualIslandsPlugin()],
       // Exclude problematic native modules from SSR bundling
@@ -146,12 +151,11 @@ class AppImpl implements App {
     const vnode = handler(context);
 
     // Render to string with island detection
-    const basePath = this.config.islands?.basePath || "/islands";
     const result = await renderToString(vnode, {
-      islandBasePath: basePath,
       // Default transformer generates standard script tags
       transformIslandScript: (island) =>
         `<script type="module" src="${island.basePath}/${island.id}.js" async></script>`,
+      rootDir: this.config.root,
     });
 
     // Cache islands
@@ -167,6 +171,7 @@ class AppImpl implements App {
         children: result.html,
         scripts: result.scripts,
         islands: result.islands,
+        css: result.css,
         path,
         title: this.config.title,
         meta: this.config.meta,
@@ -228,111 +233,155 @@ class AppImpl implements App {
 
     logger.info(`Building for production (mode: ${mode})...`);
 
+    const { mkdir } = await import("fs/promises");
+    // Ensure rootDir is always absolute
+    const rootDir = this.config.root
+      ? resolve(this.config.root)
+      : process.cwd();
+
+    // Ensure output directory exists
+    await mkdir(outDir, { recursive: true });
+
     const builtIslands: BuildResult["islands"] = [];
-    const manifest: BuildResult["manifest"] = {
-      islands: {},
-      routes: Array.from(this._routes.keys()),
-    };
+    const routes = Array.from(this._routes.keys());
 
     if (mode === "full") {
-      // Pre-render all routes to collect islands (by ID, not path)
+      // Phase 1: Pre-render all routes and collect resources
       const allIslands = new Map<string, IslandMetadata>();
 
+      // Virtual modules (use simple file names as keys)
+      const modules: Record<string, string> = {};
+      const htmlInputs: Record<string, string> = {};
+
+      // Render all routes
       for (const [path] of this._routes) {
         try {
           const result = await this.render(path);
+
+          // Collect islands by component path (not by instance id)
           for (const island of result.islands) {
-            // Use island.id as key to keep all instances
-            if (!allIslands.has(island.id)) {
-              allIslands.set(island.id, island);
+            const componentKey = this._getComponentKey(island.path, rootDir);
+            if (!allIslands.has(componentKey)) {
+              allIslands.set(componentKey, island);
             }
           }
+
+          // Generate HTML with resource references
+          const htmlFileName =
+            path === "/" ? "index.html" : `${path.replace(/^\//, "")}.html`;
+
+          // CSS paths - use absolute paths that Vite can resolve
+          const cssRefs = result.css;
+
+          // Island script references - deduplicate by component path
+          const seenComponents = new Set<string>();
+          const islandScripts: string[] = [];
+          for (const island of result.islands) {
+            const componentKey = this._getComponentKey(island.path, rootDir);
+            if (!seenComponents.has(componentKey)) {
+              seenComponents.add(componentKey);
+              islandScripts.push(
+                `<script type="module" src="/_semajsx/islands/${componentKey}.ts"></script>`,
+              );
+            }
+          }
+
+          // Generate HTML
+          const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Page</title>
+  ${cssRefs.map((href) => `<link rel="stylesheet" href="${href}">`).join("\n  ")}
+</head>
+<body>
+  ${result.html}
+  ${islandScripts.join("\n  ")}
+</body>
+</html>`;
+
+          // Store virtual HTML with simple file name as key
+          modules[htmlFileName] = html;
+          htmlInputs[htmlFileName.replace(".html", "")] = htmlFileName;
+
+          logger.debug(`Rendered ${path} -> ${htmlFileName} (virtual)`);
         } catch (error) {
           logger.warn(`Failed to pre-render route ${path}: ${String(error)}`);
         }
       }
 
-      // Build all islands with hydration entry points in one build
-      if (allIslands.size > 0) {
-        const { writeFile, rm, mkdir } = await import("fs/promises");
-        const { join } = await import("path");
-        const tempDir = join(
-          this.config.root || process.cwd(),
-          ".island-entries",
-        );
-        await mkdir(tempDir, { recursive: true });
+      // Generate virtual island entry modules (one per component)
+      for (const [componentKey, island] of allIslands) {
+        let componentPath = island.path;
+        if (componentPath.startsWith("file://")) {
+          componentPath = new URL(componentPath).pathname;
+        }
+        const componentName = island.componentName;
 
-        // Generate entry files for all islands
-        const entryPoints: Record<string, string> = {};
-
-        for (const [, island] of allIslands) {
-          const componentPath = this._normalizeModulePath(island.path);
-          const componentName = island.componentName;
-
-          const entryCode = `
-import { hydrateIsland } from '@semajsx/ssr/client';
-import { markIslandHydrated } from '@semajsx/ssr/client';
+        const entryCode = `
+import { hydrateAllIslands } from '@semajsx/ssr/client';
 import * as ComponentModule from '${componentPath}';
 
-const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName} || ` : ""}ComponentModule.default ||
+const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName}` : "ComponentModule.default"} ||
                   Object.values(ComponentModule).find(exp => typeof exp === 'function');
 
 if (Component) {
-  hydrateIsland('${island.id}', Component, markIslandHydrated);
+  hydrateAllIslands('${componentKey}', Component);
 }
 `;
 
-          const entryFile = join(tempDir, `${island.id}.ts`);
-          await writeFile(entryFile, entryCode);
-          entryPoints[island.id] = entryFile;
-        }
+        // Store virtual island entry with component key
+        modules[`_semajsx/islands/${componentKey}.ts`] = entryCode;
+      }
 
-        // Build all islands at once
-        const baseConfig: ViteUserConfig = {
-          root: this.config.root,
-          build: {
-            outDir: `${outDir}/islands`,
-            emptyOutDir: true,
-            minify,
-            sourcemap,
-            rollupOptions: {
-              input: entryPoints,
-              output: {
-                format: "es",
-                entryFileNames: "[name].js",
-              },
-              external: [],
-            },
+      logger.info(
+        `Phase 1 complete: ${Object.keys(htmlInputs).length} pages, ${allIslands.size} islands`,
+      );
+
+      // Phase 2: Vite build with virtual modules
+      const userViteConfig = this.config.vite || {};
+      const viteConfig: ViteUserConfig = {
+        ...userViteConfig,
+        root: rootDir,
+        base: "/",
+        // Merge plugins - our virtual modules plugin must be included
+        plugins: [virtualModules(modules), ...(userViteConfig.plugins || [])],
+        build: {
+          ...userViteConfig.build,
+          outDir: resolve(outDir),
+          emptyOutDir: true,
+          minify,
+          sourcemap,
+          rollupOptions: {
+            ...userViteConfig.build?.rollupOptions,
+            input: htmlInputs,
           },
-        };
+        },
+      };
 
-        const finalConfig = options.vite
-          ? mergeConfig(baseConfig, options.vite)
-          : baseConfig;
+      // Apply options.vite if provided
+      const finalConfig = options.vite
+        ? mergeConfig(viteConfig, options.vite)
+        : viteConfig;
 
-        await viteBuild(finalConfig);
+      await viteBuild(finalConfig);
 
-        // Clean up temp directory
-        await rm(tempDir, { recursive: true, force: true });
+      logger.info("Phase 2 complete: Vite build finished");
 
-        // Record built islands
-        for (const [, island] of allIslands) {
-          const outputPath = `${outDir}/islands/${island.id}.js`;
+      // Record built islands
+      for (const [componentKey, island] of allIslands) {
+        const webPath = `/_semajsx/islands/${componentKey}.js`;
 
-          builtIslands.push({
-            id: island.id,
-            path: island.path,
-            outputPath,
-          });
+        builtIslands.push({
+          id: componentKey,
+          path: island.path,
+          outputPath: webPath,
+        });
 
-          manifest.islands[island.id] = outputPath;
-
-          if (onIslandBuilt) {
-            onIslandBuilt(island);
-          }
+        if (onIslandBuilt) {
+          onIslandBuilt(island);
         }
-
-        logger.info(`Built ${allIslands.size} islands`);
       }
     }
 
@@ -341,7 +390,7 @@ if (Component) {
     return {
       outDir,
       islands: builtIslands,
-      manifest,
+      routes,
     };
   }
 
@@ -350,23 +399,27 @@ if (Component) {
     const pathname = url.pathname;
 
     // Handle Vite module requests (/@fs/, /@vite/, /node_modules/, etc.)
+    // This includes CSS files which Vite will process
     if (
       pathname.startsWith("/@") ||
       pathname.startsWith("/node_modules/") ||
-      pathname.includes("@vite")
+      pathname.includes("@vite") ||
+      pathname.endsWith(".css")
     ) {
       const result = await this._handleModuleRequest(pathname);
       if (result) {
+        const contentType = pathname.endsWith(".css")
+          ? "text/css"
+          : "application/javascript";
         return new Response(result.code, {
-          headers: { "Content-Type": "application/javascript" },
+          headers: { "Content-Type": contentType },
         });
       }
     }
 
     // Handle island entry points (must be before source file handler)
-    const islandBasePath = this.config.islands?.basePath ?? "/islands";
-    if (pathname.startsWith(islandBasePath)) {
-      const match = pathname.match(new RegExp(`${islandBasePath}/(.+)\\.js`));
+    if (pathname.startsWith("/_semajsx/islands/")) {
+      const match = pathname.match(/\/_semajsx\/islands\/(.+)\.js/);
       if (match && match[1]) {
         const islandId = match[1];
         try {
@@ -544,6 +597,32 @@ if (Component) {
     return null;
   }
 
+  /**
+   * Generate a component key from path for use as file name
+   * Example: "/home/user/project/src/components/Counter.tsx" -> "components/Counter"
+   */
+  private _getComponentKey(componentPath: string, rootDir: string): string {
+    // Convert file:// URL to path
+    let path = componentPath;
+    if (path.startsWith("file://")) {
+      path = new URL(path).pathname;
+    }
+
+    // Make relative to root and remove src/ prefix
+    if (path.startsWith(rootDir)) {
+      path = path.slice(rootDir.length);
+    }
+    path = path.replace(/^\/?(src\/)?/, "");
+
+    // Remove extension
+    path = path.replace(/\.\w+$/, "");
+
+    // Sanitize for use as file name (replace problematic chars)
+    path = path.replace(/[^a-zA-Z0-9/_-]/g, "_");
+
+    return path;
+  }
+
   private _createVirtualIslandsPlugin() {
     const islandCache = this._islandCache;
     const normalizeModulePath = this._normalizeModulePath.bind(this);
@@ -574,7 +653,7 @@ import { markIslandHydrated } from '@semajsx/ssr/client';
 import * as ComponentModule from '${componentPath}';
 
 // Get the component (try named export first, then default, then first function)
-const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName} || ` : ""}ComponentModule.default ||
+const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName}` : "ComponentModule.default"} ||
                   Object.values(ComponentModule).find(exp => typeof exp === 'function');
 
 if (Component) {
@@ -589,22 +668,8 @@ if (Component) {
 }
 
 /**
- * Create app from build output (for production)
- */
-async function fromBuild(_buildDir: string): Promise<App> {
-  // TODO: Implement loading from build manifest
-  throw new Error("fromBuild is not yet implemented");
-}
-
-/**
  * Create a new SemaJSX app
  */
-export const createApp: {
-  (config?: AppConfig): App;
-  fromBuild: typeof fromBuild;
-} = Object.assign(
-  function (config?: AppConfig): App {
-    return new AppImpl(config);
-  },
-  { fromBuild },
-);
+export function createApp(config?: AppConfig): App {
+  return new AppImpl(config);
+}

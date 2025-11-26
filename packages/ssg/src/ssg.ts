@@ -314,6 +314,7 @@ export class SSG<
       path,
       props,
       scripts: result.scripts ? new RawHTML(result.scripts) : undefined,
+      css: result.css.length > 0 ? result.css : undefined,
     };
 
     const template = this.config.document ?? DefaultDocument;

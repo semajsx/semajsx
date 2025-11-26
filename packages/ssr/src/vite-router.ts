@@ -26,7 +26,6 @@ interface RouteMatch {
  * Internal router configuration with required base fields
  */
 interface InternalRouterConfig {
-  islandBasePath: string;
   enableCache: boolean;
   dev: boolean;
   root: string;
@@ -51,7 +50,6 @@ export class ViteRouter {
 
   constructor(config: RouterConfig = {}) {
     this.config = {
-      islandBasePath: config.islandBasePath ?? "/islands",
       enableCache: config.enableCache ?? true,
       dev: config.dev ?? true,
       root: config.root ?? process.cwd(),
@@ -138,9 +136,7 @@ export class ViteRouter {
     const vnode = match.handler(context);
 
     // Render to HTML with islands
-    const basePath = this.config.islandBasePath || "/islands";
     const result = await renderToString(vnode, {
-      islandBasePath: basePath,
       // Default transformer generates standard script tags
       transformIslandScript: (island) =>
         `<script type="module" src="${island.basePath}/${island.id}.js" async></script>`,
@@ -169,6 +165,7 @@ export class ViteRouter {
           children: [],
         },
         islands: result.islands,
+        css: result.css,
         path,
         title: this.config.title,
         meta: this.config.meta,

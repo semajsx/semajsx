@@ -24,6 +24,18 @@ export { createIslandCollector, IslandCollector } from "./collector";
 // Document templates
 export { DefaultDocument, renderDocument } from "./document";
 
+// Resource utilities
+export {
+  resource,
+  STYLE_MARKER,
+  LINK_MARKER,
+  ASSET_MARKER,
+  type ResourceTools,
+  type StyleProps,
+  type LinkProps,
+  type AssetProps,
+} from "./client/resource";
+
 // Re-export shared types
 export type {
   IslandMetadata,
@@ -35,6 +47,8 @@ export type {
   RouteHandler,
   RouterConfig,
   DocumentTemplate,
+  LinkMetadata,
+  AssetMetadata,
   // App API types
   App,
   AppConfig,

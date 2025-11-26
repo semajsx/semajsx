@@ -26,14 +26,12 @@ describe("createApp", () => {
         title: "Test App",
         root: "/custom/root",
         islands: {
-          basePath: "/custom-islands",
           cache: false,
         },
       });
 
       expect(app.config.title).toBe("Test App");
       expect(app.config.root).toBe("/custom/root");
-      expect(app.config.islands?.basePath).toBe("/custom-islands");
       expect(app.config.islands?.cache).toBe(false);
     });
   });
@@ -225,14 +223,11 @@ describe("createApp", () => {
         routes: {
           "/": () => <Counter />,
         },
-        islands: {
-          basePath: "/islands",
-        },
       });
 
       const result = await app.render("/");
 
-      expect(result.scripts).toContain("/islands/");
+      expect(result.scripts).toContain("/_semajsx/islands/");
       expect(result.scripts).toContain(".js");
     });
   });
@@ -241,14 +236,6 @@ describe("createApp", () => {
     it("should return null before prepare()", () => {
       app = createApp();
       expect(app.getViteServer()).toBeNull();
-    });
-  });
-
-  describe("fromBuild", () => {
-    it("should throw not implemented error", async () => {
-      await expect(createApp.fromBuild("./dist")).rejects.toThrow(
-        "fromBuild is not yet implemented",
-      );
     });
   });
 });

@@ -26,7 +26,10 @@
     "@semajsx/core": "workspace:*",
     "@semajsx/dom": "workspace:*",
     "@semajsx/logger": "workspace:*",
-    "@semajsx/signal": "workspace:*"
+    "@semajsx/signal": "workspace:*",
+    "glob": "^11.0.0",
+    "lightningcss": "^1.30.2",
+    "minimatch": "^10.0.0"
   },
   "devDependencies": {
     "@semajsx/configs": "workspace:*",

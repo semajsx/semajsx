@@ -7,6 +7,7 @@ export {
   hydrateIsland,
   hydrateIslands,
   hydrateIslandById,
+  hydrateAllIslands,
   hasIslands,
   getIslandIds,
   getIslandInfo,
@@ -21,3 +22,28 @@ export {
   isIslandVNode,
   getIslandMetadata,
 } from "./island";
+
+export {
+  resource,
+  isStyleVNode,
+  isLinkVNode,
+  isAssetVNode,
+  STYLE_MARKER,
+  LINK_MARKER,
+  ASSET_MARKER,
+  type ResourceTools,
+  type StyleProps,
+  type LinkProps,
+  type AssetProps,
+} from "./resource";
+
+export {
+  clientResource,
+  setManifest,
+  getManifest,
+  resolveCSS,
+  resolveAsset,
+  loadStylesheet,
+  type ClientManifest,
+  type ClientResourceTools,
+} from "./client-resource";
