@@ -86,7 +86,8 @@ export function resource(baseUrl: string): ResourceTools {
    */
   const resolve = (href: string): string => {
     if (href.startsWith("./") || href.startsWith("../")) {
-      return new URL(href, baseUrl).pathname;
+      const url = new URL(href, baseUrl);
+      return url.pathname + url.search + url.hash;
     }
     return href;
   };

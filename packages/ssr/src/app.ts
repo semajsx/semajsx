@@ -155,6 +155,7 @@ class AppImpl implements App {
       // Default transformer generates standard script tags
       transformIslandScript: (island) =>
         `<script type="module" src="${island.basePath}/${island.id}.js" async></script>`,
+      rootDir: this.config.root,
     });
 
     // Cache islands
@@ -369,11 +370,11 @@ if (Component) {
       logger.info("Phase 2 complete: Vite build finished");
 
       // Record built islands
-      for (const [, island] of allIslands) {
-        const webPath = `/_semajsx/islands/${island.id}.js`;
+      for (const [componentKey, island] of allIslands) {
+        const webPath = `/_semajsx/islands/${componentKey}.js`;
 
         builtIslands.push({
-          id: island.id,
+          id: componentKey,
           path: island.path,
           outputPath: webPath,
         });
