@@ -5,8 +5,7 @@ import { resource } from "@semajsx/ssr";
 import type { VNode } from "@semajsx/core";
 
 // Import components
-import { Layout } from "./components/Layout";
-import { Callout, CodeBlock } from "./components";
+import { Layout, DocTemplate, Callout, CodeBlock } from "./components";
 
 // Get the directory where this script is located
 const rootDir = import.meta.dir;
@@ -50,7 +49,7 @@ const guides = defineCollection({
 
 // Components
 const HomePage = (): VNode => (
-  <Layout title="SemaJSX Documentation" description="A lightweight, signal-based reactive JSX runtime">
+  <Layout>
     <Style href="./styles.css" />
     <div class="home">
       <header class="hero">
@@ -97,7 +96,7 @@ const DocsIndex = ({
   Object.values(byCategory).forEach(items => items.sort((a, b) => a.data.order - b.data.order));
 
   return (
-    <Layout title="Documentation" description="Learn how to use SemaJSX">
+    <Layout>
       <Style href="./styles.css" />
       <div class="docs-index">
         <h1>Documentation</h1>
@@ -128,7 +127,7 @@ const DocPage = ({
   doc: { data: { title: string; description?: string } };
   content: VNode;
 }): VNode => (
-  <Layout title={doc.data.title} description={doc.data.description}>
+  <Layout>
     <Style href="./styles.css" />
     <article class="doc-page">
       <h1>{doc.data.title}</h1>
@@ -155,7 +154,7 @@ const GuidesIndex = ({
   Object.values(byDifficulty).forEach(items => items.sort((a, b) => a.data.order - b.data.order));
 
   return (
-    <Layout title="Guides" description="Step-by-step guides for building with SemaJSX">
+    <Layout>
       <Style href="./styles.css" />
       <div class="guides-index">
         <h1>Guides</h1>
@@ -186,7 +185,7 @@ const GuidePage = ({
   guide: { data: { title: string; description?: string; difficulty: string } };
   content: VNode;
 }): VNode => (
-  <Layout title={guide.data.title} description={guide.data.description}>
+  <Layout>
     <Style href="./styles.css" />
     <article class="guide-page">
       <div class={`difficulty-badge difficulty-${guide.data.difficulty}`}>
@@ -204,6 +203,8 @@ const ssg = createSSG({
   rootDir,
   outDir: "./dist",
   collections: [docs, guides],
+  // Custom document template
+  document: DocTemplate,
   // MDX configuration with custom components
   mdx: {
     components: {
@@ -215,7 +216,7 @@ const ssg = createSSG({
     {
       path: "/",
       component: HomePage,
-      props: { title: "Home" },
+      props: { title: "SemaJSX Documentation" },
     },
     {
       path: "/docs",
@@ -235,7 +236,11 @@ const ssg = createSSG({
             const { Content } = await doc.render();
             return {
               params: { slug: doc.slug },
-              props: { doc, content: Content(), title: doc.data.title },
+              props: {
+                doc,
+                content: Content(),
+                title: `${doc.data.title} | SemaJSX Documentation`
+              },
             };
           }),
         );
@@ -259,7 +264,11 @@ const ssg = createSSG({
             const { Content } = await guide.render();
             return {
               params: { slug: guide.slug },
-              props: { guide, content: Content(), title: guide.data.title },
+              props: {
+                guide,
+                content: Content(),
+                title: `${guide.data.title} | SemaJSX Guides`
+              },
             };
           }),
         );
