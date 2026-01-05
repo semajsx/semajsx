@@ -105,10 +105,7 @@ describe("computed", () => {
     const lastName = signal("Doe");
     const age = signal(30);
 
-    const profile = computed(
-      [firstName, lastName, age],
-      (f, l, a) => `${f} ${l}, ${a} years old`,
-    );
+    const profile = computed([firstName, lastName, age], (f, l, a) => `${f} ${l}, ${a} years old`);
 
     expect(profile.value).toBe("John Doe, 30 years old");
 

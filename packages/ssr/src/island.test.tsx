@@ -55,10 +55,7 @@ describe("island", () => {
   });
 
   it("should work with components that have no props", () => {
-    const Static = island(
-      () => <div>Static content</div>,
-      "/path/to/Static.tsx",
-    );
+    const Static = island(() => <div>Static content</div>, "/path/to/Static.tsx");
 
     const vnode = <Static />;
     expect(isIslandVNode(vnode)).toBe(true);

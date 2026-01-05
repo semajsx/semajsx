@@ -97,9 +97,7 @@ describe("helpers", () => {
     });
 
     it("should handle rejected promise", async () => {
-      const consoleSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       const error = new Error("Test error");
       const promise = Promise.reject(error);
       const result = resource(promise);
@@ -149,9 +147,7 @@ describe("helpers", () => {
     });
 
     it("should handle errors in stream", async () => {
-      const consoleSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {});
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       async function* gen() {
         yield h("div", null, "first");

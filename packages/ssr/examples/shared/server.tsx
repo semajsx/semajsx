@@ -35,10 +35,7 @@ export function startServer(app: any, config: ServerConfig) {
 /**
  * Print server information to terminal
  */
-function printServerInfo(
-  server: ReturnType<typeof Bun.serve>,
-  config: ServerConfig,
-) {
+function printServerInfo(server: ReturnType<typeof Bun.serve>, config: ServerConfig) {
   const { title, borderColor = "green", features = [] } = config;
   const url = server.url.toString();
   const hostname = server.hostname;
@@ -47,12 +44,7 @@ function printServerInfo(
   print(
     <box flexDirection="column">
       {/* Title Banner */}
-      <box
-        border="round"
-        borderColor={borderColor}
-        padding={1}
-        marginBottom={1}
-      >
+      <box border="round" borderColor={borderColor} padding={1} marginBottom={1}>
         <text bold color={borderColor}>
           {title}
         </text>

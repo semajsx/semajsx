@@ -14,11 +14,7 @@ export const Portal: symbol = Symbol.for("semajsx.portal");
  * VNode types
  * - The runtime VNode tree always resolves to these `type` values
  */
-export type VNodeType =
-  | string
-  | Component<any>
-  | typeof Fragment
-  | typeof Portal;
+export type VNodeType = string | Component<any> | typeof Fragment | typeof Portal;
 
 /**
  * VNode: The basic unit of the runtime render tree

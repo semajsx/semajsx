@@ -7,10 +7,7 @@ import type {
   DocumentTemplate,
 } from "./shared/types";
 import { renderToString } from "./render";
-import {
-  createViteIslandBuilder,
-  type ViteIslandBuilder,
-} from "./vite-builder";
+import { createViteIslandBuilder, type ViteIslandBuilder } from "./vite-builder";
 import type { ViteDevServer } from "vite";
 import { LRUCache } from "./lru-cache";
 
@@ -261,19 +258,14 @@ export class ViteRouter {
    * Example: /blog/:id -> /^\/blog\/([^\/]+)$/
    */
   private pathToRegex(path: string): RegExp {
-    const pattern = path
-      .replace(/\//g, "\\/")
-      .replace(/:([^/]+)/g, "(?<$1>[^\\/]+)");
+    const pattern = path.replace(/\//g, "\\/").replace(/:([^/]+)/g, "(?<$1>[^\\/]+)");
     return new RegExp(`^${pattern}$`);
   }
 
   /**
    * Extract params from regex match
    */
-  private extractParams(
-    _pattern: RegExp,
-    match: RegExpMatchArray,
-  ): Record<string, string> {
+  private extractParams(_pattern: RegExp, match: RegExpMatchArray): Record<string, string> {
     return match.groups || {};
   }
 }

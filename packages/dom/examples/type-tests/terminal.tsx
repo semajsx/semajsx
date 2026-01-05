@@ -65,14 +65,7 @@ const terminalApp = (
     </box>
 
     {/* Test size constraints */}
-    <box
-      minWidth={10}
-      minHeight={5}
-      maxWidth={100}
-      maxHeight={50}
-      width="50%"
-      height={10}
-    >
+    <box minWidth={10} minHeight={5} maxWidth={100} maxHeight={50} width="50%" height={10}>
       <text>Size constrained box</text>
     </box>
   </box>

@@ -84,12 +84,7 @@ function CanvasExample() {
   return (
     <div>
       <h2>Example 3: Canvas Ref</h2>
-      <canvas
-        ref={canvasRef}
-        width={200}
-        height={150}
-        style={{ border: "1px solid #ccc" }}
-      />
+      <canvas ref={canvasRef} width={200} height={150} style={{ border: "1px solid #ccc" }} />
       <br />
       <button onClick={drawCircle}>Draw Circle</button>
       <button onClick={drawSquare}>Draw Square</button>

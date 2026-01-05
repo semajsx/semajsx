@@ -9,9 +9,7 @@ import { createSignalVNode, createTextVNode, isVNode } from "./vnode";
  * - 1 child => the child itself
  * - >1 children => array
  */
-export function normalizeChildrenProp(
-  children: VNode[],
-): VNode | VNode[] | undefined {
+export function normalizeChildrenProp(children: VNode[]): VNode | VNode[] | undefined {
   if (children.length === 0) {
     return undefined;
   }
@@ -24,9 +22,7 @@ export function normalizeChildrenProp(
 /**
  * Normalize any JSXNode result from a component into a concrete VNode.
  */
-export function normalizeComponentResult(
-  result: VNode | JSXPrimitive | Iterable<JSXNode>,
-): VNode {
+export function normalizeComponentResult(result: VNode | JSXPrimitive | Iterable<JSXNode>): VNode {
   if (isVNode(result)) {
     return result;
   }

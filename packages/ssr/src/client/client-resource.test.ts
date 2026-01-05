@@ -40,9 +40,7 @@ describe("Client Resource", () => {
         assets: {},
       });
 
-      expect(resolveCSS("src/styles.css")).toBe(
-        "/_semajsx/css/styles-abc123.css",
-      );
+      expect(resolveCSS("src/styles.css")).toBe("/_semajsx/css/styles-abc123.css");
     });
 
     it("should strip leading slash for lookup", () => {
@@ -51,9 +49,7 @@ describe("Client Resource", () => {
         assets: {},
       });
 
-      expect(resolveCSS("/src/styles.css")).toBe(
-        "/_semajsx/css/styles-abc123.css",
-      );
+      expect(resolveCSS("/src/styles.css")).toBe("/_semajsx/css/styles-abc123.css");
     });
 
     it("should return original path if not in manifest", () => {
@@ -79,9 +75,7 @@ describe("Client Resource", () => {
         assets: { "src/icon.png": "/_semajsx/assets/icon-abc123.png" },
       });
 
-      expect(resolveAsset("src/icon.png")).toBe(
-        "/_semajsx/assets/icon-abc123.png",
-      );
+      expect(resolveAsset("src/icon.png")).toBe("/_semajsx/assets/icon-abc123.png");
     });
 
     it("should strip leading slash for lookup", () => {
@@ -90,9 +84,7 @@ describe("Client Resource", () => {
         assets: { "src/icon.png": "/_semajsx/assets/icon-abc123.png" },
       });
 
-      expect(resolveAsset("/src/icon.png")).toBe(
-        "/_semajsx/assets/icon-abc123.png",
-      );
+      expect(resolveAsset("/src/icon.png")).toBe("/_semajsx/assets/icon-abc123.png");
     });
 
     it("should return original path if not in manifest", () => {

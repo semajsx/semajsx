@@ -8,10 +8,7 @@ export default {
           // Check for non-ASCII characters (Chinese, Japanese, etc.)
           const nonAsciiRegex = /[^\x00-\x7F]/;
           if (nonAsciiRegex.test(header)) {
-            return [
-              false,
-              "Commit message must be in English (no non-ASCII characters allowed)",
-            ];
+            return [false, "Commit message must be in English (no non-ASCII characters allowed)"];
           }
           return [true];
         },

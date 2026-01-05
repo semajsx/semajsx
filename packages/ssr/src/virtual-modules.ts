@@ -21,10 +21,7 @@ export function virtualModules(modules: VirtualModulesOptions): Plugin {
   // Find module content by trying multiple id variations
   function find(id: string): string | undefined {
     return (
-      modules[id] ||
-      modules[id.replace(/^\//, "")] ||
-      modules[`/${id}`] ||
-      resolvedIds.get(id)
+      modules[id] || modules[id.replace(/^\//, "")] || modules[`/${id}`] || resolvedIds.get(id)
     );
   }
 

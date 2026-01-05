@@ -1,13 +1,23 @@
 {
   "name": "semajsx-monorepo",
   "version": "0.1.0",
-  "description": "Monorepo for SemaJSX - A signal-based reactive JSX runtime for building modern web applications",
-  "type": "module",
   "private": true,
+  "description": "Monorepo for SemaJSX - A signal-based reactive JSX runtime for building modern web applications",
+  "keywords": [
+    "framework",
+    "jsx",
+    "reactive",
+    "signal",
+    "typescript",
+    "ui"
+  ],
+  "license": "MIT",
+  "author": "lidessen",
   "workspaces": [
     "packages/*",
     "apps/*"
   ],
+  "type": "module",
   "scripts": {
     "build": "bun run --filter '*' build",
     "dev": "bun run --filter '*' dev",
@@ -18,34 +28,23 @@
     "typecheck:tsc": "bun run --filter '*' typecheck",
     "typecheck:compare": "bun run typecheck:tsc && bun run typecheck",
     "clean": "bun run --filter '*' clean && rm -rf node_modules",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
     "lint": "oxlint packages",
     "lint:fix": "oxlint --fix packages",
     "prepare": "husky"
   },
-  "keywords": [
-    "jsx",
-    "signal",
-    "reactive",
-    "ui",
-    "framework",
-    "typescript"
-  ],
-  "author": "lidessen",
-  "license": "MIT",
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
-    "@prettier/plugin-oxc": "^0.0.5",
     "@types/bun": "^1.3.3",
     "@types/node": "^24.10.1",
     "@typescript/native-preview": "^7.0.0-dev.20260105.1",
     "@vitest/coverage-v8": "^4.0.13",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
+    "oxfmt": "^0.22.0",
     "oxlint": "^1.29.0",
-    "prettier": "^3.6.2",
     "typescript": "^5.9.3"
   },
   "engines": {

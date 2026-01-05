@@ -12,12 +12,7 @@ export type TerminalNodeType = "element" | "text" | "root";
  */
 export interface TerminalStyle {
   flexDirection?: "row" | "column" | "row-reverse" | "column-reverse";
-  justifyContent?:
-    | "flex-start"
-    | "center"
-    | "flex-end"
-    | "space-between"
-    | "space-around";
+  justifyContent?: "flex-start" | "center" | "flex-end" | "space-between" | "space-around";
   alignItems?: "flex-start" | "center" | "flex-end" | "stretch";
   flexGrow?: number;
   flexShrink?: number;

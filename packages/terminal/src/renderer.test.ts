@@ -98,9 +98,7 @@ describe("TerminalRenderer", () => {
 
       expect(mockStream.output.length).toBeGreaterThan(0);
       // Check for ANSI escape sequences (could be various clear codes)
-      const hasEscapeSequence = mockStream.output.some((o) =>
-        o.includes("\x1B"),
-      );
+      const hasEscapeSequence = mockStream.output.some((o) => o.includes("\x1B"));
       expect(hasEscapeSequence).toBe(true);
     });
   });
@@ -167,11 +165,7 @@ describe("TerminalRenderer", () => {
       expect(child1.x).toBeDefined();
       expect(child2.x).toBeDefined();
       // In row layout, child2 should be positioned after child1
-      if (
-        child1.x !== undefined &&
-        child2.x !== undefined &&
-        child1.width !== undefined
-      ) {
+      if (child1.x !== undefined && child2.x !== undefined && child1.width !== undefined) {
         expect(child2.x).toBeGreaterThanOrEqual(child1.x);
       }
     });

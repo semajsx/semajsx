@@ -7,13 +7,7 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  external: [
-    "@semajsx/core",
-    "@semajsx/dom",
-    "@semajsx/logger",
-    "@semajsx/signal",
-    "vite",
-  ],
+  external: ["@semajsx/core", "@semajsx/dom", "@semajsx/logger", "@semajsx/signal", "vite"],
   exports: {
     devExports: true,
   },

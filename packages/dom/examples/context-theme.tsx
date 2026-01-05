@@ -93,9 +93,7 @@ function Content(_props: any, ctx: ComponentAPI) {
       }}
     >
       <h2>Content (uses context)</h2>
-      <p>
-        This component gets its theme from Context, not from props drilling.
-      </p>
+      <p>This component gets its theme from Context, not from props drilling.</p>
       <NestedComponent />
     </main>
   );

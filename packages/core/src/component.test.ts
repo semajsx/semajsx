@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { signal } from "@semajsx/signal";
-import {
-  normalizeChildrenProp,
-  normalizeComponentResult,
-} from "../src/component";
+import { normalizeChildrenProp, normalizeComponentResult } from "../src/component";
 import { createTextVNode } from "../src/vnode";
 import { Fragment } from "../src/types";
 
@@ -73,10 +70,7 @@ describe("component normalization", () => {
     });
 
     it("should convert array of VNodes to Fragment", () => {
-      const result = normalizeComponentResult([
-        createTextVNode("hello"),
-        createTextVNode("world"),
-      ]);
+      const result = normalizeComponentResult([createTextVNode("hello"), createTextVNode("world")]);
       expect(result.type).toBe(Fragment);
       expect(result.children).toHaveLength(2);
     });
@@ -100,9 +94,9 @@ describe("component normalization", () => {
     });
 
     it("should throw for invalid types", () => {
-      expect(() =>
-        normalizeComponentResult(Symbol("test") as unknown as string),
-      ).toThrow("Invalid component return type");
+      expect(() => normalizeComponentResult(Symbol("test") as unknown as string)).toThrow(
+        "Invalid component return type",
+      );
     });
   });
 });

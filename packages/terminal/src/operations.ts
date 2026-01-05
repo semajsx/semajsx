@@ -1,12 +1,7 @@
 import Yoga from "yoga-layout-prebuilt";
 import stringWidth from "string-width";
 import wrapAnsi from "wrap-ansi";
-import type {
-  TerminalNode,
-  TerminalElement,
-  TerminalText,
-  TerminalStyle,
-} from "./types";
+import type { TerminalNode, TerminalElement, TerminalText, TerminalStyle } from "./types";
 
 /**
  * Create a terminal element
@@ -66,10 +61,7 @@ export function appendChild(parent: TerminalNode, child: TerminalNode): void {
   parent.children.push(child);
 
   if (parent.yogaNode && child.yogaNode) {
-    parent.yogaNode.insertChild(
-      child.yogaNode,
-      parent.yogaNode.getChildCount(),
-    );
+    parent.yogaNode.insertChild(child.yogaNode, parent.yogaNode.getChildCount());
   }
 }
 
@@ -125,10 +117,7 @@ export function insertBefore(
 /**
  * Replace a node with another node
  */
-export function replaceNode(
-  oldNode: TerminalNode,
-  newNode: TerminalNode,
-): void {
+export function replaceNode(oldNode: TerminalNode, newNode: TerminalNode): void {
   const parent = oldNode.parent;
   if (!parent) return;
 
@@ -157,10 +146,7 @@ export function setText(node: TerminalNode, text: string): void {
 /**
  * Apply yoga layout styles
  */
-export function applyStyle(
-  element: TerminalElement,
-  style: Partial<TerminalStyle>,
-): void {
+export function applyStyle(element: TerminalElement, style: Partial<TerminalStyle>): void {
   const { yogaNode } = element;
   if (!yogaNode) return;
 
@@ -309,10 +295,7 @@ export function collectText(node: TerminalNode): string {
  * Measure text node for Yoga layout
  * This is called by Yoga when calculating layout
  */
-function measureTextNode(
-  node: TerminalElement,
-  width: number,
-): { width: number; height: number } {
+function measureTextNode(node: TerminalElement, width: number): { width: number; height: number } {
   // Collect all text from children
   const text = collectText(node);
 
@@ -340,9 +323,7 @@ function measureTextNode(
     trim: false,
   });
   const wrappedLines = wrappedText.split("\n");
-  const wrappedWidth = Math.max(
-    ...wrappedLines.map((line) => stringWidth(line)),
-  );
+  const wrappedWidth = Math.max(...wrappedLines.map((line) => stringWidth(line)));
 
   return { width: wrappedWidth, height: wrappedLines.length };
 }

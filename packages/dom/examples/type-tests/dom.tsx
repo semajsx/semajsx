@@ -15,12 +15,7 @@ const app = (
 
     {/* Test form elements */}
     <form onSubmit={(e) => console.log(e)}>
-      <input
-        type="text"
-        placeholder="Enter your name"
-        value=""
-        onChange={(e) => console.log(e)}
-      />
+      <input type="text" placeholder="Enter your name" value="" onChange={(e) => console.log(e)} />
       <button type="submit" disabled={false}>
         Submit
       </button>

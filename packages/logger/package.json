@@ -2,6 +2,10 @@
   "name": "@semajsx/logger",
   "version": "0.1.0",
   "description": "Rich terminal logging utility for SemaJSX",
+  "files": [
+    "dist",
+    "src"
+  ],
   "type": "module",
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
@@ -10,10 +14,6 @@
     ".": "./src/index.ts",
     "./package.json": "./package.json"
   },
-  "files": [
-    "dist",
-    "src"
-  ],
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",

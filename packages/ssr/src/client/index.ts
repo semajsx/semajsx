@@ -16,12 +16,7 @@ export {
 
 export type { IslandInfo } from "./hydrate";
 
-export {
-  island,
-  isIslandComponent,
-  isIslandVNode,
-  getIslandMetadata,
-} from "./island";
+export { island, isIslandComponent, isIslandVNode, getIslandMetadata } from "./island";
 
 export {
   resource,

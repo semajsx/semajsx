@@ -26,8 +26,7 @@ export function jsxDEV(
   // Island components are functions with ISLAND_MARKER symbol
   if (typeof type === "function" && ISLAND_MARKER in type) {
     // Call the island wrapper directly with all props
-    const islandProps =
-      children !== undefined ? { ...restProps, children } : restProps;
+    const islandProps = children !== undefined ? { ...restProps, children } : restProps;
     return type(islandProps);
   }
 

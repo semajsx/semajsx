@@ -34,8 +34,7 @@ export class IslandCollector {
           id: `island-${this.counter++}`,
           path: metadata.modulePath,
           props: this.serializeProps(metadata.props),
-          componentName:
-            typeof vnode.type === "function" ? vnode.type.name : undefined,
+          componentName: typeof vnode.type === "function" ? vnode.type.name : undefined,
         });
       }
       // Don't traverse into island children - they will be rendered on client
@@ -122,9 +121,7 @@ export class IslandCollector {
         continue;
       }
 
-      console.warn(
-        `Skipping non-serializable prop "${key}" of type ${typeof value}`,
-      );
+      console.warn(`Skipping non-serializable prop "${key}" of type ${typeof value}`);
     }
 
     return serialized;

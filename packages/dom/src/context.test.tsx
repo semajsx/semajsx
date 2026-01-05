@@ -1,13 +1,7 @@
 /** @jsxImportSource @semajsx/dom */
 
 import { describe, expect, it } from "vitest";
-import {
-  Context,
-  context,
-  createComponentAPI,
-  Fragment,
-  type ComponentAPI,
-} from "@semajsx/core";
+import { Context, context, createComponentAPI, Fragment, type ComponentAPI } from "@semajsx/core";
 
 describe("Context API", () => {
   it("should create a context (Symbol)", () => {

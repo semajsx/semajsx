@@ -59,9 +59,7 @@ export const TodoList = island(
     // Use computed for conditional rendering based on todos
     const emptyMessage = computed(todos, (todoList) =>
       todoList.length === 0 ? (
-        <p style={{ color: "#6b7280", textAlign: "center" }}>
-          No todos yet. Add one above!
-        </p>
+        <p style={{ color: "#6b7280", textAlign: "center" }}>No todos yet. Add one above!</p>
       ) : null,
     );
 
@@ -79,9 +77,7 @@ export const TodoList = island(
           <input
             type="text"
             value={input}
-            onInput={(e) =>
-              (input.value = (e.target as HTMLInputElement).value)
-            }
+            onInput={(e) => (input.value = (e.target as HTMLInputElement).value)}
             onKeyPress={(e) => e.key === "Enter" && addTodo()}
             placeholder="Add a new todo..."
             style={{ flex: "1", padding: "10px", fontSize: "16px" }}

@@ -16,10 +16,7 @@ export const Pagination = island(
     // Return a fragment - multiple elements without a wrapper
     return (
       <>
-        <button
-          onClick={() => current.value > 1 && current.value--}
-          disabled={isPrevDisabled}
-        >
+        <button onClick={() => current.value > 1 && current.value--} disabled={isPrevDisabled}>
           ← Prev
         </button>
         <span
@@ -30,10 +27,7 @@ export const Pagination = island(
         >
           Page {current} of {total}
         </span>
-        <button
-          onClick={() => current.value < total && current.value++}
-          disabled={isNextDisabled}
-        >
+        <button onClick={() => current.value < total && current.value++} disabled={isNextDisabled}>
           Next →
         </button>
       </>

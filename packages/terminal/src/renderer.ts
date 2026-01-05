@@ -2,18 +2,8 @@ import Yoga from "yoga-layout-prebuilt";
 import ansiEscapes from "ansi-escapes";
 import stringWidth from "string-width";
 import sliceAnsi from "slice-ansi";
-import type {
-  TerminalNode,
-  TerminalElement,
-  TerminalText,
-  TerminalRoot,
-} from "./types";
-import {
-  renderBorder,
-  renderBackground,
-  renderTextNode,
-  renderTextElement,
-} from "./rendering";
+import type { TerminalNode, TerminalElement, TerminalText, TerminalRoot } from "./types";
+import { renderBorder, renderBackground, renderTextNode, renderTextElement } from "./rendering";
 
 /**
  * Terminal renderer instance
@@ -99,11 +89,7 @@ export class TerminalRenderer {
   /**
    * Update positions of nodes based on yoga layout
    */
-  private updatePositions(
-    node: TerminalNode,
-    parentX: number,
-    parentY: number,
-  ): void {
+  private updatePositions(node: TerminalNode, parentX: number, parentY: number): void {
     if (node.yogaNode) {
       node.x = Math.round(parentX + node.yogaNode.getComputedLeft());
       node.y = Math.round(parentY + node.yogaNode.getComputedTop());
@@ -115,11 +101,7 @@ export class TerminalRenderer {
       let childOffsetX = node.x || 0;
       let childOffsetY = node.y || 0;
 
-      if (
-        node.type === "element" &&
-        node.style.border &&
-        node.style.border !== "none"
-      ) {
+      if (node.type === "element" && node.style.border && node.style.border !== "none") {
         // Expand width and height to include border (1 char on each side)
         node.width += 2;
         node.height += 2;
@@ -161,11 +143,7 @@ export class TerminalRenderer {
 
     if (y >= this.buffer.length || x < 0) return;
 
-    renderTextNode(
-      node,
-      this.writeAt.bind(this),
-      this.root.stream.columns || 80,
-    );
+    renderTextNode(node, this.writeAt.bind(this), this.root.stream.columns || 80);
   }
 
   /**
@@ -229,8 +207,7 @@ export class TerminalRenderer {
     }
 
     // Get only the lines with content
-    const contentLines =
-      lastNonEmptyIndex >= 0 ? this.buffer.slice(0, lastNonEmptyIndex + 1) : [];
+    const contentLines = lastNonEmptyIndex >= 0 ? this.buffer.slice(0, lastNonEmptyIndex + 1) : [];
     const output = contentLines.join("\n");
 
     // Only update if changed

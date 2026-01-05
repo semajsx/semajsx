@@ -20,8 +20,7 @@ export class RemoteSource<T = unknown> extends BaseSource<T> {
     const items = await this.options.fetch();
 
     return items.map((item, index) => {
-      const id =
-        (item as Record<string, unknown>).id?.toString() ?? index.toString();
+      const id = (item as Record<string, unknown>).id?.toString() ?? index.toString();
       const slug = (item as Record<string, unknown>).slug?.toString() ?? id;
 
       return {

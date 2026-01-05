@@ -141,15 +141,11 @@ describe("Async Components", () => {
 
       // Wait for first yield
       await new Promise((resolve) => setTimeout(resolve, 5));
-      expect(container.querySelector(".loading")?.textContent).toBe(
-        "Loading...",
-      );
+      expect(container.querySelector(".loading")?.textContent).toBe("Loading...");
 
       // Wait for second yield
       await new Promise((resolve) => setTimeout(resolve, 15));
-      expect(container.querySelector(".processing")?.textContent).toBe(
-        "Processing...",
-      );
+      expect(container.querySelector(".processing")?.textContent).toBe("Processing...");
 
       // Wait for final yield
       await new Promise((resolve) => setTimeout(resolve, 15));
@@ -211,18 +207,14 @@ describe("Async Components", () => {
       render(vnode, container);
 
       // Sync should render immediately
-      expect(container.querySelector(".sync")?.textContent).toBe(
-        "Sync content",
-      );
+      expect(container.querySelector(".sync")?.textContent).toBe("Sync content");
 
       // Async should be empty initially
       expect(container.querySelector(".async")).toBeFalsy();
 
       // Wait for async
       await new Promise((resolve) => setTimeout(resolve, 15));
-      expect(container.querySelector(".async")?.textContent).toBe(
-        "Async content",
-      );
+      expect(container.querySelector(".async")?.textContent).toBe("Async content");
     });
   });
 });

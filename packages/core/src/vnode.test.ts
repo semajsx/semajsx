@@ -1,11 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import {
-  h,
-  createTextVNode,
-  createSignalVNode,
-  isVNode,
-  createFragment,
-} from "../src/vnode";
+import { h, createTextVNode, createSignalVNode, isVNode, createFragment } from "../src/vnode";
 import { Fragment } from "../src/types";
 import { signal } from "@semajsx/signal";
 

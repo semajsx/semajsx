@@ -102,10 +102,7 @@ describe("Portal functionality", () => {
   });
 
   it("should clean up portal content on unmount", () => {
-    const vnode = createPortal(
-      <div className="portal-content">Portal</div>,
-      portalTarget,
-    );
+    const vnode = createPortal(<div className="portal-content">Portal</div>, portalTarget);
 
     const { unmount } = render(vnode, container);
 
@@ -141,10 +138,7 @@ describe("Portal functionality", () => {
       clicked = true;
     };
 
-    const vnode = createPortal(
-      <button onClick={handleClick}>Click me</button>,
-      portalTarget,
-    );
+    const vnode = createPortal(<button onClick={handleClick}>Click me</button>, portalTarget);
 
     render(vnode, container);
 
@@ -157,10 +151,7 @@ describe("Portal functionality", () => {
 
   it("should work with refs in portaled content", () => {
     const buttonRef = signal<HTMLButtonElement | null>(null);
-    const vnode = createPortal(
-      <button ref={buttonRef}>Portal button</button>,
-      portalTarget,
-    );
+    const vnode = createPortal(<button ref={buttonRef}>Portal button</button>, portalTarget);
 
     render(vnode, container);
 

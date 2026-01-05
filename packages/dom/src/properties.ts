@@ -5,11 +5,7 @@ import { isSignal } from "@semajsx/signal";
 /**
  * Set a property on an element
  */
-export function setProperty(
-  element: Element,
-  key: string,
-  value: unknown,
-): void {
+export function setProperty(element: Element, key: string, value: unknown): void {
   // Skip internal props
   if (key === "key" || key === "ref" || key === "children") {
     return;

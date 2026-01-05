@@ -26,8 +26,7 @@ import { viteMDXPlugin } from "./mdx";
  */
 export class SSG<
   TRegistry extends Record<string, unknown> = Record<string, unknown>,
-> implements SSGInstance<TRegistry>
-{
+> implements SSGInstance<TRegistry> {
   private config: SSGConfig;
   private rootDir: string;
   private collections: Map<string, Collection>;
@@ -100,9 +99,7 @@ export class SSG<
     const validatedEntries = entries.map((entry) => {
       const result = collection.schema.safeParse(entry.data);
       if (!result.success) {
-        throw new Error(
-          `Validation error in ${name}/${entry.id}: ${result.error.message}`,
-        );
+        throw new Error(`Validation error in ${name}/${entry.id}: ${result.error.message}`);
       }
 
       return {
@@ -121,9 +118,7 @@ export class SSG<
 
           try {
             // Load module through Vite SSR
-            const moduleExports = (await vite.ssrLoadModule(
-              `virtual:mdx:${mdxId}`,
-            )) as {
+            const moduleExports = (await vite.ssrLoadModule(`virtual:mdx:${mdxId}`)) as {
               default: (props: Record<string, unknown>) => unknown;
             };
 
@@ -299,10 +294,7 @@ export class SSG<
     return { state, paths: builtPaths, stats };
   }
 
-  private async renderPage(
-    path: string,
-    props: Record<string, unknown>,
-  ): Promise<string> {
+  private async renderPage(path: string, props: Record<string, unknown>): Promise<string> {
     // Use App to render the page
     const result = await this.app.render(path);
 
@@ -396,9 +388,7 @@ export class SSG<
     return hash.toString(16);
   }
 
-  private extractHeadings(
-    content: string,
-  ): Array<{ depth: number; text: string; slug: string }> {
+  private extractHeadings(content: string): Array<{ depth: number; text: string; slug: string }> {
     const headings: Array<{ depth: number; text: string; slug: string }> = [];
     const regex = /^(#{1,6})\s+(.+)$/gm;
 

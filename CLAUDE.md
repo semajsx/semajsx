@@ -243,11 +243,11 @@ This hybrid approach maximizes development speed while maintaining stable builds
 
 ### Linting & Formatting
 
-The project uses **oxlint** (fast Rust-based linter) and **Prettier**:
+The project uses **oxlint** (fast Rust-based linter) and **oxfmt** (fast Rust-based formatter):
 
 - **Lint All Packages**: `bun run lint` from root
 - **Auto-Fix**: `bun run lint:fix`
-- **Format**: `bun run format` formats all files with Prettier
+- **Format**: `bun run format` formats all files with oxfmt (30x faster than Prettier)
 
 Configuration files are at the root level and apply to all packages.
 
@@ -255,7 +255,7 @@ Configuration files are at the root level and apply to all packages.
 
 Pre-commit hooks automatically run on staged files:
 
-- **Format**: Prettier on all staged files
+- **Format**: oxfmt on all staged files (30x faster than Prettier)
 - **Lint**: oxlint with auto-fix on TypeScript files
 - **Commit Messages**: Conventional commits enforced (English only)
 

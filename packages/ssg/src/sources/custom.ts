@@ -19,8 +19,7 @@ export class CustomSource<T = unknown> extends BaseSource<T> {
     const items = await this.options.getEntries();
 
     return items.map((item, index) => {
-      const id =
-        (item as Record<string, unknown>).id?.toString() ?? index.toString();
+      const id = (item as Record<string, unknown>).id?.toString() ?? index.toString();
       const slug = (item as Record<string, unknown>).slug?.toString() ?? id;
 
       return {
@@ -85,8 +84,6 @@ export class CustomSource<T = unknown> extends BaseSource<T> {
 /**
  * Create a custom source
  */
-export function createSource<T = unknown>(
-  options: CustomSourceOptions<T>,
-): CustomSource<T> {
+export function createSource<T = unknown>(options: CustomSourceOptions<T>): CustomSource<T> {
   return new CustomSource<T>(options);
 }

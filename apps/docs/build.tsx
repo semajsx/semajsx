@@ -54,21 +54,33 @@ const HomePage = (): VNode => (
     <div class="home">
       <header class="hero">
         <h1>SemaJSX</h1>
-        <p class="tagline">A lightweight, signal-based reactive JSX runtime for building modern web applications</p>
+        <p class="tagline">
+          A lightweight, signal-based reactive JSX runtime for building modern web applications
+        </p>
         <div class="actions">
-          <a href="/docs/getting-started" class="btn btn-primary">Get Started</a>
-          <a href="/guides" class="btn btn-secondary">View Guides</a>
+          <a href="/docs/getting-started" class="btn btn-primary">
+            Get Started
+          </a>
+          <a href="/guides" class="btn btn-secondary">
+            View Guides
+          </a>
         </div>
       </header>
 
       <section class="features">
         <div class="feature">
           <h2>🚀 Fine-Grained Reactivity</h2>
-          <p>Signals automatically track dependencies and update only what changed - no virtual DOM needed.</p>
+          <p>
+            Signals automatically track dependencies and update only what changed - no virtual DOM
+            needed.
+          </p>
         </div>
         <div class="feature">
           <h2>📦 Modular Architecture</h2>
-          <p>Choose what you need: DOM rendering, Terminal UI, SSR, or SSG - all with the same reactive core.</p>
+          <p>
+            Choose what you need: DOM rendering, Terminal UI, SSR, or SSG - all with the same
+            reactive core.
+          </p>
         </div>
         <div class="feature">
           <h2>🎯 Type-Safe</h2>
@@ -82,18 +94,24 @@ const HomePage = (): VNode => (
 const DocsIndex = ({
   docs: docsList,
 }: {
-  docs: Array<{ slug: string; data: { title: string; description?: string; category?: string; order: number } }>;
+  docs: Array<{
+    slug: string;
+    data: { title: string; description?: string; category?: string; order: number };
+  }>;
 }): VNode => {
   // Group docs by category
-  const byCategory = docsList.reduce((acc, doc) => {
-    const category = doc.data.category || "General";
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(doc);
-    return acc;
-  }, {} as Record<string, typeof docsList>);
+  const byCategory = docsList.reduce(
+    (acc, doc) => {
+      const category = doc.data.category || "General";
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(doc);
+      return acc;
+    },
+    {} as Record<string, typeof docsList>,
+  );
 
   // Sort within each category
-  Object.values(byCategory).forEach(items => items.sort((a, b) => a.data.order - b.data.order));
+  Object.values(byCategory).forEach((items) => items.sort((a, b) => a.data.order - b.data.order));
 
   return (
     <Layout>
@@ -140,18 +158,24 @@ const DocPage = ({
 const GuidesIndex = ({
   guides: guidesList,
 }: {
-  guides: Array<{ slug: string; data: { title: string; description?: string; difficulty: string; order: number } }>;
+  guides: Array<{
+    slug: string;
+    data: { title: string; description?: string; difficulty: string; order: number };
+  }>;
 }): VNode => {
   // Group guides by difficulty
-  const byDifficulty = guidesList.reduce((acc, guide) => {
-    const difficulty = guide.data.difficulty || "beginner";
-    if (!acc[difficulty]) acc[difficulty] = [];
-    acc[difficulty].push(guide);
-    return acc;
-  }, {} as Record<string, typeof guidesList>);
+  const byDifficulty = guidesList.reduce(
+    (acc, guide) => {
+      const difficulty = guide.data.difficulty || "beginner";
+      if (!acc[difficulty]) acc[difficulty] = [];
+      acc[difficulty].push(guide);
+      return acc;
+    },
+    {} as Record<string, typeof guidesList>,
+  );
 
   // Sort within each difficulty level
-  Object.values(byDifficulty).forEach(items => items.sort((a, b) => a.data.order - b.data.order));
+  Object.values(byDifficulty).forEach((items) => items.sort((a, b) => a.data.order - b.data.order));
 
   return (
     <Layout>
@@ -239,7 +263,7 @@ const ssg = createSSG({
               props: {
                 doc,
                 content: Content(),
-                title: `${doc.data.title} | SemaJSX Documentation`
+                title: `${doc.data.title} | SemaJSX Documentation`,
               },
             };
           }),
@@ -267,7 +291,7 @@ const ssg = createSSG({
               props: {
                 guide,
                 content: Content(),
-                title: `${guide.data.title} | SemaJSX Guides`
+                title: `${guide.data.title} | SemaJSX Guides`,
               },
             };
           }),

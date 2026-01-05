@@ -120,11 +120,7 @@ function TooltipExample() {
       </button>
 
       {showTooltip.value && (
-        <Tooltip
-          text="This is a tooltip!"
-          x={tooltipX.value}
-          y={tooltipY.value}
-        />
+        <Tooltip text="This is a tooltip!" x={tooltipX.value} y={tooltipY.value} />
       )}
     </div>
   );
@@ -185,10 +181,7 @@ function NotificationExample() {
   >([]);
   let nextId = 0;
 
-  const addNotification = (
-    message: string,
-    type: "success" | "error" | "info",
-  ) => {
+  const addNotification = (message: string, type: "success" | "error" | "info") => {
     const id = nextId++;
     notifications.value = [...notifications.value, { id, message, type }];
 
@@ -216,15 +209,9 @@ function NotificationExample() {
   return (
     <div>
       <h2>Example 3: Notification System</h2>
-      <button onClick={() => addNotification("Success!", "success")}>
-        Show Success
-      </button>
-      <button onClick={() => addNotification("Error occurred!", "error")}>
-        Show Error
-      </button>
-      <button onClick={() => addNotification("Info message", "info")}>
-        Show Info
-      </button>
+      <button onClick={() => addNotification("Success!", "success")}>Show Success</button>
+      <button onClick={() => addNotification("Error occurred!", "error")}>Show Error</button>
+      <button onClick={() => addNotification("Info message", "info")}>Show Info</button>
 
       {notificationsList}
     </div>

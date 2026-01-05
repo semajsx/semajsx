@@ -1,9 +1,4 @@
-import type {
-  CollectionSource,
-  CollectionEntry,
-  ChangeSet,
-  WatchCallback,
-} from "../types";
+import type { CollectionSource, CollectionEntry, ChangeSet, WatchCallback } from "../types";
 
 /**
  * Base class for collection sources

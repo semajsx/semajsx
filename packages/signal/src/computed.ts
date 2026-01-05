@@ -15,17 +15,12 @@ import { scheduleUpdate } from "./batch";
  */
 
 // Single dependency overload
-export function computed<T, R>(
-  dep: Signal<T>,
-  compute: (value: T) => R,
-): Signal<R>;
+export function computed<T, R>(dep: Signal<T>, compute: (value: T) => R): Signal<R>;
 
 // Multiple dependencies overload
 export function computed<T extends readonly Signal<any>[], R>(
   deps: [...T],
-  compute: (
-    ...values: { [K in keyof T]: T[K] extends Signal<infer V> ? V : never }
-  ) => R,
+  compute: (...values: { [K in keyof T]: T[K] extends Signal<infer V> ? V : never }) => R,
 ): Signal<R>;
 
 // Implementation
@@ -41,9 +36,7 @@ export function computed(deps: any, compute: any): Signal<any> {
   // Recompute when dependencies change
   const recompute = () => {
     const values = getValues();
-    const newValue = Array.isArray(deps)
-      ? compute(...values)
-      : compute(values[0]);
+    const newValue = Array.isArray(deps) ? compute(...values) : compute(values[0]);
 
     if (!Object.is(value, newValue)) {
       value = newValue;
@@ -65,9 +58,7 @@ export function computed(deps: any, compute: any): Signal<any> {
 
   // Initial computation
   const initialValues = getValues();
-  value = Array.isArray(deps)
-    ? compute(...initialValues)
-    : compute(initialValues[0]);
+  value = Array.isArray(deps) ? compute(...initialValues) : compute(initialValues[0]);
 
   // Subscribe to all dependencies
   // Note: unsubscribers are not currently used as we don't have a dispose mechanism

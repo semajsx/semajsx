@@ -107,10 +107,7 @@ describe("HTML Entry Build Output", () => {
 
     // Verify both HTML files exist
     const indexHtml = await readFile(join(OUT_DIR, "index.html"), "utf-8");
-    const postHtml = await readFile(
-      join(OUT_DIR, "blog", "post-1.html"),
-      "utf-8",
-    );
+    const postHtml = await readFile(join(OUT_DIR, "blog", "post-1.html"), "utf-8");
 
     expect(indexHtml).toContain("Home");
     expect(postHtml).toContain("Blog Post");

@@ -11,11 +11,7 @@ interface CodeBlockProps {
 /**
  * CodeBlock component for displaying code with syntax highlighting style
  */
-export function CodeBlock({
-  language = "text",
-  title,
-  children,
-}: CodeBlockProps): VNode {
+export function CodeBlock({ language = "text", title, children }: CodeBlockProps): VNode {
   return (
     <div
       style={{

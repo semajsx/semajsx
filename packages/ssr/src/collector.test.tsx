@@ -34,10 +34,7 @@ describe("IslandCollector", () => {
       "/Counter.tsx",
     );
 
-    const TodoList = island(
-      (_props: { items: string[] }) => <ul></ul>,
-      "/TodoList.tsx",
-    );
+    const TodoList = island((_props: { items: string[] }) => <ul></ul>, "/TodoList.tsx");
 
     const app = (
       <div>
@@ -85,24 +82,12 @@ describe("IslandCollector", () => {
 
   it("should serialize props correctly", () => {
     const Component = island(
-      (_props: {
-        num: number;
-        str: string;
-        bool: boolean;
-        arr: number[];
-        obj: any;
-      }) => <div></div>,
+      (_props: { num: number; str: string; bool: boolean; arr: number[]; obj: any }) => <div></div>,
       "/Component.tsx",
     );
 
     const app = (
-      <Component
-        num={42}
-        str="hello"
-        bool={true}
-        arr={[1, 2, 3]}
-        obj={{ key: "value" }}
-      />
+      <Component num={42} str="hello" bool={true} arr={[1, 2, 3]} obj={{ key: "value" }} />
     );
 
     const collector = createIslandCollector();

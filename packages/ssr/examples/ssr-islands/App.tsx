@@ -95,21 +95,21 @@ export function App() {
         <div class="static-content">
           <h2>What is this?</h2>
           <p>
-            This page demonstrates <strong>SSR Islands</strong> - a technique
-            where server-rendered HTML contains "islands" of interactivity.
+            This page demonstrates <strong>SSR Islands</strong> - a technique where server-rendered
+            HTML contains "islands" of interactivity.
           </p>
           <p>
-            The static content (like this text) is rendered on the server and
-            sent as HTML. The interactive components below are{" "}
-            <strong>islands</strong> that hydrate on the client side.
+            The static content (like this text) is rendered on the server and sent as HTML. The
+            interactive components below are <strong>islands</strong> that hydrate on the client
+            side.
           </p>
         </div>
 
         <h2>📊 Static Content</h2>
         <div class="static-content">
           <p>
-            This is <em>static content</em> rendered on the server. It doesn't
-            need JavaScript and loads instantly.
+            This is <em>static content</em> rendered on the server. It doesn't need JavaScript and
+            loads instantly.
           </p>
           <ul>
             <li>✅ Fast initial load</li>
@@ -120,8 +120,7 @@ export function App() {
 
         <h2>🎮 Interactive Islands</h2>
         <p style={{ color: "#6b7280" }}>
-          The components below are marked as islands and will hydrate on the
-          client:
+          The components below are marked as islands and will hydrate on the client:
         </p>
 
         {/* Island 1: Counter */}
@@ -129,8 +128,8 @@ export function App() {
 
         <div class="static-content">
           <p>
-            <strong>More static content between islands!</strong> This
-            demonstrates that you can mix static and interactive content freely.
+            <strong>More static content between islands!</strong> This demonstrates that you can mix
+            static and interactive content freely.
           </p>
         </div>
 
@@ -139,9 +138,8 @@ export function App() {
 
         <div class="static-content">
           <p>
-            <strong>Fragment Island:</strong> The pagination below returns
-            multiple elements without a wrapper (Fragment). This tests comment
-            marker hydration.
+            <strong>Fragment Island:</strong> The pagination below returns multiple elements without
+            a wrapper (Fragment). This tests comment marker hydration.
           </p>
         </div>
 
@@ -160,8 +158,8 @@ export function App() {
         <h2>🧪 Special Component Types</h2>
         <div class="static-content">
           <p>
-            These components test special rendering patterns: async loading,
-            signal reactivity, streaming updates, and conditional rendering.
+            These components test special rendering patterns: async loading, signal reactivity,
+            streaming updates, and conditional rendering.
           </p>
         </div>
 
@@ -181,16 +179,13 @@ export function App() {
         <div class="static-content">
           <ul>
             <li>
-              <strong>Selective Hydration:</strong> Only interactive components
-              load JavaScript
+              <strong>Selective Hydration:</strong> Only interactive components load JavaScript
             </li>
             <li>
-              <strong>Faster Performance:</strong> Less JavaScript = faster page
-              loads
+              <strong>Faster Performance:</strong> Less JavaScript = faster page loads
             </li>
             <li>
-              <strong>Runtime Discovery:</strong> Islands are discovered at
-              render time
+              <strong>Runtime Discovery:</strong> Islands are discovered at render time
             </li>
             <li>
               <strong>Lazy Building:</strong> Island code is built on-demand

@@ -94,9 +94,7 @@ export interface StaticPath<P = Record<string, string>> {
   props?: Record<string, unknown>;
 }
 
-export interface RouteConfig<
-  TRegistry extends Record<string, unknown> = Record<string, unknown>,
-> {
+export interface RouteConfig<TRegistry extends Record<string, unknown> = Record<string, unknown>> {
   /** Route path pattern (e.g., '/blog/:slug') */
   path: string;
   /** Component to render */
@@ -242,9 +240,7 @@ export interface Watcher {
 // SSG Instance
 // =============================================================================
 
-export interface SSGInstance<
-  TRegistry extends Record<string, unknown> = Record<string, unknown>,
-> {
+export interface SSGInstance<TRegistry extends Record<string, unknown> = Record<string, unknown>> {
   /** Get the root directory for resolving paths */
   getRootDir(): string;
 

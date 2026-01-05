@@ -175,9 +175,7 @@ describe("renderToString", () => {
     expect(result.html).toContain("<button>Prev</button>");
     expect(result.html).toContain("<button>Next</button>");
     // Props in script tag
-    expect(result.html).toMatch(
-      /<script type="application\/json" data-island="[^"]+"/,
-    );
+    expect(result.html).toMatch(/<script type="application\/json" data-island="[^"]+"/);
   });
 
   it("should render nested elements correctly", async () => {
@@ -352,8 +350,6 @@ describe("renderToString", () => {
     expect(result.html).toContain("data-island-props=");
 
     // Server-side metadata should still have the path
-    expect(result.islands[0]?.path).toBe(
-      "file:///home/user/project/src/components/Counter.tsx",
-    );
+    expect(result.islands[0]?.path).toBe("file:///home/user/project/src/components/Counter.tsx");
   });
 });

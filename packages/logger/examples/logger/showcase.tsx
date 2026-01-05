@@ -40,10 +40,7 @@ async function main() {
   logger.blank();
 
   logger.info({ user: "alice", action: "login", timestamp: Date.now() });
-  logger.info(
-    { endpoint: "/api/users", method: "GET", status: 200 },
-    { requestId: "abc123" },
-  );
+  logger.info({ endpoint: "/api/users", method: "GET", status: 200 }, { requestId: "abc123" });
 
   logger.blank();
 
@@ -256,12 +253,7 @@ async function main() {
   logger.blank();
 
   serverLogger.jsx(
-    <box
-      border="double"
-      borderColor="green"
-      padding={1}
-      justifyContent="center"
-    >
+    <box border="double" borderColor="green" padding={1} justifyContent="center">
       <text bold color="green">
         ✓ Server ready at http://localhost:3000
       </text>

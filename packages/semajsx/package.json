@@ -2,6 +2,19 @@
   "name": "semajsx",
   "version": "0.1.0",
   "description": "A signal-based reactive JSX runtime for building modern web applications",
+  "keywords": [
+    "framework",
+    "jsx",
+    "reactive",
+    "signal",
+    "typescript",
+    "ui"
+  ],
+  "license": "MIT",
+  "author": "lidessen",
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
@@ -17,9 +30,6 @@
     "./terminal/jsx-runtime": "./src/terminal/jsx-runtime.ts",
     "./package.json": "./package.json"
   },
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
@@ -41,16 +51,14 @@
     "example:logger": "bun --conditions=development examples/logger/basic.tsx",
     "example:logger:showcase": "bun --conditions=development examples/logger/showcase.tsx"
   },
-  "keywords": [
-    "jsx",
-    "signal",
-    "reactive",
-    "ui",
-    "framework",
-    "typescript"
-  ],
-  "author": "lidessen",
-  "license": "MIT",
+  "dependencies": {
+    "@semajsx/core": "workspace:*",
+    "@semajsx/dom": "workspace:*",
+    "@semajsx/signal": "workspace:*",
+    "@semajsx/ssr": "workspace:*",
+    "@semajsx/terminal": "workspace:*",
+    "@semajsx/utils": "workspace:*"
+  },
   "devDependencies": {
     "@semajsx/configs": "workspace:*",
     "@types/bun": "latest",
@@ -62,13 +70,5 @@
     "typescript": "^5.9.3",
     "vite": "^7.2.4",
     "vitest": "^4.0.13"
-  },
-  "dependencies": {
-    "@semajsx/core": "workspace:*",
-    "@semajsx/dom": "workspace:*",
-    "@semajsx/ssr": "workspace:*",
-    "@semajsx/signal": "workspace:*",
-    "@semajsx/terminal": "workspace:*",
-    "@semajsx/utils": "workspace:*"
   }
 }
