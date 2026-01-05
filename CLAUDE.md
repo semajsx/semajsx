@@ -41,6 +41,9 @@ semajsx/
 │   │   └── src/
 │   └── configs/              # Shared TypeScript configurations (internal)
 │
+├── apps/
+│   └── docs/                 # Documentation and design documents
+│
 ├── package.json              # Root workspace configuration
 └── MONOREPO_ARCHITECTURE.md  # Detailed architecture documentation
 ```
