@@ -50,14 +50,19 @@ Thank you for your interest in contributing to SemaJSX! This document provides g
 
 ```
 semajsx/
-├── src/              # Source code
+├── packages/        # Monorepo packages
 │   ├── signal/      # Signal reactivity system
-│   ├── runtime/     # Core runtime (VNode, helpers)
+│   ├── core/        # Core runtime (VNode, helpers)
 │   ├── dom/         # DOM rendering
-│   └── terminal/    # Terminal rendering
-├── tests/           # Test files
-├── examples/        # Example applications
-└── docs/            # Documentation
+│   ├── terminal/    # Terminal rendering
+│   ├── server/      # SSR and Island architecture
+│   ├── logger/      # Logging utilities
+│   ├── utils/       # Shared utilities
+│   ├── semajsx/     # Main umbrella package
+│   └── configs/     # Shared TypeScript configurations
+├── apps/            # Applications
+│   └── docs/        # Documentation and design documents
+└── package.json     # Root workspace configuration
 ```
 
 ### Running Examples

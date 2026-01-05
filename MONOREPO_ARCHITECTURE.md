@@ -122,7 +122,6 @@ semajsx/
 │
 ├── .github/                         # GitHub workflows and configs
 ├── .husky/                          # Git hooks
-├── docs/                            # Shared documentation
 ├── scripts/                         # Build and utility scripts
 │
 ├── package.json                     # Root package.json with workspaces
