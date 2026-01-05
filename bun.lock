@@ -18,6 +18,23 @@
         "typescript": "^5.9.3",
       },
     },
+    "apps/docs": {
+      "name": "@semajsx/docs",
+      "version": "0.1.0",
+      "dependencies": {
+        "@semajsx/core": "workspace:*",
+        "@semajsx/dom": "workspace:*",
+        "@semajsx/signal": "workspace:*",
+        "@semajsx/ssg": "workspace:*",
+        "@semajsx/ssr": "workspace:*",
+        "zod": "^4.0.0",
+      },
+      "devDependencies": {
+        "@semajsx/configs": "workspace:*",
+        "typescript": "^5.9.3",
+        "vite": "^7.0.0",
+      },
+    },
     "packages/configs": {
       "name": "@semajsx/configs",
       "version": "0.1.0",
@@ -433,6 +450,8 @@
     "@semajsx/configs": ["@semajsx/configs@workspace:packages/configs"],
 
     "@semajsx/core": ["@semajsx/core@workspace:packages/core"],
+
+    "@semajsx/docs": ["@semajsx/docs@workspace:apps/docs"],
 
     "@semajsx/dom": ["@semajsx/dom@workspace:packages/dom"],
 
