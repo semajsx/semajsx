@@ -282,7 +282,7 @@ async function renderVNodeToHTML(
           ? { ...vnodeTyped.props, children: vnodeTyped.children }
           : vnodeTyped.props || {};
 
-      let result = vnodeTyped.type(props);
+      let result: any = vnodeTyped.type(props);
 
       // Handle async component - await the Promise
       if (result instanceof Promise) {
@@ -414,7 +414,7 @@ async function renderIsland(
 
   // Render the island's content on the server
   let content = "";
-  let result: VNode | JSXNode;
+  let result: any;
   try {
     result = metadata.component(metadata.props || {});
 

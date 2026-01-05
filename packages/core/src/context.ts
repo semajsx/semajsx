@@ -4,7 +4,12 @@
 
 import { h } from "./vnode";
 import { Fragment } from "./types";
-import type { ComponentAPI, Context, ContextProps, VNode } from "./types";
+import type {
+  ComponentAPI,
+  Context as ContextType,
+  ContextProps,
+  VNode,
+} from "./types";
 
 // Context map type - stores context values for current render environment
 export type ContextMap = Map<symbol, any>;
@@ -25,9 +30,9 @@ export type ContextMap = Map<symbol, any>;
  * </Context>
  * ```
  */
-export function context<T>(name?: string): Context<T> {
+export function context<T>(name?: string): ContextType<T> {
   const debugName = name || "anonymous";
-  return Symbol(debugName) as Context<T>;
+  return Symbol(debugName) as ContextType<T>;
 }
 
 /**
@@ -69,7 +74,7 @@ export function Context(props: ContextProps): VNode {
  */
 export function createComponentAPI(contextMap: ContextMap): ComponentAPI {
   return {
-    inject<T>(context: Context<T>): T | undefined {
+    inject<T>(context: ContextType<T>): T | undefined {
       return contextMap.get(context);
     },
   };

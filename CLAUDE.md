@@ -214,16 +214,32 @@ The project uses strict TypeScript configuration with comprehensive type checkin
 - **Shared Configs**: All packages extend from `@semajsx/configs`
 - **Full Coverage**: Type checking includes all packages
 - **Strict Mode**: Enabled with additional checks
+- **TypeScript Native**: Supports tsgo (10x faster type checking)
 
 Run type checking:
 
 ```bash
-# Check all packages
+# Check all packages (traditional tsc)
 bun run typecheck
+
+# Check all packages with TypeScript Native (10x faster)
+bun run typecheck:native
+
+# Compare both compilers
+bun run typecheck:compare
 
 # Check specific package
 cd packages/semajsx && bun run typecheck
 ```
+
+**TypeScript Native (tsgo)**:
+
+The project now supports [TypeScript Native](https://devblogs.microsoft.com/typescript/progress-on-typescript-7-december-2025/) (tsgo), a Go-based rewrite of the TypeScript compiler that provides 7-10x faster type checking. Both compilers coexist:
+
+- **tsc**: Used for builds and declaration file generation (`bun run build`)
+- **tsgo**: Used for fast type checking (`bun run typecheck:native`)
+
+This hybrid approach maximizes development speed while maintaining stable builds.
 
 ### Linting & Formatting
 
