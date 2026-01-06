@@ -34,9 +34,9 @@
   "devDependencies": {
     "@semajsx/configs": "workspace:*",
     "@types/glob": "^9.0.0",
-    "tsdown": "^0.16.6",
+    "tsdown": "^0.16.8",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.13"
+    "vitest": "^4.0.16"
   },
   "peerDependencies": {
     "vite": "^7.0.0"
