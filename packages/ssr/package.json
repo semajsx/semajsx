@@ -2,6 +2,10 @@
   "name": "@semajsx/ssr",
   "version": "0.1.0",
   "description": "Server-side rendering and Island architecture for SemaJSX",
+  "files": [
+    "dist",
+    "src"
+  ],
   "type": "module",
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
@@ -11,10 +15,13 @@
     "./client": "./src/client/index.ts",
     "./package.json": "./package.json"
   },
-  "files": [
-    "dist",
-    "src"
-  ],
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.mjs",
+      "./client": "./dist/client/index.mjs",
+      "./package.json": "./package.json"
+    }
+  },
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
@@ -33,7 +40,7 @@
   },
   "devDependencies": {
     "@semajsx/configs": "workspace:*",
-    "tsdown": "^0.16.6",
+    "tsdown": "^0.16.8",
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
@@ -42,13 +49,6 @@
   "peerDependenciesMeta": {
     "vite": {
       "optional": true
-    }
-  },
-  "publishConfig": {
-    "exports": {
-      ".": "./dist/index.mjs",
-      "./client": "./dist/client/index.mjs",
-      "./package.json": "./package.json"
     }
   }
 }

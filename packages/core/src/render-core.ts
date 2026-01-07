@@ -104,9 +104,7 @@ export function isPromise<T>(value: any): value is Promise<T> {
 /**
  * Check if a value is an AsyncIterator
  */
-export function isAsyncIterator<T>(
-  value: any,
-): value is AsyncIterableIterator<T> {
+export function isAsyncIterator<T>(value: any): value is AsyncIterableIterator<T> {
   return value && typeof value[Symbol.asyncIterator] === "function";
 }
 
@@ -157,10 +155,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
   /**
    * Render a single VNode
    */
-  function renderNode(
-    vnode: VNode,
-    parentContext: ContextMap,
-  ): RenderedNode<TNode> {
+  function renderNode(vnode: VNode, parentContext: ContextMap): RenderedNode<TNode> {
     const { type } = vnode;
 
     // Text node
@@ -214,10 +209,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
   /**
    * Render a signal VNode
    */
-  function renderSignalNode(
-    vnode: VNode,
-    parentContext: ContextMap,
-  ): RenderedNode<TNode> {
+  function renderSignalNode(vnode: VNode, parentContext: ContextMap): RenderedNode<TNode> {
     const signal = vnode.props?.signal;
     // Use captured context if available (for async components), otherwise parent context
     const contextForSignal = vnode.props?.context || parentContext;
@@ -284,10 +276,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
   /**
    * Helper to convert a signal value to a rendered node
    */
-  function renderValueToNode(
-    value: unknown,
-    context: ContextMap,
-  ): RenderedNode<TNode> {
+  function renderValueToNode(value: unknown, context: ContextMap): RenderedNode<TNode> {
     let newVNode: VNode;
 
     // Convert value to VNode
@@ -326,13 +315,8 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
   /**
    * Render a fragment
    */
-  function renderFragment(
-    vnode: VNode,
-    parentContext: ContextMap,
-  ): RenderedNode<TNode> {
-    const children = vnode.children.map((child) =>
-      renderNode(child, parentContext),
-    );
+  function renderFragment(vnode: VNode, parentContext: ContextMap): RenderedNode<TNode> {
+    const children = vnode.children.map((child) => renderNode(child, parentContext));
 
     // Fragment has no node of its own
     return {
@@ -347,10 +331,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
    * Render a portal
    * Portal renders its children into a different container
    */
-  function renderPortal(
-    vnode: VNode,
-    parentContext: ContextMap,
-  ): RenderedNode<TNode> {
+  function renderPortal(vnode: VNode, parentContext: ContextMap): RenderedNode<TNode> {
     const container = vnode.props?.container;
 
     if (!container) {
@@ -358,9 +339,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
     }
 
     // Render children with same context
-    const children = vnode.children.map((child) =>
-      renderNode(child, parentContext),
-    );
+    const children = vnode.children.map((child) => renderNode(child, parentContext));
 
     // Append all child nodes to the portal container (recursively handles fragments)
     for (const child of children) {
@@ -382,10 +361,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
   /**
    * Render a component
    */
-  function renderComponent(
-    vnode: VNode,
-    parentContext: ContextMap,
-  ): RenderedNode<TNode> {
+  function renderComponent(vnode: VNode, parentContext: ContextMap): RenderedNode<TNode> {
     if (typeof vnode.type !== "function") {
       throw new Error("Component vnode must have a function type");
     }
@@ -505,10 +481,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
   /**
    * Render an element
    */
-  function renderElement(
-    vnode: VNode,
-    parentContext: ContextMap,
-  ): RenderedNode<TNode> {
+  function renderElement(vnode: VNode, parentContext: ContextMap): RenderedNode<TNode> {
     if (typeof vnode.type !== "string") {
       throw new Error("Element vnode must have a string type");
     }
@@ -539,9 +512,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
     }
 
     // Render children with same context
-    const children = vnode.children.map((child) =>
-      renderNode(child, parentContext),
-    );
+    const children = vnode.children.map((child) => renderNode(child, parentContext));
 
     // Append all child nodes (recursively handles fragments and signal wrappers)
     for (const child of children) {

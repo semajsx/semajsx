@@ -5,17 +5,11 @@ import { createSSG, defineCollection, RawHTML, z } from "./index";
 import type { CollectionSource, CollectionEntry } from "./types";
 
 // Mock source for testing
-function createMockSource<T>(
-  entries: CollectionEntry<T>[],
-): CollectionSource<T> {
+function createMockSource<T>(entries: CollectionEntry<T>[]): CollectionSource<T> {
   return {
     id: "mock",
     getEntries: vi.fn().mockResolvedValue(entries),
-    getEntry: vi
-      .fn()
-      .mockImplementation(
-        async (id) => entries.find((e) => e.id === id) ?? null,
-      ),
+    getEntry: vi.fn().mockImplementation(async (id) => entries.find((e) => e.id === id) ?? null),
   };
 }
 
@@ -120,9 +114,7 @@ describe("SSG", () => {
       outDir: "./dist",
     });
 
-    await expect(ssg.getCollection("missing")).rejects.toThrow(
-      'Collection "missing" not found',
-    );
+    await expect(ssg.getCollection("missing")).rejects.toThrow('Collection "missing" not found');
   });
 
   it("should validate schema", async () => {
@@ -148,8 +140,6 @@ describe("SSG", () => {
       collections: [collection],
     });
 
-    await expect(ssg.getCollection("posts")).rejects.toThrow(
-      "Validation error",
-    );
+    await expect(ssg.getCollection("posts")).rejects.toThrow("Validation error");
   });
 });

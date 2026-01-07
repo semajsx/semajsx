@@ -2,6 +2,19 @@
   "name": "semajsx",
   "version": "0.1.0",
   "description": "A signal-based reactive JSX runtime for building modern web applications",
+  "keywords": [
+    "framework",
+    "jsx",
+    "reactive",
+    "signal",
+    "typescript",
+    "ui"
+  ],
+  "license": "MIT",
+  "author": "lidessen",
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
@@ -17,9 +30,19 @@
     "./terminal/jsx-runtime": "./src/terminal/jsx-runtime.ts",
     "./package.json": "./package.json"
   },
-  "files": [
-    "dist"
-  ],
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.mjs",
+      "./dom": "./dist/dom/index.mjs",
+      "./dom/jsx-dev-runtime": "./dist/dom/jsx-dev-runtime.mjs",
+      "./dom/jsx-runtime": "./dist/dom/jsx-runtime.mjs",
+      "./signal": "./dist/signal/index.mjs",
+      "./terminal": "./dist/terminal/index.mjs",
+      "./terminal/jsx-dev-runtime": "./dist/terminal/jsx-dev-runtime.mjs",
+      "./terminal/jsx-runtime": "./dist/terminal/jsx-runtime.mjs",
+      "./package.json": "./package.json"
+    }
+  },
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
@@ -41,34 +64,24 @@
     "example:logger": "bun --conditions=development examples/logger/basic.tsx",
     "example:logger:showcase": "bun --conditions=development examples/logger/showcase.tsx"
   },
-  "keywords": [
-    "jsx",
-    "signal",
-    "reactive",
-    "ui",
-    "framework",
-    "typescript"
-  ],
-  "author": "lidessen",
-  "license": "MIT",
-  "devDependencies": {
-    "@semajsx/configs": "workspace:*",
-    "@types/bun": "latest",
-    "@types/node": "^22.0.0",
-    "@vitest/browser": "^4.0.13",
-    "@vitest/browser-playwright": "^4.0.13",
-    "playwright": "^1.56.1",
-    "tsdown": "^0.16.6",
-    "typescript": "^5.9.3",
-    "vite": "^7.2.4",
-    "vitest": "^4.0.13"
-  },
   "dependencies": {
     "@semajsx/core": "workspace:*",
     "@semajsx/dom": "workspace:*",
-    "@semajsx/ssr": "workspace:*",
     "@semajsx/signal": "workspace:*",
+    "@semajsx/ssr": "workspace:*",
     "@semajsx/terminal": "workspace:*",
     "@semajsx/utils": "workspace:*"
+  },
+  "devDependencies": {
+    "@semajsx/configs": "workspace:*",
+    "@types/bun": "latest",
+    "@types/node": "^22.19.3",
+    "@vitest/browser": "^4.0.16",
+    "@vitest/browser-playwright": "^4.0.16",
+    "playwright": "^1.57.0",
+    "tsdown": "^0.16.8",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.0",
+    "vitest": "^4.0.16"
   }
 }

@@ -43,10 +43,7 @@ describe("CSS Builder", () => {
     expect(files[0]).toMatch(/^styles-[a-f0-9]{8}\.css$/);
 
     // Verify content is minified
-    const content = await readFile(
-      join(OUT_DIR, "_semajsx", "css", files[0]),
-      "utf-8",
-    );
+    const content = await readFile(join(OUT_DIR, "_semajsx", "css", files[0]), "utf-8");
     expect(content).toBe(".test{color:red}");
   });
 
@@ -58,12 +55,8 @@ describe("CSS Builder", () => {
 
     const result = await buildCSS(new Set([css1Path, css2Path]), OUT_DIR);
 
-    const hash1 = result.mapping
-      .get(css1Path)!
-      .match(/-([a-f0-9]{8})\.css$/)?.[1];
-    const hash2 = result.mapping
-      .get(css2Path)!
-      .match(/-([a-f0-9]{8})\.css$/)?.[1];
+    const hash1 = result.mapping.get(css1Path)!.match(/-([a-f0-9]{8})\.css$/)?.[1];
+    const hash2 = result.mapping.get(css2Path)!.match(/-([a-f0-9]{8})\.css$/)?.[1];
 
     expect(hash1).not.toBe(hash2);
   });
@@ -83,10 +76,7 @@ describe("CSS Builder", () => {
     });
 
     const files = await readdir(join(OUT_DIR, "_semajsx", "css"));
-    const content = await readFile(
-      join(OUT_DIR, "_semajsx", "css", files[0]),
-      "utf-8",
-    );
+    const content = await readFile(join(OUT_DIR, "_semajsx", "css", files[0]), "utf-8");
 
     // URL should be rewritten to hashed asset path (lightningcss adds quotes)
     expect(content).toContain('url("/_semajsx/assets/image-abc123.png")');
@@ -94,20 +84,14 @@ describe("CSS Builder", () => {
 
   it("should skip external URLs in url() rewriting", async () => {
     const cssPath = join(TEST_DIR, "styles.css");
-    await writeFile(
-      cssPath,
-      ".bg { background: url('https://example.com/image.png'); }",
-    );
+    await writeFile(cssPath, ".bg { background: url('https://example.com/image.png'); }");
 
     const result = await buildCSS(new Set([cssPath]), OUT_DIR, {
       minify: false,
     });
 
     const files = await readdir(join(OUT_DIR, "_semajsx", "css"));
-    const content = await readFile(
-      join(OUT_DIR, "_semajsx", "css", files[0]),
-      "utf-8",
-    );
+    const content = await readFile(join(OUT_DIR, "_semajsx", "css", files[0]), "utf-8");
 
     // External URL should remain unchanged (lightningcss adds quotes)
     expect(content).toContain('url("https://example.com/image.png")');
@@ -140,10 +124,7 @@ describe("Asset Builder", () => {
     expect(files[0]).toMatch(/^logo-[a-f0-9]{8}\.png$/);
 
     // Verify content
-    const content = await readFile(
-      join(OUT_DIR, "_semajsx", "assets", files[0]),
-      "utf-8",
-    );
+    const content = await readFile(join(OUT_DIR, "_semajsx", "assets", files[0]), "utf-8");
     expect(content).toBe("fake-png-content");
   });
 
@@ -155,12 +136,8 @@ describe("Asset Builder", () => {
 
     const result = await buildAssets(new Set([asset1, asset2]), OUT_DIR);
 
-    const hash1 = result.mapping
-      .get(asset1)!
-      .match(/-([a-f0-9]{8})\.png$/)?.[1];
-    const hash2 = result.mapping
-      .get(asset2)!
-      .match(/-([a-f0-9]{8})\.png$/)?.[1];
+    const hash1 = result.mapping.get(asset1)!.match(/-([a-f0-9]{8})\.png$/)?.[1];
+    const hash2 = result.mapping.get(asset2)!.match(/-([a-f0-9]{8})\.png$/)?.[1];
 
     expect(hash1).not.toBe(hash2);
   });
@@ -258,10 +235,7 @@ describe("Build Integration", () => {
 
     // Verify CSS contains rewritten URL
     const cssFiles = await readdir(join(OUT_DIR, "_semajsx", "css"));
-    const cssContent = await readFile(
-      join(OUT_DIR, "_semajsx", "css", cssFiles[0]),
-      "utf-8",
-    );
+    const cssContent = await readFile(join(OUT_DIR, "_semajsx", "css", cssFiles[0]), "utf-8");
 
     // Should contain the hashed asset path
     const assetOutputPath = assetResult.mapping.get(assetPath);

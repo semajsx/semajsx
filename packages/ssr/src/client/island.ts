@@ -1,9 +1,4 @@
-import {
-  ISLAND_MARKER,
-  type Component,
-  type JSXNode,
-  type VNode,
-} from "@semajsx/core";
+import { ISLAND_MARKER, type Component, type JSXNode, type VNode } from "@semajsx/core";
 import type { IslandMarker } from "../shared/types";
 
 /**
@@ -31,10 +26,7 @@ import type { IslandMarker } from "../shared/types";
  * )
  * ```
  */
-export function island<T extends Component<any>>(
-  component: T,
-  modulePath: string,
-): T {
+export function island<T extends Component<any>>(component: T, modulePath: string): T {
   // Create a wrapped component that marks itself as an island
   const wrappedComponent = ((props: any): JSXNode => {
     // Create a VNode with island marker

@@ -68,18 +68,13 @@ const server = Bun.serve({
     const response = await app.handleRequest(req);
 
     // Log island info for page requests
-    if (
-      response.headers.get("Content-Type")?.includes("text/html") &&
-      response.status === 200
-    ) {
+    if (response.headers.get("Content-Type")?.includes("text/html") && response.status === 200) {
       // Re-render to get island info (handleRequest already rendered)
       try {
         const result = await app.render(url.pathname);
         logger.success(`Rendered page with ${result.islands.length} islands`);
         for (const island of result.islands) {
-          logger.debug(
-            `  - ${island.id}: ${island.componentName || "anonymous"} (${island.path})`,
-          );
+          logger.debug(`  - ${island.id}: ${island.componentName || "anonymous"} (${island.path})`);
         }
       } catch {
         // Ignore - already handled

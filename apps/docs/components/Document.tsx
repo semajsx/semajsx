@@ -14,7 +14,10 @@ export function DocTemplate(props: DocumentProps): VNode {
       <head>
         <meta charSet="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="description" content="SemaJSX - A lightweight, signal-based reactive JSX runtime" />
+        <meta
+          name="description"
+          content="SemaJSX - A lightweight, signal-based reactive JSX runtime"
+        />
         <title>{title}</title>
         {css?.map((href) => (
           <link key={href} rel="stylesheet" href={href} />

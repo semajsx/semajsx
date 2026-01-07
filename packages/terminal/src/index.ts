@@ -8,12 +8,7 @@
 export { TerminalRenderer } from "./renderer";
 export { render, print } from "./render";
 export type { RenderResult, RenderOptions, PrintOptions } from "./render";
-export type {
-  TerminalNode,
-  TerminalElement,
-  TerminalText,
-  TerminalStyle,
-} from "./types";
+export type { TerminalNode, TerminalElement, TerminalText, TerminalStyle } from "./types";
 export * from "./operations";
 export * from "./properties";
 export * from "./rendering";

@@ -67,9 +67,7 @@ export const StreamingComponent = island(
             background: "#fffbeb",
           }}
         >
-          <h4 style={{ margin: "0 0 10px 0", color: "#d97706" }}>
-            Streaming Component
-          </h4>
+          <h4 style={{ margin: "0 0 10px 0", color: "#d97706" }}>Streaming Component</h4>
           <p>
             Progress: {i}/{total}
           </p>
@@ -114,9 +112,7 @@ export const SignalComponent = island(
           background: "#f5f3ff",
         }}
       >
-        <h4 style={{ margin: "0 0 10px 0", color: "#7c3aed" }}>
-          Signal Component
-        </h4>
+        <h4 style={{ margin: "0 0 10px 0", color: "#7c3aed" }}>Signal Component</h4>
         <p>
           Message: <strong>{message}</strong>
         </p>
@@ -172,11 +168,7 @@ export const SignalComponent = island(
  * Tests islands with conditional content
  */
 export const ConditionalComponent = island(
-  function ConditionalComponent({
-    showInitially = true,
-  }: {
-    showInitially?: boolean;
-  }) {
+  function ConditionalComponent({ showInitially = true }: { showInitially?: boolean }) {
     const isVisible = signal(showInitially);
 
     return (
@@ -189,9 +181,7 @@ export const ConditionalComponent = island(
           background: "#fdf2f8",
         }}
       >
-        <h4 style={{ margin: "0 0 10px 0", color: "#db2777" }}>
-          Conditional Component
-        </h4>
+        <h4 style={{ margin: "0 0 10px 0", color: "#db2777" }}>Conditional Component</h4>
         <button
           onClick={() => (isVisible.value = !isVisible.value)}
           style={{

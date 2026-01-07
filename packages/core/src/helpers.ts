@@ -46,10 +46,7 @@ export function when(
  *   <text>Loading...</text>
  * );
  */
-export function resource(
-  promise: Promise<JSXNode>,
-  pending?: JSXNode,
-): Signal<JSXNode | null> {
+export function resource(promise: Promise<JSXNode>, pending?: JSXNode): Signal<JSXNode | null> {
   const content = signal<JSXNode | null>(pending || null);
 
   promise

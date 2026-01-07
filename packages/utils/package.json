@@ -2,6 +2,16 @@
   "name": "@semajsx/utils",
   "version": "0.1.0",
   "description": "Shared utility functions for SemaJSX",
+  "keywords": [
+    "helpers",
+    "utilities",
+    "utils"
+  ],
+  "license": "MIT",
+  "author": "lidessen",
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
@@ -10,9 +20,12 @@
     ".": "./src/index.ts",
     "./package.json": "./package.json"
   },
-  "files": [
-    "dist"
-  ],
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.mjs",
+      "./package.json": "./package.json"
+    }
+  },
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
@@ -21,17 +34,10 @@
     "test:run": "vitest run",
     "clean": "rm -rf dist"
   },
-  "keywords": [
-    "utils",
-    "utilities",
-    "helpers"
-  ],
-  "author": "lidessen",
-  "license": "MIT",
   "devDependencies": {
     "@semajsx/configs": "workspace:*",
-    "tsdown": "^0.16.4",
+    "tsdown": "^0.16.8",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.16"
   }
 }

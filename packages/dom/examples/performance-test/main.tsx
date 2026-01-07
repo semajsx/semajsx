@@ -18,10 +18,7 @@ function BatchingTest() {
   return (
     <div class="section">
       <h2>1. Batching Test</h2>
-      <p>
-        Updates multiple signals at once - should only trigger one DOM update
-        (check console)
-      </p>
+      <p>Updates multiple signals at once - should only trigger one DOM update (check console)</p>
 
       <div>
         <p>Count 1: {count1}</p>
@@ -38,9 +35,7 @@ function BatchingTest() {
               count2.value++;
               count3.value++;
             });
-            console.log(
-              "After batch update - check that only 1 update occurred",
-            );
+            console.log("After batch update - check that only 1 update occurred");
           }}
         >
           Update All (Batched)
@@ -74,10 +69,7 @@ function KeyedListTest() {
   return (
     <div class="section">
       <h2>2. Keyed List Test</h2>
-      <p>
-        Efficiently updates lists using keys - items should be reused, not
-        recreated
-      </p>
+      <p>Efficiently updates lists using keys - items should be reused, not recreated</p>
 
       <div>
         {computed([items], (list) => (
@@ -93,9 +85,7 @@ function KeyedListTest() {
         <button
           onclick={() => {
             items.value = [...items.peek()].reverse();
-            console.log(
-              "List reversed - DOM nodes should be moved, not recreated",
-            );
+            console.log("List reversed - DOM nodes should be moved, not recreated");
           }}
         >
           Reverse
@@ -118,10 +108,7 @@ function KeyedListTest() {
         <button
           onclick={() => {
             const newId = Math.max(...items.peek().map((i) => i.id)) + 1;
-            items.value = [
-              ...items.peek(),
-              { id: newId, text: `Item ${newId}` },
-            ];
+            items.value = [...items.peek(), { id: newId, text: `Item ${newId}` }];
             console.log("Item added");
           }}
         >
@@ -151,10 +138,7 @@ function NodePoolingTest() {
   return (
     <div class="section">
       <h2>3. DOM Node Pooling Test</h2>
-      <p>
-        Reuses DOM nodes instead of replacing them - same text node instance is
-        updated
-      </p>
+      <p>Reuses DOM nodes instead of replacing them - same text node instance is updated</p>
 
       <div>
         <p>Text: {text}</p>
@@ -166,9 +150,7 @@ function NodePoolingTest() {
         <button
           onclick={() => {
             text.value = text.peek() + "!";
-            console.log(
-              "Text updated - text node should be reused, not replaced",
-            );
+            console.log("Text updated - text node should be reused, not replaced");
           }}
         >
           Add Exclamation
@@ -211,7 +193,5 @@ function App() {
 const root = document.getElementById("root");
 if (root) {
   render(<App />, root);
-  console.log(
-    "Performance tests loaded! Open DevTools to see optimization details.",
-  );
+  console.log("Performance tests loaded! Open DevTools to see optimization details.");
 }

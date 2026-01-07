@@ -17,12 +17,7 @@ import type { DocumentTemplate } from "./shared/types";
  * });
  * ```
  */
-export const DefaultDocument: DocumentTemplate = ({
-  children,
-  scripts,
-  css,
-  title,
-}) => (
+export const DefaultDocument: DocumentTemplate = ({ children, scripts, css, title }) => (
   <html lang="en">
     <head>
       <meta charSet="UTF-8" />
@@ -94,9 +89,7 @@ function renderDocumentVNode(vnode: any): string {
 
   // Handle Fragment (Symbol type)
   if (type === Fragment) {
-    return (children || [])
-      .map((child: any) => renderDocumentVNode(child))
-      .join("");
+    return (children || []).map((child: any) => renderDocumentVNode(child)).join("");
   }
 
   // Handle special VNode types
@@ -106,18 +99,13 @@ function renderDocumentVNode(vnode: any): string {
       if (type === "#text") {
         const value = props?.nodeValue ?? "";
         // Check if it's already rendered HTML
-        if (
-          typeof value === "string" &&
-          (value.startsWith("<") || value.includes("</"))
-        ) {
+        if (typeof value === "string" && (value.startsWith("<") || value.includes("</"))) {
           return value;
         }
         return escapeHTML(String(value));
       }
       // For #signal and other special types, render children
-      return (children || [])
-        .map((child: any) => renderDocumentVNode(child))
-        .join("");
+      return (children || []).map((child: any) => renderDocumentVNode(child)).join("");
     }
     return renderElement(type, props, children);
   }
@@ -142,9 +130,7 @@ function renderElement(tag: string, props: any, children: any[]): string {
     return `<${tag}${attrs} />`;
   }
 
-  const childrenHTML = (children || [])
-    .map((child) => renderDocumentVNode(child))
-    .join("");
+  const childrenHTML = (children || []).map((child) => renderDocumentVNode(child)).join("");
 
   return `<${tag}${attrs}>${childrenHTML}</${tag}>`;
 }
@@ -156,12 +142,7 @@ function renderAttributes(props: Record<string, any>): string {
   const attrs: string[] = [];
 
   for (const [key, value] of Object.entries(props)) {
-    if (
-      key === "children" ||
-      key === "key" ||
-      key === "ref" ||
-      key === "dangerouslySetInnerHTML"
-    ) {
+    if (key === "children" || key === "key" || key === "ref" || key === "dangerouslySetInnerHTML") {
       continue;
     }
 

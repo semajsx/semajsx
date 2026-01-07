@@ -54,9 +54,7 @@ describe("createApp", () => {
     it("should register routes via route() method", () => {
       app = createApp();
 
-      const result = app
-        .route("/", () => <div>Home</div>)
-        .route("/about", () => <div>About</div>);
+      const result = app.route("/", () => <div>Home</div>).route("/about", () => <div>About</div>);
 
       expect(result).toBe(app); // chainable
     });
@@ -116,9 +114,7 @@ describe("createApp", () => {
     });
 
     it("should handle query parameters", async () => {
-      const Search = ({ query }: { query: string }) => (
-        <div>Search: {query}</div>
-      );
+      const Search = ({ query }: { query: string }) => <div>Search: {query}</div>;
 
       app = createApp({
         routes: {
@@ -191,10 +187,7 @@ describe("createApp", () => {
     });
 
     it("should cache islands when enabled", async () => {
-      const Counter = island(
-        () => <button>Click</button>,
-        "file:///test/Counter.tsx",
-      );
+      const Counter = island(() => <button>Click</button>, "file:///test/Counter.tsx");
 
       app = createApp({
         routes: {
@@ -214,10 +207,7 @@ describe("createApp", () => {
     });
 
     it("should generate island scripts", async () => {
-      const Counter = island(
-        () => <button>Click</button>,
-        "file:///test/Counter.tsx",
-      );
+      const Counter = island(() => <button>Click</button>, "file:///test/Counter.tsx");
 
       app = createApp({
         routes: {

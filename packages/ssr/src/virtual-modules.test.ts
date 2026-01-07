@@ -74,8 +74,7 @@ describe("Virtual Modules Plugin", () => {
     // This simulates what build() does
     const rootDir = process.cwd(); // In user's case this might be examples/basic
     const path = "/";
-    const htmlFileName =
-      path === "/" ? "index.html" : `${path.replace(/^\//, "")}.html`;
+    const htmlFileName = path === "/" ? "index.html" : `${path.replace(/^\//, "")}.html`;
     const absoluteHtmlPath = resolve(rootDir, htmlFileName);
 
     console.log("rootDir:", rootDir);

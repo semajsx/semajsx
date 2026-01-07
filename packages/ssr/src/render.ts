@@ -78,11 +78,7 @@ export async function renderToString(
   const html = await renderVNodeToHTML(vnode, context);
 
   // Generate script tags for islands (only if transformer is provided)
-  const scripts = generateIslandScripts(
-    context.islands,
-    islandBasePath,
-    transformIslandScript,
-  );
+  const scripts = generateIslandScripts(context.islands, islandBasePath, transformIslandScript);
 
   return {
     html,
@@ -153,9 +149,7 @@ function serializeProps(props: any): Record<string, any> {
       continue;
     }
 
-    console.warn(
-      `Skipping non-serializable prop "${key}" of type ${typeof value}`,
-    );
+    console.warn(`Skipping non-serializable prop "${key}" of type ${typeof value}`);
   }
 
   return serialized;
@@ -176,10 +170,7 @@ function isAsyncIterator(value: any): value is AsyncIterableIterator<any> {
 /**
  * Render VNode to HTML string
  */
-async function renderVNodeToHTML(
-  vnode: VNode | JSXNode,
-  context: RenderContext,
-): Promise<string> {
+async function renderVNodeToHTML(vnode: VNode | JSXNode, context: RenderContext): Promise<string> {
   // Handle null/undefined
   if (vnode == null) {
     return "";
@@ -201,9 +192,7 @@ async function renderVNodeToHTML(
 
   // Handle arrays
   if (Array.isArray(vnode)) {
-    const results = await Promise.all(
-      vnode.map((child) => renderVNodeToHTML(child, context)),
-    );
+    const results = await Promise.all(vnode.map((child) => renderVNodeToHTML(child, context)));
     return results.join("");
   }
 
@@ -282,7 +271,7 @@ async function renderVNodeToHTML(
           ? { ...vnodeTyped.props, children: vnodeTyped.children }
           : vnodeTyped.props || {};
 
-      let result = vnodeTyped.type(props);
+      let result: any = vnodeTyped.type(props);
 
       // Handle async component - await the Promise
       if (result instanceof Promise) {
@@ -380,12 +369,7 @@ function injectIslandAttrs(
 
   // Handle self-closing tags
   if (html[firstTagEnd - 1] === "/") {
-    return (
-      html.slice(0, firstTagEnd - 1) +
-      attrs +
-      " />" +
-      html.slice(firstTagEnd + 1)
-    );
+    return html.slice(0, firstTagEnd - 1) + attrs + " />" + html.slice(firstTagEnd + 1);
   }
 
   return html.slice(0, firstTagEnd) + attrs + html.slice(firstTagEnd);
@@ -397,10 +381,7 @@ function injectIslandAttrs(
  * - If hydration disabled: renders as plain HTML (no markers)
  * - If hydration enabled: adds markers for client-side hydration
  */
-async function renderIsland(
-  vnode: VNode,
-  context: RenderContext,
-): Promise<string> {
+async function renderIsland(vnode: VNode, context: RenderContext): Promise<string> {
   const metadata = getIslandMetadata(vnode);
   if (!metadata) {
     return "";
@@ -408,13 +389,11 @@ async function renderIsland(
 
   // Extract component name for better debugging
   const componentName =
-    typeof metadata.component === "function"
-      ? metadata.component.name || "Anonymous"
-      : "Unknown";
+    typeof metadata.component === "function" ? metadata.component.name || "Anonymous" : "Unknown";
 
   // Render the island's content on the server
   let content = "";
-  let result: VNode | JSXNode;
+  let result: any;
   try {
     result = metadata.component(metadata.props || {});
 
@@ -478,10 +457,7 @@ async function renderIsland(
 /**
  * Render a DOM element to HTML
  */
-async function renderElement(
-  vnode: VNode,
-  context: RenderContext,
-): Promise<string> {
+async function renderElement(vnode: VNode, context: RenderContext): Promise<string> {
   const tag = vnode.type as string;
   const props = vnode.props || {};
 
@@ -534,12 +510,7 @@ function renderAttributes(props: Record<string, any>): string {
 
   for (const [key, value] of Object.entries(props)) {
     // Skip special props
-    if (
-      key === "children" ||
-      key === "key" ||
-      key === "ref" ||
-      key === "dangerouslySetInnerHTML"
-    ) {
+    if (key === "children" || key === "key" || key === "ref" || key === "dangerouslySetInnerHTML") {
       continue;
     }
 
@@ -631,8 +602,7 @@ function generateIslandScripts(
  */
 function renderErrorFallback(error: any, vnode?: VNode): string {
   const message = error?.message || String(error);
-  const componentName =
-    vnode && typeof vnode.type === "function" ? vnode.type.name : "Unknown";
+  const componentName = vnode && typeof vnode.type === "function" ? vnode.type.name : "Unknown";
 
   return `<div style="border: 2px solid red; padding: 10px; margin: 10px; background: #fee;">
     <strong>Error rendering component: ${escapeHTML(componentName)}</strong>

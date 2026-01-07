@@ -185,10 +185,7 @@ function tryReuseNode(
   newRendered: RenderedNode<Node>,
 ): boolean {
   // Both are text nodes - just update the content
-  if (
-    oldDom.nodeType === Node.TEXT_NODE &&
-    newDom.nodeType === Node.TEXT_NODE
-  ) {
+  if (oldDom.nodeType === Node.TEXT_NODE && newDom.nodeType === Node.TEXT_NODE) {
     if (oldDom.textContent !== newDom.textContent) {
       oldDom.textContent = newDom.textContent;
     }
@@ -226,16 +223,8 @@ function tryReuseNode(
     // Use keyed reconciliation if children have keys
     const hasKeys = hasChildKeys(oldRendered) || hasChildKeys(newRendered);
 
-    if (
-      hasKeys &&
-      oldRendered.children.length > 0 &&
-      newRendered.children.length > 0
-    ) {
-      reconcileKeyedChildren(
-        oldElement,
-        oldRendered.children,
-        newRendered.children,
-      );
+    if (hasKeys && oldRendered.children.length > 0 && newRendered.children.length > 0) {
+      reconcileKeyedChildren(oldElement, oldRendered.children, newRendered.children);
     } else {
       // Fallback: replace all children
       // Clear old children
@@ -322,17 +311,11 @@ function reconcileKeyedChildren(
     if (oldChild && reused && oldChild.node && newChild.node) {
       const sameType =
         oldChild.vnode.type === newChild.vnode.type ||
-        (oldChild.node.nodeType === Node.TEXT_NODE &&
-          newChild.node.nodeType === Node.TEXT_NODE);
+        (oldChild.node.nodeType === Node.TEXT_NODE && newChild.node.nodeType === Node.TEXT_NODE);
 
       if (sameType) {
         // Try to reuse the node
-        const nodeReused = tryReuseNode(
-          oldChild.node,
-          newChild.node,
-          oldChild,
-          newChild,
-        );
+        const nodeReused = tryReuseNode(oldChild.node, newChild.node, oldChild, newChild);
 
         if (nodeReused) {
           // Ensure the child is in the correct position

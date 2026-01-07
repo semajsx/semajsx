@@ -23,9 +23,7 @@ describe("resource()", () => {
   });
 
   it("should resolve parent directory paths", async () => {
-    const { Style } = resource(
-      "file:///home/user/project/src/pages/deep/Page.tsx",
-    );
+    const { Style } = resource("file:///home/user/project/src/pages/deep/Page.tsx");
 
     const app = (
       <>
@@ -56,9 +54,7 @@ describe("resource()", () => {
   });
 
   it("should collect assets", async () => {
-    const { Asset, url } = resource(
-      "file:///home/user/project/src/pages/Home.tsx",
-    );
+    const { Asset, url } = resource("file:///home/user/project/src/pages/Home.tsx");
 
     const app = (
       <div>
@@ -70,15 +66,11 @@ describe("resource()", () => {
     const result = await renderToString(app);
 
     expect(result.assets).toContain("/home/user/project/src/pages/hero.png");
-    expect(result.html).toContain(
-      'src="/home/user/project/src/pages/logo.svg"',
-    );
+    expect(result.html).toContain('src="/home/user/project/src/pages/logo.svg"');
   });
 
   it("should create islands with resolved module path", async () => {
-    const { island, Style } = resource(
-      "file:///home/user/project/src/islands/Counter.tsx",
-    );
+    const { island, Style } = resource("file:///home/user/project/src/islands/Counter.tsx");
 
     const Counter = island(function Counter({ initial = 0 }) {
       return (
@@ -92,14 +84,11 @@ describe("resource()", () => {
     const app = <Counter initial={5} />;
 
     const result = await renderToString(app, {
-      transformIslandScript: (ctx) =>
-        `<script src="${ctx.basePath}/${ctx.id}.js"></script>`,
+      transformIslandScript: (ctx) => `<script src="${ctx.basePath}/${ctx.id}.js"></script>`,
     });
 
     expect(result.islands).toHaveLength(1);
-    expect(result.islands[0]?.path).toBe(
-      "file:///home/user/project/src/islands/Counter.tsx",
-    );
+    expect(result.islands[0]?.path).toBe("file:///home/user/project/src/islands/Counter.tsx");
     expect(result.css).toContain("/home/user/project/src/islands/Counter.css");
     expect(result.html).toContain("<button>");
   });

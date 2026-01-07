@@ -51,9 +51,7 @@ const LEVEL_PRIORITY: Record<LogLevel, number> = {
  * Logger class
  */
 export class Logger {
-  private options: Required<
-    Omit<LoggerOptions, "levelConfig" | "timestampFormat">
-  > & {
+  private options: Required<Omit<LoggerOptions, "levelConfig" | "timestampFormat">> & {
     timestampFormat: () => string;
     levelConfig: Record<LogLevel, LogLevelConfig>;
   };
@@ -68,8 +66,7 @@ export class Logger {
   constructor(options: LoggerOptions = {}) {
     this.options = {
       timestamp: options.timestamp ?? true,
-      timestampFormat:
-        options.timestampFormat || (() => new Date().toLocaleTimeString()),
+      timestampFormat: options.timestampFormat || (() => new Date().toLocaleTimeString()),
       showLevel: options.showLevel ?? true,
       minLevel: options.minLevel || "debug",
       prefix: options.prefix || "",
@@ -327,12 +324,7 @@ export class Logger {
    * Log a table
    */
   table(data: Record<string, unknown>[], options: TableOptions = {}): this {
-    const {
-      headers,
-      border = "single",
-      borderColor = "cyan",
-      headerSeparator = true,
-    } = options;
+    const { headers, border = "single", borderColor = "cyan", headerSeparator = true } = options;
 
     if (data.length === 0) {
       this.info("Empty table");
@@ -374,12 +366,7 @@ export class Logger {
     }
 
     print(
-      <box
-        flexDirection="column"
-        border={border}
-        borderColor={borderColor}
-        paddingInline={1}
-      >
+      <box flexDirection="column" border={border} borderColor={borderColor} paddingInline={1}>
         {rows}
       </box>,
       { stream: this.options.stream },
@@ -391,12 +378,7 @@ export class Logger {
   /**
    * Show a progress bar
    */
-  progress(
-    current: number,
-    total: number,
-    label?: string,
-    options: ProgressOptions = {},
-  ): this {
+  progress(current: number, total: number, label?: string, options: ProgressOptions = {}): this {
     const {
       width = 40,
       char = "█",

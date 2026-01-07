@@ -2,17 +2,32 @@
   "name": "@semajsx/signal",
   "version": "0.1.0",
   "description": "Fine-grained reactive signal system for SemaJSX",
+  "keywords": [
+    "computed",
+    "effect",
+    "reactive",
+    "reactivity",
+    "signal"
+  ],
+  "license": "MIT",
+  "author": "lidessen",
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "exports": {
     ".": "./src/index.ts",
-    "./utils": "./src/utils.ts"
+    "./package.json": "./package.json"
   },
-  "files": [
-    "dist"
-  ],
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.mjs",
+      "./package.json": "./package.json"
+    }
+  },
   "scripts": {
     "build": "tsdown",
     "dev": "tsdown --watch",
@@ -22,22 +37,13 @@
     "test:coverage": "vitest run --coverage",
     "clean": "rm -rf dist"
   },
-  "keywords": [
-    "signal",
-    "reactive",
-    "reactivity",
-    "computed",
-    "effect"
-  ],
-  "author": "lidessen",
-  "license": "MIT",
   "dependencies": {
     "@semajsx/utils": "workspace:*"
   },
   "devDependencies": {
     "@semajsx/configs": "workspace:*",
-    "tsdown": "^0.16.4",
+    "tsdown": "^0.16.8",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.16"
   }
 }

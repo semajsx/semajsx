@@ -5,11 +5,7 @@ import { applyStyle } from "./operations";
 /**
  * Set a property on a terminal node
  */
-export function setProperty(
-  node: TerminalNode,
-  key: string,
-  value: unknown,
-): void {
+export function setProperty(node: TerminalNode, key: string, value: unknown): void {
   if (node.type !== "element") return;
 
   // Handle style properties

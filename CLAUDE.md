@@ -214,24 +214,40 @@ The project uses strict TypeScript configuration with comprehensive type checkin
 - **Shared Configs**: All packages extend from `@semajsx/configs`
 - **Full Coverage**: Type checking includes all packages
 - **Strict Mode**: Enabled with additional checks
+- **TypeScript Native**: Uses tsgo as default (10x faster type checking)
 
 Run type checking:
 
 ```bash
-# Check all packages
+# Check all packages (default: TypeScript Native - 10x faster)
 bun run typecheck
 
-# Check specific package
+# Check all packages with traditional tsc
+bun run typecheck:tsc
+
+# Compare both compilers
+bun run typecheck:compare
+
+# Check specific package (uses traditional tsc)
 cd packages/semajsx && bun run typecheck
 ```
 
+**TypeScript Native (tsgo) - Default Type Checker**:
+
+The project uses [TypeScript Native](https://devblogs.microsoft.com/typescript/progress-on-typescript-7-december-2025/) (tsgo), a Go-based rewrite of the TypeScript compiler that provides 7-10x faster type checking, as the **default type checker**. Both compilers coexist:
+
+- **tsgo** (default): Used for type checking (`bun run typecheck`) and CI/CD pipelines
+- **tsc**: Used for builds, declaration file generation, and package-level checks
+
+This hybrid approach maximizes development speed while maintaining stable builds.
+
 ### Linting & Formatting
 
-The project uses **oxlint** (fast Rust-based linter) and **Prettier**:
+The project uses **oxlint** (fast Rust-based linter) and **oxfmt** (fast Rust-based formatter):
 
 - **Lint All Packages**: `bun run lint` from root
 - **Auto-Fix**: `bun run lint:fix`
-- **Format**: `bun run format` formats all files with Prettier
+- **Format**: `bun run format` formats all files with oxfmt (30x faster than Prettier)
 
 Configuration files are at the root level and apply to all packages.
 
@@ -239,7 +255,7 @@ Configuration files are at the root level and apply to all packages.
 
 Pre-commit hooks automatically run on staged files:
 
-- **Format**: Prettier on all staged files
+- **Format**: oxfmt on all staged files (30x faster than Prettier)
 - **Lint**: oxlint with auto-fix on TypeScript files
 - **Commit Messages**: Conventional commits enforced (English only)
 

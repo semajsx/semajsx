@@ -35,9 +35,7 @@ export interface IslandScriptContext {
  * Function to transform island metadata into custom script code
  * Return null or empty string to skip script generation for this island
  */
-export type IslandScriptTransformer = (
-  context: IslandScriptContext,
-) => string | null;
+export type IslandScriptTransformer = (context: IslandScriptContext) => string | null;
 
 /**
  * Options for renderToString
@@ -316,9 +314,7 @@ export interface App {
   render(path: string): Promise<RenderResult>;
 
   /** Start development server */
-  dev(
-    options?: DevOptions,
-  ): Promise<{ port: number; close: () => Promise<void> }>;
+  dev(options?: DevOptions): Promise<{ port: number; close: () => Promise<void> }>;
 
   /** Build for production */
   build(options?: BuildOptions): Promise<BuildResult>;

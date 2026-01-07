@@ -1,9 +1,9 @@
 {
   "name": "@semajsx/docs",
   "version": "0.1.0",
+  "private": true,
   "description": "SemaJSX documentation site",
   "type": "module",
-  "private": true,
   "scripts": {
     "build": "bun run build.tsx",
     "dev": "bun run build.tsx --watch",
@@ -11,11 +11,11 @@
     "serve": "bun run --bun vite preview --outDir dist"
   },
   "dependencies": {
+    "@semajsx/core": "workspace:*",
+    "@semajsx/dom": "workspace:*",
+    "@semajsx/signal": "workspace:*",
     "@semajsx/ssg": "workspace:*",
     "@semajsx/ssr": "workspace:*",
-    "@semajsx/dom": "workspace:*",
-    "@semajsx/core": "workspace:*",
-    "@semajsx/signal": "workspace:*",
     "zod": "^4.0.0"
   },
   "devDependencies": {

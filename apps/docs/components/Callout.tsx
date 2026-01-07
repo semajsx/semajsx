@@ -19,11 +19,7 @@ const styles = {
 /**
  * Callout component for highlighting important information in MDX
  */
-export function Callout({
-  type = "info",
-  title,
-  children,
-}: CalloutProps): VNode {
+export function Callout({ type = "info", title, children }: CalloutProps): VNode {
   const style = styles[type];
 
   return (

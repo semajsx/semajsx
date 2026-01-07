@@ -118,16 +118,8 @@ export interface PrintOptions {
  * // Custom FPS
  * render(<App />, { fps: 30 });
  */
-export function render(
-  element: VNode,
-  options: RenderOptions = {},
-): RenderResult {
-  const {
-    renderer,
-    autoRender = true,
-    fps = 60,
-    stream: outputStream = process.stdout,
-  } = options;
+export function render(element: VNode, options: RenderOptions = {}): RenderResult {
+  const { renderer, autoRender = true, fps = 60, stream: outputStream = process.stdout } = options;
 
   // Reset exiting signal for new render
   resetExitingSignal();

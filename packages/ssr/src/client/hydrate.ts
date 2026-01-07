@@ -25,9 +25,7 @@ interface IslandInfo {
 /**
  * Type guard for async iterators
  */
-function isAsyncIterator(
-  value: unknown,
-): value is AsyncIterableIterator<unknown> {
+function isAsyncIterator(value: unknown): value is AsyncIterableIterator<unknown> {
   if (!value || typeof value !== "object") return false;
   const obj = value as Record<string | symbol, unknown>;
   return (
@@ -80,11 +78,7 @@ export function hydrate(vnode: VNode, container: Element): Node | null {
 /**
  * Hydrate a VNode onto an existing DOM node
  */
-function hydrateNode(
-  vnode: VNode | any,
-  domNode: Node,
-  parentElement: Element,
-): void {
+function hydrateNode(vnode: VNode | any, domNode: Node, parentElement: Element): void {
   // Handle null/undefined
   if (vnode == null) {
     return;
@@ -104,12 +98,7 @@ function hydrateNode(
       // Text node already exists, verify content matches
       const expectedText = String(vnode);
       if (domNode.textContent !== expectedText) {
-        console.warn(
-          "[Hydrate] Text mismatch, updating:",
-          domNode.textContent,
-          "->",
-          expectedText,
-        );
+        console.warn("[Hydrate] Text mismatch, updating:", domNode.textContent, "->", expectedText);
         domNode.textContent = expectedText;
       }
     }
@@ -197,12 +186,7 @@ function hydrateNode(
 
     // Verify tag matches
     if (element.tagName.toLowerCase() !== vnodeTyped.type.toLowerCase()) {
-      console.warn(
-        "[Hydrate] Tag mismatch:",
-        element.tagName,
-        "vs",
-        vnodeTyped.type,
-      );
+      console.warn("[Hydrate] Tag mismatch:", element.tagName, "vs", vnodeTyped.type);
       return;
     }
 
@@ -292,11 +276,7 @@ function hydrateChildren(element: Element, children: any[]): void {
  * Hydrate a signal VNode
  * Set up reactivity to replace content when signal changes
  */
-function hydrateSignalNode(
-  signal: any,
-  domNode: Node,
-  parentElement: Element,
-): void {
+function hydrateSignalNode(signal: any, domNode: Node, parentElement: Element): void {
   // Get current signal value
   const currentValue = signal.value;
 
@@ -310,25 +290,14 @@ function hydrateSignalNode(
     if (domNode.nodeType === Node.COMMENT_NODE) {
       // Comment marker is correct, nothing to validate
     } else {
-      console.warn(
-        "[Hydrate] Expected comment marker for empty signal, got:",
-        domNode.nodeType,
-      );
+      console.warn("[Hydrate] Expected comment marker for empty signal, got:", domNode.nodeType);
     }
   } // For simple values (string, number), the server renders them as text nodes
-  else if (
-    typeof currentValue === "string" ||
-    typeof currentValue === "number"
-  ) {
+  else if (typeof currentValue === "string" || typeof currentValue === "number") {
     if (domNode.nodeType === Node.TEXT_NODE) {
       const expectedText = String(currentValue);
       if (domNode.textContent !== expectedText) {
-        console.warn(
-          "[Hydrate] Signal text mismatch:",
-          domNode.textContent,
-          "->",
-          expectedText,
-        );
+        console.warn("[Hydrate] Signal text mismatch:", domNode.textContent, "->", expectedText);
         domNode.textContent = expectedText;
       }
     }
@@ -537,10 +506,7 @@ export function hydrateIsland(
   }
 
   // Fragment island: find by comment marker
-  const walker = document.createTreeWalker(
-    document.body,
-    NodeFilter.SHOW_COMMENT,
-  );
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_COMMENT);
   let startComment: Comment | null = null;
   let comment: Comment | null;
   while ((comment = walker.nextNode() as Comment | null)) {
@@ -560,10 +526,7 @@ export function hydrateIsland(
     let sibling = startComment.nextSibling;
     let endComment: Comment | null = null;
     while (sibling) {
-      if (
-        sibling.nodeType === Node.COMMENT_NODE &&
-        sibling.textContent === `/island:${islandId}`
-      ) {
+      if (sibling.nodeType === Node.COMMENT_NODE && sibling.textContent === `/island:${islandId}`) {
         endComment = sibling as Comment;
         break;
       }
@@ -625,10 +588,7 @@ function findAllIslands(): IslandInfo[] {
   }
 
   // Find fragment-based islands (comment markers + script)
-  const walker = document.createTreeWalker(
-    document.body,
-    NodeFilter.SHOW_COMMENT,
-  );
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_COMMENT);
 
   let comment: Comment | null;
   while ((comment = walker.nextNode() as Comment | null)) {
@@ -639,10 +599,7 @@ function findAllIslands(): IslandInfo[] {
       let endComment: Comment | null = null;
       let sibling = comment.nextSibling;
       while (sibling) {
-        if (
-          sibling.nodeType === Node.COMMENT_NODE &&
-          sibling.textContent === `/island:${id}`
-        ) {
+        if (sibling.nodeType === Node.COMMENT_NODE && sibling.textContent === `/island:${id}`) {
           endComment = sibling as Comment;
           break;
         }
@@ -650,9 +607,7 @@ function findAllIslands(): IslandInfo[] {
       }
 
       // Find props from script tag
-      const script = document.querySelector(
-        `script[type="application/json"][data-island="${id}"]`,
-      );
+      const script = document.querySelector(`script[type="application/json"][data-island="${id}"]`);
       const props = script ? JSON.parse(script.textContent || "{}") : {};
 
       islands.push({
@@ -713,11 +668,7 @@ async function waitForIslandScript(island: IslandInfo): Promise<void> {
   if (element?.hasAttribute("data-hydrated")) {
     return;
   }
-  if (
-    startComment?.parentElement?.querySelector(
-      `[data-island-hydrated="${islandId}"]`,
-    )
-  ) {
+  if (startComment?.parentElement?.querySelector(`[data-island-hydrated="${islandId}"]`)) {
     return;
   }
 
@@ -730,8 +681,7 @@ async function waitForIslandScript(island: IslandInfo): Promise<void> {
     const checkInterval = setInterval(() => {
       const isHydrated = element
         ? element.hasAttribute("data-hydrated")
-        : document.querySelector(`[data-island-hydrated="${islandId}"]`) !==
-          null;
+        : document.querySelector(`[data-island-hydrated="${islandId}"]`) !== null;
 
       if (isHydrated) {
         clearInterval(checkInterval);
@@ -750,9 +700,7 @@ async function waitForIslandScript(island: IslandInfo): Promise<void> {
  */
 export function getIslandInfo(islandId: string): IslandInfo | null {
   // Try element-based first
-  const element = document.querySelector(
-    `[data-island-id="${islandId}"]`,
-  ) as HTMLElement | null;
+  const element = document.querySelector(`[data-island-id="${islandId}"]`) as HTMLElement | null;
 
   if (element) {
     const propsStr = element.getAttribute("data-island-props");
@@ -771,10 +719,7 @@ export function getIslandInfo(islandId: string): IslandInfo | null {
   if (script) {
     const props = JSON.parse(script.textContent || "{}");
     // Find start comment
-    const walker = document.createTreeWalker(
-      document.body,
-      NodeFilter.SHOW_COMMENT,
-    );
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_COMMENT);
     let comment: Comment | null;
     while ((comment = walker.nextNode() as Comment | null)) {
       if (comment.textContent === `island:${islandId}`) {
@@ -824,10 +769,7 @@ export function hasIslands(): boolean {
     return true;
   }
   // Check for fragment-based islands
-  return (
-    document.querySelectorAll('script[type="application/json"][data-island]')
-      .length > 0
-  );
+  return document.querySelectorAll('script[type="application/json"][data-island]').length > 0;
 }
 
 /**
@@ -844,9 +786,7 @@ export function getIslandIds(): string[] {
   }
 
   // Fragment-based islands
-  const scripts = document.querySelectorAll(
-    'script[type="application/json"][data-island]',
-  );
+  const scripts = document.querySelectorAll('script[type="application/json"][data-island]');
   for (const script of scripts) {
     const id = script.getAttribute("data-island");
     if (id) ids.push(id);
@@ -894,14 +834,9 @@ export function markIslandHydrated(islandId: string): void {
  * hydrateAllIslands('components/Counter', Counter);
  * ```
  */
-export function hydrateAllIslands(
-  componentSrc: string,
-  Component: Function,
-): void {
+export function hydrateAllIslands(componentSrc: string, Component: Function): void {
   // Find all elements with this component source
-  const elements = document.querySelectorAll(
-    `[data-island-src="${componentSrc}"]`,
-  );
+  const elements = document.querySelectorAll(`[data-island-src="${componentSrc}"]`);
 
   // Also find fragment-based islands (script tags with data-island-src)
   const scripts = document.querySelectorAll(
@@ -959,11 +894,7 @@ export function hydrateAllIslands(
     const endMarker = `/island:${islandId}`;
 
     // Find and process the fragment
-    const walker = document.createTreeWalker(
-      document.body,
-      NodeFilter.SHOW_COMMENT,
-      null,
-    );
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_COMMENT, null);
 
     let startNode: Comment | null = null;
     let endNode: Comment | null = null;

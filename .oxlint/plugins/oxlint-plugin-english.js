@@ -32,8 +32,7 @@ export default {
               if (hasNonASCII(text)) {
                 context.report({
                   node: comment,
-                  message:
-                    "Comments must be in English (no non-ASCII characters allowed)",
+                  message: "Comments must be in English (no non-ASCII characters allowed)",
                 });
               }
             }

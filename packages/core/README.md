@@ -27,10 +27,7 @@ import { h, createFragment, createTextVNode } from "@semajsx/core";
 const element = h("div", { className: "container" }, "Hello");
 
 // Create fragment
-const fragment = createFragment([
-  h("h1", null, "Title"),
-  h("p", null, "Content"),
-]);
+const fragment = createFragment([h("h1", null, "Title"), h("p", null, "Content")]);
 
 // Create text node
 const text = createTextVNode("Hello World");

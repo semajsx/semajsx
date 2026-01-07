@@ -49,12 +49,10 @@ function Counter() {
   return (
     <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
       <h1>Counter App</h1>
-      <p style={{ fontSize: "32px", fontWeight: "bold" }}>
-        Count: {count}
-      </p>
+      <p style={{ fontSize: "32px", fontWeight: "bold" }}>Count: {count}</p>
       <div style={{ display: "flex", gap: "10px" }}>
         <button onClick={() => count.value--}>Decrement</button>
-        <button onClick={() => count.value = 0}>Reset</button>
+        <button onClick={() => (count.value = 0)}>Reset</button>
         <button onClick={() => count.value++}>Increment</button>
       </div>
     </div>
@@ -72,15 +70,15 @@ Create an `index.html` file:
 ```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Counter App</title>
-</head>
-<body>
-  <div id="app"></div>
-  <script type="module" src="./counter.tsx"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Counter App</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="./counter.tsx"></script>
+  </body>
 </html>
 ```
 
@@ -145,13 +143,13 @@ function Counter() {
         <input
           type="number"
           value={step}
-          onInput={(e) => step.value = parseInt(e.currentTarget.value)}
+          onInput={(e) => (step.value = parseInt(e.currentTarget.value))}
         />
       </label>
 
-      <button onClick={() => count.value -= step.value}>-{step}</button>
-      <button onClick={() => count.value = 0}>Reset</button>
-      <button onClick={() => count.value += step.value}>+{step}</button>
+      <button onClick={() => (count.value -= step.value)}>-{step}</button>
+      <button onClick={() => (count.value = 0)}>Reset</button>
+      <button onClick={() => (count.value += step.value)}>+{step}</button>
     </div>
   );
 }

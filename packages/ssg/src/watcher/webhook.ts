@@ -81,10 +81,7 @@ export function verifyWebhookSignature(
   // Simple HMAC verification
   // In production, use crypto.timingSafeEqual
   const crypto = require("crypto");
-  const expectedSignature = crypto
-    .createHmac("sha256", secret)
-    .update(payload)
-    .digest("hex");
+  const expectedSignature = crypto.createHmac("sha256", secret).update(payload).digest("hex");
 
   return signature === `sha256=${expectedSignature}`;
 }

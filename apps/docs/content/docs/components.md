@@ -21,7 +21,7 @@ function Greeting({ name }: { name: string }) {
 }
 
 // Usage
-<Greeting name="Alice" />
+<Greeting name="Alice" />;
 ```
 
 ## Props
@@ -66,7 +66,7 @@ function Card({ title, children }: CardProps) {
 // Usage
 <Card title="My Card">
   <p>Card content goes here</p>
-</Card>
+</Card>;
 ```
 
 ## Reactive Components
@@ -111,15 +111,7 @@ Use JavaScript expressions for conditional rendering:
 
 ```tsx
 function LoginButton({ isLoggedIn }: { isLoggedIn: boolean }) {
-  return (
-    <div>
-      {isLoggedIn ? (
-        <button>Logout</button>
-      ) : (
-        <button>Login</button>
-      )}
-    </div>
-  );
+  return <div>{isLoggedIn ? <button>Logout</button> : <button>Login</button>}</div>;
 }
 ```
 
@@ -158,11 +150,7 @@ const ThemeContext = context<Theme>("theme");
 function ThemedButton(props: ButtonProps, ctx) {
   const theme = ctx?.inject(ThemeContext) ?? defaultTheme;
 
-  return (
-    <button style={{ background: theme.primary }}>
-      {props.label}
-    </button>
-  );
+  return <button style={{ background: theme.primary }}>{props.label}</button>;
 }
 ```
 

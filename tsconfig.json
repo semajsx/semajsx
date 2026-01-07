@@ -15,7 +15,6 @@
   },
   "files": [],
   "references": [
-    { "path": "./packages/configs" },
     { "path": "./packages/utils" },
     { "path": "./packages/signal" },
     { "path": "./packages/core" },
@@ -24,6 +23,7 @@
     { "path": "./packages/logger" },
     { "path": "./packages/ssr" },
     { "path": "./packages/ssg" },
-    { "path": "./packages/semajsx" }
+    { "path": "./packages/semajsx" },
+    { "path": "./apps/docs" }
   ]
 }

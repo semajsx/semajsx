@@ -1,11 +1,7 @@
 import { exec } from "child_process";
 import { promisify } from "util";
 import type { CollectionEntry } from "../types";
-import type {
-  GitSourceOptions,
-  GitCommitSourceOptions,
-  GitTagSourceOptions,
-} from "./types";
+import type { GitSourceOptions, GitCommitSourceOptions, GitTagSourceOptions } from "./types";
 import { BaseSource } from "./base";
 
 const execAsync = promisify(exec);
@@ -33,9 +29,7 @@ export class GitSource<T = unknown> extends BaseSource<T> {
     }
   }
 
-  private async getCommits(
-    options: GitCommitSourceOptions,
-  ): Promise<CollectionEntry<T>[]> {
+  private async getCommits(options: GitCommitSourceOptions): Promise<CollectionEntry<T>[]> {
     const args = ["log", "--format=%H|%s|%an|%ae|%aI"];
 
     if (options.filter?.since) {
@@ -89,9 +83,7 @@ export class GitSource<T = unknown> extends BaseSource<T> {
     });
   }
 
-  private async getTags(
-    options: GitTagSourceOptions,
-  ): Promise<CollectionEntry<T>[]> {
+  private async getTags(options: GitTagSourceOptions): Promise<CollectionEntry<T>[]> {
     const pattern = options.pattern ?? "*";
 
     // Get tags with date and message
@@ -134,9 +126,6 @@ export class GitSource<T = unknown> extends BaseSource<T> {
 /**
  * Create a Git source
  */
-export function gitSource<T = unknown>(
-  options: GitSourceOptions,
-  cwd?: string,
-): GitSource<T> {
+export function gitSource<T = unknown>(options: GitSourceOptions, cwd?: string): GitSource<T> {
   return new GitSource<T>(options, cwd);
 }

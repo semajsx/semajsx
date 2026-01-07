@@ -22,11 +22,7 @@ export function removeChild(node: Node): void {
   node.parentNode?.removeChild(node);
 }
 
-export function insertBefore(
-  parent: Node,
-  newNode: Node,
-  refNode: Node | null,
-): void {
+export function insertBefore(parent: Node, newNode: Node, refNode: Node | null): void {
   parent.insertBefore(newNode, refNode);
 }
 

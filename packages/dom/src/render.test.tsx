@@ -63,9 +63,7 @@ describe("render", () => {
 
   it("should render signal VNode", async () => {
     const show = signal(true);
-    const content = computed([show], (s) =>
-      s ? <p>Visible</p> : <p>Hidden</p>,
-    );
+    const content = computed([show], (s) => (s ? <p>Visible</p> : <p>Hidden</p>));
     const vnode = <div>{content}</div>;
     render(vnode, container);
 

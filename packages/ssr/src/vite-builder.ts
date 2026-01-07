@@ -38,9 +38,7 @@ export class ViteIslandBuilder {
         },
         load: (id: string) => {
           if (id.startsWith("\0virtual:island-")) {
-            const islandId = id
-              .replace("\0virtual:island-", "")
-              .replace(".js", "");
+            const islandId = id.replace("\0virtual:island-", "").replace(".js", "");
             return this.entryPoints.get(islandId);
           }
         },
@@ -125,10 +123,7 @@ export class ViteIslandBuilder {
           }
         : null;
     } catch (error) {
-      logger.error(
-        `Error transforming ${url}:`,
-        error as Record<string, unknown>,
-      );
+      logger.error(`Error transforming ${url}:`, error as Record<string, unknown>);
       return null;
     }
   }

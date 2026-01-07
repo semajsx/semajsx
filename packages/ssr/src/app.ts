@@ -85,13 +85,7 @@ class AppImpl implements App {
       appType: "custom",
       optimizeDeps: {
         // Disable optimization for semajsx to use source directly in development
-        exclude: [
-          "semajsx",
-          "@semajsx/core",
-          "@semajsx/dom",
-          "@semajsx/signal",
-          "@semajsx/ssr",
-        ],
+        exclude: ["semajsx", "@semajsx/core", "@semajsx/dom", "@semajsx/signal", "@semajsx/ssr"],
       },
       resolve: {
         // Ensure Vite respects package.json "exports" field with conditions
@@ -186,9 +180,7 @@ class AppImpl implements App {
     return result;
   }
 
-  async dev(
-    options: DevOptions = {},
-  ): Promise<{ port: number; close: () => Promise<void> }> {
+  async dev(options: DevOptions = {}): Promise<{ port: number; close: () => Promise<void> }> {
     const { port = 3000, host = "localhost", open = false } = options;
 
     await this.prepare();
@@ -235,9 +227,7 @@ class AppImpl implements App {
 
     const { mkdir } = await import("fs/promises");
     // Ensure rootDir is always absolute
-    const rootDir = this.config.root
-      ? resolve(this.config.root)
-      : process.cwd();
+    const rootDir = this.config.root ? resolve(this.config.root) : process.cwd();
 
     // Ensure output directory exists
     await mkdir(outDir, { recursive: true });
@@ -267,8 +257,7 @@ class AppImpl implements App {
           }
 
           // Generate HTML with resource references
-          const htmlFileName =
-            path === "/" ? "index.html" : `${path.replace(/^\//, "")}.html`;
+          const htmlFileName = path === "/" ? "index.html" : `${path.replace(/^\//, "")}.html`;
 
           // CSS paths - use absolute paths that Vite can resolve
           const cssRefs = result.css;
@@ -361,9 +350,7 @@ if (Component) {
       };
 
       // Apply options.vite if provided
-      const finalConfig = options.vite
-        ? mergeConfig(viteConfig, options.vite)
-        : viteConfig;
+      const finalConfig = options.vite ? mergeConfig(viteConfig, options.vite) : viteConfig;
 
       await viteBuild(finalConfig);
 
@@ -408,9 +395,7 @@ if (Component) {
     ) {
       const result = await this._handleModuleRequest(pathname);
       if (result) {
-        const contentType = pathname.endsWith(".css")
-          ? "text/css"
-          : "application/javascript";
+        const contentType = pathname.endsWith(".css") ? "text/css" : "application/javascript";
         return new Response(result.code, {
           headers: { "Content-Type": contentType },
         });
@@ -492,9 +477,7 @@ if (Component) {
 
     // Transform through Vite if available
     if (this._viteServer) {
-      const result = await this._viteServer.transformRequest(
-        `virtual:island-entry:${islandId}`,
-      );
+      const result = await this._viteServer.transformRequest(`virtual:island-entry:${islandId}`);
       if (result) {
         return result.code;
       }
@@ -530,10 +513,7 @@ if (Component) {
     return { handler: undefined, params: {} };
   }
 
-  private _matchDynamicRoute(
-    pattern: string,
-    path: string,
-  ): Record<string, string> | null {
+  private _matchDynamicRoute(pattern: string, path: string): Record<string, string> | null {
     const patternParts = pattern.split("/").filter(Boolean);
     const pathParts = path.split("/").filter(Boolean);
 
@@ -580,9 +560,7 @@ if (Component) {
     return path;
   }
 
-  private async _handleModuleRequest(
-    url: string,
-  ): Promise<{ code: string } | null> {
+  private async _handleModuleRequest(url: string): Promise<{ code: string } | null> {
     if (!this._viteServer) return null;
 
     try {
