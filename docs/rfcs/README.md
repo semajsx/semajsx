@@ -1,140 +1,69 @@
 # RFCs (Request for Comments)
 
-This directory contains **RFC documents** - formal proposals for new features or significant changes to SemaJSX.
+Formal proposals for new features or significant changes.
 
 ---
 
-## Purpose
+## When to Create
 
-RFCs are used to:
-- **Propose major features** before implementation
-- **Gather feedback** from team and community
-- **Document requirements** and success criteria
-- **Make informed decisions** about what to build
+✅ **Create RFC for:**
+- Major features
+- Breaking changes
+- New concepts/paradigms
+- Unclear scope needing discussion
 
----
-
-## When to Create an RFC
-
-Create an RFC when:
-- ✅ Adding a **major feature** that affects users or architecture
-- ✅ Making **breaking changes** to existing APIs
-- ✅ Introducing **new concepts** or paradigms
-- ✅ Requiring **stakeholder approval** before investing time
-- ✅ The **scope is unclear** and needs discussion
-
-Don't create an RFC for:
-- ❌ Simple bug fixes
-- ❌ Minor enhancements
-- ❌ Documentation updates
-- ❌ Internal refactoring (use design doc instead)
+❌ **Don't create RFC for:**
+- Bug fixes
+- Minor enhancements
+- Documentation updates
 
 ---
 
-## RFC Process
+## Process
 
 ```
-1. Draft → 2. Discussion → 3. Review → 4. Decision (Accept/Reject) → 5. Design Phase
+Draft → Discussion → Review → Decision → Design Phase
 ```
 
-### 1. Draft RFC
-- Use [template.md](./template.md)
-- Write clear problem statement
-- Research alternatives
-- Estimate effort
-
-### 2. Discussion
-- Share with team
-- Gather feedback
-- Iterate on proposal
-- Document open questions
-
-### 3. Review
-- Present to stakeholders
-- Address concerns
-- Refine scope
-
-### 4. Decision
-- Accept: Move to design phase
-- Reject: Document rationale
-- Defer: Table for future consideration
-
-### 5. Design Phase
-- Create detailed design document in `../designs/`
-- Link back to this RFC
+1. **Draft**: Use [template.md](./template.md)
+2. **Discussion**: Gather feedback, iterate
+3. **Review**: Present to stakeholders
+4. **Decision**: Accept, Reject, or Defer
+5. **Design**: Create design doc in `../designs/`
 
 ---
 
-## Naming Convention
+## Naming
 
 ```
 YYYY-MM-DD-feature-name.md
 ```
 
-**Examples**:
-- `2026-01-15-context-api.md`
-- `2026-02-01-ssr-streaming.md`
-- `2026-03-10-typescript-native.md`
+Examples: `2026-01-15-context-api.md`, `2026-02-01-ssr-streaming.md`
 
 ---
 
-## RFC Status
+## Status
 
-RFCs can have the following statuses:
-
-| Status | Meaning |
-|--------|---------|
-| **Draft** | Work in progress, not ready for review |
-| **In Review** | Ready for team feedback |
-| **Accepted** | Approved for implementation |
-| **Rejected** | Not moving forward (with rationale) |
-| **Superseded** | Replaced by newer RFC |
+- **Draft** - Work in progress
+- **In Review** - Ready for feedback
+- **Accepted** - Approved for implementation
+- **Rejected** - Not moving forward
+- **Superseded** - Replaced by newer RFC
 
 ---
 
 ## Template
 
-Use [template.md](./template.md) to create new RFCs. The template includes:
-
-- Summary
-- Motivation & Problem Statement
+Use [template.md](./template.md) - includes:
+- Summary & Motivation
 - Goals & Non-Goals
 - Research & Alternatives
-- High-Level Proposal
 - Risks & Dependencies
 - Open Questions
-- Decision
 
 ---
 
-## Examples
+## Existing RFCs
 
-### Good RFC Titles
-- "RFC: Add Context API for Component Communication"
-- "RFC: Implement Server-Side Rendering with Island Architecture"
-- "RFC: Adopt TypeScript Native for 10x Faster Type Checking"
-
-### Poor RFC Titles
-- "RFC: Fix Bug" (too vague, not RFC-worthy)
-- "RFC: Update Documentation" (not a feature proposal)
-- "RFC: Refactor Code" (internal change, use design doc)
-
----
-
-## Related Documentation
-
-- **After RFC is accepted**: Create [Design Document](../designs/)
-- **For architectural decisions**: Create [ADR](../adrs/)
-- **For implementation details**: See [Workflow Guide](../guides/workflow.md)
-
----
-
-## Getting Started
-
-1. Copy [template.md](./template.md) to `YYYY-MM-DD-your-feature.md`
-2. Fill in all sections
-3. Share with team for feedback
-4. Iterate until decision is made
-5. Update status in the document
-
-**Questions?** See [DOCS.md](../../DOCS.md) for the complete documentation index.
+None yet. Be the first!
