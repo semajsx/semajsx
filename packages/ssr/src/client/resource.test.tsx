@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from "vitest";
 import { renderToString } from "../render";
-import { resource, STYLE_MARKER, LINK_MARKER, ASSET_MARKER } from "./resource";
+import { resource } from "./resource";
 
 describe("resource()", () => {
   it("should resolve relative CSS paths", async () => {

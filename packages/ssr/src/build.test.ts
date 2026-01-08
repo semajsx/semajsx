@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdir, writeFile, rm, readFile, readdir } from "fs/promises";
-import { join, relative } from "path";
+import { join } from "path";
 import { buildCSS, analyzeCSSChunks } from "./css-builder";
 import { buildAssets } from "./asset-builder";
 
@@ -70,7 +70,7 @@ describe("CSS Builder", () => {
       [join(TEST_DIR, "image.png"), "/_semajsx/assets/image-abc123.png"],
     ]);
 
-    const result = await buildCSS(new Set([cssPath]), OUT_DIR, {
+    const _result = await buildCSS(new Set([cssPath]), OUT_DIR, {
       minify: false,
       assetManifest,
     });
@@ -86,7 +86,7 @@ describe("CSS Builder", () => {
     const cssPath = join(TEST_DIR, "styles.css");
     await writeFile(cssPath, ".bg { background: url('https://example.com/image.png'); }");
 
-    const result = await buildCSS(new Set([cssPath]), OUT_DIR, {
+    const _result = await buildCSS(new Set([cssPath]), OUT_DIR, {
       minify: false,
     });
 
@@ -228,7 +228,7 @@ describe("Build Integration", () => {
     await writeFile(cssPath, `.icon { background: url('./icon.svg'); }`);
 
     // Build CSS with asset manifest
-    const cssResult = await buildCSS(new Set([cssPath]), OUT_DIR, {
+    const _cssResult = await buildCSS(new Set([cssPath]), OUT_DIR, {
       minify: true,
       assetManifest: assetResult.mapping,
     });
@@ -299,7 +299,7 @@ describe("App Build Integration", () => {
       ],
     }));
 
-    const result = await app.build({ outDir: OUT_DIR });
+    const _result = await app.build({ outDir: OUT_DIR });
 
     // With HTML entry build, Vite processes CSS and outputs to assets/
     // Check that HTML file was created
@@ -334,7 +334,7 @@ describe("App Build Integration", () => {
     }));
 
     // Build
-    const buildResult = await app.build({ outDir: OUT_DIR });
+    const _buildResult = await app.build({ outDir: OUT_DIR });
 
     // With HTML entry build, Vite handles CSS hashing
     // Check that HTML output contains hashed CSS reference
@@ -393,7 +393,7 @@ describe("App Build Integration", () => {
       ],
     }));
 
-    const result = await app.build({ outDir: OUT_DIR });
+    const _result = await app.build({ outDir: OUT_DIR });
 
     // With HTML entry build, Vite handles CSS bundling
     // Check that both HTML files were created
@@ -427,7 +427,7 @@ describe("App Build Integration", () => {
       ],
     }));
 
-    const result = await app.build({ outDir: OUT_DIR });
+    const _result = await app.build({ outDir: OUT_DIR });
 
     // With HTML entry build, Vite handles assets
     // Check that HTML file was created

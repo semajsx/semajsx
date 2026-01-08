@@ -8,7 +8,6 @@ import {
   getManifest,
   resolveCSS,
   resolveAsset,
-  loadStylesheet,
   clientResource,
 } from "./client-resource";
 
