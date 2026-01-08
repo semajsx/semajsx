@@ -107,7 +107,7 @@ project-root/
    - Scope? (MVP vs Full)
 
 ### Output
-- **RFC Document** (`apps/docs/rfcs/YYYY-MM-DD-feature.md`)
+- **RFC Document** (`../rfcs/YYYY-MM-DD-feature.md`)
 - **Research Reports** (`.workspace/research/`)
 - **Meeting Notes** (`.workspace/discussions/`)
 
@@ -117,7 +117,7 @@ project-root/
 - [ ] Key risks identified
 - [ ] Decision makers have approved (Accept/Reject)
 
-**Template**: See `apps/docs/rfcs/template.md`
+**Template**: See `../rfcs/template.md`
 
 ---
 
@@ -152,9 +152,9 @@ project-root/
    - Record ADRs
 
 ### Output
-- **Design Document** (`apps/docs/designs/feature-design.md`)
+- **Design Document** (`../designs/feature-design.md`)
 - **Design Drafts** (`.workspace/drafts/feature-v1/v2/v3.md`)
-- **ADR** (`apps/docs/adrs/NNNN-decision.md`)
+- **ADR** (`../adrs/NNNN-decision.md`)
 - **Prototype Code** (`.workspace/experiments/poc-feature/`)
 
 ### Acceptance Criteria
@@ -164,8 +164,8 @@ project-root/
 - [ ] Peer review passed
 
 **Templates**:
-- Design: `apps/docs/designs/template.md`
-- ADR: `apps/docs/adrs/template.md`
+- Design: `../designs/template.md`
+- ADR: `../adrs/template.md`
 
 ---
 
@@ -330,7 +330,7 @@ git commit -m "docs: add API documentation"
 
 ```bash
 # 1. Move final design to official directory
-mv .workspace/drafts/feature-v3-final.md apps/docs/designs/feature-design.md
+mv .workspace/drafts/feature-v3-final.md ../designs/feature-design.md
 
 # 2. Archive or delete drafts
 rm -rf .workspace/drafts/feature-v1.md
@@ -363,9 +363,9 @@ git commit -m "docs: archive feature design and cleanup workspace"
 | **Design Drafts** | `.workspace/drafts/` | Temporary, final version becomes official | feature-v1/v2/v3.md |
 | **Discussion Notes** | `.workspace/discussions/` | Temporary, extract key conclusions to RFC/ADR | Weekly meeting notes |
 | **Experiment Code** | `.workspace/experiments/` | Temporary, delete or promote after validation | POC prototypes |
-| **RFC** | `apps/docs/rfcs/` | Permanent | Requirements documents |
-| **Design Docs** | `apps/docs/designs/` | Permanent | Design documents |
-| **ADR** | `apps/docs/adrs/` | Permanent | Architecture decisions |
+| **RFC** | `../rfcs/` | Permanent | Requirements documents |
+| **Design Docs** | `../designs/` | Permanent | Design documents |
+| **ADR** | `../adrs/` | Permanent | Architecture decisions |
 | **Source Code** | `packages/*/src/` | Permanent | Production code |
 | **Changelog** | `CHANGELOG.md` | Permanent | Version history |
 
@@ -462,9 +462,9 @@ This workflow is designed to be AI-friendly:
 
 4. **Explicit Instructions**
    ```
-   "Create an RFC for [feature] using the template in apps/docs/rfcs/template.md"
+   "Create an RFC for [feature] using the template in ../rfcs/template.md"
    "Generate a design document following our design template"
-   "Review this code against the design doc in apps/docs/designs/..."
+   "Review this code against the design doc in ../designs/..."
    ```
 
 ---
@@ -516,9 +516,9 @@ This is normal! Either:
 
 All templates are available in their respective directories:
 
-- **RFC Template**: `apps/docs/rfcs/template.md`
-- **Design Document Template**: `apps/docs/designs/template.md`
-- **ADR Template**: `apps/docs/adrs/template.md`
+- **RFC Template**: `../rfcs/template.md`
+- **Design Document Template**: `../designs/template.md`
+- **ADR Template**: `../adrs/template.md`
 
 ---
 

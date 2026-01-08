@@ -7,30 +7,20 @@ Official documentation site for SemaJSX, built with `@semajsx/ssg`.
 ```
 apps/docs/
 ├── content/              # Documentation content
-│   ├── docs/            # Documentation pages
+│   ├── docs/            # API reference pages
 │   └── guides/          # Tutorial guides
-├── components/          # Reusable components
+├── components/          # Reusable doc site components
 │   ├── Layout.tsx       # Main layout
 │   ├── Callout.tsx      # Callout component
 │   └── CodeBlock.tsx    # Code syntax highlighting
-├── rfcs/                # RFC documents (Requirements)
-├── designs/             # Design documents
-├── adrs/                # Architecture Decision Records
-├── guides/              # Development guides
-│   └── workflow.md      # Development workflow guide
 ├── build.tsx            # Build script
 ├── styles.css           # Global styles
 └── package.json
 ```
 
-**Documentation Types**:
-- `content/` - User-facing documentation and guides (published to docs site)
-- `rfcs/` - Feature proposals and requirements (internal)
-- `designs/` - Technical design documents (internal)
-- `adrs/` - Architecture decisions (internal)
-- `guides/` - Development workflow and processes (internal)
+This directory contains **user-facing documentation** for SemaJSX - tutorials, guides, and API references published to the documentation website.
 
-See [Development Workflow](../../CLAUDE.md#development-workflow) for how these are used.
+**Note**: For internal development documentation (RFCs, design docs, ADRs), see the [docs/](../../docs/) directory in the project root.
 
 ## Development
 
