@@ -13,10 +13,24 @@ apps/docs/
 │   ├── Layout.tsx       # Main layout
 │   ├── Callout.tsx      # Callout component
 │   └── CodeBlock.tsx    # Code syntax highlighting
+├── rfcs/                # RFC documents (Requirements)
+├── designs/             # Design documents
+├── adrs/                # Architecture Decision Records
+├── guides/              # Development guides
+│   └── workflow.md      # Development workflow guide
 ├── build.tsx            # Build script
 ├── styles.css           # Global styles
 └── package.json
 ```
+
+**Documentation Types**:
+- `content/` - User-facing documentation and guides (published to docs site)
+- `rfcs/` - Feature proposals and requirements (internal)
+- `designs/` - Technical design documents (internal)
+- `adrs/` - Architecture decisions (internal)
+- `guides/` - Development workflow and processes (internal)
+
+See [Development Workflow](../../CLAUDE.md#development-workflow) for how these are used.
 
 ## Development
 

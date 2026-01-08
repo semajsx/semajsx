@@ -205,6 +205,58 @@ See [MONOREPO_ARCHITECTURE.md](./MONOREPO_ARCHITECTURE.md) for details on the Is
    - Always run `bun install` from the root directory
    - Use `bun --filter <package-name>` to run commands in specific packages from root
 
+## Development Workflow
+
+This project follows a structured development workflow for major features and changes. See [apps/docs/guides/workflow.md](./apps/docs/guides/workflow.md) for complete details.
+
+### Workflow Stages
+
+1. **Discovery** - Define requirements and conduct research
+2. **Design** - Create detailed design documents
+3. **Implementation** - Write code and tests
+4. **Verification** - Validate quality and functionality
+5. **Archive** - Document and clean up
+
+### Document Types
+
+- **RFC** (`apps/docs/rfcs/`) - Requirements and feature proposals
+- **Design Docs** (`apps/docs/designs/`) - Detailed technical designs
+- **ADR** (`apps/docs/adrs/`) - Architecture Decision Records
+
+### Temporary Workspace
+
+The `.workspace/` directory is for temporary work-in-progress:
+- `research/` - Research materials
+- `drafts/` - Design document drafts
+- `discussions/` - Meeting notes
+- `experiments/` - Prototype code
+
+This directory is git-ignored. Move final artifacts to `apps/docs/` when complete.
+
+### When to Use
+
+**Full Workflow** (RFC + Design + ADR):
+- Major new features
+- Breaking changes
+- Architectural changes
+
+**Simplified Workflow** (Design Doc only):
+- Minor features
+- Enhancements
+- Complex bug fixes
+
+**Direct Implementation** (PR only):
+- Simple bug fixes
+- Documentation updates
+- Typo fixes
+
+**Guidelines**:
+- Large features should have design documents before implementation
+- Architecture decisions should be recorded in ADRs
+- When in doubt, create a design document
+
+See [Workflow Guide](./apps/docs/guides/workflow.md) for templates and detailed process.
+
 ## Code Quality
 
 ### Type Checking
