@@ -2,6 +2,24 @@
 
 This file provides guidance to Claude Code when working with this repository.
 
+## 📚 Documentation System
+
+**Before you start**: SemaJSX has a structured documentation system.
+
+**Quick Question**: Should I document this work?
+→ See [`DOC_GUIDE.md`](./DOC_GUIDE.md) - One-page decision tree
+
+**Key locations**:
+
+- 💡 Decisions → `.design/decisions/` (ADRs)
+- 🏗️ Feature designs → `.design/features/`
+- 📋 Tasks → `.tasks/active/`
+- 📝 Scratch work → `.temp/` (gitignored)
+
+**Full details**: `.design/DOCUMENTATION_PLAN.md` | Architecture: `.design/ARCHITECTURE_SUMMARY.md`
+
+---
+
 ## Project Overview
 
 SemaJSX is a lightweight, signal-based reactive JSX runtime for building modern web applications. It uses fine-grained reactivity with signals for efficient updates without virtual DOM diffing.

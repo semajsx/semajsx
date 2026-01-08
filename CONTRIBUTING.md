@@ -2,6 +2,23 @@
 
 Thank you for your interest in contributing to SemaJSX! This document provides guidelines and instructions for contributing to the project.
 
+## 📚 Documentation First
+
+**Before contributing**, familiarize yourself with our documentation system:
+
+- **[DOC_GUIDE.md](./DOC_GUIDE.md)** - Quick guide: where to document your work
+- **[.design/ARCHITECTURE_SUMMARY.md](./.design/ARCHITECTURE_SUMMARY.md)** - System architecture overview
+- **[.design/decisions/](./.design/decisions/)** - Past architectural decisions (ADRs)
+- **[CLAUDE.md](./CLAUDE.md)** - Development guide and project overview
+
+**When contributing**:
+
+- Read existing ADRs to understand design decisions
+- Document significant changes in appropriate locations
+- Update tests and documentation with your changes
+
+---
+
 ## Getting Started
 
 ### Prerequisites

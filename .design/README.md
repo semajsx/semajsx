@@ -183,12 +183,22 @@ For public-facing documentation:
 4. Keep documents updated
 5. Archive completed items
 
+## 🚀 Quick Start
+
+**New here?** Start with these in order:
+
+1. **[📋 Cheat Sheet](./DOCUMENTATION_CHEATSHEET.md)** - Ultra-compact reference (1 page)
+2. **[📚 Quick Guide](../DOC_GUIDE.md)** - Decision tree and quick actions (3 pages)
+3. **[🌳 Workflow](./DOCUMENTATION_WORKFLOW.md)** - Visual flowcharts and diagrams
+4. **[📖 Full Plan](./DOCUMENTATION_PLAN.md)** - Complete strategy with templates (60+ pages)
+
 ## Quick Links
 
 - [Documentation Plan](./DOCUMENTATION_PLAN.md) - Full documentation strategy
+- [Architecture Summary](./ARCHITECTURE_SUMMARY.md) - System architecture overview
 - [Decisions](./decisions/) - All ADRs
 - [Active Discussions](./discussions/) - Current proposals
-- [Architecture Overview](./architecture/) - System design
+- [Architecture Deep Dives](./architecture/) - System design details
 
 ## Questions?
 
