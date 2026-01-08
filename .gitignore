@@ -152,3 +152,7 @@ test-results
 # Test screenshots
 **/__screenshots__/
 .content-temp
+
+# Temporary working documents (scratch, investigations, reviews)
+# See .tasks/README.md for task management
+.temp/
