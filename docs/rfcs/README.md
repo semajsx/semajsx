@@ -36,10 +36,10 @@ Draft → Discussion → Review → Decision → Design Phase
 ## Naming
 
 ```
-YYYY-MM-DD-feature-name.md
+YYYY-MM-feature-name.md
 ```
 
-Examples: `2024-01-context-api.md`, `2024-02-terminal-logger.md`
+Examples: `2025-08-signal-reactivity.md`, `2025-09-context-api.md`
 
 ---
 
@@ -58,11 +58,11 @@ Examples: `2024-01-context-api.md`, `2024-02-terminal-logger.md`
 
 | RFC | Feature | Date | Status |
 |-----|---------|------|--------|
-| [2023-01-signal-reactivity.md](./2023-01-signal-reactivity.md) | Signal-based Reactivity | 2023-01 | Implemented |
-| [2023-02-dual-rendering-targets.md](./2023-02-dual-rendering-targets.md) | DOM + Terminal Rendering | 2023-02 | Implemented |
-| [2024-01-context-api.md](./2024-01-context-api.md) | Context API | 2024-01 | Implemented |
-| [2024-02-terminal-logger.md](./2024-02-terminal-logger.md) | Terminal Logger | 2024-02 | Implemented |
-| [2024-03-ssr-island-architecture.md](./2024-03-ssr-island-architecture.md) | SSR Islands | 2024-03 | Implemented |
+| [2025-08-signal-reactivity.md](./2025-08-signal-reactivity.md) | Signal-based Reactivity | 2025-08 | Implemented |
+| [2025-08-dual-rendering-targets.md](./2025-08-dual-rendering-targets.md) | DOM + Terminal Rendering | 2025-08 | Implemented |
+| [2025-09-context-api.md](./2025-09-context-api.md) | Context API | 2025-09 | Implemented |
+| [2025-10-terminal-logger.md](./2025-10-terminal-logger.md) | Terminal Logger | 2025-10 | Implemented |
+| [2025-11-ssr-island-architecture.md](./2025-11-ssr-island-architecture.md) | SSR Islands | 2025-11 | Implemented |
 
 ---
 

@@ -1,6 +1,6 @@
 # RFC: Context API for Component Communication
 
-**Date**: 2024-01 (retroactive)
+**Date**: 2025-09 (retroactive)
 **Status**: Implemented
 **Design Doc**: [docs/designs/context-api-design.md](../designs/context-api-design.md)
 
@@ -143,7 +143,7 @@ See [Design Document](../designs/context-api-design.md) for detailed implementat
 
 ## Decision
 
-**Accepted**: 2024-01
+**Accepted**: 2025-09
 
 **Rationale**:
 1. Solves real pain point (prop drilling)

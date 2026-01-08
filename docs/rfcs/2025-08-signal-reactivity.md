@@ -1,6 +1,6 @@
 # RFC: Fine-Grained Reactivity with Signals
 
-**Date**: 2023-01 (retroactive)
+**Date**: 2025-08 (retroactive)
 **Status**: Implemented
 **Related ADR**: Should create ADR-0001 for this decision
 
@@ -215,7 +215,7 @@ count.value = 1;
 
 ## Decision
 
-**Accepted**: 2023-01
+**Accepted**: 2025-08
 
 **Rationale**:
 1. **Performance**: 5-10x faster than VDOM approaches

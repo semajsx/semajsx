@@ -1,6 +1,6 @@
 # RFC: Visual-Rich Terminal Logger
 
-**Date**: 2024-02 (retroactive)
+**Date**: 2025-10 (retroactive)
 **Status**: Implemented
 **Design Doc**: [docs/designs/logger-api-design.md](../designs/logger-api-design.md)
 
@@ -139,7 +139,7 @@ See [Design Document](../designs/logger-api-design.md) for detailed API.
 
 ## Decision
 
-**Accepted**: 2024-02
+**Accepted**: 2025-10
 
 **Rationale**:
 1. Unique value proposition (JSX in logs)

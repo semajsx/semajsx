@@ -1,6 +1,6 @@
 # RFC: SSR Island Architecture
 
-**Date**: 2024-03 (retroactive)
+**Date**: 2025-11 (retroactive)
 **Status**: Implemented
 **Design Doc**: [docs/designs/ssr-html-entry-build.md](../designs/ssr-html-entry-build.md)
 
@@ -219,7 +219,7 @@ build/
 
 ## Decision
 
-**Accepted**: 2024-03
+**Accepted**: 2025-11
 
 **Rationale**:
 1. **Performance**: 80% reduction in JavaScript vs full hydration

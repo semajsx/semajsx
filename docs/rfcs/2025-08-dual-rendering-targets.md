@@ -1,6 +1,6 @@
 # RFC: Dual Rendering Targets (DOM + Terminal)
 
-**Date**: 2023-02 (retroactive)
+**Date**: 2025-08 (retroactive)
 **Status**: Implemented
 
 ---
@@ -228,7 +228,7 @@ function CLIApp() {
 
 ## Decision
 
-**Accepted**: 2023-02
+**Accepted**: 2025-08
 
 **Rationale**:
 1. **Unique value**: No other framework offers this combination
