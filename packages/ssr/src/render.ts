@@ -257,7 +257,7 @@ async function renderVNodeToHTML(vnode: VNode | JSXNode, context: RenderContext)
   // Handle fragments
   if (vnodeTyped.type === Fragment) {
     const results = await Promise.all(
-      vnodeTyped.children.map((child) => renderVNodeToHTML(child, context)),
+      vnodeTyped.children.map((child: JSXNode) => renderVNodeToHTML(child, context)),
     );
     return results.join("");
   }
@@ -495,7 +495,7 @@ async function renderElement(vnode: VNode, context: RenderContext): Promise<stri
 
   // Regular tag with children
   const childResults = await Promise.all(
-    (vnode.children || []).map((child) => renderVNodeToHTML(child, context)),
+    (vnode.children || []).map((child: JSXNode) => renderVNodeToHTML(child, context)),
   );
   const children = childResults.join("");
 
