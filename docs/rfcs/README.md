@@ -39,7 +39,7 @@ Draft → Discussion → Review → Decision → Design Phase
 YYYY-MM-DD-feature-name.md
 ```
 
-Examples: `2026-01-15-context-api.md`, `2026-02-01-ssr-streaming.md`
+Examples: `2024-01-context-api.md`, `2024-02-terminal-logger.md`
 
 ---
 
@@ -50,20 +50,22 @@ Examples: `2026-01-15-context-api.md`, `2026-02-01-ssr-streaming.md`
 - **Accepted** - Approved for implementation
 - **Rejected** - Not moving forward
 - **Superseded** - Replaced by newer RFC
-
----
-
-## Template
-
-Use [template.md](./template.md) - includes:
-- Summary & Motivation
-- Goals & Non-Goals
-- Research & Alternatives
-- Risks & Dependencies
-- Open Questions
+- **Implemented** - Feature is complete
 
 ---
 
 ## Existing RFCs
 
-None yet. Be the first!
+| RFC | Feature | Date | Status |
+|-----|---------|------|--------|
+| [2023-01-signal-reactivity.md](./2023-01-signal-reactivity.md) | Signal-based Reactivity | 2023-01 | Implemented |
+| [2023-02-dual-rendering-targets.md](./2023-02-dual-rendering-targets.md) | DOM + Terminal Rendering | 2023-02 | Implemented |
+| [2024-01-context-api.md](./2024-01-context-api.md) | Context API | 2024-01 | Implemented |
+| [2024-02-terminal-logger.md](./2024-02-terminal-logger.md) | Terminal Logger | 2024-02 | Implemented |
+| [2024-03-ssr-island-architecture.md](./2024-03-ssr-island-architecture.md) | SSR Islands | 2024-03 | Implemented |
+
+---
+
+## Template
+
+Use [template.md](./template.md) for new RFCs.

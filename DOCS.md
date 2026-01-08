@@ -23,8 +23,8 @@ Quick reference to all documentation in SemaJSX.
 - [docs/workflow.md](./docs/workflow.md) - Development workflow
 
 ### Design & Decisions
+- [docs/rfcs/](./docs/rfcs/) - Feature proposals (5 RFCs: [signals](./docs/rfcs/2023-01-signal-reactivity.md), [dual-rendering](./docs/rfcs/2023-02-dual-rendering-targets.md), [context](./docs/rfcs/2024-01-context-api.md), [logger](./docs/rfcs/2024-02-terminal-logger.md), [ssr-islands](./docs/rfcs/2024-03-ssr-island-architecture.md))
 - [docs/designs/](./docs/designs/) - Design documents ([context-api](./docs/designs/context-api-design.md), [logger](./docs/designs/logger-api-design.md), [ssr](./docs/designs/ssr-html-entry-build.md))
-- [docs/rfcs/](./docs/rfcs/) - Feature proposals (none yet)
 - [docs/adrs/](./docs/adrs/) - Architecture decisions (none yet)
 
 ### Workspace
