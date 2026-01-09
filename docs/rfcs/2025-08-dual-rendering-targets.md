@@ -111,7 +111,7 @@ render(<App />);
 ### Shared Logic
 
 ```tsx
-// Shared hook/logic
+// Shared logic can be reused
 function useCounter() {
   const count = signal(0);
   const increment = () => count.value++;
@@ -126,7 +126,7 @@ function WebApp() {
 
 // Use in Terminal
 function CLIApp() {
-  const { count, increment } = useCounter();
+  const { count } = useCounter();
   return <text>{count}</text>;
 }
 ```
