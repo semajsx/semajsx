@@ -63,22 +63,49 @@ function Counter() {
 ### Signal API
 
 ```tsx
-import { signal, computed, effect } from '@semajsx/signal';
+import { signal, computed, effect, batch } from '@semajsx/signal';
 
 // Create signal
 const count = signal(0);
 
-// Read/write
-console.log(count.value);  // Read
-count.value = 1;            // Write (triggers subscribers)
+// Read value
+console.log(count.value);  // 0
 
-// Computed signals
+// Write value (multiple ways)
+count.value = 1;           // Direct assignment
+count.set(2);              // Explicit setter
+count.update(n => n + 1);  // Update based on previous value
+
+// Subscribe to changes
+const unsubscribe = count.subscribe(newValue => {
+  console.log('Count changed:', newValue);
+});
+
+// Peek without tracking (useful in effects)
+const value = count.peek(); // Read without subscribing
+
+// Computed signals (auto-update when dependencies change)
 const doubled = computed(() => count.value * 2);
 
-// Effects
-effect(() => {
+// Effects (run when dependencies change)
+const dispose = effect(() => {
   console.log('Count is:', count.value);
 });
+
+// Batch updates (trigger effects only once)
+batch(() => {
+  count.value = 1;
+  count.value = 2;
+  count.value = 3;
+  // Effects run once with final value (3)
+});
+
+// Utility functions
+import { isSignal, unwrap, peek } from '@semajsx/signal';
+
+isSignal(count);    // true
+unwrap(count);      // 3 (extracts value from signal or returns as-is)
+peek(count);        // 3 (read without tracking)
 ```
 
 ### Integration with JSX
@@ -194,12 +221,62 @@ count.value = 1;
 
 ---
 
+## Complete API Design
+
+### Core Types
+
+```typescript
+interface WritableSignal<T> {
+  value: T;                              // Read/write value
+  set(value: T): void;                   // Set value
+  update(fn: (prev: T) => T): void;      // Update based on previous
+  subscribe(listener: (value: T) => void): () => void;  // Subscribe
+  peek(): T;                             // Read without tracking
+}
+
+interface ReadonlySignal<T> {
+  readonly value: T;                     // Read-only value
+  subscribe(listener: (value: T) => void): () => void;
+  peek(): T;
+}
+```
+
+### Functions
+
+- `signal<T>(initialValue: T): WritableSignal<T>` - Create writable signal
+- `computed<T>(fn: () => T): ReadonlySignal<T>` - Create computed signal
+- `effect(fn: () => void | (() => void)): () => void` - Create effect (returns dispose)
+- `batch(fn: () => void): void` - Batch updates
+- `isSignal<T>(value: unknown): value is Signal<T>` - Type guard
+- `unwrap<T>(value: MaybeSignal<T>): T` - Extract value from signal or return as-is
+- `peek<T>(value: MaybeSignal<T>): T` - Read without tracking
+
+---
+
 ## Implementation Plan
 
-1. **Phase 1**: Core signal primitives (`signal`, `computed`, `effect`)
-2. **Phase 2**: JSX integration (automatic subscriptions)
-3. **Phase 3**: Batching and scheduling
-4. **Phase 4**: Advanced features (untrack, batch, etc.)
+1. **Phase 1**: Core signal primitives ✅
+   - `signal()` with `.value`, `.set()`, `.update()`
+   - `subscribe()` for reactive updates
+   - `peek()` for untracked reads
+
+2. **Phase 2**: Computed signals ✅
+   - `computed()` with automatic dependency tracking
+   - Lazy evaluation
+   - Memoization
+
+3. **Phase 3**: Effects ✅
+   - `effect()` with automatic tracking
+   - Cleanup support (return function)
+   - Dispose function
+
+4. **Phase 4**: Batching & Utilities ✅
+   - `batch()` for performance
+   - `isSignal()`, `unwrap()`, `peek()` utilities
+
+5. **Phase 5**: JSX integration ✅
+   - Automatic subscriptions in JSX
+   - Fine-grained DOM updates
 
 ---
 
@@ -208,7 +285,7 @@ count.value = 1;
 | Risk | Impact | Mitigation |
 |------|--------|------------|
 | Unfamiliar to React devs | Medium | Good documentation, examples |
-| `.value` syntax verbose | Low | Consider `get()/set()` helpers |
+| `.value` syntax verbose | Low | Provide `.set()` and `.update()` helpers |
 | Fine-grained updates complexity | Medium | Keep API simple, hide complexity |
 
 ---
@@ -223,6 +300,8 @@ count.value = 1;
 3. **Predictability**: Explicit dependencies, no hidden re-renders
 4. **Simplicity**: No need for useMemo, useCallback, React.memo
 5. **Proven**: Solid.js validates this approach works
+6. **Rich API**: Multiple ways to interact (`.value`, `.set()`, `.update()`)
+7. **Utilities**: Helpful functions for edge cases (`peek()`, `unwrap()`, etc.)
 
 **Trade-offs accepted**:
 - Different mental model than React (worth it for performance)
@@ -230,6 +309,11 @@ count.value = 1;
 
 **Next Steps**:
 - [x] Implement core signal system
+- [x] Add `.set()` and `.update()` methods
+- [x] Implement `subscribe()` for direct subscriptions
+- [x] Add `peek()` for untracked reads
+- [x] Implement batching
+- [x] Add utility functions
 - [x] Integrate with JSX runtime
 - [x] Write comprehensive tests
 - [x] Create examples and documentation
