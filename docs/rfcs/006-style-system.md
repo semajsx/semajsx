@@ -140,31 +140,62 @@ import { classes, style } from "@semajsx/style";
 
 const c = classes(["root", "icon", "label"]);
 
-export const button = style(
-  c,
-  `
-  .${c.root} {
+export const button = {
+  /** display: inline-flex; padding: 8px 16px */
+  root: style(
+    c.root,
+    `
+    display: inline-flex;
     padding: 8px 16px;
-  }
-  .${c.root}:hover {
-    background: var(--hover);
-  }
-  .${c.icon} {
+  `,
+  ),
+
+  /** width: 18px; height: 18px */
+  icon: style(
+    c.icon,
+    `
     width: 18px;
-  }
-  .${c.root} > .${c.icon} {
+    height: 18px;
+  `,
+  ),
+
+  /** font-weight: 500 */
+  label: style(
+    c.label,
+    `
+    font-weight: 500;
+  `,
+  ),
+
+  /** margin-right: 8px (icon inside root) */
+  rootIcon: style(
+    `${c.root} > ${c.icon}`,
+    `
     margin-right: 8px;
-  }
-`,
-);
+  `,
+  ),
+
+  /** hover state */
+  rootHover: style(
+    `${c.root}:hover`,
+    `
+    background: var(--hover);
+  `,
+  ),
+
+  /** multiple rules for states */
+  states: style(
+    [`${c.root}:active`, `transform: scale(0.98);`],
+    [`${c.root}:disabled`, `opacity: 0.5; cursor: not-allowed;`],
+  ),
+};
 ```
 
 ### 7.2 Key Components
 
 1. **ClassRef**: A reference to a class name that stringifies to a hashed value
-2. **StyleBundle**: Contains StyleTokens for each class + the CSS string
-3. **StyleToken**: A class name reference that carries its CSS for injection
-4. **StyleAnchor**: Controls where styles are injected in the DOM
+2. **StyleToken**: Contains className (if applicable) + CSS rule, can be used in class prop or injected
+3. **StyleAnchor**: Controls where styles are injected in the DOM
 
 ### 7.3 Two-Level Anchor System
 
@@ -211,37 +242,57 @@ c.root.toString(); // "root-x7f3a"
 `${c.root}`; // "root-x7f3a"
 ```
 
-#### `style(refs: ClassRefs, css: string): StyleBundle`
+#### `style(selector, css): StyleToken` - Single Rule
 
-Binds CSS to class references, returns a bundle.
+Creates a StyleToken for a single CSS rule.
 
 ```ts
-const button = style(
-  c,
-  `
-  .${c.root} { padding: 8px; }
-  .${c.root}:hover { background: blue; }
-`,
-);
+// Class selector - returns StyleToken with className
+const root = style(c.root, `padding: 8px;`);
+// root._ = "root-x7f3a"
+// root.__css = ".root-x7f3a { padding: 8px; }"
 
-// button.root is a StyleToken
-// button.icon is a StyleToken
-// button.__css is the full CSS string
-// button.__injected is a Set of injection targets
+// Complex selector - returns StyleToken without className (injection only)
+const rootHover = style(`${c.root}:hover`, `background: blue;`);
+// rootHover._ = undefined
+// rootHover.__css = ".root-x7f3a:hover { background: blue; }"
+
+// Nested selector
+const rootIcon = style(`${c.root} > ${c.icon}`, `margin-right: 8px;`);
 ```
 
-#### `inject(bundle: StyleBundle, options?): () => void`
+#### `style(...rules): StyleToken` - Multiple Rules
 
-Manually injects styles into DOM. Returns cleanup function.
+Creates a StyleToken containing multiple CSS rules.
 
 ```ts
-// Inject to document.head (default)
-const cleanup = inject(button);
+const states = style(
+  [`${c.root}:hover`, `background: blue;`],
+  [`${c.root}:active`, `transform: scale(0.98);`],
+  [`${c.root}:disabled`, `opacity: 0.5;`],
+);
+// states.__css contains all three rules
+```
 
-// Inject to specific target
+#### `inject(tokens, options?): () => void`
+
+Manually injects styles into DOM. Supports single token, array, or object. Returns cleanup function.
+
+```ts
+// Single token
+inject(button.root);
+
+// Array of tokens
+inject([button.root, button.icon, button.rootIcon]);
+
+// Object - extracts all StyleTokens
+inject(button);
+
+// With target
 inject(button, { target: shadowRoot });
 
 // Cleanup removes the <style> element
+const cleanup = inject(button);
 cleanup();
 ```
 
@@ -284,18 +335,12 @@ type ClassRefs<T extends readonly string[]> = {
   readonly [K in T[number]]: ClassRef;
 };
 
-// Style token (used in class prop)
+// Style token (returned by style())
 interface StyleToken {
-  readonly _: string; // hashed class name
-  readonly __bundle: StyleBundle;
-  toString(): string;
-}
-
-// Style bundle (returned by style())
-interface StyleBundle<T extends readonly string[]> {
-  readonly [K in T[number]]: StyleToken;
-  readonly __css: string;
+  readonly _?: string; // className (only for class selectors)
+  readonly __css: string; // full CSS rule(s)
   readonly __injected: Set<Element | ShadowRoot>;
+  toString(): string; // returns _ or empty string
 }
 
 // Registry options
@@ -303,6 +348,11 @@ interface RegistryOptions {
   target?: Element | ShadowRoot;
   dedupe?: boolean;
 }
+
+// style() function overloads
+function style(selector: ClassRef, css: string): StyleToken;
+function style(selector: string, css: string): StyleToken;
+function style(...rules: [string, string][]): StyleToken;
 ```
 
 ### 8.3 SemaJSX Integration (`@semajsx/dom`)
@@ -592,7 +642,7 @@ The style system can integrate with Tailwind CSS to provide type-safe utility cl
 
 ### 10.2 Predefined Values
 
-Predefined Tailwind scale values are exported as direct properties with JSDoc comments for IDE hover hints:
+Predefined Tailwind scale values are exported as direct properties with JSDoc comments for IDE hover hints. JSDoc is placed directly on the object properties:
 
 ```ts
 // @semajsx/tailwind/spacing.ts
@@ -610,61 +660,38 @@ const c = classes([
   "m2",
   "m4",
   "m8",
-  "mx",
-  "my",
   "mauto",
   // ...
 ]);
 
-export const spacing = style(
-  c,
-  `
-  .${c.p0} { padding: 0; }
-  .${c.p1} { padding: 0.25rem; }
-  .${c.p2} { padding: 0.5rem; }
-  .${c.p4} { padding: 1rem; }
-  .${c.p8} { padding: 2rem; }
-  .${c.px} { padding: 1px; }
-
-  .${c.m0} { margin: 0; }
-  .${c.m1} { margin: 0.25rem; }
-  .${c.m2} { margin: 0.5rem; }
-  .${c.m4} { margin: 1rem; }
-  .${c.m8} { margin: 2rem; }
-  .${c.mauto} { margin: auto; }
-  /* ... */
-`,
-);
-
-// Type definitions with JSDoc for IDE hover hints
-export interface SpacingStyles {
+export const spacing = {
   /** padding: 0 */
-  p0: StyleToken;
+  p0: style(c.p0, `padding: 0;`),
   /** padding: 0.25rem (4px) */
-  p1: StyleToken;
+  p1: style(c.p1, `padding: 0.25rem;`),
   /** padding: 0.5rem (8px) */
-  p2: StyleToken;
+  p2: style(c.p2, `padding: 0.5rem;`),
   /** padding: 1rem (16px) */
-  p4: StyleToken;
+  p4: style(c.p4, `padding: 1rem;`),
   /** padding: 2rem (32px) */
-  p8: StyleToken;
+  p8: style(c.p8, `padding: 2rem;`),
   /** padding: 1px */
-  px: StyleToken;
+  px: style(c.px, `padding: 1px;`),
 
   /** margin: 0 */
-  m0: StyleToken;
+  m0: style(c.m0, `margin: 0;`),
   /** margin: 0.25rem (4px) */
-  m1: StyleToken;
+  m1: style(c.m1, `margin: 0.25rem;`),
   /** margin: 0.5rem (8px) */
-  m2: StyleToken;
+  m2: style(c.m2, `margin: 0.5rem;`),
   /** margin: 1rem (16px) */
-  m4: StyleToken;
+  m4: style(c.m4, `margin: 1rem;`),
   /** margin: 2rem (32px) */
-  m8: StyleToken;
+  m8: style(c.m8, `margin: 2rem;`),
   /** margin: auto */
-  mauto: StyleToken;
+  mauto: style(c.mauto, `margin: auto;`),
   // ...
-}
+};
 ```
 
 IDE hover example:
@@ -676,6 +703,16 @@ spacing.p4
 │ (property) p4           │
 │ padding: 1rem (16px)    │
 └─────────────────────────┘
+```
+
+Batch injection:
+
+```ts
+// Inject all spacing styles at once
+inject(spacing);
+
+// Or inject specific ones
+inject([spacing.p4, spacing.m2]);
 ```
 
 Usage:
@@ -838,7 +875,7 @@ function Card({ width, children }) {
 
 ### 10.7 Code Generation from Tailwind Config
 
-A code generator reads Tailwind config to produce the style bundles with JSDoc comments:
+A code generator reads Tailwind config to produce the style objects with JSDoc comments:
 
 ```ts
 // scripts/generate-tailwind.ts
@@ -849,30 +886,26 @@ const config = resolveConfig(tailwindConfig);
 
 function generateSpacing(): string {
   const names: string[] = [];
-  const rules: string[] = [];
-  const typeProps: string[] = [];
+  const props: string[] = [];
 
   for (const [key, value] of Object.entries(config.theme.spacing)) {
     const name = `p${key}`;
     names.push(name);
-    rules.push(`.${name} { padding: ${value}; }`);
 
-    // Generate JSDoc for type definition
+    // Generate property with JSDoc
     const pxValue = convertToPixels(value); // e.g., "1rem" -> "16px"
-    typeProps.push(`  /** padding: ${value}${pxValue ? ` (${pxValue})` : ""} */`);
-    typeProps.push(`  ${name}: StyleToken;`);
+    props.push(`  /** padding: ${value}${pxValue ? ` (${pxValue})` : ""} */`);
+    props.push(`  ${name}: style(c.${name}, \`padding: ${value};\`),`);
   }
 
   return `
-import { classes, style, StyleToken } from "@semajsx/style";
+import { classes, style } from "@semajsx/style";
 
 const c = classes(${JSON.stringify(names)});
 
-export const spacing = style(c, \`${rules.join("\n")}\`);
-
-export interface SpacingStyles {
-${typeProps.join("\n")}
-}
+export const spacing = {
+${props.join("\n")}
+};
 `;
 }
 
@@ -1002,15 +1035,16 @@ If accepted:
 ### Glossary
 
 - **ClassRef**: A reference object that stringifies to a hashed class name
-- **StyleToken**: A ClassRef bound to its CSS, used in class props
-- **StyleBundle**: Collection of StyleTokens + full CSS string
+- **StyleToken**: Contains className (optional) + CSS rule(s), used in class props or injected
 - **ArbitraryStyleToken**: A token for arbitrary values that uses CSS variables instead of generating classes
 - **App Anchor**: Global style injection target (default: document.head)
 - **Component Anchor**: Per-component injection target (doesn't affect children)
 
 ### Change Log
 
-| Date       | Change                         | Author       |
-| ---------- | ------------------------------ | ------------ |
-| 2026-01-10 | Initial draft                  | SemaJSX Team |
-| 2026-01-10 | Added Tailwind CSS integration | SemaJSX Team |
+| Date       | Change                                          | Author       |
+| ---------- | ----------------------------------------------- | ------------ |
+| 2026-01-10 | Initial draft                                   | SemaJSX Team |
+| 2026-01-10 | Added Tailwind CSS integration                  | SemaJSX Team |
+| 2026-01-10 | Refined style() API: per-property with JSDoc    | SemaJSX Team |
+| 2026-01-10 | Added batch inject() and multiple rules support | SemaJSX Team |
