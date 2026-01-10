@@ -447,13 +447,15 @@ function Box() {
 
 **How it works internally:**
 
-```ts
-function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
-  const bindings: SignalBinding[] = [];
-  let varIndex = 0;
+`rule()` is a **pure function** - it only creates an immutable definition with no side effects. Variable name assignment and CSS injection are handled by `StyleAnchor`.
 
-  // Build CSS, replacing signals with var() references
-  const css = strings.reduce((acc, str, i) => {
+```ts
+// rule() is pure - no global state, no side effects
+function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
+  const bindingDefs: SignalBindingDef[] = [];
+
+  // Build CSS template with placeholders for signals
+  const cssTemplate = strings.reduce((acc, str, i) => {
     if (i === 0) return str;
 
     const value = values[i - 1];
@@ -463,11 +465,11 @@ function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
     }
 
     if (isSignal(value)) {
-      const varName = `--_v${varIndex++}`;
-      // Check if next char is a unit (px, em, %, etc.)
+      // Use placeholder {{index}} - variable name assigned by anchor later
+      const index = bindingDefs.length;
       const unit = extractUnit(str);
-      bindings.push([value, varName, unit]);
-      return acc + `var(${varName})` + str;
+      bindingDefs.push({ signal: value, index, unit });
+      return acc + `{{${index}}}` + str;
     }
 
     return acc + String(value) + str;
@@ -475,13 +477,43 @@ function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
 
   return {
     __kind: "style",
-    _: extractClassName(css),
-    __css: css,
-    __bindings: bindings.length > 0 ? bindings : undefined,
-    __injected: new WeakSet(),
+    _: extractClassName(cssTemplate),
+    __cssTemplate: cssTemplate,
+    __bindingDefs: bindingDefs.length > 0 ? bindingDefs : undefined,
+    toString() {
+      return this._ ?? "";
+    },
   };
 }
 ```
+
+**Key insight: Separation of concerns**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  rule() - Pure definition (module load time)                    │
+│  ─────────────────────────────────────────                      │
+│  Input:  rule`${c.box} { height: ${signal}px; }`                │
+│  Output: { __cssTemplate: ".box-xxx { height: {{0}}px; }",      │
+│            __bindingDefs: [{ signal, index: 0, unit: "px" }] }  │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  StyleAnchor - Side effects (render time)                       │
+│  ────────────────────────────────────────                       │
+│  1. Assign variable name: signal → "--sig-x7f3a"                │
+│  2. Generate final CSS: ".box-xxx { height: var(--sig-x7f3a); }"│
+│  3. Inject CSS to target (if not already done)                  │
+│  4. Set up signal subscription                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Benefits of pure rule():**
+
+- **Testable**: No global state to mock
+- **SSR-friendly**: Each request has its own anchor, no shared state
+- **Predictable**: Same input always produces same output
+- **GC-friendly**: Tokens can be garbage collected when not referenced
 
 **Static Rules (no signals):**
 
@@ -515,7 +547,7 @@ token1 === token3; // false - different signal instance
 **Usage in React:**
 
 ```tsx
-import { useStyle, useSignal } from "@semajsx/style/react";
+import { useStyle, useSignal, StyleAnchor } from "@semajsx/style/react";
 import * as styles from "./box.style";
 
 function Box() {
@@ -523,27 +555,31 @@ function Box() {
   const height = useSignal(100);
   const color = useSignal("#3b82f6");
 
-  // cx() returns { className, ref } for reactive tokens
-  // The ref sets up signal subscriptions that bypass React re-renders
-  const props = cx(styles.box(height, color));
-
+  // cx() always returns string
+  // StyleAnchor handles both CSS injection and signal bindings
   return (
-    <div {...props} onClick={() => (height.value += 10)}>
-      Click to grow
-    </div>
+    <StyleAnchor>
+      <div className={cx(styles.box(height, color))} onClick={() => (height.value += 10)}>
+        Click to grow
+      </div>
+    </StyleAnchor>
   );
 }
 
-// Rendered:
-// <div class="box-x7f3a" style="--_v0: 100px; --_v1: #3b82f6">
+// DOM structure:
+// <div style="--_v0: 100px; --_v1: #3b82f6">  <!-- StyleAnchor -->
+//   <div class="box-x7f3a">Click to grow</div>
+// </div>
 //
-// After click (signal update directly to DOM, no React re-render!):
-// <div class="box-x7f3a" style="--_v0: 110px; --_v1: #3b82f6">
+// After click (signal update directly to anchor, no React re-render!):
+// <div style="--_v0: 110px; --_v1: #3b82f6">
+//   <div class="box-x7f3a">Click to grow</div>
+// </div>
 ```
 
 **How it works:**
 
-The `cx()` function for reactive tokens returns props including a `ref` callback. When React attaches the ref to the DOM element, it sets up signal subscriptions that update CSS variables directly, bypassing React's reconciliation.
+The `<StyleAnchor>` component handles both CSS injection and signal bindings. CSS variables are set on the anchor element and cascade to descendants via CSS inheritance. The anchor uses `display: contents` to avoid affecting layout.
 
 **Benefits:**
 
@@ -555,7 +591,12 @@ The `cx()` function for reactive tokens returns props including a `ref` callback
 
 #### `inject(tokens, options?): () => void`
 
-Manually injects styles into DOM. Supports single token, array, or object. Returns cleanup function.
+Manually injects CSS into DOM. Supports single token, array, or object. Returns cleanup function.
+
+**Important**: `inject()` only handles CSS stylesheet injection. It does NOT set up signal bindings for reactive tokens. Signal binding is handled separately:
+
+- **SemaJSX**: The render system (`resolveClass()`) handles signal binding when processing `class` props (see Section 8.3)
+- **React/Vue**: The `<StyleAnchor>` component captures signal bindings and sets up subscriptions (see Section 9.3)
 
 ```ts
 // Single token
@@ -573,6 +614,13 @@ inject(button, { target: shadowRoot });
 // Cleanup removes the <style> element
 const cleanup = inject(button);
 cleanup();
+
+// For reactive tokens, inject() only adds the CSS:
+// .box-xxx { height: var(--_v0); }
+// The signal → CSS variable binding must be set up separately
+const boxToken = boxStyle(heightSignal, bgSignal);
+inject(boxToken); // Injects CSS with var() placeholders
+// Signal binding is set up by StyleAnchor in React/Vue
 ```
 
 #### `createRegistry(options?): StyleRegistry`
@@ -617,43 +665,33 @@ type ClassRefs<T extends readonly string[]> = {
 // Discriminated union for token types
 // Use __kind for type narrowing in TypeScript
 
-/** Signal binding: [signal, varName, unit] */
-type SignalBinding = [Signal<unknown>, string, string];
+/** Signal binding definition (before variable name assignment) */
+interface SignalBindingDef {
+  signal: Signal<unknown>;
+  index: number; // position in template (for placeholder replacement)
+  unit: string; // suffix like "px", "em", etc.
+}
 
-/** Style token - CSS with optional signal bindings */
+/** Style token - immutable definition, no side effects */
 interface StyleToken {
   readonly __kind: "style";
   readonly _?: string; // className (only for class selectors)
-  readonly __css: string; // CSS with var() for signals
-  readonly __bindings?: SignalBinding[]; // signal → CSS variable bindings
-  readonly __injected: WeakSet<Element | ShadowRoot>;
+  readonly __cssTemplate: string; // CSS with {{0}}, {{1}} placeholders for signals
+  readonly __bindingDefs?: SignalBindingDef[]; // signal references + positions
   toString(): string; // returns _ or empty string
 }
 
-/** Arbitrary value token (for Tailwind integration) */
-interface ArbitraryStyleToken {
-  readonly __kind: "arbitrary";
-  readonly _: string; // e.g., "p-v"
-  readonly __var: string; // e.g., "--p"
-  readonly __value: string; // e.g., "4px"
-  toString(): string;
-}
+// Note: No __injected here - injection state is managed by StyleAnchor
 
-/** All token types */
-type AnyStyleToken = StyleToken | ArbitraryStyleToken;
-
-// Type guards
+// Type guard
 function isStyleToken(value: unknown): value is StyleToken {
   return (
     typeof value === "object" && value !== null && "__kind" in value && value.__kind === "style"
   );
 }
 
-function isArbitraryToken(value: unknown): value is ArbitraryStyleToken {
-  return (
-    typeof value === "object" && value !== null && "__kind" in value && value.__kind === "arbitrary"
-  );
-}
+// Note: Arbitrary values (Tailwind p`4px` syntax) now return regular StyleToken
+// with dynamically generated class names. No separate ArbitraryStyleToken type needed.
 
 // Registry options
 interface RegistryOptions {
@@ -672,155 +710,121 @@ function rule(
 function rules(...tokens: StyleToken[]): StyleToken;
 ```
 
-### 8.3 Type Narrowing Examples
+### 8.3 Render System Integration
+
+The render system delegates to `StyleAnchor` for all side effects:
 
 ```ts
-// Using discriminated union for type-safe handling
-function processToken(token: AnyStyleToken) {
-  switch (token.__kind) {
-    case "style":
-      // TypeScript knows: token is StyleToken
-      inject(token);
-      break;
-
-    case "arbitrary":
-      // TypeScript knows: token is ArbitraryStyleToken
-      applyVariable(token.__var, token.__value);
-      break;
-  }
-}
-
-// In render system
-function resolveClass(value: AnyStyleToken, element: HTMLElement) {
-  if (value.__kind === "arbitrary") {
-    element.style.setProperty(value.__var, value.__value);
-    return value._;
-  }
-
-  // StyleToken - set up signal bindings if present
-  if (value.__bindings) {
-    for (const [signal, varName, unit] of value.__bindings) {
-      const update = () => {
-        const v = unit ? `${signal.value}${unit}` : String(signal.value);
-        element.style.setProperty(varName, v);
-      };
-      update(); // Initial value
-      signal.subscribe(update);
-    }
-  }
-
+// In render system - just extract class name, anchor handles the rest
+function resolveClass(value: StyleToken, anchor: StyleAnchorRegistry): string {
+  // Anchor processes the token (assign var names, inject CSS, set up subscriptions)
+  anchor.processToken(value);
   return value._ ?? "";
 }
 ```
 
-### 8.4 Global Token Registry
+See Section 9.3 for the full `StyleAnchor` implementation that handles:
 
-The runtime maintains a global registry that maps token hashes to their definitions. This is essential for SSR hydration, deduplication, and signal-based token caching.
+- Signal variable name assignment
+- CSS generation and injection
+- Signal subscriptions and cleanup
+
+### 8.4 Token Caching (Optional Optimization)
+
+Since `rule()` is a pure function, tokens can optionally be cached for performance. This is handled by the caller, not by `rule()` itself.
 
 ```ts
-// Internal global registry
-const globalTokenRegistry = new Map<string, StyleToken>();
+// Optional: Cache tokens by template + signal identity
+const tokenCache = new WeakMap<TemplateStringsArray, Map<string, StyleToken>>();
 
-// Automatically populated when rule() is called
-function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
-  // Hash includes template strings + signal identities (not values)
-  const hashKey =
-    strings.join("\0") + values.map((v) => (isSignal(v) ? v.id : String(v))).join("\0");
+function cachedRule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
+  // Build cache key from signal identities
+  const signalKey = values.map((v) => (isSignal(v) ? getObjectId(v) : String(v))).join("\0");
 
-  const hash = computeHash(hashKey);
-
-  // Return cached token if exists
-  if (globalTokenRegistry.has(hash)) {
-    return globalTokenRegistry.get(hash)!;
+  let cache = tokenCache.get(strings);
+  if (!cache) {
+    cache = new Map();
+    tokenCache.set(strings, cache);
   }
 
-  // Build CSS with var() for signals
-  const { css, bindings } = buildCSSWithBindings(strings, values);
+  if (cache.has(signalKey)) {
+    return cache.get(signalKey)!;
+  }
 
-  const token: StyleToken = {
-    __kind: "style",
-    _: extractClassName(css),
-    __css: css,
-    __bindings: bindings.length > 0 ? bindings : undefined,
-    __injected: new WeakSet(),
-  };
-
-  globalTokenRegistry.set(hash, token);
+  const token = rule(strings, ...values);
+  cache.set(signalKey, token);
   return token;
+}
+
+// Helper: Get stable ID for any object (for cache keys)
+const objectIds = new WeakMap<object, number>();
+let nextId = 0;
+function getObjectId(obj: object): number {
+  let id = objectIds.get(obj);
+  if (id === undefined) {
+    id = nextId++;
+    objectIds.set(obj, id);
+  }
+  return id;
 }
 ```
 
-**Why a global registry?**
+**When to use caching:**
 
-1. **Token caching**: Same template + same signals = same token instance
-2. **CSS deduplication**: Same CSS (even with different signals) shares the same stylesheet
-3. **SSR Hydration**: `hydrateStyles()` can mark existing tokens as already injected
-4. **Memory efficiency**: Avoid creating duplicate token objects
+- Dynamic rules called frequently with same signals
+- Large applications with many rule definitions
 
-**Registry Lifecycle**:
+**When caching is unnecessary:**
 
-- Static tokens are registered at module load time
-- Dynamic tokens (with signals) are registered on first call with those signal instances
-- Registry persists for the application lifetime
-- In SSR, each request should use a fresh registry (via `collectStyles()` context)
-
-**Dynamic Rules and Token Caching**:
-
-```ts
-// Dynamic rule definition
-const boxStyle = (height: Signal<number>, bg: Signal<string>) =>
-  rule`${c.box} { height: ${height}px; background: ${bg}; }`;
-
-// Same signal instances = same cached token
-const h = signal(100);
-const c = signal("red");
-
-const token1 = boxStyle(h, c);
-const token2 = boxStyle(h, c);
-token1 === token2; // true - same signals, cached token
-
-// Different signal instances = different tokens
-const h2 = signal(100); // new signal with same value
-const token3 = boxStyle(h2, c);
-token1 === token3; // false - different signal instance
-```
-
-**Why cache by signal identity?**
-
-Each token stores its own `__bindings` array referencing specific signal instances. If two different signals were used to create the "same" token, they would conflict when setting up subscriptions.
-
-**Preventing unbounded growth**:
-
-1. **Same signals → same token**: Hash by signal identity prevents duplicates
-2. **Typical usage**: Components create signals once, so tokens are created once
-3. **Token footprint is small**: Just CSS string + binding references
-4. **Signals GC'd, tokens remain**: Tokens stay in registry but bindings become inactive
+- Static rules (defined once at module level)
+- Rules called once per component instance
 
 ### 8.5 rules() Return Type
 
-When combining multiple tokens with `rules()`, bindings from all tokens are merged:
+When combining multiple tokens with `rules()`, binding definitions from all tokens are merged:
 
 ```ts
 function rules(...tokens: StyleToken[]): StyleToken {
-  const combinedCSS = tokens.map((t) => t.__css).join("\n");
-  const allBindings = tokens.flatMap((t) => t.__bindings ?? []);
+  const combinedCSS = tokens.map((t) => t.__cssTemplate).join("\n");
+  const allBindingDefs = tokens.flatMap((t, tokenIndex) =>
+    (t.__bindingDefs ?? []).map((def) => ({
+      ...def,
+      // Adjust index to be unique across combined tokens
+      index: def.index + tokenIndex * 100,
+    })),
+  );
 
   return {
     __kind: "style",
     _: undefined, // Combined rules have no single class name
-    __css: combinedCSS,
-    __bindings: allBindings.length > 0 ? allBindings : undefined,
-    __injected: new WeakSet(),
+    __cssTemplate: combinedCSS,
+    __bindingDefs: allBindingDefs.length > 0 ? allBindingDefs : undefined,
+    toString() {
+      return "";
+    },
   };
 }
 ```
 
 **Behavior**:
 
-- All CSS rules are concatenated
-- All signal bindings are merged into a single array
+- All CSS templates are concatenated
+- All binding definitions are merged (with adjusted indices)
 - The combined token has no `_` (class name) since it may contain multiple selectors
-- When used in `class`, all signal subscriptions are set up on the element
+- StyleAnchor processes all binding definitions when the token is used
+
+**Important**: Since `rules()` returns a token with `_: undefined`, it cannot be used as a standalone className. Use it for:
+
+```tsx
+// ✅ Injection only (global styles, state rules)
+inject(buttonStates);
+
+// ✅ Combined with other tokens that have class names
+<button class={[button.root, button.states]}>  {/* button.root provides class */}
+
+// ❌ Won't add any class to element
+<div class={buttonStates}>  {/* toString() returns "" */}
+```
 
 ### 8.6 SemaJSX Integration (`@semajsx/dom`)
 
@@ -989,17 +993,17 @@ class MyElement extends HTMLElement {
 
 #### React Integration (`@semajsx/style/react`)
 
-Provider + hook pattern for seamless React usage:
+Anchor + hook pattern for seamless React usage:
 
 ```tsx
 // App.tsx
-import { StyleProvider } from "@semajsx/style/react";
+import { StyleAnchor } from "@semajsx/style/react";
 
 function App() {
   return (
-    <StyleProvider>
+    <StyleAnchor>
       <MyApp />
-    </StyleProvider>
+    </StyleAnchor>
   );
 }
 
@@ -1008,9 +1012,9 @@ function WebComponent() {
   const shadowRef = useRef<ShadowRoot>(null);
 
   return (
-    <StyleProvider target={shadowRef.current}>
+    <StyleAnchor target={shadowRef.current}>
       <Content />
-    </StyleProvider>
+    </StyleAnchor>
   );
 }
 ```
@@ -1048,27 +1052,27 @@ The `useStyle()` hook returns a `cx` function that:
 - Deduplicates injections automatically
 
 ```ts
-// @semajsx/style/react implementation sketch
-import { createContext, useContext, useCallback, useMemo } from "react";
-import { inject, isStyleToken, type StyleToken } from "@semajsx/style";
+// @semajsx/style/react implementation
+import { createContext, useContext, useCallback, useRef, useEffect } from "react";
+import { nanoid } from "nanoid";
+import { isStyleToken, type StyleToken, type SignalBindingDef } from "@semajsx/style";
 
-const StyleContext = createContext<Element | ShadowRoot | null>(null);
-
-export function StyleProvider({ target, children }: {
-  target?: Element | ShadowRoot;
-  children: React.ReactNode;
-}) {
-  return (
-    <StyleContext.Provider value={target ?? null}>
-      {children}
-    </StyleContext.Provider>
-  );
+/** Registry managed by each StyleAnchor instance */
+interface StyleAnchorRegistry {
+  // Signal → CSS variable name (unique within this anchor)
+  signalVars: WeakMap<Signal<unknown>, string>;
+  // Already injected classNames (for deduplication)
+  injectedClasses: Set<string>;
+  // Process a token: assign var names, inject CSS, set up subscriptions
+  processToken: (token: StyleToken, element: HTMLElement) => void;
 }
+
+const StyleAnchorContext = createContext<StyleAnchorRegistry | null>(null);
 
 type CxArg = StyleToken | string | false | null | undefined;
 
 export function useStyle() {
-  const target = useContext(StyleContext);
+  const registry = useContext(StyleAnchorContext);
 
   const cx = useCallback((...args: CxArg[]): string => {
     const classes: string[] = [];
@@ -1077,8 +1081,10 @@ export function useStyle() {
       if (!arg) continue;
 
       if (isStyleToken(arg)) {
-        // Inject if not already injected to this target
-        inject(arg, { target: target ?? undefined });
+        // Registry handles all side effects
+        if (registry) {
+          registry.processToken(arg, /* element from render context */);
+        }
         if (arg._) classes.push(arg._);
       } else {
         classes.push(arg);
@@ -1086,10 +1092,246 @@ export function useStyle() {
     }
 
     return classes.join(" ");
-  }, [target]);
+  }, [registry]);
 
   return cx;
 }
+
+/**
+ * StyleAnchor - Manages all style-related state and side effects
+ *
+ * Responsibilities:
+ * 1. Signal → CSS variable name mapping (scoped to this anchor)
+ * 2. Arbitrary value token caching
+ * 3. CSS injection deduplication
+ * 4. Signal subscriptions and cleanup
+ */
+export function StyleAnchor({
+  target,
+  children,
+}: {
+  target?: ShadowRoot;
+  children: React.ReactNode;
+}) {
+  const elementRef = useRef<HTMLDivElement>(null);
+  const subscriptionsRef = useRef<Set<() => void>>(new Set());
+
+  // Create registry once per anchor instance
+  const registryRef = useRef<StyleAnchorRegistry | null>(null);
+  if (!registryRef.current) {
+    const signalVars = new WeakMap<Signal<unknown>, string>();
+    const injectedClasses = new Set<string>();
+
+    registryRef.current = {
+      signalVars,
+      injectedClasses,
+
+      processToken(token: StyleToken, element: HTMLElement) {
+        // 1. Generate final CSS by replacing placeholders with var names
+        let css = token.__cssTemplate;
+        const bindings: Array<{ signal: Signal<unknown>; varName: string; unit: string }> = [];
+
+        if (token.__bindingDefs) {
+          for (const def of token.__bindingDefs) {
+            // Get or assign variable name for this signal
+            let varName = signalVars.get(def.signal);
+            if (!varName) {
+              varName = `--sig-${nanoid(6)}`;
+              signalVars.set(def.signal, varName);
+            }
+            // Replace placeholder with var()
+            css = css.replace(`{{${def.index}}}`, `var(${varName})`);
+            bindings.push({ signal: def.signal, varName, unit: def.unit });
+          }
+        }
+
+        // 2. Inject CSS if className not already injected
+        const className = token._;
+        if (className && !injectedClasses.has(className)) {
+          const injectionTarget = target ?? document.head;
+          injectStyles(css, injectionTarget);
+          injectedClasses.add(className);
+        }
+
+        // 3. Set up signal subscriptions on the anchor element
+        const anchorElement = elementRef.current;
+        if (anchorElement && bindings.length > 0) {
+          for (const { signal, varName, unit } of bindings) {
+            // Set initial value
+            const value = unit ? `${signal.value}${unit}` : String(signal.value);
+            anchorElement.style.setProperty(varName, value);
+
+            // Subscribe to changes
+            const unsub = signal.subscribe((newValue) => {
+              const v = unit ? `${newValue}${unit}` : String(newValue);
+              anchorElement.style.setProperty(varName, v);
+            });
+            subscriptionsRef.current.add(unsub);
+          }
+        }
+      },
+    };
+  }
+
+  // Cleanup subscriptions on unmount
+  useEffect(() => {
+    return () => {
+      subscriptionsRef.current.forEach((unsub) => unsub());
+      subscriptionsRef.current.clear();
+    };
+  }, []);
+
+  return (
+    <StyleAnchorContext.Provider value={registryRef.current}>
+      <div ref={elementRef} style={{ display: "contents" }}>
+        {children}
+      </div>
+    </StyleAnchorContext.Provider>
+  );
+}
+
+```
+
+**Key insight**: StyleAnchor manages all state and side effects:
+
+- Signal → CSS variable name mapping (scoped to anchor)
+- CSS injection deduplication (by className)
+- Signal subscriptions with automatic cleanup
+
+Note: Arbitrary values no longer need anchor-scoped caching because they use deterministic classNames (see Section 10.3).
+
+#### Core JS Implementation (`@semajsx/style`)
+
+Before framework integrations, here's the core framework-agnostic implementation:
+
+```ts
+// @semajsx/style - Core implementation (framework-agnostic)
+import { nanoid } from "nanoid";
+
+/**
+ * StyleRegistry - Core class that manages all style state
+ *
+ * Can be used directly in vanilla JS or wrapped by framework integrations
+ */
+export class StyleRegistry {
+  // Signal → CSS variable name
+  private signalVars = new WeakMap<Signal<unknown>, string>();
+  // Already injected classNames (for deduplication)
+  private injectedClasses = new Set<string>();
+  // Active subscriptions (for cleanup)
+  private subscriptions = new Set<() => void>();
+  // Injection target
+  private target: Element | ShadowRoot;
+  // Element for CSS variable values
+  private anchorElement: HTMLElement | null = null;
+
+  constructor(options: { target?: Element | ShadowRoot } = {}) {
+    this.target = options.target ?? document.head;
+  }
+
+  /** Set anchor element for CSS variable values */
+  setAnchorElement(element: HTMLElement) {
+    this.anchorElement = element;
+  }
+
+  /** Process a token: generate CSS, inject, set up bindings */
+  processToken(token: StyleToken): string {
+    // 1. Generate final CSS with var() references
+    let css = token.__cssTemplate;
+    const bindings: Array<{ signal: Signal<unknown>; varName: string; unit: string }> = [];
+
+    if (token.__bindingDefs) {
+      for (const def of token.__bindingDefs) {
+        let varName = this.signalVars.get(def.signal);
+        if (!varName) {
+          varName = `--sig-${nanoid(6)}`;
+          this.signalVars.set(def.signal, varName);
+        }
+        css = css.replace(`{{${def.index}}}`, `var(${varName})`);
+        bindings.push({ signal: def.signal, varName, unit: def.unit });
+      }
+    }
+
+    // 2. Inject CSS if className not already injected
+    const className = token._;
+    if (className && !this.injectedClasses.has(className)) {
+      injectStyles(css, this.target);
+      this.injectedClasses.add(className);
+    }
+
+    // 3. Set up signal subscriptions
+    if (this.anchorElement && bindings.length > 0) {
+      for (const { signal, varName, unit } of bindings) {
+        const value = unit ? `${signal.value}${unit}` : String(signal.value);
+        this.anchorElement.style.setProperty(varName, value);
+
+        const unsub = signal.subscribe((newValue) => {
+          const v = unit ? `${newValue}${unit}` : String(newValue);
+          this.anchorElement?.style.setProperty(varName, v);
+        });
+        this.subscriptions.add(unsub);
+      }
+    }
+
+    return token._ ?? "";
+  }
+
+  /** Cleanup all subscriptions */
+  dispose() {
+    this.subscriptions.forEach((unsub) => unsub());
+    this.subscriptions.clear();
+  }
+}
+
+/** Create cx() function bound to a registry */
+export function createCx(registry: StyleRegistry) {
+  return (...args: (StyleToken | string | false | null | undefined)[]): string => {
+    const classes: string[] = [];
+    for (const arg of args) {
+      if (!arg) continue;
+      if (isStyleToken(arg)) {
+        const className = registry.processToken(arg);
+        if (className) classes.push(className);
+      } else {
+        classes.push(arg);
+      }
+    }
+    return classes.join(" ");
+  };
+}
+```
+
+#### Vanilla JS Usage
+
+```ts
+import { StyleRegistry, createCx } from "@semajsx/style";
+import { signal } from "@semajsx/signal";
+import * as button from "./button.style";
+
+// Create registry (once per app or shadow root)
+const registry = new StyleRegistry();
+
+// Optional: set anchor element for reactive styles
+const container = document.getElementById("app")!;
+registry.setAnchorElement(container);
+
+// Create cx helper
+const cx = createCx(registry);
+
+// Use tokens
+const btn = document.createElement("button");
+btn.className = cx(button.root, button.primary);
+container.appendChild(btn);
+
+// Reactive styles
+const height = signal(100);
+const boxToken = rule`${c.box} { height: ${height}px; }`;
+const box = document.createElement("div");
+box.className = cx(boxToken);
+container.appendChild(box);
+
+// Cleanup when done
+registry.dispose();
 ```
 
 #### Vue Integration (`@semajsx/style/vue`)
@@ -1110,32 +1352,13 @@ const cx = useStyle();
 </template>
 ```
 
-#### Vanilla JS
-
-```ts
-import { inject, cx } from "@semajsx/style";
-import * as button from "./button.style";
-import { root, primary } from "./button.style";
-
-// Option 1: Pre-inject specific styles
-inject(root);
-inject(primary);
-
-const btn = document.createElement("button");
-btn.className = String(button.root);
-
-// Option 2: Use cx() helper (auto-injects)
-const btn2 = document.createElement("button");
-btn2.className = cx(button.root, button.primary, "custom");
-```
-
 #### Reactive Styles in React/Vue
 
-React and Vue use the same signal-based approach via `useSignal` hook:
+React and Vue use the same signal-based approach via `useSignal` hook and `StyleAnchor`:
 
 ```tsx
-// React - Reactive values with useSignal
-import { useStyle, useSignal } from "@semajsx/style/react";
+// React - Reactive values with useSignal and StyleAnchor
+import { useStyle, useSignal, StyleAnchor } from "@semajsx/style/react";
 import { classes, rule } from "@semajsx/style";
 
 const c = classes(["box"]);
@@ -1158,40 +1381,48 @@ function Box() {
   const height = useSignal(100);
   const color = useSignal("#3b82f6");
 
-  // cx() returns { className, ref } for reactive tokens
-  // The ref sets up signal subscriptions that bypass React re-renders
-  const props = cx(boxStyle({ height, bg: color }));
-
+  // cx() always returns string
+  // StyleAnchor handles both CSS injection and signal bindings
   return (
-    <div {...props} onClick={() => (height.value += 10)}>
-      Click to grow
-    </div>
+    <StyleAnchor>
+      <div className={cx(boxStyle({ height, bg: color }))} onClick={() => (height.value += 10)}>
+        Click to grow
+      </div>
+    </StyleAnchor>
   );
 }
 
-// Rendered:
-// <div class="box-x7f3a" style="--_v0: 100px; --_v1: #3b82f6">
+// DOM structure:
+// <div style="--_v0: 100px; --_v1: #3b82f6">  <!-- StyleAnchor wrapper -->
+//   <div class="box-x7f3a">Click to grow</div>
+// </div>
 //
 // After click (signal update directly to DOM, no React re-render!):
-// <div class="box-x7f3a" style="--_v0: 110px; --_v1: #3b82f6">
+// <div style="--_v0: 110px; --_v1: #3b82f6">  <!-- CSS vars updated -->
+//   <div class="box-x7f3a">Click to grow</div>
+// </div>
 ```
 
-Vue with `useSignal`:
+**How it works**: CSS variables set on the anchor element cascade to descendants via CSS inheritance. The anchor uses `display: contents` to avoid affecting layout.
+
+Vue with `useSignal` and `StyleAnchor`:
 
 ```vue
 <script setup lang="ts">
 import { useStyle, useSignal } from "@semajsx/style/vue";
+import StyleAnchor from "@semajsx/style/vue/StyleAnchor.vue";
 
 const cx = useStyle();
 const height = useSignal(100);
 const color = useSignal("#3b82f6");
-
-// cx() returns bindings directive for reactive tokens
-const boxProps = cx(boxStyle({ height, bg: color }));
 </script>
 
 <template>
-  <div v-bind="boxProps" @click="height.value += 10">Click to grow</div>
+  <StyleAnchor>
+    <div :class="cx(boxStyle({ height, bg: color }))" @click="height.value += 10">
+      Click to grow
+    </div>
+  </StyleAnchor>
 </template>
 ```
 
@@ -1203,9 +1434,9 @@ const boxProps = cx(boxStyle({ height, bg: color }));
 | Dynamic rule     | `boxStyle({ height, bg })` | `boxStyle({ height, bg })`     |
 | Update           | `height.value += 10`       | `height.value += 10`           |
 | Re-render needed | No - direct DOM update     | No - signal bypasses React/Vue |
-| Syntax           | `<div class={style}>`      | `<div className={cx(style)}>`  |
+| Syntax           | `<div class={style}>`      | `<StyleAnchor>` + `cx(style)`  |
 
-The key insight: **signals bypass framework re-renders**. The CSS variable update happens directly on the DOM element via signal subscription, not through React/Vue's reconciliation.
+The key insight: **signals bypass framework re-renders**. The CSS variable update happens directly on the anchor element via signal subscription, not through React/Vue's reconciliation. CSS variables cascade to descendants via CSS inheritance.
 
 ### 9.4 Global Styles
 
@@ -1276,9 +1507,19 @@ The style system can integrate with Tailwind CSS to provide type-safe utility cl
   └── index.ts        # Re-export all
 ```
 
-### 10.2 Predefined Values
+### 10.2 Predefined Values (Template-First Approach)
 
-Predefined Tailwind scale values are exported as object properties with JSDoc comments for IDE hover hints.
+Predefined Tailwind scale values use a **template-first approach**: define the utility template once, then generate all predefined values from it. This ensures consistency between predefined and arbitrary values.
+
+**Design decision**: We chose template-first over direct CSS for predefined values because:
+
+| Aspect              | Template-First (chosen)                    | Direct CSS                     |
+| ------------------- | ------------------------------------------ | ------------------------------ |
+| Single source       | ✅ Property defined once in template       | ❌ Repeated in each rule       |
+| className prefix    | ✅ Automatically consistent                | ❌ Manual consistency required |
+| Arbitrary values    | ✅ Same template, same prefix              | ❌ Separate implementation     |
+| Runtime performance | ✅ Static tokens (generated at definition) | ✅ Static tokens               |
+| Code size           | ✅ Less duplication                        | ❌ More verbose                |
 
 **Note on tree-shaking**: Unlike component styles (Section 6.4), Tailwind utilities use object exports for ergonomics. This is acceptable because:
 
@@ -1291,52 +1532,80 @@ For component styles where each rule is larger and usage is selective, prefer na
 
 ```ts
 // @semajsx/tailwind/spacing.ts
-import { classes, rule } from "@semajsx/style";
+import { classes } from "@semajsx/style";
 
-const c = classes([
-  "p0",
-  "p1",
-  "p2",
-  "p4",
-  "p8",
-  "px",
-  "m0",
-  "m1",
-  "m2",
-  "m4",
-  "m8",
-  "mauto",
-  // ...
-]);
+// 1. Define class names (single source of truth)
+const c = classes(["p", "m"]);
 
+// 2. Create utility template (defines property + className prefix)
+function createUtility(property: string, classPrefix: string) {
+  return (value: string): StyleToken => ({
+    __kind: "style",
+    _: `${classPrefix}-${valueToSuffix(value)}`,
+    __cssTemplate: `.${classPrefix}-${valueToSuffix(value)} { ${property}: ${value}; }`,
+    toString() {
+      return this._;
+    },
+  });
+}
+
+// Helper: Convert value to deterministic suffix
+function valueToSuffix(value: string): string {
+  // Simple values: use directly (sanitized)
+  if (/^[\w.]+$/.test(value)) {
+    return value.replace(".", "_");
+  }
+  // Complex values (calc, etc.): use short hash
+  return hashString(value).slice(0, 6);
+}
+
+// 3. Create templates for each property
+const padding = createUtility("padding", c.p.toString());
+const margin = createUtility("margin", c.m.toString());
+
+// 4. Generate predefined values (static tokens at definition time)
 export const spacing = {
   /** padding: 0 */
-  p0: rule`${c.p0} { padding: 0; }`,
+  p0: padding("0"),
   /** padding: 0.25rem (4px) */
-  p1: rule`${c.p1} { padding: 0.25rem; }`,
+  p1: padding("0.25rem"),
   /** padding: 0.5rem (8px) */
-  p2: rule`${c.p2} { padding: 0.5rem; }`,
+  p2: padding("0.5rem"),
   /** padding: 1rem (16px) */
-  p4: rule`${c.p4} { padding: 1rem; }`,
+  p4: padding("1rem"),
   /** padding: 2rem (32px) */
-  p8: rule`${c.p8} { padding: 2rem; }`,
-  /** padding: 1px */
-  px: rule`${c.px} { padding: 1px; }`,
+  p8: padding("2rem"),
 
   /** margin: 0 */
-  m0: rule`${c.m0} { margin: 0; }`,
+  m0: margin("0"),
   /** margin: 0.25rem (4px) */
-  m1: rule`${c.m1} { margin: 0.25rem; }`,
+  m1: margin("0.25rem"),
   /** margin: 0.5rem (8px) */
-  m2: rule`${c.m2} { margin: 0.5rem; }`,
+  m2: margin("0.5rem"),
   /** margin: 1rem (16px) */
-  m4: rule`${c.m4} { margin: 1rem; }`,
+  m4: margin("1rem"),
   /** margin: 2rem (32px) */
-  m8: rule`${c.m8} { margin: 2rem; }`,
+  m8: margin("2rem"),
   /** margin: auto */
-  mauto: rule`${c.mauto} { margin: auto; }`,
-  // ...
+  mauto: margin("auto"),
 };
+
+// 5. Export templates for arbitrary values (same prefix!)
+export { padding as p, margin as m };
+```
+
+**How it works:**
+
+```ts
+// Predefined values - generated from template at definition time
+spacing.p4._; // "p-1rem" (deterministic)
+spacing.p4.__cssTemplate; // ".p-1rem { padding: 1rem; }"
+
+// Arbitrary values - same template, same prefix
+p("4px")._; // "p-4px" (deterministic)
+p("calc(100% - 40px)")._; // "p-a1b2c3" (hash for complex values)
+
+// Prefix is always consistent: both come from c.p
 ```
 
 IDE hover example:
@@ -1368,101 +1637,112 @@ import { spacing, colors } from "@semajsx/tailwind";
 <div class={[spacing.p4, spacing.m2, colors.bgBlue500, colors.textWhite]}>Hello</div>;
 ```
 
-### 10.3 Arbitrary Values with CSS Variables
+### 10.3 Arbitrary Values (Same Template)
 
-For Tailwind's arbitrary value syntax (e.g., `p-[4px]`), we use CSS custom properties instead of generating new classes dynamically:
-
-```css
-/* @semajsx/tailwind/arbitrary.css - Pre-generated CSS */
-.p-v {
-  padding: var(--p);
-}
-.m-v {
-  margin: var(--m);
-}
-.w-v {
-  width: var(--w);
-}
-.h-v {
-  height: var(--h);
-}
-.bg-v {
-  background-color: var(--bg);
-}
-.text-v {
-  color: var(--text);
-}
-/* ... */
-```
-
-Template string functions return a special `ArbitraryStyleToken`:
+Arbitrary values use the **same template** as predefined values, ensuring consistent className prefixes. The className is **deterministic** based on the value, enabling deduplication by className.
 
 ```ts
-// @semajsx/tailwind/arbitrary.ts
+// @semajsx/tailwind/spacing.ts (continued from 10.2)
 
-interface ArbitraryStyleToken {
-  readonly __kind: "arbitrary";
-  readonly _: string; // "p-v"
-  readonly __var: string; // "--p"
-  readonly __value: string; // "4px"
-}
+// The same templates used for predefined values work for arbitrary values!
+// p("4px") uses the same `padding` template, same `c.p` prefix
 
-export function p(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken {
+// Tagged template syntax for ergonomics
+export function pTemplate(strings: TemplateStringsArray, ...values: unknown[]) {
   const value = String.raw(strings, ...values);
-  return {
-    __kind: "arbitrary",
-    _: "p-v",
-    __var: "--p",
-    __value: value,
-  };
+  return padding(value); // Uses same createUtility result
 }
 
-export function m(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken;
-export function w(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken;
-export function h(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken;
-export function bg(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken;
-// ...
+export function mTemplate(strings: TemplateStringsArray, ...values: unknown[]) {
+  const value = String.raw(strings, ...values);
+  return margin(value);
+}
+
+// Export as p`...` and m`...`
+export { pTemplate as p, mTemplate as m };
 ```
+
+**How it works:**
+
+```ts
+import { spacing, p, m } from "@semajsx/tailwind/spacing";
+
+// Predefined and arbitrary share the same className prefix
+spacing.p4._; // "p-abc123-1rem"  (c.p prefix + value suffix)
+p`4px`._; // "p-abc123-4px"  (same c.p prefix + value suffix)
+p`calc(100% - 40px)`._; // "p-abc123-a1b2c3"  (hash for complex)
+
+// Same value = same className = deduplication works
+p`4px` === p`4px`; // Same token (deterministic)
+```
+
+**Deduplication by className:**
+
+The `StyleRegistry` deduplicates by className (not CSS hash), which is simpler and more efficient:
+
+```ts
+// StyleRegistry.processToken() - simplified
+processToken(token: StyleToken): string {
+  const className = token._;
+  if (!className) return "";
+
+  // Dedupe by className - simple Set lookup
+  if (!this.injectedClasses.has(className)) {
+    injectStyles(token.__cssTemplate, this.target);
+    this.injectedClasses.add(className);
+  }
+
+  return className;
+}
+```
+
+**Benefits:**
+
+- **Deterministic**: Same value always produces same className
+- **Consistent prefix**: Predefined and arbitrary share `c.p`, `c.m` prefixes
+- **Simple deduplication**: Just check className in Set
+- **No registry needed for tokens**: Tokens are pure, registry only handles injection
 
 Usage:
 
 ```tsx
-import { spacing } from "@semajsx/tailwind";
-import { p, m, w, bg } from "@semajsx/tailwind/arbitrary";
+import { spacing, p, w, bg } from "@semajsx/tailwind";
 
-<div
-  class={[
-    spacing.p4, // Predefined: padding: 1rem
-    w`calc(100% - 40px)`, // Arbitrary: width: var(--w)
-    bg`#f5f5f5`, // Arbitrary: background: var(--bg)
-  ]}
->
-  ...
-</div>;
+function Card() {
+  return (
+    <div
+      class={[
+        spacing.p4, // Predefined: "p-xxx-1rem"
+        w`calc(100% - 40px)`, // Arbitrary: "w-xxx-a1b2c3"
+        bg`#f5f5f5`, // Arbitrary: "bg-xxx-f5f5f5"
+      ]}
+    >
+      ...
+    </div>
+  );
+}
+
+// All class-based, deduplication by className
+// If w`calc(100% - 40px)` appears twice, CSS only injected once
 ```
 
 ### 10.4 Render Handling
 
-The render system detects `ArbitraryStyleToken` and merges CSS variables into the style attribute:
+Since arbitrary values now return regular `StyleToken`, no special handling is needed. Both predefined and arbitrary tokens are processed identically:
 
 ```ts
-function resolveClassAndStyle(values: Array<StyleToken | ArbitraryStyleToken>) {
+function resolveClass(values: StyleToken[]): string {
   const classes: string[] = [];
-  const styleVars: Record<string, string> = {};
 
   for (const token of values.flat().filter(Boolean)) {
-    if (isArbitraryToken(token)) {
-      classes.push(token._);
-      styleVars[token.__var] = token.__value;
-    } else if (isStyleToken(token)) {
-      classes.push(token._);
+    if (isStyleToken(token)) {
+      // Inject CSS if not already done
+      injectIfNeeded(token);
+      if (token._) classes.push(token._);
     }
   }
 
-  return {
-    class: classes.join(" "),
-    style: styleVars,
-  };
+  return classes.join(" ");
 }
 ```
 
@@ -1472,24 +1752,29 @@ Rendered output:
 // Input
 <div class={[spacing.p4, w`calc(100% - 40px)`, bg`#f5f5f5`]}>
 
-// Output
-<div class="p-4 w-v bg-v" style="--w: calc(100% - 40px); --bg: #f5f5f5">
+// Output (all class-based, CSS injected automatically)
+<div class="p-4 w-x7f3 bg-b2c4">
 ```
 
-### 10.5 Advantages of CSS Variable Approach
+### 10.5 Why Dynamic Classes (Not Inline Styles)
 
-| Aspect            | Dynamic Class Generation | CSS Variable Approach |
-| ----------------- | ------------------------ | --------------------- |
-| Generated classes | One per unique value     | Fixed set             |
-| CSS bundle size   | Grows with usage         | Fixed                 |
-| Runtime overhead  | Need to inject new rules | Only set variables    |
-| Implementation    | Requires hash/cache      | Simple                |
+We chose dynamic class generation over inline styles for arbitrary values:
+
+| Aspect           | Dynamic Classes (chosen)          | Inline Styles              |
+| ---------------- | --------------------------------- | -------------------------- |
+| API consistency  | ✅ Same as predefined tokens      | ❌ Mixed class + style     |
+| Component usage  | ✅ Just use in `class` prop       | ❌ Must handle `style` too |
+| Caching          | ✅ Same value = same cached token | ❌ Creates new object      |
+| CSS cascade      | ✅ Works with other classes       | ⚠️ Highest specificity     |
+| DevTools inspect | ✅ See class name in Elements     | ⚠️ Inline style noise      |
+
+**Trade-off**: Slightly larger CSS output, but simpler developer experience.
 
 ### 10.6 Complete Example
 
 ```tsx
 import { spacing, colors, flex } from "@semajsx/tailwind";
-import { p, m, w, h, bg } from "@semajsx/tailwind/arbitrary";
+import { w, h } from "@semajsx/tailwind/arbitrary";
 
 function Card({ width, children }) {
   return (
@@ -1501,7 +1786,7 @@ function Card({ width, children }) {
         colors.bgWhite,
         flex.col,
 
-        // Arbitrary values (template strings)
+        // Arbitrary values (dynamic classes, same API)
         w`${width}px`,
         h`calc(100vh - 80px)`,
       ]}
@@ -1511,11 +1796,12 @@ function Card({ width, children }) {
   );
 }
 
-// Rendered:
-// <div
-//   class="p-4 m-2 bg-white flex-col w-v h-v"
-//   style="--w: 300px; --h: calc(100vh - 80px)"
-// >
+// Rendered (all class-based):
+// <div class="p-4 m-2 bg-white flex-col w-x7f3 h-b2c4">
+//
+// Injected CSS:
+// .w-x7f3 { width: 300px; }
+// .h-b2c4 { height: calc(100vh - 80px); }
 ```
 
 ### 10.7 Code Generation from Tailwind Config
@@ -2151,7 +2437,7 @@ If accepted:
 
 ### 18.2 Phase 2: Framework Integrations
 
-- [ ] Implement `@semajsx/style/react` (StyleProvider, useStyle, useSignal)
+- [ ] Implement `@semajsx/style/react` (StyleAnchor, useStyle, useSignal)
 - [ ] Implement `@semajsx/style/vue` (useStyle, useSignal composables)
 - [ ] Implement `@semajsx/style/server` (SSR support)
 - [ ] Add hydration support
@@ -2193,7 +2479,7 @@ If accepted:
 
 - **ClassRef**: A reference object that stringifies to a hashed class name
 - **StyleToken**: Contains className (optional) + CSS rule(s), used in class props or injected
-- **ArbitraryStyleToken**: A token for arbitrary values that uses CSS variables instead of generating classes
+- **Arbitrary Value**: Tailwind-style arbitrary syntax (e.g., `p\`4px\``) that generates a StyleToken with dynamic class name
 - **ReactiveVar**: Signal binding info for dynamic CSS variables
 - **Dynamic Rule**: A function that accepts props object with signals and returns a StyleToken (like Component)
 - **App Anchor**: Global style injection target (default: document.head)
@@ -2232,3 +2518,23 @@ If accepted:
 | 2026-01-10 | Added dynamic rules registry behavior (hash by signal identity)           | SemaJSX Team |
 | 2026-01-10 | Changed hydration to hash-based matching (minification-safe)              | SemaJSX Team |
 | 2026-01-10 | Redesigned reactive: signals in template, auto-binding via \_\_bindings   | SemaJSX Team |
+| 2026-01-10 | Clarified inject() only handles CSS, signal binding handled by framework  | SemaJSX Team |
+| 2026-01-10 | Fixed signal identity: use WeakMap since Signal has no id property        | SemaJSX Team |
+| 2026-01-10 | Clarified hashKey vs hash relationship in token caching                   | SemaJSX Team |
+| 2026-01-10 | Redesigned cx() to always return string, use anchor for signal bindings   | SemaJSX Team |
+| 2026-01-10 | Unified StyleProvider and SignalStyleAnchor into single StyleAnchor       | SemaJSX Team |
+| 2026-01-10 | Fixed CSS variable collision: use sig- prefix + nanoid per signal         | SemaJSX Team |
+| 2026-01-10 | Fixed StyleAnchor first render: default to document.head for CSS inject   | SemaJSX Team |
+| 2026-01-10 | Added toString() implementation to StyleToken and rules() return          | SemaJSX Team |
+| 2026-01-10 | Clarified rules() returns token without className (injection only)        | SemaJSX Team |
+| 2026-01-10 | Changed arbitrary values to dynamic classes (not inline styles)           | SemaJSX Team |
+| 2026-01-10 | Removed ArbitraryStyleToken type - arbitrary values return StyleToken     | SemaJSX Team |
+| 2026-01-10 | Made rule() pure function with placeholder syntax (no global state)       | SemaJSX Team |
+| 2026-01-10 | Changed StyleToken to use \_\_cssTemplate and \_\_bindingDefs             | SemaJSX Team |
+| 2026-01-10 | Introduced StyleRegistry class for anchor-scoped state management         | SemaJSX Team |
+| 2026-01-10 | Moved all caches (signalVars, arbitraryTokens, injectedCSS) to registry   | SemaJSX Team |
+| 2026-01-10 | Added core JS implementation before framework integrations                | SemaJSX Team |
+| 2026-01-10 | Redesigned Tailwind utils with template-first approach                    | SemaJSX Team |
+| 2026-01-10 | Changed arbitrary values to use deterministic className (valueToSuffix)   | SemaJSX Team |
+| 2026-01-10 | Changed deduplication from CSS hash to className (simpler, faster)        | SemaJSX Team |
+| 2026-01-10 | Removed arbitraryTokens cache (deterministic tokens don't need caching)   | SemaJSX Team |
