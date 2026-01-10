@@ -555,7 +555,13 @@ The `cx()` function for reactive tokens returns props including a `ref` callback
 
 #### `inject(tokens, options?): () => void`
 
-Manually injects styles into DOM. Supports single token, array, or object. Returns cleanup function.
+Manually injects CSS into DOM. Supports single token, array, or object. Returns cleanup function.
+
+**Important**: `inject()` only handles CSS stylesheet injection. It does NOT set up signal bindings for reactive tokens. Signal binding is handled separately:
+
+- **SemaJSX**: The render system (`resolveClass()`) handles signal binding when processing `class` props (see Section 8.3)
+- **React**: The `cx()` function returns a `ref` callback that sets up signal subscriptions (see Section 9.3)
+- **Vue**: The `cx()` function returns directive bindings that set up subscriptions
 
 ```ts
 // Single token
@@ -573,6 +579,13 @@ inject(button, { target: shadowRoot });
 // Cleanup removes the <style> element
 const cleanup = inject(button);
 cleanup();
+
+// For reactive tokens, inject() only adds the CSS:
+// .box-xxx { height: var(--_v0); }
+// The signal → CSS variable binding must be set up separately
+const boxToken = boxStyle(heightSignal, bgSignal);
+inject(boxToken); // Injects CSS with var() placeholders
+// Signal binding is set up by the framework integration (cx().ref in React, etc.)
 ```
 
 #### `createRegistry(options?): StyleRegistry`
@@ -721,15 +734,34 @@ The runtime maintains a global registry that maps token hashes to their definiti
 // Internal global registry
 const globalTokenRegistry = new Map<string, StyleToken>();
 
+// WeakMap to assign unique IDs to signal instances
+// Since Signal objects don't have an inherent `id` property, we generate one
+let signalIdCounter = 0;
+const signalIdMap = new WeakMap<object, number>();
+
+function getSignalId(signal: Signal<unknown>): number {
+  let id = signalIdMap.get(signal);
+  if (id === undefined) {
+    id = signalIdCounter++;
+    signalIdMap.set(signal, id);
+  }
+  return id;
+}
+
 // Automatically populated when rule() is called
 function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
-  // Hash includes template strings + signal identities (not values)
+  // Build hashKey from template strings + value identities
+  // For signals, use their unique ID (not their current value)
+  // For other values, use their string representation
   const hashKey =
-    strings.join("\0") + values.map((v) => (isSignal(v) ? v.id : String(v))).join("\0");
+    strings.join("\0") +
+    "\0" +
+    values.map((v) => (isSignal(v) ? `signal:${getSignalId(v)}` : String(v))).join("\0");
 
+  // Compute a short hash from the hashKey for storage efficiency
   const hash = computeHash(hashKey);
 
-  // Return cached token if exists
+  // Return cached token if exists (same template + same signal instances)
   if (globalTokenRegistry.has(hash)) {
     return globalTokenRegistry.get(hash)!;
   }
@@ -749,6 +781,17 @@ function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
   return token;
 }
 ```
+
+**Hash computation explained**:
+
+1. **hashKey**: A composite string built from template literals and value identities
+   - Template strings are joined with null separators (`\0`)
+   - Signal values use their unique ID from `signalIdMap` (not their current value)
+   - Non-signal values are stringified
+
+2. **hash**: The result of `computeHash(hashKey)` - a short, fixed-length string suitable as a Map key
+
+3. **Why WeakMap for signal IDs?**: Since `@semajsx/signal` doesn't expose an `id` property on Signal objects, we use a WeakMap to lazily assign unique IDs. This allows garbage collection of signals while maintaining identity tracking during their lifetime.
 
 **Why a global registry?**
 
@@ -1049,7 +1092,7 @@ The `useStyle()` hook returns a `cx` function that:
 
 ```ts
 // @semajsx/style/react implementation sketch
-import { createContext, useContext, useCallback, useMemo } from "react";
+import { createContext, useContext, useCallback, useRef } from "react";
 import { inject, isStyleToken, type StyleToken } from "@semajsx/style";
 
 const StyleContext = createContext<Element | ShadowRoot | null>(null);
@@ -1067,29 +1110,97 @@ export function StyleProvider({ target, children }: {
 
 type CxArg = StyleToken | string | false | null | undefined;
 
+// Return type depends on whether tokens have reactive bindings
+type CxResult =
+  | string                              // No reactive tokens
+  | { className: string; ref: RefCallback }; // Has reactive tokens
+
 export function useStyle() {
   const target = useContext(StyleContext);
+  // Track active subscriptions for cleanup
+  const subscriptionsRef = useRef<Map<HTMLElement, (() => void)[]>>(new Map());
 
-  const cx = useCallback((...args: CxArg[]): string => {
+  const cx = useCallback((...args: CxArg[]): CxResult => {
     const classes: string[] = [];
+    const allBindings: Array<[Signal<unknown>, string, string]> = [];
 
     for (const arg of args) {
       if (!arg) continue;
 
       if (isStyleToken(arg)) {
-        // Inject if not already injected to this target
+        // Inject CSS (this only injects the stylesheet, not signal bindings)
         inject(arg, { target: target ?? undefined });
         if (arg._) classes.push(arg._);
+
+        // Collect signal bindings from token
+        if (arg.__bindings) {
+          allBindings.push(...arg.__bindings);
+        }
       } else {
         classes.push(arg);
       }
     }
 
-    return classes.join(" ");
+    const className = classes.join(" ");
+
+    // If no reactive bindings, return simple string
+    if (allBindings.length === 0) {
+      return className;
+    }
+
+    // Has reactive bindings - return { className, ref }
+    // The ref callback sets up signal subscriptions that bypass React re-renders
+    const ref = (element: HTMLElement | null) => {
+      // Cleanup previous subscriptions for this element
+      const prevSubs = subscriptionsRef.current.get(element!);
+      if (prevSubs) {
+        prevSubs.forEach(unsub => unsub());
+        subscriptionsRef.current.delete(element!);
+      }
+
+      if (!element) return;
+
+      // Set up new subscriptions
+      const unsubs: (() => void)[] = [];
+      for (const [signal, varName, unit] of allBindings) {
+        // Set initial value
+        const value = unit ? `${signal.value}${unit}` : String(signal.value);
+        element.style.setProperty(varName, value);
+
+        // Subscribe to changes - updates DOM directly, bypasses React
+        const unsub = signal.subscribe((newValue) => {
+          const v = unit ? `${newValue}${unit}` : String(newValue);
+          element.style.setProperty(varName, v);
+        });
+        unsubs.push(unsub);
+      }
+      subscriptionsRef.current.set(element, unsubs);
+    };
+
+    return { className, ref };
   }, [target]);
 
   return cx;
 }
+```
+
+**Key insight**: The `cx()` function returns different types based on content:
+
+- **Static tokens only**: Returns `string` (simple className)
+- **Reactive tokens**: Returns `{ className, ref }` where the ref callback sets up signal subscriptions
+
+The ref callback approach allows signal updates to directly mutate the DOM element's style property without triggering React re-renders. This is the same pattern used by animation libraries like Framer Motion.
+
+**Usage pattern**:
+
+```tsx
+// cx() return type is a union - use spread to handle both cases
+const props = cx(styles.box(height, color));
+return <div {...(typeof props === "string" ? { className: props } : props)} />;
+
+// Or use a helper that normalizes the result:
+const normalized = typeof props === "string" ? { className: props } : props;
+return <div {...normalized} />;
 ```
 
 #### Vue Integration (`@semajsx/style/vue`)
@@ -2232,3 +2343,7 @@ If accepted:
 | 2026-01-10 | Added dynamic rules registry behavior (hash by signal identity)           | SemaJSX Team |
 | 2026-01-10 | Changed hydration to hash-based matching (minification-safe)              | SemaJSX Team |
 | 2026-01-10 | Redesigned reactive: signals in template, auto-binding via \_\_bindings   | SemaJSX Team |
+| 2026-01-10 | Fixed React cx() to return { className, ref } for reactive tokens         | SemaJSX Team |
+| 2026-01-10 | Clarified inject() only handles CSS, signal binding handled by framework  | SemaJSX Team |
+| 2026-01-10 | Fixed signal identity: use WeakMap since Signal has no id property        | SemaJSX Team |
+| 2026-01-10 | Clarified hashKey vs hash relationship in token caching                   | SemaJSX Team |
