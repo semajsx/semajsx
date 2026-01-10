@@ -49,6 +49,14 @@ export function virtualModules(modules: VirtualModulesOptions): Plugin {
         return resolve(viteRoot, id);
       }
 
+      // Try resolving relative paths to absolute
+      if (!id.startsWith("/")) {
+        const absoluteId = resolve(viteRoot, id);
+        if (modules[absoluteId] || resolvedIds.has(absoluteId)) {
+          return absoluteId;
+        }
+      }
+
       // Try resolving relative imports from importer
       if (importer) {
         const abs = resolve(dirname(importer), id);
