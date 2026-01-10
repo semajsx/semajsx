@@ -101,7 +101,7 @@ No built-in solution for:
 - **CSS preprocessor features**: No built-in Sass/Less compilation (use external tools)
 - **Atomic CSS generation**: Not auto-generating utility classes like Tailwind
 - **CSS-in-JS object syntax**: We explicitly prefer native CSS strings
-- **Hot Module Replacement**: HMR is a build tool concern, not runtime
+- **Runtime HMR**: HMR is a build tool concern, not a runtime feature (Vite plugin provides HMR)
 
 ---
 
@@ -125,7 +125,89 @@ No built-in solution for:
 
 ### 6.3 Key Insight
 
-The key insight is treating **each `rule()` call as a tree-shakeable unit**. If a `rule()` export isn't imported, its CSS is eliminated entirely.
+The key insight is treating styles as **JavaScript modules** that bundlers can analyze and eliminate.
+
+### 6.4 Tree-Shaking: Honest Analysis
+
+**What works (module-level tree-shaking):**
+
+```
+components/
+├── Button/
+│   ├── Button.tsx        → imports button.style.ts
+│   └── button.style.ts   → included in bundle
+├── Card/
+│   ├── Card.tsx          → imports card.style.ts
+│   └── card.style.ts     → included in bundle
+└── Tooltip/
+    ├── Tooltip.tsx       → NOT imported anywhere
+    └── tooltip.style.ts  → ELIMINATED by bundler
+```
+
+If your app never imports `<Tooltip>`, its styles are eliminated. This is standard ES module tree-shaking.
+
+**What doesn't work (property-level tree-shaking):**
+
+```ts
+// button.style.ts
+export const button = {
+  root: rule`...`,    // ← If you import ANY of these...
+  icon: rule`...`,    // ← ...ALL of them are included
+  large: rule`...`,   // ← (object properties don't tree-shake)
+};
+
+// Component only uses button.root
+import { button } from "./button.style";
+<div class={button.root}>  // button.icon and button.large still in bundle
+```
+
+**Why?** JavaScript bundlers (Rollup, esbuild, webpack) perform tree-shaking at the export level, not the property level. When you export an object, the entire object is included if any property is accessed.
+
+**Workarounds for finer granularity:**
+
+1. **Separate exports** (manual, verbose):
+
+```ts
+// button.style.ts
+export const buttonRoot = rule`...`;
+export const buttonIcon = rule`...`;
+export const buttonLarge = rule`...`;
+
+// Now unused exports ARE eliminated
+import { buttonRoot } from "./button.style";
+// buttonIcon and buttonLarge are tree-shaken
+```
+
+2. **Compile-time splitting** (requires Vite plugin):
+
+```ts
+// button.style.ts - written as object for convenience
+export const button = {
+  root: rule`...`,
+  icon: rule`...`,
+};
+
+// Transformed by Vite plugin to separate exports
+// → buttonRoot, buttonIcon (enables tree-shaking)
+```
+
+3. **CSS injection at use-time** (our current approach):
+
+Even if all rules are bundled, only **used** rules are injected into the DOM. Unused rules exist in JS but never become `<style>` tags.
+
+**Practical impact:**
+
+| Scenario                      | Bundle Size               | DOM Size              |
+| ----------------------------- | ------------------------- | --------------------- |
+| Component not imported        | ✅ Eliminated             | ✅ No styles          |
+| Component imported, all used  | Included (expected)       | Injected (expected)   |
+| Component imported, some used | Included (all properties) | ✅ Only used injected |
+
+**Recommendation:**
+
+- For component libraries with many variants, consider separate exports
+- For most apps, module-level tree-shaking is sufficient
+- The Vite plugin (Phase 3) will add property-level optimization
 
 ---
 
@@ -630,7 +712,77 @@ function resolveClass(value: AnyStyleToken, element: HTMLElement) {
 }
 ```
 
-### 8.4 SemaJSX Integration (`@semajsx/dom`)
+### 8.4 Global Token Registry
+
+The runtime maintains a global registry that maps token hashes to their definitions. This is essential for SSR hydration and deduplication.
+
+```ts
+// Internal global registry
+const globalTokenRegistry = new Map<string, StyleToken>();
+
+// Automatically populated when rule() is called
+function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
+  const css = buildCSS(strings, values);
+  const hash = computeHash(css);
+
+  // Check if already registered
+  if (globalTokenRegistry.has(hash)) {
+    return globalTokenRegistry.get(hash)!;
+  }
+
+  const token: StyleToken = {
+    __kind: isReactive(values) ? "reactive" : "static",
+    _: extractClassName(css),
+    __css: css,
+    __vars: extractVars(values),
+    __injected: new WeakSet(),
+  };
+
+  globalTokenRegistry.set(hash, token);
+  return token;
+}
+```
+
+**Why a global registry?**
+
+1. **Deduplication**: Same CSS content returns the same token instance
+2. **SSR Hydration**: `hydrateStyles()` can mark existing tokens as already injected
+3. **Memory Efficiency**: Avoid creating duplicate token objects
+
+**Registry Lifecycle**:
+
+- Tokens are registered at module load time (when `rule()` is called)
+- Registry persists for the application lifetime
+- In SSR, each request should use a fresh registry (via `collectStyles()` context)
+
+### 8.5 rules() Return Type
+
+When combining multiple tokens with `rules()`, the return type depends on the inputs:
+
+```ts
+function rules(...tokens: StyleToken[]): StyleToken {
+  const hasReactive = tokens.some((t) => t.__kind === "reactive");
+  const combinedCSS = tokens.map((t) => t.__css).join("\n");
+  const combinedVars = tokens.flatMap((t) => (t.__kind === "reactive" ? t.__vars : []));
+
+  return {
+    // If ANY input is reactive, output is reactive
+    __kind: hasReactive ? "reactive" : "static",
+    _: undefined, // Combined rules have no single class name
+    __css: combinedCSS,
+    __vars: hasReactive ? combinedVars : undefined,
+    __injected: new WeakSet(),
+  };
+}
+```
+
+**Behavior**:
+
+- All static inputs → static output
+- Any reactive input → reactive output (merges all `__vars`)
+- The combined token has no `_` (class name) since it may contain multiple selectors
+
+### 8.6 SemaJSX Integration (`@semajsx/dom`)
 
 #### Class Property Enhancement
 
@@ -1202,19 +1354,19 @@ Template string functions return a special `ArbitraryStyleToken`:
 // @semajsx/tailwind/arbitrary.ts
 
 interface ArbitraryStyleToken {
-  _: string; // "p-v"
-  __var: string; // "--p"
-  __value: string; // "4px"
-  __isArbitrary: true;
+  readonly __kind: "arbitrary";
+  readonly _: string; // "p-v"
+  readonly __var: string; // "--p"
+  readonly __value: string; // "4px"
 }
 
 export function p(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken {
   const value = String.raw(strings, ...values);
   return {
+    __kind: "arbitrary",
     _: "p-v",
     __var: "--p",
     __value: value,
-    __isArbitrary: true,
   };
 }
 
@@ -1364,7 +1516,7 @@ generateFlex();
 
 ---
 
-## 12. Alternatives Considered
+## 11. Alternatives Considered
 
 ### Alternative A: CSS-in-JS Object Syntax
 
@@ -1400,7 +1552,7 @@ const button = css`
 
 ---
 
-## 13. Risks and Mitigation
+## 12. Risks and Mitigation
 
 | Risk                               | Impact | Probability | Mitigation                                                     |
 | ---------------------------------- | ------ | ----------- | -------------------------------------------------------------- |
@@ -1412,7 +1564,7 @@ const button = css`
 | Invalid CSS strings                | Low    | Medium      | Validate at definition time in dev mode, skip invalid rules    |
 | Target element removed from DOM    | Medium | Low         | WeakRef for targets, auto-cleanup on GC                        |
 
-### 13.1 Memory Management Strategy
+### 12.1 Memory Management Strategy
 
 ```ts
 // Use WeakSet to track injection targets - allows GC when targets are removed
@@ -1443,7 +1595,7 @@ class StyleRegistry {
 }
 ```
 
-### 13.2 Performance: Explicit Preload
+### 12.2 Performance: Explicit Preload
 
 ```ts
 // Problem: Multiple cx() calls cause multiple style injections
@@ -1498,7 +1650,7 @@ function inject(token: StyleToken, options?: InjectOptions) {
 }
 ```
 
-### 13.3 Error Handling
+### 12.3 Error Handling
 
 ```ts
 // Dev mode: validate CSS at definition time
@@ -1529,9 +1681,9 @@ function generateHash(content: string): string {
 
 ---
 
-## 14. Shadow DOM Considerations
+## 13. Shadow DOM Considerations
 
-### 14.1 Nested Shadow DOM
+### 13.1 Nested Shadow DOM
 
 ```tsx
 // Outer shadow root
@@ -1551,7 +1703,7 @@ function generateHash(content: string): string {
 
 Each Shadow DOM boundary requires its own `AppStyleAnchor`. Styles don't pierce shadow boundaries.
 
-### 14.2 Anchor Target Removal
+### 13.2 Anchor Target Removal
 
 ```ts
 // When anchor target is removed from DOM
@@ -1564,7 +1716,7 @@ shadowRoot.host.remove();
 registry.inject(button); // No-op, logs warning in dev mode
 ```
 
-### 14.3 Multiple Shadow Roots Performance
+### 13.3 Multiple Shadow Roots Performance
 
 For apps with many shadow roots (e.g., micro-frontends):
 
@@ -1589,9 +1741,9 @@ function injectToShadow(token: StyleToken, shadow: ShadowRoot) {
 
 ---
 
-## 15. Server-Side Rendering (SSR)
+## 14. Server-Side Rendering (SSR)
 
-### 15.1 SSR Strategy
+### 14.1 SSR Strategy
 
 The style system supports SSR by collecting styles during server render and injecting them into the HTML:
 
@@ -1625,7 +1777,7 @@ const fullHtml = `
 `;
 ```
 
-### 15.2 Style Collection
+### 14.2 Style Collection
 
 During SSR, the `cx()` function collects styles instead of injecting to DOM:
 
@@ -1670,7 +1822,7 @@ export function renderStylesToString(collector: StyleCollector): string {
 }
 ```
 
-### 15.3 Hydration
+### 14.3 Hydration
 
 On client-side hydration, skip re-injection for styles already in the page:
 
@@ -1684,33 +1836,76 @@ hydrateStyles();
 // Now cx() won't re-inject styles that are already in <style id="__semajsx_styles__">
 ```
 
-Implementation:
+**Timing Considerations**:
+
+1. `hydrateStyles()` should be called **after** style modules are imported
+2. Since `rule()` registers tokens at module load time, ensure style imports come before `hydrateStyles()`
+3. For lazy-loaded modules, hydration happens on-demand via the inject check
 
 ```ts
+// Correct order - style imports first
+import { button } from "./button.style"; // rule() registers tokens here
+import { card } from "./card.style";
+import { hydrateStyles } from "@semajsx/style";
+
+hydrateStyles(); // Now globalTokenRegistry contains all tokens
+```
+
+Implementation with lazy hydration fallback:
+
+```ts
+let existingCSS: string | null = null;
+
+function getExistingCSS(): string {
+  if (existingCSS === null) {
+    const styleEl = document.getElementById("__semajsx_styles__");
+    existingCSS = styleEl?.textContent || "";
+  }
+  return existingCSS;
+}
+
 export function hydrateStyles() {
-  const styleEl = document.getElementById("__semajsx_styles__");
-  if (!styleEl) return;
+  const css = getExistingCSS();
+  if (!css) return;
 
-  // Parse existing CSS to mark tokens as injected
-  const existingCSS = styleEl.textContent || "";
-
-  // Mark all rule hashes as already injected to document.head
+  // Mark all currently registered tokens as injected
   for (const [hash, token] of globalTokenRegistry) {
-    if (existingCSS.includes(token.__css)) {
+    if (css.includes(token.__css)) {
       token.__injected.add(document.head);
     }
   }
 }
+
+// Also check during inject() for lazy-loaded modules
+function inject(token: StyleToken, options?: InjectOptions) {
+  const target = options?.target ?? document.head;
+
+  // Lazy hydration check for SSR'd styles
+  if (target === document.head && !token.__injected.has(target)) {
+    const css = getExistingCSS();
+    if (css && css.includes(token.__css)) {
+      token.__injected.add(target);
+      return; // Already in page, skip injection
+    }
+  }
+
+  // ... proceed with injection
+}
 ```
 
-### 15.4 Streaming SSR
+This dual approach ensures:
 
-For streaming SSR (React 18+), styles can be flushed incrementally:
+- **Eager hydration**: `hydrateStyles()` marks all known tokens immediately
+- **Lazy hydration**: Tokens from lazy-loaded modules are checked on first use
+
+### 14.4 Streaming SSR
+
+For streaming SSR (React 18+), styles can be flushed incrementally. **The same `StyleCollectorProvider` and `collectStyles()` are used** - streaming vs sync is determined by how you consume the collector.
 
 ```ts
 // Streaming SSR with style chunks
 import { renderToPipeableStream } from "react-dom/server";
-import { StyleCollectorProvider, flushStyles } from "@semajsx/style/server";
+import { StyleCollectorProvider, collectStyles, flushStyles } from "@semajsx/style/server";
 
 const collector = collectStyles();
 
@@ -1720,30 +1915,66 @@ const { pipe } = renderToPipeableStream(
   </StyleCollectorProvider>,
   {
     onShellReady() {
-      // Flush styles collected so far
+      // Flush styles collected so far (clears the collector)
       const css = flushStyles(collector);
       res.write(`<style>${css}</style>`);
       pipe(res);
+    },
+    onAllReady() {
+      // Optionally flush any remaining styles after full render
+      const remainingCss = flushStyles(collector);
+      if (remainingCss) {
+        res.write(`<style>${remainingCss}</style>`);
+      }
     },
   }
 );
 ```
 
-### 15.5 Framework Integration
+**API difference**:
+
+- `renderStylesToString(collector)`: Returns all styles, leaves collector intact (for sync SSR)
+- `flushStyles(collector)`: Returns new styles since last flush, clears them (for streaming)
+
+### 14.5 Framework Integration
 
 **Next.js App Router:**
 
 ```tsx
-// app/layout.tsx
-import { StyleCollectorProvider, renderStylesToString } from "@semajsx/style/server";
+// lib/style-registry.tsx
+"use client";
 
-export default function RootLayout({ children }) {
+import { useServerInsertedHTML } from "next/navigation";
+import { useRef } from "react";
+import { collectStyles, renderStylesToString, StyleCollectorProvider } from "@semajsx/style/server";
+
+export function StyleRegistry({ children }: { children: React.ReactNode }) {
+  const collectorRef = useRef(collectStyles());
+  const isServerInserted = useRef(false);
+
+  useServerInsertedHTML(() => {
+    if (isServerInserted.current) return null;
+    isServerInserted.current = true;
+
+    const css = renderStylesToString(collectorRef.current);
+    return <style id="__semajsx_styles__" dangerouslySetInnerHTML={{ __html: css }} />;
+  });
+
+  return (
+    <StyleCollectorProvider collector={collectorRef.current}>{children}</StyleCollectorProvider>
+  );
+}
+
+// app/layout.tsx
+import { StyleRegistry } from "@/lib/style-registry";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html>
-      <head>
-        <StyleRegistry />
-      </head>
-      <body>{children}</body>
+      <head />
+      <body>
+        <StyleRegistry>{children}</StyleRegistry>
+      </body>
     </html>
   );
 }
@@ -1775,21 +2006,21 @@ export default function App() {
 
 ---
 
-## 16. Dependencies
+## 15. Dependencies
 
-### 16.1 Technical Dependencies
+### 15.1 Technical Dependencies
 
 - None for core `@semajsx/style` package
 - `@semajsx/dom` for SemaJSX integration (optional)
 
-### 16.2 Optional Build Tools
+### 15.2 Optional Build Tools
 
 - Vite plugin for `.css` → `.css.ts` transformation
 - CSS minification in production builds
 
 ---
 
-## 17. Open Questions
+## 16. Open Questions
 
 - [ ] **Q1**: Should CSS be auto-split per class for finer tree-shaking?
   - **Context**: Currently, entire `rule` block is one unit
@@ -1809,7 +2040,7 @@ export default function App() {
 
 ---
 
-## 18. Success Criteria
+## 17. Success Criteria
 
 - [ ] `@semajsx/style` works standalone with any framework
 - [ ] Tree-shaking eliminates unused style bundles
@@ -1823,11 +2054,11 @@ export default function App() {
 
 ---
 
-## 19. Next Steps
+## 18. Next Steps
 
 If accepted:
 
-### 19.1 Phase 1: Core Implementation
+### 18.1 Phase 1: Core Implementation
 
 - [ ] Create design document: `docs/designs/style-system-design.md`
 - [ ] Implement `@semajsx/style` package (core runtime)
@@ -1836,14 +2067,14 @@ If accepted:
 - [ ] Implement `preload()` and dev mode warnings
 - [ ] Write documentation and examples
 
-### 19.2 Phase 2: Framework Integrations
+### 18.2 Phase 2: Framework Integrations
 
 - [ ] Implement `@semajsx/style/react` (StyleProvider, useStyle, useSignal)
 - [ ] Implement `@semajsx/style/vue` (useStyle, useSignal composables)
 - [ ] Implement `@semajsx/style/server` (SSR support)
 - [ ] Add hydration support
 
-### 19.3 Phase 3: Toolchain
+### 18.3 Phase 3: Toolchain
 
 - [ ] **Vite Plugin** (`vite-plugin-semajsx-style`)
   - Transform `.css` files to `.css.ts` modules
@@ -1865,7 +2096,7 @@ If accepted:
 
 ---
 
-## 20. Appendix
+## 19. Appendix
 
 ### References
 
@@ -1907,3 +2138,10 @@ If accepted:
 | 2026-01-10 | Added SSR support (style collection, hydration, streaming)                | SemaJSX Team |
 | 2026-01-10 | Type system cleanup with discriminated union pattern                      | SemaJSX Team |
 | 2026-01-10 | Added toolchain planning (Vite plugin, VSCode extension, ESLint)          | SemaJSX Team |
+| 2026-01-10 | Fixed ArbitraryStyleToken to use \_\_kind discriminant                    | SemaJSX Team |
+| 2026-01-10 | Added globalTokenRegistry and rules() return type documentation           | SemaJSX Team |
+| 2026-01-10 | Fixed Next.js SSR example with proper StyleRegistry implementation        | SemaJSX Team |
+| 2026-01-10 | Fixed section numbering (removed gap at section 11)                       | SemaJSX Team |
+| 2026-01-10 | Clarified streaming SSR uses same Provider, added flushStyles API         | SemaJSX Team |
+| 2026-01-10 | Added hydration timing explanation with lazy fallback                     | SemaJSX Team |
+| 2026-01-10 | Added honest tree-shaking analysis (module vs property level)             | SemaJSX Team |
