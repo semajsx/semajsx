@@ -759,6 +759,108 @@ const btn2 = document.createElement("button");
 btn2.className = cx(button.root, button.primary, "custom");
 ```
 
+#### Reactive Values in React/Vue
+
+For frameworks without native signals, use `vars()` to bind dynamic values. The `cx()` returns an object with both `className` and `style`:
+
+```tsx
+// React - Reactive values with vars()
+import { useState } from "react";
+import { useStyle, vars } from "@semajsx/style/react";
+import { classes, rule } from "@semajsx/style";
+
+const c = classes(["box"]);
+
+// Define style with placeholder variables
+const boxStyle = rule`${c.box} {
+  height: var(--h);
+  background: var(--bg);
+  transition: all 0.3s;
+}`;
+
+function Box() {
+  const [height, setHeight] = useState(100);
+  const [color, setColor] = useState("#3b82f6");
+  const cx = useStyle();
+
+  // vars() creates CSS variable bindings
+  const { className, style } = cx(boxStyle, vars({ "--h": `${height}px`, "--bg": color }));
+
+  return (
+    <div className={className} style={style} onClick={() => setHeight((h) => h + 10)}>
+      Click to grow
+    </div>
+  );
+}
+
+// Rendered:
+// <div class="box-x7f3a" style="--h: 100px; --bg: #3b82f6">
+```
+
+`vars()` helper:
+
+```ts
+interface VarsToken {
+  __vars: Record<string, string>;
+  __isVars: true;
+}
+
+function vars(values: Record<string, string>): VarsToken {
+  return { __vars: values, __isVars: true };
+}
+
+// Updated cx() to handle vars
+function cx(...args): { className: string; style?: Record<string, string> } {
+  const classes: string[] = [];
+  let styleVars: Record<string, string> | undefined;
+
+  for (const arg of args) {
+    if (!arg) continue;
+
+    if (isVarsToken(arg)) {
+      styleVars = { ...styleVars, ...arg.__vars };
+    } else if (isStyleToken(arg)) {
+      inject(arg);
+      if (arg._) classes.push(arg._);
+    } else if (typeof arg === "string") {
+      classes.push(arg);
+    }
+  }
+
+  return {
+    className: classes.join(" "),
+    ...(styleVars && { style: styleVars }),
+  };
+}
+```
+
+Vue with reactive refs:
+
+```vue
+<script setup lang="ts">
+import { ref } from "vue";
+import { useStyle, vars } from "@semajsx/style/vue";
+
+const height = ref(100);
+const cx = useStyle();
+
+const { className, style } = cx(boxStyle, vars({ "--h": `${height.value}px` }));
+</script>
+
+<template>
+  <div :class="className" :style="style" @click="height += 10">Click to grow</div>
+</template>
+```
+
+**SemaJSX vs React/Vue for reactive styles:**
+
+| Aspect           | SemaJSX (Signal)                    | React/Vue (vars())                |
+| ---------------- | ----------------------------------- | --------------------------------- |
+| Definition       | `rule\`..${signal}px..\``           | `rule\`..var(--h)..\``+`vars()`   |
+| Auto-binding     | Yes - signal subscription automatic | No - manual `vars()` call         |
+| Re-render needed | No - direct DOM update              | Yes - React/Vue re-render         |
+| Syntax           | `<div class={boxStyle}>`            | `<div className={cn} style={st}>` |
+
 ### 9.4 Global Styles
 
 ```ts
@@ -1388,6 +1490,8 @@ If accepted:
 - **ClassRef**: A reference object that stringifies to a hashed class name
 - **StyleToken**: Contains className (optional) + CSS rule(s), used in class props or injected
 - **ArbitraryStyleToken**: A token for arbitrary values that uses CSS variables instead of generating classes
+- **VarsToken**: A token containing CSS variable bindings for React/Vue reactive values
+- **ReactiveVar**: Signal binding info for SemaJSX reactive CSS variables
 - **App Anchor**: Global style injection target (default: document.head)
 - **Component Anchor**: Per-component injection target (doesn't affect children)
 
@@ -1406,3 +1510,4 @@ If accepted:
 | 2026-01-10 | Unified to single tagged template syntax: rule\`selector { css }\`        | SemaJSX Team |
 | 2026-01-10 | Changed preload() to explicit only (no automatic batching)                | SemaJSX Team |
 | 2026-01-10 | Added reactive values with signals (CSS variables for dynamic updates)    | SemaJSX Team |
+| 2026-01-10 | Added vars() helper for React/Vue reactive CSS variables                  | SemaJSX Team |
