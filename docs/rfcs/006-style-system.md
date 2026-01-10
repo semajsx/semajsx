@@ -297,9 +297,13 @@ When a Signal is interpolated in the template, it automatically converts to a CS
 // Static rule - defined at module level, no signals
 const staticBox = rule`${c.box} { padding: 8px; }`;
 
-// Dynamic rule - function that accepts signals, returns StyleToken
-// Like Component vs JSX element relationship
-const dynamicBox = (height: Signal<number>, bg: Signal<string>) =>
+// Dynamic rule - function that accepts props object (like Component)
+interface BoxStyleProps {
+  height: Signal<number>;
+  bg: Signal<string>;
+}
+
+const dynamicBox = ({ height, bg }: BoxStyleProps) =>
   rule`${c.box} {
     height: ${height}px;
     background: ${bg};
@@ -315,8 +319,8 @@ function Box() {
   const height = signal(100);
   const color = signal("#3b82f6");
 
-  // Call dynamic rule with signals
-  const boxStyle = dynamicBox(height, color);
+  // Call dynamic rule with props object
+  const boxStyle = dynamicBox({ height, bg: color });
 
   return (
     <div class={boxStyle} onClick={() => (height.value += 10)}>
@@ -342,7 +346,7 @@ function Box() {
   const height = useSignal(100);
   const color = useSignal("#3b82f6");
 
-  const boxStyle = dynamicBox(height, color);
+  const boxStyle = dynamicBox({ height, bg: color });
 
   return (
     <div className={boxStyle} onClick={() => (height.value += 10)}>
@@ -845,8 +849,13 @@ import { classes, rule } from "@semajsx/style";
 
 const c = classes(["box"]);
 
-// Dynamic rule - function that accepts signals
-const boxStyle = (height: Signal<number>, bg: Signal<string>) =>
+// Dynamic rule - function that accepts props object
+interface BoxStyleProps {
+  height: Signal<number>;
+  bg: Signal<string>;
+}
+
+const boxStyle = ({ height, bg }: BoxStyleProps) =>
   rule`${c.box} {
     height: ${height}px;
     background: ${bg};
@@ -858,8 +867,8 @@ function Box() {
   const height = useSignal(100);
   const color = useSignal("#3b82f6");
 
-  // Same pattern as SemaJSX - signals in rule
-  const style = boxStyle(height, color);
+  // Same pattern as SemaJSX - props object
+  const style = boxStyle({ height, bg: color });
 
   return (
     <div className={cx(style)} onClick={() => (height.value += 10)}>
@@ -885,7 +894,7 @@ const cx = useStyle();
 const height = useSignal(100);
 const color = useSignal("#3b82f6");
 
-const style = boxStyle(height, color);
+const style = boxStyle({ height, bg: color });
 </script>
 
 <template>
@@ -895,13 +904,13 @@ const style = boxStyle(height, color);
 
 **Unified API across frameworks:**
 
-| Aspect           | SemaJSX                   | React/Vue                      |
-| ---------------- | ------------------------- | ------------------------------ |
-| Create signal    | `signal(100)`             | `useSignal(100)`               |
-| Dynamic rule     | `boxStyle(height, color)` | `boxStyle(height, color)`      |
-| Update           | `height.value += 10`      | `height.value += 10`           |
-| Re-render needed | No - direct DOM update    | No - signal bypasses React/Vue |
-| Syntax           | `<div class={style}>`     | `<div className={cx(style)}>`  |
+| Aspect           | SemaJSX                    | React/Vue                      |
+| ---------------- | -------------------------- | ------------------------------ |
+| Create signal    | `signal(100)`              | `useSignal(100)`               |
+| Dynamic rule     | `boxStyle({ height, bg })` | `boxStyle({ height, bg })`     |
+| Update           | `height.value += 10`       | `height.value += 10`           |
+| Re-render needed | No - direct DOM update     | No - signal bypasses React/Vue |
+| Syntax           | `<div class={style}>`      | `<div className={cx(style)}>`  |
 
 The key insight: **signals bypass framework re-renders**. The CSS variable update happens directly on the DOM element via signal subscription, not through React/Vue's reconciliation.
 
@@ -1535,7 +1544,7 @@ If accepted:
 - **StyleToken**: Contains className (optional) + CSS rule(s), used in class props or injected
 - **ArbitraryStyleToken**: A token for arbitrary values that uses CSS variables instead of generating classes
 - **ReactiveVar**: Signal binding info for dynamic CSS variables
-- **Dynamic Rule**: A function that accepts signals and returns a StyleToken (like Component vs JSX)
+- **Dynamic Rule**: A function that accepts props object with signals and returns a StyleToken (like Component)
 - **App Anchor**: Global style injection target (default: document.head)
 - **Component Anchor**: Per-component injection target (doesn't affect children)
 
@@ -1555,3 +1564,4 @@ If accepted:
 | 2026-01-10 | Changed preload() to explicit only (no automatic batching)                | SemaJSX Team |
 | 2026-01-10 | Added reactive values with signals (CSS variables for dynamic updates)    | SemaJSX Team |
 | 2026-01-10 | Introduced dynamic rules (functions) + useSignal hook for React/Vue       | SemaJSX Team |
+| 2026-01-10 | Changed dynamic rule to use props object pattern (like Component)         | SemaJSX Team |
