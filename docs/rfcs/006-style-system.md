@@ -287,6 +287,89 @@ const allStyles = rules(
 );
 ```
 
+#### Reactive Values with Signals
+
+When a Signal is interpolated in the template, it automatically converts to a CSS variable. The framework's reactivity updates the variable without re-injecting CSS.
+
+```ts
+import { signal } from "@semajsx/signal";
+
+const height = signal(100);
+const color = signal("#3b82f6");
+
+// Signal interpolation → CSS variable
+const box = rule`${c.box} {
+  height: ${height}px;
+  background: ${color};
+}`;
+
+// Internally generates:
+// .box-x7f3a {
+//   height: var(--box-h-abc);
+//   background: var(--box-bg-def);
+// }
+
+// box.__vars = [
+//   { id: "--box-h-abc", signal: height, suffix: "px" },
+//   { id: "--box-bg-def", signal: color, suffix: "" },
+// ]
+```
+
+Usage in component:
+
+```tsx
+function Box() {
+  const height = signal(100);
+
+  const boxStyle = rule`${c.box} {
+    height: ${height}px;
+    transition: height 0.3s;
+  }`;
+
+  return (
+    <div class={boxStyle} onClick={() => (height.value += 10)}>
+      Click to grow
+    </div>
+  );
+}
+
+// Rendered:
+// <div class="box-x7f3a" style="--box-h-abc: 100">
+//
+// After click:
+// <div class="box-x7f3a" style="--box-h-abc: 110">
+// (CSS transition animates the change!)
+```
+
+The render system detects `__vars` and:
+
+1. Injects the static CSS rule once
+2. Binds signal subscriptions to update CSS variables on the element's `style`
+3. No re-injection needed - just variable updates
+
+```ts
+// StyleToken with reactive vars
+interface StyleToken {
+  readonly _?: string;
+  readonly __css: string;
+  readonly __vars?: ReactiveVar[];
+  readonly __injected: WeakSet<Element | ShadowRoot>;
+}
+
+interface ReactiveVar {
+  id: string; // "--box-h-abc"
+  signal: Signal<any>; // The signal reference
+  suffix: string; // "px", "%", "", etc.
+}
+```
+
+Benefits:
+
+- CSS rule injected once, never changes
+- Only CSS variable values update (cheap DOM operation)
+- CSS transitions/animations work naturally
+- No style string rebuilding or re-parsing
+
 #### `inject(tokens, options?): () => void`
 
 Manually injects styles into DOM. Supports single token, array, or object. Returns cleanup function.
@@ -1322,3 +1405,4 @@ If accepted:
 | 2026-01-10 | Added memory management, performance, error handling, Shadow DOM sections | SemaJSX Team |
 | 2026-01-10 | Unified to single tagged template syntax: rule\`selector { css }\`        | SemaJSX Team |
 | 2026-01-10 | Changed preload() to explicit only (no automatic batching)                | SemaJSX Team |
+| 2026-01-10 | Added reactive values with signals (CSS variables for dynamic updates)    | SemaJSX Team |
