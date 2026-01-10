@@ -515,7 +515,7 @@ token1 === token3; // false - different signal instance
 **Usage in React:**
 
 ```tsx
-import { useStyle, useSignal } from "@semajsx/style/react";
+import { useStyle, useSignal, SignalStyleAnchor } from "@semajsx/style/react";
 import * as styles from "./box.style";
 
 function Box() {
@@ -523,27 +523,31 @@ function Box() {
   const height = useSignal(100);
   const color = useSignal("#3b82f6");
 
-  // cx() returns { className, ref } for reactive tokens
-  // The ref sets up signal subscriptions that bypass React re-renders
-  const props = cx(styles.box(height, color));
-
+  // cx() always returns string
+  // SignalStyleAnchor captures bindings and sets CSS variables on anchor element
   return (
-    <div {...props} onClick={() => (height.value += 10)}>
-      Click to grow
-    </div>
+    <SignalStyleAnchor>
+      <div className={cx(styles.box(height, color))} onClick={() => (height.value += 10)}>
+        Click to grow
+      </div>
+    </SignalStyleAnchor>
   );
 }
 
-// Rendered:
-// <div class="box-x7f3a" style="--_v0: 100px; --_v1: #3b82f6">
+// DOM structure:
+// <div style="--_v0: 100px; --_v1: #3b82f6">  <!-- SignalStyleAnchor -->
+//   <div class="box-x7f3a">Click to grow</div>
+// </div>
 //
-// After click (signal update directly to DOM, no React re-render!):
-// <div class="box-x7f3a" style="--_v0: 110px; --_v1: #3b82f6">
+// After click (signal update directly to anchor, no React re-render!):
+// <div style="--_v0: 110px; --_v1: #3b82f6">
+//   <div class="box-x7f3a">Click to grow</div>
+// </div>
 ```
 
 **How it works:**
 
-The `cx()` function for reactive tokens returns props including a `ref` callback. When React attaches the ref to the DOM element, it sets up signal subscriptions that update CSS variables directly, bypassing React's reconciliation.
+The `<SignalStyleAnchor>` component captures signal bindings from `cx()` calls within its subtree. CSS variables are set on the anchor element and cascade to descendants via CSS inheritance. The anchor uses `display: contents` to avoid affecting layout.
 
 **Benefits:**
 
@@ -1092,10 +1096,16 @@ The `useStyle()` hook returns a `cx` function that:
 
 ```ts
 // @semajsx/style/react implementation sketch
-import { createContext, useContext, useCallback, useRef } from "react";
-import { inject, isStyleToken, type StyleToken } from "@semajsx/style";
+import { createContext, useContext, useCallback, useRef, useEffect } from "react";
+import { inject, isStyleToken, type StyleToken, type SignalBinding } from "@semajsx/style";
 
+// Style injection target context
 const StyleContext = createContext<Element | ShadowRoot | null>(null);
+
+// Signal binding anchor context
+const SignalAnchorContext = createContext<{
+  register: (bindings: SignalBinding[]) => void;
+} | null>(null);
 
 export function StyleProvider({ target, children }: {
   target?: Element | ShadowRoot;
@@ -1110,98 +1120,100 @@ export function StyleProvider({ target, children }: {
 
 type CxArg = StyleToken | string | false | null | undefined;
 
-// Return type depends on whether tokens have reactive bindings
-type CxResult =
-  | string                              // No reactive tokens
-  | { className: string; ref: RefCallback }; // Has reactive tokens
-
 export function useStyle() {
   const target = useContext(StyleContext);
-  // Track active subscriptions for cleanup
-  const subscriptionsRef = useRef<Map<HTMLElement, (() => void)[]>>(new Map());
+  const anchor = useContext(SignalAnchorContext);
 
-  const cx = useCallback((...args: CxArg[]): CxResult => {
+  // cx() always returns string
+  const cx = useCallback((...args: CxArg[]): string => {
     const classes: string[] = [];
-    const allBindings: Array<[Signal<unknown>, string, string]> = [];
 
     for (const arg of args) {
       if (!arg) continue;
 
       if (isStyleToken(arg)) {
-        // Inject CSS (this only injects the stylesheet, not signal bindings)
+        // Inject CSS
         inject(arg, { target: target ?? undefined });
         if (arg._) classes.push(arg._);
 
-        // Collect signal bindings from token
-        if (arg.__bindings) {
-          allBindings.push(...arg.__bindings);
+        // Register signal bindings to nearest anchor
+        if (arg.__bindings && anchor) {
+          anchor.register(arg.__bindings);
         }
       } else {
         classes.push(arg);
       }
     }
 
-    const className = classes.join(" ");
-
-    // If no reactive bindings, return simple string
-    if (allBindings.length === 0) {
-      return className;
-    }
-
-    // Has reactive bindings - return { className, ref }
-    // The ref callback sets up signal subscriptions that bypass React re-renders
-    const ref = (element: HTMLElement | null) => {
-      // Cleanup previous subscriptions for this element
-      const prevSubs = subscriptionsRef.current.get(element!);
-      if (prevSubs) {
-        prevSubs.forEach(unsub => unsub());
-        subscriptionsRef.current.delete(element!);
-      }
-
-      if (!element) return;
-
-      // Set up new subscriptions
-      const unsubs: (() => void)[] = [];
-      for (const [signal, varName, unit] of allBindings) {
-        // Set initial value
-        const value = unit ? `${signal.value}${unit}` : String(signal.value);
-        element.style.setProperty(varName, value);
-
-        // Subscribe to changes - updates DOM directly, bypasses React
-        const unsub = signal.subscribe((newValue) => {
-          const v = unit ? `${newValue}${unit}` : String(newValue);
-          element.style.setProperty(varName, v);
-        });
-        unsubs.push(unsub);
-      }
-      subscriptionsRef.current.set(element, unsubs);
-    };
-
-    return { className, ref };
-  }, [target]);
+    return classes.join(" ");
+  }, [target, anchor]);
 
   return cx;
 }
+
+/**
+ * SignalStyleAnchor - Sets up signal → CSS variable bindings on this element
+ *
+ * CSS variables set on this element cascade to all descendants.
+ * Use this to wrap reactive style usage.
+ */
+export function SignalStyleAnchor({ children }: { children: React.ReactNode }) {
+  const elementRef = useRef<HTMLDivElement>(null);
+  const bindingsRef = useRef<SignalBinding[]>([]);
+  const unsubscribesRef = useRef<(() => void)[]>([]);
+
+  // Register bindings (called by cx() in children)
+  const register = useCallback((bindings: SignalBinding[]) => {
+    bindingsRef.current.push(...bindings);
+  }, []);
+
+  // Set up subscriptions after render
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return;
+
+    // Clean up previous subscriptions
+    unsubscribesRef.current.forEach(unsub => unsub());
+    unsubscribesRef.current = [];
+
+    // Set up new subscriptions
+    for (const [signal, varName, unit] of bindingsRef.current) {
+      // Set initial value
+      const value = unit ? `${signal.value}${unit}` : String(signal.value);
+      element.style.setProperty(varName, value);
+
+      // Subscribe to changes
+      const unsub = signal.subscribe((newValue) => {
+        const v = unit ? `${newValue}${unit}` : String(newValue);
+        element.style.setProperty(varName, v);
+      });
+      unsubscribesRef.current.push(unsub);
+    }
+
+    // Clear bindings for next render cycle
+    bindingsRef.current = [];
+
+    return () => {
+      unsubscribesRef.current.forEach(unsub => unsub());
+    };
+  });
+
+  return (
+    <SignalAnchorContext.Provider value={{ register }}>
+      <div ref={elementRef} style={{ display: "contents" }}>
+        {children}
+      </div>
+    </SignalAnchorContext.Provider>
+  );
+}
 ```
 
-**Key insight**: The `cx()` function returns different types based on content:
+**Key insight**: Signal bindings use the same anchor pattern as style injection:
 
-- **Static tokens only**: Returns `string` (simple className)
-- **Reactive tokens**: Returns `{ className, ref }` where the ref callback sets up signal subscriptions
-
-The ref callback approach allows signal updates to directly mutate the DOM element's style property without triggering React re-renders. This is the same pattern used by animation libraries like Framer Motion.
-
-**Usage pattern**:
-
-```tsx
-// cx() return type is a union - use spread to handle both cases
-const props = cx(styles.box(height, color));
-return <div {...(typeof props === "string" ? { className: props } : props)} />;
-
-// Or use a helper that normalizes the result:
-const normalized = typeof props === "string" ? { className: props } : props;
-return <div {...normalized} />;
-```
+- `cx()` always returns `string` (simple, predictable)
+- `<SignalStyleAnchor>` captures signal bindings from `cx()` calls within its subtree
+- CSS variables are set on the anchor element and cascade to descendants via CSS inheritance
+- No need for ref callbacks or complex return types
 
 #### Vue Integration (`@semajsx/style/vue`)
 
@@ -1242,11 +1254,11 @@ btn2.className = cx(button.root, button.primary, "custom");
 
 #### Reactive Styles in React/Vue
 
-React and Vue use the same signal-based approach via `useSignal` hook:
+React and Vue use the same signal-based approach via `useSignal` hook and `SignalStyleAnchor`:
 
 ```tsx
-// React - Reactive values with useSignal
-import { useStyle, useSignal } from "@semajsx/style/react";
+// React - Reactive values with useSignal and SignalStyleAnchor
+import { useStyle, useSignal, SignalStyleAnchor } from "@semajsx/style/react";
 import { classes, rule } from "@semajsx/style";
 
 const c = classes(["box"]);
@@ -1269,54 +1281,62 @@ function Box() {
   const height = useSignal(100);
   const color = useSignal("#3b82f6");
 
-  // cx() returns { className, ref } for reactive tokens
-  // The ref sets up signal subscriptions that bypass React re-renders
-  const props = cx(boxStyle({ height, bg: color }));
-
+  // cx() always returns string
+  // SignalStyleAnchor captures signal bindings and sets CSS variables
   return (
-    <div {...props} onClick={() => (height.value += 10)}>
-      Click to grow
-    </div>
+    <SignalStyleAnchor>
+      <div className={cx(boxStyle({ height, bg: color }))} onClick={() => (height.value += 10)}>
+        Click to grow
+      </div>
+    </SignalStyleAnchor>
   );
 }
 
-// Rendered:
-// <div class="box-x7f3a" style="--_v0: 100px; --_v1: #3b82f6">
+// DOM structure:
+// <div style="--_v0: 100px; --_v1: #3b82f6">  <!-- SignalStyleAnchor wrapper -->
+//   <div class="box-x7f3a">Click to grow</div>
+// </div>
 //
 // After click (signal update directly to DOM, no React re-render!):
-// <div class="box-x7f3a" style="--_v0: 110px; --_v1: #3b82f6">
+// <div style="--_v0: 110px; --_v1: #3b82f6">  <!-- CSS vars updated -->
+//   <div class="box-x7f3a">Click to grow</div>
+// </div>
 ```
 
-Vue with `useSignal`:
+**How it works**: CSS variables set on the anchor element cascade to descendants via CSS inheritance. The anchor uses `display: contents` to avoid affecting layout.
+
+Vue with `useSignal` and `SignalStyleAnchor`:
 
 ```vue
 <script setup lang="ts">
 import { useStyle, useSignal } from "@semajsx/style/vue";
+import SignalStyleAnchor from "@semajsx/style/vue/SignalStyleAnchor.vue";
 
 const cx = useStyle();
 const height = useSignal(100);
 const color = useSignal("#3b82f6");
-
-// cx() returns bindings directive for reactive tokens
-const boxProps = cx(boxStyle({ height, bg: color }));
 </script>
 
 <template>
-  <div v-bind="boxProps" @click="height.value += 10">Click to grow</div>
+  <SignalStyleAnchor>
+    <div :class="cx(boxStyle({ height, bg: color }))" @click="height.value += 10">
+      Click to grow
+    </div>
+  </SignalStyleAnchor>
 </template>
 ```
 
 **Unified API across frameworks:**
 
-| Aspect           | SemaJSX                    | React/Vue                      |
-| ---------------- | -------------------------- | ------------------------------ |
-| Create signal    | `signal(100)`              | `useSignal(100)`               |
-| Dynamic rule     | `boxStyle({ height, bg })` | `boxStyle({ height, bg })`     |
-| Update           | `height.value += 10`       | `height.value += 10`           |
-| Re-render needed | No - direct DOM update     | No - signal bypasses React/Vue |
-| Syntax           | `<div class={style}>`      | `<div className={cx(style)}>`  |
+| Aspect           | SemaJSX                    | React/Vue                           |
+| ---------------- | -------------------------- | ----------------------------------- |
+| Create signal    | `signal(100)`              | `useSignal(100)`                    |
+| Dynamic rule     | `boxStyle({ height, bg })` | `boxStyle({ height, bg })`          |
+| Update           | `height.value += 10`       | `height.value += 10`                |
+| Re-render needed | No - direct DOM update     | No - signal bypasses React/Vue      |
+| Syntax           | `<div class={style}>`      | `<SignalStyleAnchor>` + `cx(style)` |
 
-The key insight: **signals bypass framework re-renders**. The CSS variable update happens directly on the DOM element via signal subscription, not through React/Vue's reconciliation.
+The key insight: **signals bypass framework re-renders**. The CSS variable update happens directly on the anchor element via signal subscription, not through React/Vue's reconciliation. CSS variables cascade to descendants via CSS inheritance.
 
 ### 9.4 Global Styles
 
@@ -2312,38 +2332,38 @@ If accepted:
 
 ### Change Log
 
-| Date       | Change                                                                    | Author       |
-| ---------- | ------------------------------------------------------------------------- | ------------ |
-| 2026-01-10 | Initial draft                                                             | SemaJSX Team |
-| 2026-01-10 | Added Tailwind CSS integration                                            | SemaJSX Team |
-| 2026-01-10 | Refined style() API: per-property with JSDoc                              | SemaJSX Team |
-| 2026-01-10 | Added batch inject() and multiple rules support                           | SemaJSX Team |
-| 2026-01-10 | Renamed style→rule, added rules() for combining                           | SemaJSX Team |
-| 2026-01-10 | Added tagged template syntax for complex selectors                        | SemaJSX Team |
-| 2026-01-10 | Added React/Vue integrations with Provider + useStyle() hook              | SemaJSX Team |
-| 2026-01-10 | Added memory management, performance, error handling, Shadow DOM sections | SemaJSX Team |
-| 2026-01-10 | Unified to single tagged template syntax: rule\`selector { css }\`        | SemaJSX Team |
-| 2026-01-10 | Changed preload() to explicit only (no automatic batching)                | SemaJSX Team |
-| 2026-01-10 | Added reactive values with signals (CSS variables for dynamic updates)    | SemaJSX Team |
-| 2026-01-10 | Introduced dynamic rules (functions) + useSignal hook for React/Vue       | SemaJSX Team |
-| 2026-01-10 | Changed dynamic rule to use props object pattern (like Component)         | SemaJSX Team |
-| 2026-01-10 | Added dev mode warning for non-preloaded style injections                 | SemaJSX Team |
-| 2026-01-10 | Added SSR support (style collection, hydration, streaming)                | SemaJSX Team |
-| 2026-01-10 | Type system cleanup with discriminated union pattern                      | SemaJSX Team |
-| 2026-01-10 | Added toolchain planning (Vite plugin, VSCode extension, ESLint)          | SemaJSX Team |
-| 2026-01-10 | Fixed ArbitraryStyleToken to use \_\_kind discriminant                    | SemaJSX Team |
-| 2026-01-10 | Added globalTokenRegistry and rules() return type documentation           | SemaJSX Team |
-| 2026-01-10 | Fixed Next.js SSR example with proper StyleRegistry implementation        | SemaJSX Team |
-| 2026-01-10 | Fixed section numbering (removed gap at section 11)                       | SemaJSX Team |
-| 2026-01-10 | Clarified streaming SSR uses same Provider, added flushStyles API         | SemaJSX Team |
-| 2026-01-10 | Added hydration timing explanation with lazy fallback                     | SemaJSX Team |
-| 2026-01-10 | Added honest tree-shaking analysis (module vs property level)             | SemaJSX Team |
-| 2026-01-10 | Changed to named exports as default pattern for tree-shaking              | SemaJSX Team |
-| 2026-01-10 | Added Tailwind tree-shaking trade-off explanation                         | SemaJSX Team |
-| 2026-01-10 | Added dynamic rules registry behavior (hash by signal identity)           | SemaJSX Team |
-| 2026-01-10 | Changed hydration to hash-based matching (minification-safe)              | SemaJSX Team |
-| 2026-01-10 | Redesigned reactive: signals in template, auto-binding via \_\_bindings   | SemaJSX Team |
-| 2026-01-10 | Fixed React cx() to return { className, ref } for reactive tokens         | SemaJSX Team |
-| 2026-01-10 | Clarified inject() only handles CSS, signal binding handled by framework  | SemaJSX Team |
-| 2026-01-10 | Fixed signal identity: use WeakMap since Signal has no id property        | SemaJSX Team |
-| 2026-01-10 | Clarified hashKey vs hash relationship in token caching                   | SemaJSX Team |
+| Date       | Change                                                                      | Author       |
+| ---------- | --------------------------------------------------------------------------- | ------------ |
+| 2026-01-10 | Initial draft                                                               | SemaJSX Team |
+| 2026-01-10 | Added Tailwind CSS integration                                              | SemaJSX Team |
+| 2026-01-10 | Refined style() API: per-property with JSDoc                                | SemaJSX Team |
+| 2026-01-10 | Added batch inject() and multiple rules support                             | SemaJSX Team |
+| 2026-01-10 | Renamed style→rule, added rules() for combining                             | SemaJSX Team |
+| 2026-01-10 | Added tagged template syntax for complex selectors                          | SemaJSX Team |
+| 2026-01-10 | Added React/Vue integrations with Provider + useStyle() hook                | SemaJSX Team |
+| 2026-01-10 | Added memory management, performance, error handling, Shadow DOM sections   | SemaJSX Team |
+| 2026-01-10 | Unified to single tagged template syntax: rule\`selector { css }\`          | SemaJSX Team |
+| 2026-01-10 | Changed preload() to explicit only (no automatic batching)                  | SemaJSX Team |
+| 2026-01-10 | Added reactive values with signals (CSS variables for dynamic updates)      | SemaJSX Team |
+| 2026-01-10 | Introduced dynamic rules (functions) + useSignal hook for React/Vue         | SemaJSX Team |
+| 2026-01-10 | Changed dynamic rule to use props object pattern (like Component)           | SemaJSX Team |
+| 2026-01-10 | Added dev mode warning for non-preloaded style injections                   | SemaJSX Team |
+| 2026-01-10 | Added SSR support (style collection, hydration, streaming)                  | SemaJSX Team |
+| 2026-01-10 | Type system cleanup with discriminated union pattern                        | SemaJSX Team |
+| 2026-01-10 | Added toolchain planning (Vite plugin, VSCode extension, ESLint)            | SemaJSX Team |
+| 2026-01-10 | Fixed ArbitraryStyleToken to use \_\_kind discriminant                      | SemaJSX Team |
+| 2026-01-10 | Added globalTokenRegistry and rules() return type documentation             | SemaJSX Team |
+| 2026-01-10 | Fixed Next.js SSR example with proper StyleRegistry implementation          | SemaJSX Team |
+| 2026-01-10 | Fixed section numbering (removed gap at section 11)                         | SemaJSX Team |
+| 2026-01-10 | Clarified streaming SSR uses same Provider, added flushStyles API           | SemaJSX Team |
+| 2026-01-10 | Added hydration timing explanation with lazy fallback                       | SemaJSX Team |
+| 2026-01-10 | Added honest tree-shaking analysis (module vs property level)               | SemaJSX Team |
+| 2026-01-10 | Changed to named exports as default pattern for tree-shaking                | SemaJSX Team |
+| 2026-01-10 | Added Tailwind tree-shaking trade-off explanation                           | SemaJSX Team |
+| 2026-01-10 | Added dynamic rules registry behavior (hash by signal identity)             | SemaJSX Team |
+| 2026-01-10 | Changed hydration to hash-based matching (minification-safe)                | SemaJSX Team |
+| 2026-01-10 | Redesigned reactive: signals in template, auto-binding via \_\_bindings     | SemaJSX Team |
+| 2026-01-10 | Clarified inject() only handles CSS, signal binding handled by framework    | SemaJSX Team |
+| 2026-01-10 | Fixed signal identity: use WeakMap since Signal has no id property          | SemaJSX Team |
+| 2026-01-10 | Clarified hashKey vs hash relationship in token caching                     | SemaJSX Team |
+| 2026-01-10 | Redesigned cx() to always return string, use SignalStyleAnchor for bindings | SemaJSX Team |
