@@ -448,9 +448,23 @@ function Box() {
 **How it works internally:**
 
 ```ts
+import { nanoid } from "nanoid";
+
+// Map signal instances to their CSS variable names
+const signalVarMap = new WeakMap<Signal<unknown>, string>();
+
+function getSignalVarName(signal: Signal<unknown>): string {
+  let varName = signalVarMap.get(signal);
+  if (!varName) {
+    // Fixed prefix "sig-" + nanoid (6 chars)
+    varName = `--sig-${nanoid(6)}`;
+    signalVarMap.set(signal, varName);
+  }
+  return varName;
+}
+
 function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
   const bindings: SignalBinding[] = [];
-  let varIndex = 0;
 
   // Build CSS, replacing signals with var() references
   const css = strings.reduce((acc, str, i) => {
@@ -463,7 +477,8 @@ function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
     }
 
     if (isSignal(value)) {
-      const varName = `--_v${varIndex++}`;
+      // Each signal instance gets a unique, stable variable name
+      const varName = getSignalVarName(value);
       // Check if next char is a unit (px, em, %, etc.)
       const unit = extractUnit(str);
       bindings.push([value, varName, unit]);
@@ -479,9 +494,43 @@ function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
     __css: css,
     __bindings: bindings.length > 0 ? bindings : undefined,
     __injected: new WeakSet(),
+    toString() {
+      return this._ ?? "";
+    },
   };
 }
 ```
+
+**Why signal-based variable names?**
+
+Each signal instance gets a unique, stable variable name (e.g., `--sig-x7f3a`, `--sig-b2c4d`):
+
+```tsx
+const h = signal(100);
+const w = signal(200);
+
+const box1 = (height: Signal<number>) => rule`${c.box1} { height: ${height}px; }`;
+const box2 = (width: Signal<number>) => rule`${c.box2} { width: ${width}px; }`;
+
+// h → --sig-x7f3a (stable, regardless of which token uses it)
+// w → --sig-b2c4d (stable)
+
+<StyleAnchor>
+  <div class={cx(box1(h))} />  {/* uses --sig-x7f3a */}
+  <div class={cx(box2(w))} />  {/* uses --sig-b2c4d, no collision ✓ */}
+</StyleAnchor>
+
+// Same signal in different tokens = same variable name
+<div class={cx(box1(h))} />  {/* --sig-x7f3a */}
+<div class={cx(box2(h))} />  {/* --sig-x7f3a, intentionally same! */}
+```
+
+**Benefits:**
+
+- **No collision**: Different signals = different variable names (nanoid)
+- **Stable**: Same signal always maps to same variable name (WeakMap)
+- **Efficient**: If same signal is used in multiple tokens, only one CSS variable is set
+- **GC-friendly**: WeakMap allows signals to be garbage collected
 
 **Static Rules (no signals):**
 
@@ -857,6 +906,9 @@ function rules(...tokens: StyleToken[]): StyleToken {
     __css: combinedCSS,
     __bindings: allBindings.length > 0 ? allBindings : undefined,
     __injected: new WeakSet(),
+    toString() {
+      return "";
+    },
   };
 }
 ```
@@ -867,6 +919,19 @@ function rules(...tokens: StyleToken[]): StyleToken {
 - All signal bindings are merged into a single array
 - The combined token has no `_` (class name) since it may contain multiple selectors
 - When used in `class`, all signal subscriptions are set up on the element
+
+**Important**: Since `rules()` returns a token with `_: undefined`, it cannot be used as a standalone className. Use it for:
+
+```tsx
+// ✅ Injection only (global styles, state rules)
+inject(buttonStates);
+
+// ✅ Combined with other tokens that have class names
+<button class={[button.root, button.states]}>  {/* button.root provides class */}
+
+// ❌ Won't add any class to element
+<div class={buttonStates}>  {/* toString() returns "" */}
+```
 
 ### 8.6 SemaJSX Integration (`@semajsx/dom`)
 
@@ -1190,8 +1255,10 @@ export function StyleAnchor({
     };
   });
 
-  // CSS injection target: shadowRoot if provided, else anchor element itself
-  const injectionTarget = target ?? elementRef.current;
+  // CSS injection target:
+  // - Shadow DOM: use provided target (shadowRoot)
+  // - Regular DOM: use document.head (not elementRef, which is null on first render)
+  const injectionTarget = target ?? (typeof document !== "undefined" ? document.head : null);
 
   return (
     <StyleAnchorContext.Provider value={{ target: injectionTarget, register }}>
@@ -1207,8 +1274,9 @@ export function StyleAnchor({
 
 - `cx()` always returns `string` (simple, predictable)
 - `<StyleAnchor>` handles both CSS injection target and signal → CSS variable bindings
+- CSS injection defaults to `document.head` (works on first render)
 - For Shadow DOM, pass `target={shadowRoot}` to inject styles there
-- CSS variables are set on the anchor element and cascade to descendants via CSS inheritance
+- Signal bindings are set on the anchor element (via useEffect, after mount) and cascade to descendants
 
 #### Vue Integration (`@semajsx/style/vue`)
 
@@ -1494,73 +1562,88 @@ import { spacing, colors } from "@semajsx/tailwind";
 <div class={[spacing.p4, spacing.m2, colors.bgBlue500, colors.textWhite]}>Hello</div>;
 ```
 
-### 10.3 Arbitrary Values with CSS Variables
+### 10.3 Arbitrary Values with Inline Styles
 
-For Tailwind's arbitrary value syntax (e.g., `p-[4px]`), we use CSS custom properties instead of generating new classes dynamically:
-
-```css
-/* @semajsx/tailwind/arbitrary.css - Pre-generated CSS */
-.p-v {
-  padding: var(--p);
-}
-.m-v {
-  margin: var(--m);
-}
-.w-v {
-  width: var(--w);
-}
-.h-v {
-  height: var(--h);
-}
-.bg-v {
-  background-color: var(--bg);
-}
-.text-v {
-  color: var(--text);
-}
-/* ... */
-```
-
-Template string functions return a special `ArbitraryStyleToken`:
+For Tailwind's arbitrary value syntax (e.g., `p-[4px]`), we use inline styles directly instead of CSS variables. This avoids collision issues when the same utility is used multiple times:
 
 ```ts
 // @semajsx/tailwind/arbitrary.ts
 
 interface ArbitraryStyleToken {
   readonly __kind: "arbitrary";
-  readonly _: string; // "p-v"
-  readonly __var: string; // "--p"
-  readonly __value: string; // "4px"
+  readonly __style: Record<string, string>; // inline style object
+  toString(): string; // returns "" (no class name)
 }
 
 export function p(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken {
   const value = String.raw(strings, ...values);
   return {
     __kind: "arbitrary",
-    _: "p-v",
-    __var: "--p",
-    __value: value,
+    __style: { padding: value },
+    toString() {
+      return "";
+    },
   };
 }
 
-export function m(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken;
-export function w(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken;
-export function h(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken;
-export function bg(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken;
-// ...
+export function m(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken {
+  const value = String.raw(strings, ...values);
+  return {
+    __kind: "arbitrary",
+    __style: { margin: value },
+    toString() {
+      return "";
+    },
+  };
+}
+
+export function w(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken {
+  const value = String.raw(strings, ...values);
+  return {
+    __kind: "arbitrary",
+    __style: { width: value },
+    toString() {
+      return "";
+    },
+  };
+}
+
+// Directional variants
+export function pt(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken {
+  const value = String.raw(strings, ...values);
+  return {
+    __kind: "arbitrary",
+    __style: { paddingTop: value },
+    toString() {
+      return "";
+    },
+  };
+}
+// pb, pl, pr, px, py, mt, mb, ml, mr, mx, my, etc.
+```
+
+**Why inline styles instead of CSS variables?**
+
+```tsx
+// ❌ CSS variable approach - collision!
+<div class={[p`4px`, p`8px`]}>  {/* Both use --p, later overwrites */}
+
+// ✅ Inline style approach - no collision
+<div class={[p`4px`]} />  {/* style={{ padding: "4px" }} */}
+<div class={[p`8px`]} />  {/* style={{ padding: "8px" }} */}
 ```
 
 Usage:
 
 ```tsx
 import { spacing } from "@semajsx/tailwind";
-import { p, m, w, bg } from "@semajsx/tailwind/arbitrary";
+import { w, bg } from "@semajsx/tailwind/arbitrary";
 
 <div
   class={[
-    spacing.p4, // Predefined: padding: 1rem
-    w`calc(100% - 40px)`, // Arbitrary: width: var(--w)
-    bg`#f5f5f5`, // Arbitrary: background: var(--bg)
+    spacing.p4, // Predefined: padding: 1rem (class-based)
+    w`calc(100% - 40px)`, // Arbitrary: inline style
+    bg`#f5f5f5`, // Arbitrary: inline style
   ]}
 >
   ...
@@ -1569,25 +1652,25 @@ import { p, m, w, bg } from "@semajsx/tailwind/arbitrary";
 
 ### 10.4 Render Handling
 
-The render system detects `ArbitraryStyleToken` and merges CSS variables into the style attribute:
+The render system detects `ArbitraryStyleToken` and merges inline styles:
 
 ```ts
 function resolveClassAndStyle(values: Array<StyleToken | ArbitraryStyleToken>) {
   const classes: string[] = [];
-  const styleVars: Record<string, string> = {};
+  const styles: Record<string, string> = {};
 
   for (const token of values.flat().filter(Boolean)) {
     if (isArbitraryToken(token)) {
-      classes.push(token._);
-      styleVars[token.__var] = token.__value;
+      // Merge inline styles
+      Object.assign(styles, token.__style);
     } else if (isStyleToken(token)) {
-      classes.push(token._);
+      if (token._) classes.push(token._);
     }
   }
 
   return {
     class: classes.join(" "),
-    style: styleVars,
+    style: styles,
   };
 }
 ```
@@ -1599,35 +1682,35 @@ Rendered output:
 <div class={[spacing.p4, w`calc(100% - 40px)`, bg`#f5f5f5`]}>
 
 // Output
-<div class="p-4 w-v bg-v" style="--w: calc(100% - 40px); --bg: #f5f5f5">
+<div class="p-4" style="width: calc(100% - 40px); background-color: #f5f5f5">
 ```
 
-### 10.5 Advantages of CSS Variable Approach
+### 10.5 Advantages of Inline Style Approach
 
-| Aspect            | Dynamic Class Generation | CSS Variable Approach |
-| ----------------- | ------------------------ | --------------------- |
-| Generated classes | One per unique value     | Fixed set             |
-| CSS bundle size   | Grows with usage         | Fixed                 |
-| Runtime overhead  | Need to inject new rules | Only set variables    |
-| Implementation    | Requires hash/cache      | Simple                |
+| Aspect          | Dynamic Class Generation | Inline Style Approach |
+| --------------- | ------------------------ | --------------------- |
+| Class conflicts | Possible                 | None                  |
+| CSS bundle size | Grows with usage         | Zero                  |
+| Runtime         | Inject CSS rules         | Set style directly    |
+| Specificity     | Class-level              | Inline (highest)      |
 
 ### 10.6 Complete Example
 
 ```tsx
 import { spacing, colors, flex } from "@semajsx/tailwind";
-import { p, m, w, h, bg } from "@semajsx/tailwind/arbitrary";
+import { w, h } from "@semajsx/tailwind/arbitrary";
 
 function Card({ width, children }) {
   return (
     <div
       class={[
-        // Predefined values (IDE autocomplete)
+        // Predefined values (IDE autocomplete, class-based)
         spacing.p4,
         spacing.m2,
         colors.bgWhite,
         flex.col,
 
-        // Arbitrary values (template strings)
+        // Arbitrary values (inline styles)
         w`${width}px`,
         h`calc(100vh - 80px)`,
       ]}
@@ -1639,8 +1722,8 @@ function Card({ width, children }) {
 
 // Rendered:
 // <div
-//   class="p-4 m-2 bg-white flex-col w-v h-v"
-//   style="--w: 300px; --h: calc(100vh - 80px)"
+//   class="p-4 m-2 bg-white flex-col"
+//   style="width: 300px; height: calc(100vh - 80px)"
 // >
 ```
 
@@ -2363,3 +2446,8 @@ If accepted:
 | 2026-01-10 | Clarified hashKey vs hash relationship in token caching                   | SemaJSX Team |
 | 2026-01-10 | Redesigned cx() to always return string, use anchor for signal bindings   | SemaJSX Team |
 | 2026-01-10 | Unified StyleProvider and SignalStyleAnchor into single StyleAnchor       | SemaJSX Team |
+| 2026-01-10 | Fixed CSS variable collision: use sig- prefix + nanoid per signal         | SemaJSX Team |
+| 2026-01-10 | Changed ArbitraryStyleToken to use inline styles instead of CSS vars      | SemaJSX Team |
+| 2026-01-10 | Fixed StyleAnchor first render: default to document.head for CSS inject   | SemaJSX Team |
+| 2026-01-10 | Added toString() implementation to StyleToken and rules() return          | SemaJSX Team |
+| 2026-01-10 | Clarified rules() returns token without className (injection only)        | SemaJSX Team |
