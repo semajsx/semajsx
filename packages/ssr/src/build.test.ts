@@ -2,6 +2,12 @@
  * Build process tests
  *
  * Tests for full build integration with the App
+ *
+ * TODO: When css-builder and asset-builder modules are implemented,
+ * restore comprehensive unit tests for:
+ * - buildCSS: CSS building with content hash, minification, url() rewriting
+ * - buildAssets: Asset copying with content hash
+ * - analyzeCSSChunks: CSS chunk analysis for shared/per-entry optimization
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
