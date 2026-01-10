@@ -1081,33 +1081,186 @@ const button = css`
 
 ## 13. Risks and Mitigation
 
-| Risk                               | Impact | Probability | Mitigation                                                |
-| ---------------------------------- | ------ | ----------- | --------------------------------------------------------- |
-| CSS string parsing overhead        | Medium | Low         | Parsing happens once at definition time, not render time  |
-| Hash collisions                    | High   | Very Low    | Use crypto-grade hash + namespace prefix                  |
-| Memory leaks from injected styles  | Medium | Medium      | Track injection targets, provide cleanup API              |
-| Breaking existing class prop usage | High   | Low         | StyleToken stringifies to class name, backward compatible |
+| Risk                               | Impact | Probability | Mitigation                                                     |
+| ---------------------------------- | ------ | ----------- | -------------------------------------------------------------- |
+| CSS string parsing overhead        | Medium | Low         | Parsing happens once at definition time, not render time       |
+| Hash collisions                    | High   | Very Low    | Use crypto-grade hash + namespace prefix + collision detection |
+| Memory leaks from injected styles  | Medium | Medium      | Use WeakSet for tracking, provide explicit cleanup API         |
+| Breaking existing class prop usage | High   | Low         | StyleToken stringifies to class name, backward compatible      |
+| Layout thrashing on first inject   | Medium | Medium      | Batch injections, provide preload API                          |
+| Invalid CSS strings                | Low    | Medium      | Validate at definition time in dev mode, skip invalid rules    |
+| Target element removed from DOM    | Medium | Low         | WeakRef for targets, auto-cleanup on GC                        |
+
+### 13.1 Memory Management Strategy
+
+```ts
+// Use WeakSet to track injection targets - allows GC when targets are removed
+interface StyleToken {
+  readonly _?: string;
+  readonly __css: string;
+  readonly __injected: WeakSet<Element | ShadowRoot>;
+}
+
+// WeakRef for registry targets
+class StyleRegistry {
+  private targetRef: WeakRef<Element | ShadowRoot>;
+  private injectedStyles: Set<string>;
+
+  inject(token: StyleToken) {
+    const target = this.targetRef.deref();
+    if (!target) {
+      // Target was GC'd, cleanup registry
+      this.dispose();
+      return;
+    }
+    // ... injection logic
+  }
+
+  dispose() {
+    // Explicit cleanup
+  }
+}
+```
+
+### 13.2 Performance: Batching and Preload
+
+```ts
+// Problem: Multiple cx() calls cause multiple style injections
+cx(button.root); // inject
+cx(button.icon); // inject
+cx(button.label); // inject  <- 3 separate DOM writes
+
+// Solution 1: Batch inject via preload()
+import { preload } from "@semajsx/style";
+
+// At app startup or route entry
+preload(button, card, input); // Single batched injection
+
+// Solution 2: Automatic batching with microtask
+const pendingInjections = new Set<StyleToken>();
+let scheduled = false;
+
+function scheduleInject(token: StyleToken, target: Element) {
+  pendingInjections.add(token);
+
+  if (!scheduled) {
+    scheduled = true;
+    queueMicrotask(() => {
+      batchInject([...pendingInjections], target);
+      pendingInjections.clear();
+      scheduled = false;
+    });
+  }
+}
+```
+
+### 13.3 Error Handling
+
+```ts
+// Dev mode: validate CSS at definition time
+function rule(selector: ClassRef, css: string): StyleToken {
+  if (process.env.NODE_ENV === "development") {
+    validateCSS(css); // Throws with helpful message
+  }
+  // ...
+}
+
+// Hash collision detection
+const hashRegistry = new Map<string, string>();
+
+function generateHash(content: string): string {
+  const hash = computeHash(content);
+
+  if (hashRegistry.has(hash) && hashRegistry.get(hash) !== content) {
+    console.warn(`Hash collision detected for ${hash}, using fallback`);
+    return computeHash(content + Date.now());
+  }
+
+  hashRegistry.set(hash, content);
+  return hash;
+}
+```
 
 ---
 
-## 14. Dependencies
+## 14. Shadow DOM Considerations
 
-### 14.1 Technical Dependencies
+### 14.1 Nested Shadow DOM
+
+```tsx
+// Outer shadow root
+<AppStyleAnchor target={outerShadow}>
+  <div class={button.root}>
+    {/* Inner web component with its own shadow */}
+    <inner-component>
+      #shadow-root
+      {/* Styles here need separate injection */}
+      <AppStyleAnchor target={innerShadow}>
+        <div class={button.root}>...</div>
+      </AppStyleAnchor>
+    </inner-component>
+  </div>
+</AppStyleAnchor>
+```
+
+Each Shadow DOM boundary requires its own `AppStyleAnchor`. Styles don't pierce shadow boundaries.
+
+### 14.2 Anchor Target Removal
+
+```ts
+// When anchor target is removed from DOM
+const registry = createRegistry({ target: shadowRoot });
+
+// Later, shadowRoot is removed
+shadowRoot.host.remove();
+
+// Next injection attempt detects removed target
+registry.inject(button); // No-op, logs warning in dev mode
+```
+
+### 14.3 Multiple Shadow Roots Performance
+
+For apps with many shadow roots (e.g., micro-frontends):
+
+```ts
+// Shared style cache across shadow roots
+const sharedCache = new Map<string, CSSStyleSheet>();
+
+function injectToShadow(token: StyleToken, shadow: ShadowRoot) {
+  // Use constructable stylesheets for efficient sharing
+  let sheet = sharedCache.get(token.__css);
+
+  if (!sheet) {
+    sheet = new CSSStyleSheet();
+    sheet.replaceSync(token.__css);
+    sharedCache.set(token.__css, sheet);
+  }
+
+  // Adopt shared stylesheet (no duplication)
+  shadow.adoptedStyleSheets = [...shadow.adoptedStyleSheets, sheet];
+}
+```
+
+---
+
+## 15. Dependencies
+
+### 15.1 Technical Dependencies
 
 - None for core `@semajsx/style` package
 - `@semajsx/dom` for SemaJSX integration (optional)
 
-### 14.2 Optional Build Tools
+### 15.2 Optional Build Tools
 
 - Vite plugin for `.css` → `.css.ts` transformation
 - CSS minification in production builds
 
 ---
 
-## 15. Open Questions
+## 16. Open Questions
 
 - [ ] **Q1**: Should CSS be auto-split per class for finer tree-shaking?
-  - **Context**: Currently, entire `style()` block is one unit
+  - **Context**: Currently, entire `rule()` block is one unit
   - **Options**: A) Keep as-is (simpler), B) Compile-time splitting
   - **Leaning**: A - per-component granularity is sufficient
 
@@ -1119,9 +1272,25 @@ const button = css`
   - **Context**: Users may prefer writing `.css` files
   - **Options**: A) Vite plugin, B) CLI tool, C) Both, D) None (manual)
 
+- [ ] **Q4**: Is the dual syntax for `rule()` confusing?
+  - **Context**: `rule(c.root, css)` for simple selectors vs ``rule`${c.root}:hover`(css)`` for complex
+  - **Options**:
+    - A) Keep dual syntax (clear separation of use cases)
+    - B) Always use tagged template: ``rule`${c.root}`(css)``
+    - C) Add helper for pseudo-classes: `rule.hover(c.root, css)`
+  - **Leaning**: A - the distinction is meaningful (simple class vs complex selector)
+
+- [ ] **Q5**: Should `preload()` be automatic or explicit?
+  - **Context**: Batching style injections improves performance
+  - **Options**:
+    - A) Explicit `preload()` call at app/route entry
+    - B) Automatic batching via microtask queue
+    - C) Both (auto-batch by default, explicit for control)
+  - **Leaning**: C - sensible defaults with escape hatch
+
 ---
 
-## 16. Success Criteria
+## 17. Success Criteria
 
 - [ ] `@semajsx/style` works standalone with any framework
 - [ ] Tree-shaking eliminates unused style bundles
@@ -1130,10 +1299,12 @@ const button = css`
 - [ ] Shadow DOM injection works correctly
 - [ ] Zero runtime CSS parsing (parse once at definition)
 - [ ] Backward compatible with existing string class names
+- [ ] No memory leaks with proper cleanup
+- [ ] Performant with batched injections
 
 ---
 
-## 17. Next Steps
+## 18. Next Steps
 
 If accepted:
 
@@ -1141,12 +1312,13 @@ If accepted:
 - [ ] Implement `@semajsx/style` package
 - [ ] Integrate with `@semajsx/dom` class property handling
 - [ ] Add StyleAnchor components
+- [ ] Implement `preload()` and automatic batching
 - [ ] Write documentation and examples
 - [ ] Create Vite plugin for `.css` transformation (optional)
 
 ---
 
-## 18. Appendix
+## 19. Appendix
 
 ### References
 
@@ -1167,12 +1339,13 @@ If accepted:
 
 ### Change Log
 
-| Date       | Change                                                       | Author       |
-| ---------- | ------------------------------------------------------------ | ------------ |
-| 2026-01-10 | Initial draft                                                | SemaJSX Team |
-| 2026-01-10 | Added Tailwind CSS integration                               | SemaJSX Team |
-| 2026-01-10 | Refined style() API: per-property with JSDoc                 | SemaJSX Team |
-| 2026-01-10 | Added batch inject() and multiple rules support              | SemaJSX Team |
-| 2026-01-10 | Renamed style→rule, added rules() for combining              | SemaJSX Team |
-| 2026-01-10 | Added tagged template syntax for complex selectors           | SemaJSX Team |
-| 2026-01-10 | Added React/Vue integrations with Provider + useStyle() hook | SemaJSX Team |
+| Date       | Change                                                                    | Author       |
+| ---------- | ------------------------------------------------------------------------- | ------------ |
+| 2026-01-10 | Initial draft                                                             | SemaJSX Team |
+| 2026-01-10 | Added Tailwind CSS integration                                            | SemaJSX Team |
+| 2026-01-10 | Refined style() API: per-property with JSDoc                              | SemaJSX Team |
+| 2026-01-10 | Added batch inject() and multiple rules support                           | SemaJSX Team |
+| 2026-01-10 | Renamed style→rule, added rules() for combining                           | SemaJSX Team |
+| 2026-01-10 | Added tagged template syntax for complex selectors                        | SemaJSX Team |
+| 2026-01-10 | Added React/Vue integrations with Provider + useStyle() hook              | SemaJSX Team |
+| 2026-01-10 | Added memory management, performance, error handling, Shadow DOM sections | SemaJSX Team |
