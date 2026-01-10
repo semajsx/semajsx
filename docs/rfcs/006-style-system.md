@@ -1374,6 +1374,31 @@ Benefits of explicit preload:
 - No hidden microtask overhead
 - Easier to debug and profile
 
+Development mode warning for non-preloaded injections:
+
+```ts
+// Track which tokens have been preloaded
+const preloadedTokens = new WeakSet<StyleToken>();
+
+export function preload(...styles: StyleToken[]) {
+  for (const token of styles.flat()) {
+    preloadedTokens.add(token);
+  }
+  batchInject(styles);
+}
+
+// In inject() or cx()
+function inject(token: StyleToken, options?: InjectOptions) {
+  if (process.env.NODE_ENV === "development" && !preloadedTokens.has(token)) {
+    console.warn(
+      `[@semajsx/style] Injecting "${token._}" without preload. ` +
+        `Consider using preload() at app/route entry for better performance.`,
+    );
+  }
+  // ... injection logic
+}
+```
+
 ### 13.3 Error Handling
 
 ```ts
@@ -1565,3 +1590,4 @@ If accepted:
 | 2026-01-10 | Added reactive values with signals (CSS variables for dynamic updates)    | SemaJSX Team |
 | 2026-01-10 | Introduced dynamic rules (functions) + useSignal hook for React/Vue       | SemaJSX Team |
 | 2026-01-10 | Changed dynamic rule to use props object pattern (like Component)         | SemaJSX Team |
+| 2026-01-10 | Added dev mode warning for non-preloaded style injections                 | SemaJSX Team |
