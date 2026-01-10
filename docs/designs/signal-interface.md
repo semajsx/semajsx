@@ -45,6 +45,7 @@ Define a minimal, pluggable Signal interface in `@semajsx/core` to enable third-
 ```
 
 **Issues:**
+
 1. Core runtime tightly coupled to signal package
 2. Can't replace signal implementation
 3. Third-party signals can't be used
@@ -67,17 +68,19 @@ Define a minimal, pluggable Signal interface in `@semajsx/core` to enable third-
 ### Why set() and update() Are Not in the Interface
 
 **Current Problem**:
+
 ```typescript
 // ❌ If we require set/update in the interface
 interface WritableSignal<T> {
   value: T;
-  set(value: T): void;       // Redundant with .value =
-  update(fn: (prev: T) => T): void;  // Redundant with .value++
+  set(value: T): void; // Redundant with .value =
+  update(fn: (prev: T) => T): void; // Redundant with .value++
   subscribe(fn): () => void;
 }
 ```
 
 **Issues**:
+
 - `set()` is just `signal.value = x` - redundant
 - `update()` is just `signal.value = fn(signal.value)` - redundant
 - Forces all implementations to provide these methods
@@ -88,19 +91,29 @@ interface WritableSignal<T> {
 ```typescript
 // ✅ Core interface: minimal
 interface WritableSignal<T> extends ReadableSignal<T> {
-  value: T;  // Only this is required
+  value: T; // Only this is required
 }
 
 // ✅ Implementation can add convenience methods
 export function signal<T>(initialValue: T): WritableSignal<T> {
   return {
-    get value() { return value; },
-    set value(v) { value = v; },
-    subscribe(fn) { /* ... */ },
+    get value() {
+      return value;
+    },
+    set value(v) {
+      value = v;
+    },
+    subscribe(fn) {
+      /* ... */
+    },
 
     // Convenience methods (not in interface)
-    set(v) { this.value = v; },
-    update(fn) { this.value = fn(value); }
+    set(v) {
+      this.value = v;
+    },
+    update(fn) {
+      this.value = fn(value);
+    },
   };
 }
 ```
@@ -181,6 +194,7 @@ export function isSignal<T = any>(value: unknown): value is ReadableSignal<T> {
 **Why no `peek()`?**
 
 In SemaJSX's explicit dependency system:
+
 ```typescript
 // No auto-tracking, so peek() is redundant
 get value() { return value; }
@@ -188,15 +202,16 @@ peek() { return value; }  // Exactly the same!
 ```
 
 **Auto-tracking vs Explicit:**
+
 ```typescript
 // Auto-tracking (Preact, Solid, Vue)
 // .value tracks dependency, .peek() doesn't
-const doubled = computed(() => count.value * 2);  // count tracked
-const x = computed(() => count.peek() + 1);       // count NOT tracked
+const doubled = computed(() => count.value * 2); // count tracked
+const x = computed(() => count.peek() + 1); // count NOT tracked
 
 // SemaJSX: Explicit dependencies
 // .value never tracks, dependencies are explicit
-const doubled = computed([count], c => c * 2);    // count explicit
+const doubled = computed([count], (c) => c * 2); // count explicit
 // No need for peek() - .value is already non-tracking
 ```
 
@@ -207,6 +222,7 @@ const doubled = computed([count], c => c * 2);    // count explicit
 ## What Core Needs
 
 ### 1. Type Checking
+
 ```typescript
 if (isSignal(value)) {
   // Handle signal
@@ -214,12 +230,14 @@ if (isSignal(value)) {
 ```
 
 ### 2. Reading Value
+
 ```typescript
 // Get initial value
 setProperty(element, key, signal.value);
 ```
 
 ### 3. Subscribing to Changes
+
 ```typescript
 signal.subscribe((newValue) => {
   setProperty(element, key, newValue);
@@ -227,6 +245,7 @@ signal.subscribe((newValue) => {
 ```
 
 **What core does NOT need:**
+
 - ❌ `.peek()` - redundant with `.value`
 - ❌ `.set()` - convenience for users, not runtime
 - ❌ `.update()` - convenience for users, not runtime
@@ -255,12 +274,16 @@ import { ref, watch } from "vue";
 // Simple adapter wrapper
 function toSemaJSXSignal<T>(vueRef: Ref<T>): ReadableSignal<T> {
   return {
-    get value() { return vueRef.value; },
-    set value(v) { vueRef.value = v; },
+    get value() {
+      return vueRef.value;
+    },
+    set value(v) {
+      vueRef.value = v;
+    },
     subscribe(fn) {
       const stop = watch(vueRef, fn, { immediate: false });
       return stop;
-    }
+    },
   };
 }
 
@@ -314,30 +337,36 @@ const [count, setCount] = createSignal(0);
 ## Implementation Plan
 
 ### Phase 1: Create Core Interface ✅
+
 1. Create `packages/core/src/signal-interface.ts`
 2. Define `ReadableSignal`, `WritableSignal`, `isSignal`
 3. Update `packages/core/src/types.ts` to export from interface file
 
 ### Phase 2: Update Signal Implementation ✅
+
 1. Update `@semajsx/signal/src/types.ts` to import from core
 2. Remove `peek()` from implementation
 3. Keep convenience methods (`set`, `update`)
 
 ### Phase 3: Update Consumers ✅
+
 1. Update all `peek()` calls to use `.value`
 2. Import signal types from `@semajsx/core` instead of `@semajsx/signal`
 3. Update `isSignal()` to not check for `peek()`
 
 ### Phase 4: Update Dependencies ✅
+
 1. Remove `@semajsx/signal` from core `package.json` dependencies
 2. Keep in dom/terminal/ssr (for runtime, not types)
 
 ### Phase 5: Documentation ✅
+
 1. Document signal interface in core README
 2. Add "Using Custom Signals" guide
 3. Create adapter examples
 
 ### Phase 6: Adapters (Future) 🔮
+
 1. Create `packages/signal-adapters/` directory
 2. Implement Vue ref adapter
 3. Implement Solid signals adapter (if needed)
@@ -349,6 +378,7 @@ const [count, setCount] = createSignal(0);
 **For Users**: None - this is internal refactoring.
 
 **For Library Authors**:
+
 - Change: `import type { Signal } from "@semajsx/signal"`
 - To: `import type { ReadableSignal } from "@semajsx/core"`
 - Remove: Any usage of `signal.peek()` → use `signal.value`
@@ -357,14 +387,14 @@ const [count, setCount] = createSignal(0);
 
 ## Comparison
 
-| Feature | Before | After |
-|---------|--------|-------|
-| Interface location | @semajsx/signal | @semajsx/core |
-| Required methods | 3 (value, peek, subscribe) | 2 (value, subscribe) |
-| Core dependencies | @semajsx/signal | None |
-| Preact compatibility | 95% | 100% ✅ |
-| Vue compatibility | 30% | 50% ⬆️ |
-| Implementation coupling | Tight | Loose ✅ |
+| Feature                 | Before                     | After                |
+| ----------------------- | -------------------------- | -------------------- |
+| Interface location      | @semajsx/signal            | @semajsx/core        |
+| Required methods        | 3 (value, peek, subscribe) | 2 (value, subscribe) |
+| Core dependencies       | @semajsx/signal            | None                 |
+| Preact compatibility    | 95%                        | 100% ✅              |
+| Vue compatibility       | 30%                        | 50% ⬆️               |
+| Implementation coupling | Tight                      | Loose ✅             |
 
 ---
 
@@ -414,15 +444,17 @@ function mySignal<T>(initialValue: T): WritableSignal<T> {
   const listeners = new Set<(v: T) => void>();
 
   return {
-    get value() { return value; },
+    get value() {
+      return value;
+    },
     set value(v) {
       value = v;
-      listeners.forEach(fn => fn(v));
+      listeners.forEach((fn) => fn(v));
     },
     subscribe(fn) {
       listeners.add(fn);
       return () => listeners.delete(fn);
-    }
+    },
   };
 }
 
@@ -442,10 +474,12 @@ function mySignalWithHelpers<T>(initialValue: T): WritableSignal<T> & {
   const listeners = new Set<(v: T) => void>();
 
   return {
-    get value() { return value; },
+    get value() {
+      return value;
+    },
     set value(v) {
       value = v;
-      listeners.forEach(fn => fn(v));
+      listeners.forEach((fn) => fn(v));
     },
     subscribe(fn) {
       listeners.add(fn);
@@ -453,15 +487,19 @@ function mySignalWithHelpers<T>(initialValue: T): WritableSignal<T> & {
     },
 
     // Optional convenience methods
-    set(v) { this.value = v; },
-    update(fn) { this.value = fn(value); }
+    set(v) {
+      this.value = v;
+    },
+    update(fn) {
+      this.value = fn(value);
+    },
   };
 }
 
 const count = mySignalWithHelpers(0);
-count.value++;      // ✅ Works
-count.set(5);       // ✅ Works (convenience)
-count.update(n => n + 1); // ✅ Works (convenience)
+count.value++; // ✅ Works
+count.set(5); // ✅ Works (convenience)
+count.update((n) => n + 1); // ✅ Works (convenience)
 ```
 
 ---
@@ -469,19 +507,23 @@ count.update(n => n + 1); // ✅ Works (convenience)
 ## Design Decisions Summary
 
 ### 1. No peek() Method ✅
+
 - **Reason**: Redundant in explicit dependency system
 - **Impact**: Interface simplified from 3 to 2 methods
 
 ### 2. No set()/update() in Interface ✅
+
 - **Reason**: Convenience methods, not core requirements
 - **Impact**: Easier third-party adoption
 - **Note**: Implementations can still provide them
 
 ### 3. ReadableSignal Naming ✅
+
 - **Reason**: Clear semantics (not just "Signal")
 - **Impact**: Better developer experience
 
 ### 4. Duck Typing for isSignal() ✅
+
 - **Reason**: Maximum flexibility
 - **Check**: Only `value` + `subscribe` existence
 

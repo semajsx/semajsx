@@ -11,10 +11,12 @@ SemaJSX is a lightweight, signal-based reactive JSX runtime for building modern 
 **IMPORTANT**: This project has two distinct types of documentation:
 
 ### 1. Internal Development Documentation
+
 **Purpose**: For contributors, maintainers, and AI assistants
 **Audience**: People building and maintaining SemaJSX
 
 **Key Documents**:
+
 - `CLAUDE.md` - AI instructions (this file)
 - `CONTRIBUTING.md` - Contribution guidelines
 - `MONOREPO_ARCHITECTURE.md` - Architecture details
@@ -25,22 +27,26 @@ SemaJSX is a lightweight, signal-based reactive JSX runtime for building modern 
 - `docs/adrs/` - Architecture decisions
 
 **Characteristics**:
+
 - Technical and detailed
 - Explains "why" and "how we built it"
 - Contains design rationale and trade-offs
 - Located in root or `docs/{rfcs,designs,adrs}`
 
 ### 2. User-Facing Documentation
+
 **Purpose**: Teaching users how to use SemaJSX
 **Audience**: Developers building applications with SemaJSX
 
 **Key Documents**:
+
 - `README.md` - Project introduction
 - `CHANGELOG.md` - Version history
 - `packages/*/README.md` - Package usage guides
 - `apps/docs/content/` - Tutorials and API reference (published to docs site)
 
 **Characteristics**:
+
 - Practical and example-focused
 - Explains "how to use it"
 - Tutorial and reference style
@@ -276,6 +282,7 @@ This project follows a structured development workflow for major features and ch
 ### Temporary Workspace
 
 The `.workspace/` directory is for temporary work-in-progress:
+
 - `research/` - Research materials
 - `drafts/` - Design document drafts
 - `discussions/` - Meeting notes
@@ -286,21 +293,25 @@ This directory is git-ignored. Move final artifacts to `apps/docs/` when complet
 ### When to Use
 
 **Full Workflow** (RFC + Design + ADR):
+
 - Major new features
 - Breaking changes
 - Architectural changes
 
 **Simplified Workflow** (Design Doc only):
+
 - Minor features
 - Enhancements
 - Complex bug fixes
 
 **Direct Implementation** (PR only):
+
 - Simple bug fixes
 - Documentation updates
 - Typo fixes
 
 **Guidelines**:
+
 - Large features should have design documents before implementation
 - Architecture decisions should be recorded in ADRs
 - When in doubt, create a design document

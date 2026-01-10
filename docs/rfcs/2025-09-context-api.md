@@ -24,7 +24,7 @@ In deeply nested component trees, passing props through intermediate components 
   <Layout theme={theme}>
     <Sidebar theme={theme}>
       <Menu theme={theme}>
-        <MenuItem theme={theme} />  // Finally used here!
+        <MenuItem theme={theme} /> // Finally used here!
       </Menu>
     </Sidebar>
   </Layout>
@@ -32,6 +32,7 @@ In deeply nested component trees, passing props through intermediate components 
 ```
 
 **Pain points**:
+
 - Intermediate components must know about props they don't use
 - Refactoring becomes difficult (change propagates through all levels)
 - Component reusability suffers
@@ -71,7 +72,7 @@ const ThemeContext = context<Theme>();
 // 2. Provide value
 <Context provide={[ThemeContext, theme]}>
   <App />
-</Context>
+</Context>;
 
 // 3. Consume via second parameter
 function MyComponent(props, ctx) {
@@ -92,30 +93,36 @@ function MyComponent(props, ctx) {
 ## Alternatives Considered
 
 ### Alternative A: React-style Context with Hooks
+
 ```tsx
 const theme = useContext(ThemeContext);
 ```
 
 **Rejected because**:
+
 - Hook rules complicate async components
 - Requires global state management
 - Not aligned with SemaJSX's signal-based approach
 
 ### Alternative B: Solid-style Context with Hooks
+
 ```tsx
 const theme = useContext(ThemeContext);
 ```
 
 **Rejected because**:
+
 - Still has hook limitations
 - We prefer explicit parameters over implicit hooks
 
 ### Alternative C: Provide/Inject via Props
+
 ```tsx
 <ThemeContext.Provider value={theme}>
 ```
 
 **Rejected because**:
+
 - Requires nested providers for multiple contexts
 - More verbose than unified `<Context>` component
 
@@ -135,6 +142,7 @@ const theme = useContext(ThemeContext);
 See [Design Document](../designs/context-api-design.md) for detailed implementation.
 
 **Key files**:
+
 - `packages/core/src/context.ts` - Core implementation
 - `packages/dom/src/render.ts` - Rendering integration
 - `packages/core/src/context.test.ts` - Tests
@@ -146,12 +154,14 @@ See [Design Document](../designs/context-api-design.md) for detailed implementat
 **Accepted**: 2025-09
 
 **Rationale**:
+
 1. Solves real pain point (prop drilling)
 2. Design aligns with SemaJSX principles (explicit, signal-friendly, async-safe)
 3. Implementation is clean and backward compatible
 4. No performance overhead
 
 **Next Steps**:
+
 - [x] Design document created
 - [x] Implementation complete
 - [x] Tests written

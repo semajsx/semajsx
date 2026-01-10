@@ -19,9 +19,11 @@ Discovery → Design → Implementation → Verification → Archive
 ## Stages
 
 ### 1. Discovery 📋
+
 **Goal**: Clarify what problem to solve and why.
 
 **Output**:
+
 - RFC document (`rfcs/YYYY-MM-DD-feature.md`)
 - Research materials (`.workspace/research/`)
 
@@ -32,9 +34,11 @@ Discovery → Design → Implementation → Verification → Archive
 ---
 
 ### 2. Design 🎨
+
 **Goal**: Determine how to implement and why this design.
 
 **Output**:
+
 - Design document (`designs/feature-design.md`)
 - ADRs for key decisions (`adrs/NNNN-decision.md`)
 - Drafts (`.workspace/drafts/`)
@@ -46,9 +50,11 @@ Discovery → Design → Implementation → Verification → Archive
 ---
 
 ### 3. Implementation 💻
+
 **Goal**: Turn design into code.
 
 **Output**:
+
 - Source code (`packages/*/src/`)
 - Tests (`*.test.ts`)
 - Examples (`packages/*/examples/`)
@@ -58,9 +64,11 @@ Discovery → Design → Implementation → Verification → Archive
 ---
 
 ### 4. Verification ✅
+
 **Goal**: Ensure quality and design goals achieved.
 
 **Checklist**:
+
 - [ ] All tests pass
 - [ ] Code coverage > 80%
 - [ ] Lint/type checks pass
@@ -70,9 +78,11 @@ Discovery → Design → Implementation → Verification → Archive
 ---
 
 ### 5. Archive 📦
+
 **Goal**: Clean up, document, release.
 
 **Tasks**:
+
 - Update CHANGELOG.md
 - Move final designs from `.workspace/` to `docs/`
 - Delete temporary drafts
@@ -82,16 +92,17 @@ Discovery → Design → Implementation → Verification → Archive
 
 ## When to Use
 
-| Change Type | RFC | Design | ADR | Example |
-|------------|-----|--------|-----|---------|
-| Major feature | ✅ | ✅ | If needed | New engine |
-| Minor feature | Optional | ✅ | If needed | New helper |
-| Bug fix | ❌ | ❌ | ❌ | Fix error |
-| Refactor | Optional | ✅ | If architectural | Restructure |
-| Docs | ❌ | ❌ | ❌ | Update README |
-| Breaking | ✅ | ✅ | ✅ | Change API |
+| Change Type   | RFC      | Design | ADR              | Example       |
+| ------------- | -------- | ------ | ---------------- | ------------- |
+| Major feature | ✅       | ✅     | If needed        | New engine    |
+| Minor feature | Optional | ✅     | If needed        | New helper    |
+| Bug fix       | ❌       | ❌     | ❌               | Fix error     |
+| Refactor      | Optional | ✅     | If architectural | Restructure   |
+| Docs          | ❌       | ❌     | ❌               | Update README |
+| Breaking      | ✅       | ✅     | ✅               | Change API    |
 
 **Rule of thumb**:
+
 - **Simple change?** Direct PR
 - **Need to think through design?** Create design doc
 - **Major feature or breaking?** Full workflow (RFC + Design + ADR)
@@ -118,15 +129,15 @@ docs/
 
 ## Information Lifecycle
 
-| Type | Location | Lifecycle |
-|------|----------|-----------|
-| Research | `.workspace/research/` | Temporary, archive or delete |
-| Drafts | `.workspace/drafts/` | Temporary, final → `docs/designs/` |
-| Discussions | `.workspace/discussions/` | Temporary, extract → RFC/ADR |
+| Type        | Location                  | Lifecycle                          |
+| ----------- | ------------------------- | ---------------------------------- |
+| Research    | `.workspace/research/`    | Temporary, archive or delete       |
+| Drafts      | `.workspace/drafts/`      | Temporary, final → `docs/designs/` |
+| Discussions | `.workspace/discussions/` | Temporary, extract → RFC/ADR       |
 | Experiments | `.workspace/experiments/` | Temporary, delete after validation |
-| RFC | `docs/rfcs/` | Permanent |
-| Design | `docs/designs/` | Permanent |
-| ADR | `docs/adrs/` | Permanent |
+| RFC         | `docs/rfcs/`              | Permanent                          |
+| Design      | `docs/designs/`           | Permanent                          |
+| ADR         | `docs/adrs/`              | Permanent                          |
 
 ---
 
@@ -176,6 +187,7 @@ docs/
 ## Working with AI
 
 AI can help with:
+
 - **Discovery**: Research, draft RFC
 - **Design**: Generate drafts, suggest alternatives
 - **Implementation**: Write code, tests, docs

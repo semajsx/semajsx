@@ -34,6 +34,7 @@ Describe the technical, business, or architectural context that requires a decis
 Be clear and specific about what you're deciding. Use active voice.
 
 ### Examples:
+
 - "We will use TypeScript for all new code."
 - "We will adopt a monorepo structure using Bun workspaces."
 - "We will implement signals using fine-grained reactivity."
@@ -60,12 +61,12 @@ List the key reasons supporting this decision:
 
 ### Key Factors Considered
 
-| Factor | Weight | Impact on Decision |
-|--------|--------|-------------------|
-| Performance | High | Significant improvement expected |
-| Developer Experience | High | Simplifies workflow |
-| Maintainability | Medium | Easier to maintain long-term |
-| Cost | Low | Minimal additional cost |
+| Factor               | Weight | Impact on Decision               |
+| -------------------- | ------ | -------------------------------- |
+| Performance          | High   | Significant improvement expected |
+| Developer Experience | High   | Simplifies workflow              |
+| Maintainability      | Medium | Easier to maintain long-term     |
+| Cost                 | Low    | Minimal additional cost          |
 
 ---
 
@@ -108,10 +109,12 @@ Changes that are neither clearly positive nor negative:
 **Description**: What this alternative entailed
 
 **Pros**:
+
 - Pro 1
 - Pro 2
 
 **Cons**:
+
 - Con 1
 - Con 2
 
@@ -122,10 +125,12 @@ Changes that are neither clearly positive nor negative:
 **Description**: What this alternative entailed
 
 **Pros**:
+
 - Pro 1
 - Pro 2
 
 **Cons**:
+
 - Con 1
 - Con 2
 
@@ -134,6 +139,7 @@ Changes that are neither clearly positive nor negative:
 ### Do Nothing
 
 **What happens if we don't make a change?**
+
 - Consequence 1
 - Consequence 2
 
@@ -212,18 +218,21 @@ When should we review this decision?
 ### Dependencies
 
 This decision depends on:
+
 - ADR-XXXX: [Title]
 - ADR-YYYY: [Title]
 
 ### Influences
 
 This decision influences:
+
 - ADR-ZZZZ: [Title]
 - Future decision area: [Description]
 
 ### Conflicts
 
 This decision conflicts with or supersedes:
+
 - ADR-WWWW: [Title] - [How resolved]
 
 ---
@@ -242,8 +251,8 @@ This decision conflicts with or supersedes:
 
 ### Risks
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
+| Risk   | Impact          | Mitigation         |
+| ------ | --------------- | ------------------ |
 | Risk 1 | High/Medium/Low | How we'll mitigate |
 | Risk 2 | High/Medium/Low | How we'll mitigate |
 
@@ -260,11 +269,11 @@ This decision conflicts with or supersedes:
 
 ## Change History
 
-| Date | Change | Author |
-|------|--------|--------|
+| Date       | Change        | Author |
+| ---------- | ------------- | ------ |
 | YYYY-MM-DD | Initial draft | [Name] |
-| YYYY-MM-DD | Accepted | [Name] |
-| YYYY-MM-DD | Updated | [Name] |
+| YYYY-MM-DD | Accepted      | [Name] |
+| YYYY-MM-DD | Updated       | [Name] |
 
 ---
 
@@ -275,6 +284,7 @@ This decision conflicts with or supersedes:
 ### When to Create an ADR
 
 Create an ADR when:
+
 - Making significant architectural decisions
 - Choosing between multiple viable alternatives
 - Decisions will have long-term impact
