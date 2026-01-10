@@ -49,11 +49,20 @@ export function virtualModules(modules: VirtualModulesOptions): Plugin {
         return resolve(viteRoot, id);
       }
 
-      // Try resolving relative imports from importer
+      // Try resolving relative imports from importer first
       if (importer) {
         const abs = resolve(dirname(importer), id);
         if (resolvedIds.has(abs)) {
           return abs;
+        }
+      }
+
+      // For bare specifiers (not starting with /, ./, or ../),
+      // try resolving against viteRoot
+      if (!id.startsWith("/") && !id.startsWith("./") && !id.startsWith("../")) {
+        const absoluteId = resolve(viteRoot, id);
+        if (modules[absoluteId] || resolvedIds.has(absoluteId)) {
+          return absoluteId;
         }
       }
 

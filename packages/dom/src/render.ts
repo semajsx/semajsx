@@ -6,6 +6,7 @@ import {
   isAsyncIterator,
   isPromise,
   Fragment,
+  Portal,
   type RenderedNode,
   type RenderStrategy,
   type ContextMap,
@@ -29,6 +30,12 @@ import {
  */
 function collectNodes(rendered: RenderedNode<Node>): Node[] {
   const nodes: Node[] = [];
+
+  // Portal: children are already rendered to the portal container
+  // Don't collect them here as they shouldn't be added to the main tree
+  if (rendered.vnode.type === Portal) {
+    return nodes;
+  }
 
   // Fragment: no node, only children
   if (rendered.vnode.type === Fragment) {

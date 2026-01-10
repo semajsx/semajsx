@@ -7,12 +7,14 @@ Formal proposals for new features or significant changes.
 ## When to Create
 
 ✅ **Create RFC for:**
+
 - Major features
 - Breaking changes
 - New concepts/paradigms
 - Unclear scope needing discussion
 
 ❌ **Don't create RFC for:**
+
 - Bug fixes
 - Minor enhancements
 - Documentation updates
@@ -56,13 +58,13 @@ Examples: `2025-08-signal-reactivity.md`, `2025-09-context-api.md`
 
 ## Existing RFCs
 
-| RFC | Feature | Date | Status |
-|-----|---------|------|--------|
-| [2025-08-signal-reactivity.md](./2025-08-signal-reactivity.md) | Signal-based Reactivity | 2025-08 | Implemented |
-| [2025-08-dual-rendering-targets.md](./2025-08-dual-rendering-targets.md) | DOM + Terminal Rendering | 2025-08 | Implemented |
-| [2025-09-context-api.md](./2025-09-context-api.md) | Context API | 2025-09 | Implemented |
-| [2025-10-terminal-logger.md](./2025-10-terminal-logger.md) | Terminal Logger | 2025-10 | Implemented |
-| [2025-11-ssr-island-architecture.md](./2025-11-ssr-island-architecture.md) | SSR Islands | 2025-11 | Implemented |
+| RFC                                                                        | Feature                  | Date    | Status      |
+| -------------------------------------------------------------------------- | ------------------------ | ------- | ----------- |
+| [2025-08-signal-reactivity.md](./2025-08-signal-reactivity.md)             | Signal-based Reactivity  | 2025-08 | Implemented |
+| [2025-08-dual-rendering-targets.md](./2025-08-dual-rendering-targets.md)   | DOM + Terminal Rendering | 2025-08 | Implemented |
+| [2025-09-context-api.md](./2025-09-context-api.md)                         | Context API              | 2025-09 | Implemented |
+| [2025-10-terminal-logger.md](./2025-10-terminal-logger.md)                 | Terminal Logger          | 2025-10 | Implemented |
+| [2025-11-ssr-island-architecture.md](./2025-11-ssr-island-architecture.md) | SSR Islands              | 2025-11 | Implemented |
 
 ---
 

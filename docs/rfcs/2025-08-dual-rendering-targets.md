@@ -31,6 +31,7 @@ console.log('Click here...');
 ```
 
 **Pain points**:
+
 - CLI tools lack component model
 - No reactive updates in terminal UIs
 - Can't reuse logic between web and CLI
@@ -73,8 +74,8 @@ console.log('Click here...');
 ### DOM Rendering
 
 ```tsx
-import { render } from '@semajsx/dom';
-import { signal } from '@semajsx/signal';
+import { render } from "@semajsx/dom";
+import { signal } from "@semajsx/signal";
 
 function App() {
   const count = signal(0);
@@ -92,8 +93,8 @@ render(<App />, document.body);
 ### Terminal Rendering
 
 ```tsx
-import { render } from '@semajsx/terminal';
-import { signal } from '@semajsx/signal';
+import { render } from "@semajsx/terminal";
+import { signal } from "@semajsx/signal";
 
 function App() {
   const count = signal(0);
@@ -136,15 +137,20 @@ function CLIApp() {
 ## Alternatives Considered
 
 ### Alternative A: DOM Only
+
 **Rejected**: Misses opportunity to bring modern patterns to CLI development
 
 ### Alternative B: Universal Components
+
 ```tsx
 // Same component works everywhere
-<View><Text>Hello</Text></View>
+<View>
+  <Text>Hello</Text>
+</View>
 ```
 
 **Rejected**:
+
 - Forces lowest common denominator
 - DOM loses semantic HTML
 - Complexity of abstraction not worth it
@@ -152,9 +158,11 @@ function CLIApp() {
 **Verdict**: Target-specific components better
 
 ### Alternative C: Separate Frameworks
+
 **Rejected**: Loses shared patterns and code reuse
 
 ### Alternative D: Dual Rendering ✅
+
 **Chosen**: Balance between code reuse and target-specific features
 
 ---
@@ -164,6 +172,7 @@ function CLIApp() {
 ### Shared Core
 
 `@semajsx/core` provides:
+
 - VNode creation (`h()`)
 - Signal system
 - Component model
@@ -172,12 +181,14 @@ function CLIApp() {
 ### Target-Specific Renderers
 
 **DOM Renderer** (`@semajsx/dom`):
+
 - DOM manipulation
 - Event handling
 - HTML elements
 - Hydration
 
 **Terminal Renderer** (`@semajsx/terminal`):
+
 - Yoga layout engine (Flexbox)
 - ANSI color support (chalk)
 - Built-in components (`<box>`, `<text>`)
@@ -206,21 +217,25 @@ function CLIApp() {
 ## Implementation
 
 **Phase 1: Core** ✅
+
 - VNode system
 - Signal reactivity
 - Component model
 
 **Phase 2: DOM** ✅
+
 - DOM rendering
 - Event handling
 - Hydration
 
 **Phase 3: Terminal** ✅
+
 - Yoga integration
 - Box/Text components
 - ANSI colors
 
 **Phase 4: Documentation** ✅
+
 - Examples for both targets
 - Migration guides
 
@@ -231,16 +246,19 @@ function CLIApp() {
 **Accepted**: 2025-08
 
 **Rationale**:
+
 1. **Unique value**: No other framework offers this combination
 2. **Market need**: CLI tools lack modern patterns
 3. **Clean architecture**: Separate packages keep web apps lightweight
 4. **Proven tech**: Yoga (React Native layout engine) is battle-tested
 
 **Trade-offs accepted**:
+
 - Dual renderers increase maintenance
 - Cannot share components directly (acceptable - shared logic is enough)
 
 **Next Steps**:
+
 - [x] Implement core runtime
 - [x] Implement DOM renderer
 - [x] Implement terminal renderer

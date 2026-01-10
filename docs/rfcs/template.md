@@ -83,10 +83,10 @@ What is explicitly out of scope? This prevents scope creep.
 
 ### 6.1 Existing Solutions Comparison
 
-| Solution | Pros | Cons | Applicability |
-|----------|------|------|---------------|
+| Solution                            | Pros               | Cons               | Applicability   |
+| ----------------------------------- | ------------------ | ------------------ | --------------- |
 | Solution A (e.g., React's approach) | - Pro 1<br>- Pro 2 | - Con 1<br>- Con 2 | High/Medium/Low |
-| Solution B (e.g., Vue's approach) | - Pro 1<br>- Pro 2 | - Con 1<br>- Con 2 | High/Medium/Low |
+| Solution B (e.g., Vue's approach)   | - Pro 1<br>- Pro 2 | - Con 1<br>- Con 2 | High/Medium/Low |
 | Solution C (e.g., Solid's approach) | - Pro 1<br>- Pro 2 | - Con 1<br>- Con 2 | High/Medium/Low |
 
 ### 6.2 Technical Feasibility
@@ -132,12 +132,14 @@ const example = newFeature();
 What other approaches were considered and why were they rejected?
 
 ### Alternative A: [Name]
+
 - **Description**: ...
 - **Pros**: ...
 - **Cons**: ...
 - **Why not chosen**: ...
 
 ### Alternative B: [Name]
+
 - **Description**: ...
 - **Pros**: ...
 - **Cons**: ...
@@ -147,25 +149,28 @@ What other approaches were considered and why were they rejected?
 
 ## 9. Risks and Mitigation
 
-| Risk | Impact (H/M/L) | Probability (H/M/L) | Mitigation Strategy |
-|------|----------------|---------------------|---------------------|
-| Risk 1 | High | Medium | Mitigation plan |
-| Risk 2 | Medium | Low | Mitigation plan |
-| Risk 3 | Low | High | Mitigation plan |
+| Risk   | Impact (H/M/L) | Probability (H/M/L) | Mitigation Strategy |
+| ------ | -------------- | ------------------- | ------------------- |
+| Risk 1 | High           | Medium              | Mitigation plan     |
+| Risk 2 | Medium         | Low                 | Mitigation plan     |
+| Risk 3 | Low            | High                | Mitigation plan     |
 
 ---
 
 ## 10. Dependencies
 
 ### 10.1 Technical Dependencies
+
 - Dependency 1: [What it is, why needed]
 - Dependency 2: [What it is, why needed]
 
 ### 10.2 Team Dependencies
+
 - Team A needs to provide X
 - Team B needs to review Y
 
 ### 10.3 External Dependencies
+
 - Third-party service
 - External API
 
@@ -217,11 +222,13 @@ Rough timeline estimate:
 **Decision Maker**: [Name/Role]
 
 **Rationale**:
+
 - Reason 1
 - Reason 2
 - Reason 3
 
 **Conditions** (if accepted with conditions):
+
 - Condition 1
 - Condition 2
 
@@ -242,16 +249,19 @@ If accepted, what happens next?
 ## 16. Appendix
 
 ### References
+
 - [Link to related documents]
 - [Link to external resources]
 - [Link to research materials]
 
 ### Glossary
+
 - **Term 1**: Definition
 - **Term 2**: Definition
 
 ### Change Log
-| Date | Change | Author |
-|------|--------|--------|
-| YYYY-MM-DD | Initial draft | Name |
-| YYYY-MM-DD | Updated after review | Name |
+
+| Date       | Change               | Author |
+| ---------- | -------------------- | ------ |
+| YYYY-MM-DD | Initial draft        | Name   |
+| YYYY-MM-DD | Updated after review | Name   |

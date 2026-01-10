@@ -8,6 +8,7 @@
 ## Summary
 
 Design a pluggable Signal system for fine-grained reactivity in SemaJSX, with:
+
 1. **Minimal signal interface** (defined in core, zero dependencies)
 2. **Default implementation** (@semajsx/signal with explicit dependencies)
 3. **Third-party compatibility** (easy to swap or wrap other signal libraries)
@@ -31,6 +32,7 @@ function Counter() {
 ```
 
 **Pain points**:
+
 - **Performance overhead**: VDOM creation + diffing on every state change
 - **Unpredictable updates**: Component re-renders even if output unchanged
 - **Bundle size**: VDOM reconciler adds significant weight
@@ -47,12 +49,14 @@ function Counter() {
 ## Goals
 
 ### Signal System
+
 - ✅ **Minimal interface**: Only 2 required methods (.value + subscribe)
 - ✅ **Pluggable**: Easy to swap signal implementations
 - ✅ **Zero dependencies**: Core doesn't depend on signal package
 - ✅ **Third-party compatible**: Works with Preact Signals, Vue ref (with adapter)
 
 ### Default Implementation (@semajsx/signal)
+
 - ✅ **Performance**: Direct DOM updates, no VDOM diffing
 - ✅ **Predictability**: Explicit dependencies, no magic tracking
 - ✅ **Simplicity**: Clear, minimal API
@@ -141,15 +145,18 @@ export function isSignal<T = any>(value: unknown): value is ReadableSignal<T> {
 #### 1. Minimal Interface (Only 2 Methods)
 
 **Core runtime needs**:
+
 - ✅ `.value` - Read current value
 - ✅ `.subscribe()` - React to changes
 
 **Core runtime does NOT need**:
+
 - ❌ `.set()` - Convenience method (same as `.value = x`)
 - ❌ `.update()` - Convenience method (same as `.value = fn(.value)`)
 - ❌ `.peek()` - Redundant in explicit dependency system
 
 **Why minimal?**
+
 - Easier third-party adoption
 - Clear separation: interface vs implementation
 - Preact Signals works with zero adapter (100% compatible)
@@ -161,10 +168,11 @@ export function isSignal<T = any>(value: unknown): value is ReadableSignal<T> {
 const doubled = computed(() => count.value * 2);
 
 // ✅ Explicit dependencies (SemaJSX)
-const doubled = computed([count], c => c * 2);
+const doubled = computed([count], (c) => c * 2);
 ```
 
 **Why explicit?**
+
 - **Simpler**: No Proxy magic, no tracking overhead
 - **Faster**: 0.3ms vs 0.5ms for updates
 - **Smaller**: 4KB vs 7KB bundle size
@@ -176,15 +184,17 @@ const doubled = computed([count], c => c * 2);
 #### 3. No peek() Method
 
 In auto-tracking systems:
+
 ```typescript
 // Auto-tracking needs peek() to read without tracking
-const x = computed(() => count.peek());  // Don't track count
+const x = computed(() => count.peek()); // Don't track count
 ```
 
 In SemaJSX (explicit dependencies):
+
 ```typescript
 // .value already doesn't track - dependencies are explicit
-const x = computed([otherSignal], () => count.value);  // count NOT tracked
+const x = computed([otherSignal], () => count.value); // count NOT tracked
 ```
 
 **Verdict**: `peek()` is redundant in explicit system. Remove it.
@@ -196,22 +206,23 @@ const x = computed([otherSignal], () => count.value);  // count NOT tracked
 effect(() => console.log(count.value));
 
 // ✅ Use subscribe directly
-count.subscribe(value => console.log(value));
+count.subscribe((value) => console.log(value));
 ```
 
 **Why no effect?**
+
 - Simpler API (one less concept)
 - No need for automatic tracking
 - `subscribe()` is more explicit
 
 ### Third-Party Compatibility
 
-| Library | Compatibility | Adapter Needed | Notes |
-|---------|--------------|----------------|-------|
-| @semajsx/signal | ✅ 100% | None | Default implementation |
-| @preact/signals | ✅ 100% | None | Has .value + .subscribe() |
-| Vue ref | ⚠️ 50% | Simple wrapper | Only needs subscribe() wrapper |
-| Solid signals | ❌ 0% | Full adapter | Different paradigm (tuple-based) |
+| Library         | Compatibility | Adapter Needed | Notes                            |
+| --------------- | ------------- | -------------- | -------------------------------- |
+| @semajsx/signal | ✅ 100%       | None           | Default implementation           |
+| @preact/signals | ✅ 100%       | None           | Has .value + .subscribe()        |
+| Vue ref         | ⚠️ 50%        | Simple wrapper | Only needs subscribe() wrapper   |
+| Solid signals   | ❌ 0%         | Full adapter   | Different paradigm (tuple-based) |
 
 ### Integration with JSX
 
@@ -222,7 +233,7 @@ function Counter() {
 
   return (
     <div>
-      <p>{count}</p>  {/* Auto-subscribes to count */}
+      <p>{count}</p> {/* Auto-subscribes to count */}
       <button onClick={() => count.value++}>+</button>
     </div>
   );
@@ -240,22 +251,22 @@ function Counter() {
 ### API Overview
 
 ```tsx
-import { signal, computed, batch } from '@semajsx/signal';
+import { signal, computed, batch } from "@semajsx/signal";
 
 // Create signal
 const count = signal(0);
 
 // Read value
-console.log(count.value);  // 0
+console.log(count.value); // 0
 
 // Write value (multiple ways)
-count.value = 1;           // Direct assignment (core interface)
-count.set(2);              // Convenience method (implementation)
-count.update(n => n + 1);  // Convenience method (implementation)
+count.value = 1; // Direct assignment (core interface)
+count.set(2); // Convenience method (implementation)
+count.update((n) => n + 1); // Convenience method (implementation)
 
 // Subscribe to changes
-const unsubscribe = count.subscribe(newValue => {
-  console.log('Count changed:', newValue);
+const unsubscribe = count.subscribe((newValue) => {
+  console.log("Count changed:", newValue);
 });
 
 // Clean up
@@ -265,11 +276,11 @@ unsubscribe();
 ### Signal Creation
 
 ```typescript
-import { signal } from '@semajsx/signal';
+import { signal } from "@semajsx/signal";
 
 const count = signal(0);
-const name = signal('Alice');
-const user = signal({ id: 1, name: 'Bob' });
+const name = signal("Alice");
+const user = signal({ id: 1, name: "Bob" });
 ```
 
 **Returns**: `WritableSignal<T>` with convenience methods
@@ -277,21 +288,21 @@ const user = signal({ id: 1, name: 'Bob' });
 ### Computed Signals (Explicit Dependencies)
 
 ```tsx
-import { signal, computed } from '@semajsx/signal';
+import { signal, computed } from "@semajsx/signal";
 
 const count = signal(0);
 
 // Single dependency
-const doubled = computed([count], c => c * 2);
+const doubled = computed([count], (c) => c * 2);
 
 // Multiple dependencies
-const firstName = signal('John');
-const lastName = signal('Doe');
+const firstName = signal("John");
+const lastName = signal("Doe");
 const fullName = computed([firstName, lastName], (f, l) => `${f} ${l}`);
 
 console.log(fullName.value); // "John Doe"
 
-firstName.value = 'Jane';
+firstName.value = "Jane";
 console.log(fullName.value); // "Jane Doe"
 ```
 
@@ -300,10 +311,10 @@ console.log(fullName.value); // "Jane Doe"
 ### Batching Updates
 
 ```tsx
-import { signal, batch } from '@semajsx/signal';
+import { signal, batch } from "@semajsx/signal";
 
 const count = signal(0);
-const doubled = computed([count], c => c * 2);
+const doubled = computed([count], (c) => c * 2);
 
 // Batch multiple updates
 batch(() => {
@@ -321,7 +332,7 @@ console.log(doubled.value); // 6
 ### Utility Functions
 
 ```tsx
-import { isSignal, unwrap } from '@semajsx/signal';
+import { isSignal, unwrap } from "@semajsx/signal";
 
 const count = signal(5);
 
@@ -341,14 +352,15 @@ unwrap(5); // 5
 ```typescript
 // @semajsx/signal provides these for better DX
 interface SemaJSXSignal<T> extends WritableSignal<T> {
-  set(value: T): void;         // Same as: signal.value = value
-  update(fn: (prev: T) => T): void;  // Same as: signal.value = fn(signal.value)
+  set(value: T): void; // Same as: signal.value = value
+  update(fn: (prev: T) => T): void; // Same as: signal.value = fn(signal.value)
 }
 
 export function signal<T>(initialValue: T): SemaJSXSignal<T>;
 ```
 
 **Why include them?**
+
 - Better developer experience
 - Common patterns (set, update)
 - Optional - not required by core interface
@@ -369,14 +381,16 @@ const [state, setState] = useState(0);
 ### Alternative B: Automatic Dependency Tracking (Solid/Vue)
 
 ```tsx
-const doubled = computed(() => count.value * 2);  // Auto-tracks count
+const doubled = computed(() => count.value * 2); // Auto-tracks count
 ```
 
 **Pros**:
+
 - Less verbose
 - Feels magical
 
 **Cons**:
+
 - Requires Proxy or getter/setter tracking
 - Hard to understand what's tracked
 - Performance overhead for tracking
@@ -388,10 +402,11 @@ const doubled = computed(() => count.value * 2);  // Auto-tracks count
 ### Alternative C: Explicit Dependencies (Chosen) ✅
 
 ```tsx
-const doubled = computed([count], c => c * 2);  // Explicit dependency
+const doubled = computed([count], (c) => c * 2); // Explicit dependency
 ```
 
 **Pros**:
+
 - Crystal clear dependencies
 - No tracking overhead
 - Simple implementation
@@ -399,6 +414,7 @@ const doubled = computed([count], c => c * 2);  // Explicit dependency
 - Easy to debug
 
 **Cons**:
+
 - Slightly more verbose
 - Must manually list dependencies
 
@@ -431,34 +447,28 @@ interface SemaJSXSignal<T> extends WritableSignal<T> {
 }
 
 // Functions
-function signal<T>(initialValue: T): SemaJSXSignal<T>
+function signal<T>(initialValue: T): SemaJSXSignal<T>;
 
-function computed<T, R>(
-  dep: Signal<T>,
-  compute: (value: T) => R
-): Signal<R>
+function computed<T, R>(dep: Signal<T>, compute: (value: T) => R): Signal<R>;
 
-function computed<T extends Signal<any>[], R>(
-  deps: [...T],
-  compute: (...values) => R
-): Signal<R>
+function computed<T extends Signal<any>[], R>(deps: [...T], compute: (...values) => R): Signal<R>;
 
-function batch(fn: () => void): void
+function batch(fn: () => void): void;
 
-function isSignal<T>(value: unknown): value is ReadableSignal<T>
-function unwrap<T>(value: MaybeSignal<T>): T
+function isSignal<T>(value: unknown): value is ReadableSignal<T>;
+function unwrap<T>(value: MaybeSignal<T>): T;
 ```
 
 ---
 
 ## Performance Benchmarks
 
-| Framework | Update Time | Bundle Size | Approach |
-|-----------|-------------|-------------|----------|
-| React | ~3ms | ~40KB | VDOM diffing |
-| Vue 3 | ~2ms | ~35KB | Reactive Proxy |
-| Solid (auto-track) | ~0.5ms | ~7KB | Auto-tracking |
-| **SemaJSX (explicit)** | **~0.3ms** | **~4KB** | Explicit deps ✅ |
+| Framework              | Update Time | Bundle Size | Approach         |
+| ---------------------- | ----------- | ----------- | ---------------- |
+| React                  | ~3ms        | ~40KB       | VDOM diffing     |
+| Vue 3                  | ~2ms        | ~35KB       | Reactive Proxy   |
+| Solid (auto-track)     | ~0.5ms      | ~7KB        | Auto-tracking    |
+| **SemaJSX (explicit)** | **~0.3ms**  | **~4KB**    | Explicit deps ✅ |
 
 **Why faster?** No tracking overhead = faster updates.
 
@@ -497,26 +507,32 @@ function unwrap<T>(value: MaybeSignal<T>): T
 ## Key Design Decisions Summary
 
 ### 1. Minimal Interface ✅
+
 - **Decision**: Only 2 methods required (value + subscribe)
 - **Impact**: Easier third-party adoption, Preact 100% compatible
 
 ### 2. Explicit Dependencies ✅
+
 - **Decision**: `computed([deps], fn)` instead of `computed(() => fn())`
 - **Impact**: Simpler, faster, clearer
 
 ### 3. No peek() ✅
+
 - **Decision**: Removed from interface
 - **Impact**: Interface simplified from 3 to 2 methods
 
 ### 4. No Effect System ✅
+
 - **Decision**: Use `subscribe()` directly
 - **Impact**: Simpler API, one less concept
 
 ### 5. Convenience Methods Are Implementation Details ✅
+
 - **Decision**: `set()` and `update()` not in core interface
 - **Impact**: Core interface minimal, implementations can optionally provide them
 
 ### 6. Batching via Microtasks ✅
+
 - **Decision**: `batch()` uses microtasks
 - **Impact**: Predictable timing, better performance
 
@@ -527,6 +543,7 @@ function unwrap<T>(value: MaybeSignal<T>): T
 **Accepted**: 2025-08
 
 **Rationale**:
+
 1. **Pluggability**: Any signal implementation can work with SemaJSX
 2. **Simplicity**: Explicit > implicit, minimal interface
 3. **Performance**: No tracking overhead (~0.3ms updates)
@@ -535,11 +552,13 @@ function unwrap<T>(value: MaybeSignal<T>): T
 6. **Compatibility**: Preact Signals works without adapter
 
 **Trade-offs accepted**:
+
 - More verbose than auto-tracking (worth the clarity)
 - No effect system (subscribe is enough)
 - Different from Solid/Preact (aligned with our philosophy)
 
 **Next Steps**:
+
 - [x] Define core interface in @semajsx/core
 - [x] Implement @semajsx/signal with explicit deps
 - [x] Implement batching

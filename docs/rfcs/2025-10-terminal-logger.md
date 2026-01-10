@@ -20,12 +20,13 @@ Existing terminal loggers are text-focused and limited:
 
 ```ts
 // Traditional logging - plain text only
-console.log('✓ Success');
-console.log(chalk.green.bold('✓') + ' Success');  // Verbose
-logger.info('Processing...', { progress: 75 });   // No visual feedback
+console.log("✓ Success");
+console.log(chalk.green.bold("✓") + " Success"); // Verbose
+logger.info("Processing...", { progress: 75 }); // No visual feedback
 ```
 
 **Pain points**:
+
 - No structured layouts (tables, progress bars, boxes)
 - Verbose syntax for styling
 - No JSX support for complex output
@@ -61,33 +62,32 @@ logger.info('Processing...', { progress: 75 });   // No visual feedback
 ### API Overview
 
 ```tsx
-import { createLogger } from '@semajsx/logger';
+import { createLogger } from "@semajsx/logger";
 
 const logger = createLogger();
 
 // Standard logging
-logger.info('Server started');
-logger.success('Build complete');
-logger.error('Connection failed');
+logger.info("Server started");
+logger.success("Build complete");
+logger.error("Connection failed");
 
 // JSX content
 logger.jsx(
   <box border="round" padding={1}>
-    <text color="green" bold>✓ Deployment successful</text>
-  </box>
+    <text color="green" bold>
+      ✓ Deployment successful
+    </text>
+  </box>,
 );
 
 // Tables
-logger.table(data, { border: 'round', headerSeparator: true });
+logger.table(data, { border: "round", headerSeparator: true });
 
 // Progress
-logger.progress(75, 100, 'Building...');
+logger.progress(75, 100, "Building...");
 
 // Grouping
-logger.group('Tests')
-  .success('✓ test1')
-  .error('✗ test2')
-  .groupEnd();
+logger.group("Tests").success("✓ test1").error("✗ test2").groupEnd();
 ```
 
 ### Key Design Choices
@@ -103,12 +103,15 @@ logger.group('Tests')
 ## Alternatives Considered
 
 ### Alternative A: Use Existing Loggers (Winston/Pino)
+
 **Rejected**: Server-focused, text-only, no terminal UI features
 
 ### Alternative B: Use CLI UI Libraries (Ink, Blessed)
+
 **Rejected**: Too heavy, require full TUI, we only need logging
 
 ### Alternative C: Use Chalk + Ora + CLI-Table
+
 **Rejected**: Multiple dependencies, inconsistent APIs, no JSX
 
 ---
@@ -127,6 +130,7 @@ logger.group('Tests')
 See [Design Document](../designs/logger-api-design.md) for detailed API.
 
 **Key features**:
+
 - Standard log levels (debug, info, success, warn, error)
 - JSX content support
 - Tables with customizable borders
@@ -142,12 +146,14 @@ See [Design Document](../designs/logger-api-design.md) for detailed API.
 **Accepted**: 2025-10
 
 **Rationale**:
+
 1. Unique value proposition (JSX in logs)
 2. Leverages existing SemaJSX terminal rendering
 3. Solves real need for CLI tool developers
 4. No performance overhead (one-time rendering)
 
 **Next Steps**:
+
 - [x] Design document created
 - [x] Implementation complete
 - [x] Examples created

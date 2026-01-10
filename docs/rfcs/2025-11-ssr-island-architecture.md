@@ -19,16 +19,19 @@ Implement Server-Side Rendering (SSR) with Island Architecture for SemaJSX, enab
 Traditional SSR approaches have limitations:
 
 **Full SSR + Full Hydration** (Next.js, Nuxt):
+
 ```tsx
 // Server renders everything
 // Client downloads ALL JavaScript
 // Hydrates entire page (even static content)
 ```
+
 - ❌ Large bundle sizes
 - ❌ Hydrates static content unnecessarily
 - ❌ All-or-nothing approach
 
 **Static Site Generation (SSG)**:
+
 - ✅ Fast, no server needed
 - ❌ No interactivity
 - ❌ Requires full rebuild for changes
@@ -95,6 +98,7 @@ export function Counter() {
 ```
 
 **Result**:
+
 - HTML generated at build time
 - Only `Counter` component shipped as JavaScript
 - Footer, header remain static (no hydration)
@@ -120,16 +124,19 @@ export function Counter() {
 ## Alternatives Considered
 
 ### Alternative A: Full Hydration (Next.js)
+
 **Pros**: Simple mental model
 **Cons**: Hydrates everything, large bundles
 **Verdict**: ❌ Too much JS for content sites
 
 ### Alternative B: Partial Hydration (Qwik)
+
 **Pros**: Granular control
 **Cons**: Complex implementation, unfamiliar patterns
 **Verdict**: ❌ Too complex for our use case
 
 ### Alternative C: Islands (Astro) ✅
+
 **Pros**: Simple, effective, proven
 **Cons**: Requires tooling
 **Verdict**: ✅ **Chosen** - Best DX + performance balance
@@ -177,12 +184,12 @@ build/
 
 ## Performance Benefits
 
-| Metric | Full Hydration | Islands |
-|--------|----------------|---------|
-| Initial HTML | Instant | Instant |
-| JavaScript | ~150KB | ~20KB |
-| Time to Interactive | ~3s | ~0.5s |
-| Hydration Cost | Full page | Islands only |
+| Metric              | Full Hydration | Islands      |
+| ------------------- | -------------- | ------------ |
+| Initial HTML        | Instant        | Instant      |
+| JavaScript          | ~150KB         | ~20KB        |
+| Time to Interactive | ~3s            | ~0.5s        |
+| Hydration Cost      | Full page      | Islands only |
 
 ---
 
@@ -198,19 +205,23 @@ build/
 ## Implementation
 
 **Phase 1: SSR Rendering** ✅
+
 - Server-side HTML generation
 - String rendering for components
 
 **Phase 2: Island Detection** ✅
+
 - Parse `client:*` directives
 - Mark components for hydration
 
 **Phase 3: Build System** ✅
+
 - Vite plugin for island bundling
 - Code splitting per island
 - HTML injection
 
 **Phase 4: Client Hydration** ✅
+
 - Island runtime
 - Selective hydration
 - Signal restoration
@@ -222,16 +233,19 @@ build/
 **Accepted**: 2025-11
 
 **Rationale**:
+
 1. **Performance**: 80% reduction in JavaScript vs full hydration
 2. **Proven pattern**: Astro validates this approach
 3. **Simple DX**: Explicit `client:*` directives
 4. **Flexible**: Works for docs, blogs, marketing sites
 
 **Trade-offs accepted**:
+
 - Requires build step (acceptable for SSG use case)
 - Islands can't easily communicate (use signals for shared state)
 
 **Next Steps**:
+
 - [x] Implement SSR rendering
 - [x] Build Vite plugin for islands
 - [x] Create client hydration runtime

@@ -113,9 +113,9 @@ export function setSignalProperty<T = unknown>(
 export function setRef(element: Node, ref: Ref<any>): () => void {
   // Signal ref
   if (isSignal(ref)) {
-    ref.set(element);
+    ref.value = element;
     return () => {
-      ref.set(null);
+      ref.value = null;
     };
   }
 

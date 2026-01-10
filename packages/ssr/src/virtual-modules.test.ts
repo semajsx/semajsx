@@ -21,7 +21,7 @@ describe("Virtual Modules Plugin", () => {
     expect(result).toBe(normalize("/home/user/test/index.html"));
   });
 
-  it("should resolve relative paths to absolute", () => {
+  it("should resolve bare specifiers against viteRoot", () => {
     const cwd = process.cwd();
     const absolutePath = resolve(cwd, "test/index.html");
 
@@ -32,7 +32,9 @@ describe("Virtual Modules Plugin", () => {
     const plugin = virtualModules(modules);
     const resolveId = plugin.resolveId as (id: string) => string | null;
 
-    // When given relative path, should resolve to absolute
+    // Bare specifiers (no /, ./, or ../ prefix) should resolve against viteRoot
+    // This is different from relative paths like ./test/index.html which
+    // require an importer context to resolve properly
     const result = resolveId("test/index.html");
 
     expect(result).toBe(normalize(absolutePath));
