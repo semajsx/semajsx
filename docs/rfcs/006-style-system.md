@@ -127,87 +127,88 @@ No built-in solution for:
 
 The key insight is treating styles as **JavaScript modules** that bundlers can analyze and eliminate.
 
-### 6.4 Tree-Shaking: Honest Analysis
+### 6.4 Tree-Shaking: How It Works
 
-**What works (module-level tree-shaking):**
+**Recommended Pattern: Named Exports**
+
+```ts
+// button.style.ts
+import { classes, rule } from "@semajsx/style";
+
+const c = classes(["root", "icon", "primary", "secondary", "large"]);
+
+export const root = rule`${c.root} { display: inline-flex; padding: 8px 16px; }`;
+export const icon = rule`${c.icon} { width: 18px; height: 18px; }`;
+export const primary = rule`${c.primary} { background: var(--primary); color: white; }`;
+export const secondary = rule`${c.secondary} { background: var(--secondary); }`;
+export const large = rule`${c.large} { padding: 12px 24px; font-size: 18px; }`;
+```
+
+**Usage options:**
+
+```ts
+// Option 1: Namespace import (recommended - feels like object access)
+import * as button from "./button.style";
+<div class={[button.root, button.primary]}>
+
+// Option 2: Named imports (explicit, best tree-shaking)
+import { root, primary } from "./button.style";
+<div class={[root, primary]}>
+```
+
+**Tree-shaking behavior:**
+
+```
+// If component only uses: import { root, primary } from "./button.style"
+// Bundler eliminates: icon, secondary, large ✅
+
+// If component uses: import * as button from "./button.style"
+// And only accesses button.root and button.primary
+// Modern bundlers (Rollup, esbuild) can still eliminate unused exports ✅
+```
+
+**Module-level elimination also works:**
 
 ```
 components/
 ├── Button/
-│   ├── Button.tsx        → imports button.style.ts
-│   └── button.style.ts   → included in bundle
+│   └── button.style.ts   → imported by Button.tsx → included
 ├── Card/
-│   ├── Card.tsx          → imports card.style.ts
-│   └── card.style.ts     → included in bundle
+│   └── card.style.ts     → imported by Card.tsx → included
 └── Tooltip/
-    ├── Tooltip.tsx       → NOT imported anywhere
-    └── tooltip.style.ts  → ELIMINATED by bundler
+    └── tooltip.style.ts  → NOT imported anywhere → ELIMINATED
 ```
 
-If your app never imports `<Tooltip>`, its styles are eliminated. This is standard ES module tree-shaking.
-
-**What doesn't work (property-level tree-shaking):**
+**Why NOT object exports:**
 
 ```ts
-// button.style.ts
-export const button = {
-  root: rule`...`,    // ← If you import ANY of these...
-  icon: rule`...`,    // ← ...ALL of them are included
-  large: rule`...`,   // ← (object properties don't tree-shake)
-};
-
-// Component only uses button.root
-import { button } from "./button.style";
-<div class={button.root}>  // button.icon and button.large still in bundle
-```
-
-**Why?** JavaScript bundlers (Rollup, esbuild, webpack) perform tree-shaking at the export level, not the property level. When you export an object, the entire object is included if any property is accessed.
-
-**Workarounds for finer granularity:**
-
-1. **Separate exports** (manual, verbose):
-
-```ts
-// button.style.ts
-export const buttonRoot = rule`...`;
-export const buttonIcon = rule`...`;
-export const buttonLarge = rule`...`;
-
-// Now unused exports ARE eliminated
-import { buttonRoot } from "./button.style";
-// buttonIcon and buttonLarge are tree-shaken
-```
-
-2. **Compile-time splitting** (requires Vite plugin):
-
-```ts
-// button.style.ts - written as object for convenience
+// ❌ Avoid this pattern - no tree-shaking
 export const button = {
   root: rule`...`,
-  icon: rule`...`,
+  icon: rule`...`, // Included even if unused
+  large: rule`...`, // Included even if unused
 };
-
-// Transformed by Vite plugin to separate exports
-// → buttonRoot, buttonIcon (enables tree-shaking)
 ```
 
-3. **CSS injection at use-time** (our current approach):
-
-Even if all rules are bundled, only **used** rules are injected into the DOM. Unused rules exist in JS but never become `<style>` tags.
+Object properties cannot be tree-shaken. If you import `button`, you get everything.
 
 **Practical impact:**
 
-| Scenario                      | Bundle Size               | DOM Size              |
-| ----------------------------- | ------------------------- | --------------------- |
-| Component not imported        | ✅ Eliminated             | ✅ No styles          |
-| Component imported, all used  | Included (expected)       | Injected (expected)   |
-| Component imported, some used | Included (all properties) | ✅ Only used injected |
+| Pattern                         | Bundle Size        | DOM Size              |
+| ------------------------------- | ------------------ | --------------------- |
+| Named exports, selective import | ✅ Only imported   | ✅ Only used injected |
+| `import * as styles`, some used | ✅ Only accessed\* | ✅ Only used injected |
+| Object export, some used        | ❌ All properties  | ✅ Only used injected |
+| Module not imported             | ✅ Eliminated      | ✅ No styles          |
 
-**Recommendation:**
+\*Modern bundlers with good static analysis
 
-- For component libraries with many variants, consider separate exports
-- For most apps, module-level tree-shaking is sufficient
-- The Vite plugin (Phase 3) will add property-level optimization
+**Summary:**
+
+- **Default to named exports** (`export const primary = ...`)
+- **Use `import * as styles`** for namespace-style access
+- **Use `import { primary }`** for explicit imports
+- **Avoid object exports** (`export const button = { ... }`)
 
 ---
 
@@ -221,40 +222,50 @@ import { classes, rule, rules } from "@semajsx/style";
 
 const c = classes(["root", "icon", "label"]);
 
-export const button = {
-  /** display: inline-flex; padding: 8px 16px */
-  root: rule`${c.root} {
-    display: inline-flex;
-    padding: 8px 16px;
-  }`,
+/** display: inline-flex; padding: 8px 16px */
+export const root = rule`${c.root} {
+  display: inline-flex;
+  padding: 8px 16px;
+}`;
 
-  /** width: 18px; height: 18px */
-  icon: rule`${c.icon} {
-    width: 18px;
-    height: 18px;
-  }`,
+/** width: 18px; height: 18px */
+export const icon = rule`${c.icon} {
+  width: 18px;
+  height: 18px;
+}`;
 
-  /** font-weight: 500 */
-  label: rule`${c.label} {
-    font-weight: 500;
-  }`,
+/** font-weight: 500 */
+export const label = rule`${c.label} {
+  font-weight: 500;
+}`;
 
-  /** margin-right: 8px (icon inside root) */
-  rootIcon: rule`${c.root} > ${c.icon} {
-    margin-right: 8px;
-  }`,
+/** margin-right: 8px (icon inside root) */
+export const rootIcon = rule`${c.root} > ${c.icon} {
+  margin-right: 8px;
+}`;
 
-  /** hover state */
-  rootHover: rule`${c.root}:hover {
-    background: var(--hover);
-  }`,
+/** hover state */
+export const rootHover = rule`${c.root}:hover {
+  background: var(--hover);
+}`;
 
-  /** multiple rules for states */
-  states: rules(
-    rule`${c.root}:active { transform: scale(0.98); }`,
-    rule`${c.root}:disabled { opacity: 0.5; cursor: not-allowed; }`,
-  ),
-};
+/** multiple rules for states */
+export const states = rules(
+  rule`${c.root}:active { transform: scale(0.98); }`,
+  rule`${c.root}:disabled { opacity: 0.5; cursor: not-allowed; }`,
+);
+```
+
+**Usage:**
+
+```tsx
+// Namespace import (recommended)
+import * as button from "./button.style";
+
+<button class={[button.root, button.states]}>
+  <span class={button.icon}>{icon}</span>
+  <span class={button.label}>{children}</span>
+</button>;
 ```
 
 ### 7.2 Key Components
@@ -880,42 +891,40 @@ import { classes, rule, rules } from "@semajsx/style";
 
 const c = classes(["root", "icon", "label", "large", "primary"]);
 
-export const button = {
-  /** Base button styles */
-  root: rule`${c.root} {
-    display: inline-flex;
-    align-items: center;
-    padding: 8px 16px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }`,
+/** Base button styles */
+export const root = rule`${c.root} {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}`;
 
-  /** Button states */
-  states: rules(
-    rule`${c.root}:hover { transform: translateY(-1px); }`,
-    rule`${c.root}:disabled { opacity: 0.5; cursor: not-allowed; }`,
-  ),
+/** Button states */
+export const states = rules(
+  rule`${c.root}:hover { transform: translateY(-1px); }`,
+  rule`${c.root}:disabled { opacity: 0.5; cursor: not-allowed; }`,
+);
 
-  /** Icon styling */
-  icon: rule`${c.icon} { width: 18px; height: 18px; }`,
-  iconInRoot: rule`${c.root} > ${c.icon}:first-child { margin-right: 8px; }`,
+/** Icon styling */
+export const icon = rule`${c.icon} { width: 18px; height: 18px; }`;
+export const iconInRoot = rule`${c.root} > ${c.icon}:first-child { margin-right: 8px; }`;
 
-  /** Label styling */
-  label: rule`${c.label} { font-weight: 500; }`,
+/** Label styling */
+export const label = rule`${c.label} { font-weight: 500; }`;
 
-  /** Size variants */
-  large: rule`${c.large} { padding: 12px 24px; }`,
+/** Size variants */
+export const large = rule`${c.large} { padding: 12px 24px; }`;
 
-  /** Color variants */
-  primary: rule`${c.primary} { background: var(--primary); color: white; }`,
-};
+/** Color variants */
+export const primary = rule`${c.primary} { background: var(--primary); color: white; }`;
 ```
 
 ```tsx
 // Button.tsx
-import { button } from "./button.style";
+import * as button from "./button.style";
 
 export function Button({ large, primary, icon, children }) {
   return (
@@ -931,7 +940,7 @@ export function Button({ large, primary, icon, children }) {
 
 ```tsx
 import { AppStyleAnchor } from "@semajsx/dom";
-import { button } from "./button.style";
+import * as button from "./button.style";
 
 class MyElement extends HTMLElement {
   connectedCallback() {
@@ -980,7 +989,7 @@ function WebComponent() {
 ```tsx
 // Button.tsx
 import { useStyle } from "@semajsx/style/react";
-import { button } from "./button.style";
+import * as button from "./button.style";
 
 function Button({ large, primary, disabled, children }) {
   const cx = useStyle();
@@ -1059,7 +1068,7 @@ export function useStyle() {
 ```vue
 <script setup lang="ts">
 import { useStyle } from "@semajsx/style/vue";
-import { button } from "./button.style";
+import * as button from "./button.style";
 
 const props = defineProps<{ large?: boolean; primary?: boolean }>();
 const cx = useStyle();
@@ -1076,10 +1085,12 @@ const cx = useStyle();
 
 ```ts
 import { inject, cx } from "@semajsx/style";
-import { button } from "./button.style";
+import * as button from "./button.style";
+import { root, primary } from "./button.style";
 
-// Option 1: Pre-inject all styles
-inject(button);
+// Option 1: Pre-inject specific styles
+inject(root);
+inject(primary);
 
 const btn = document.createElement("button");
 btn.className = String(button.root);
@@ -1204,19 +1215,15 @@ export const c = classes(["button", "card", "input", "icon"]);
 import { rule } from "@semajsx/style";
 import { c } from "./tokens";
 
-export const button = {
-  root: rule`${c.button} { ... }`,
-  icon: rule`${c.button} > ${c.icon} { ... }`,
-};
+export const root = rule`${c.button} { ... }`;
+export const withIcon = rule`${c.button} > ${c.icon} { ... }`;
 
 // card.style.ts
 import { rule } from "@semajsx/style";
 import { c } from "./tokens";
 
-export const card = {
-  root: rule`${c.card} { ... }`,
-  button: rule`${c.card} ${c.button} { width: 100%; }`,
-};
+export const root = rule`${c.card} { ... }`;
+export const cardButton = rule`${c.card} ${c.button} { width: 100%; }`;
 ```
 
 ---
@@ -1844,8 +1851,8 @@ hydrateStyles();
 
 ```ts
 // Correct order - style imports first
-import { button } from "./button.style"; // rule() registers tokens here
-import { card } from "./card.style";
+import * as button from "./button.style"; // rule() registers tokens here
+import * as card from "./card.style";
 import { hydrateStyles } from "@semajsx/style";
 
 hydrateStyles(); // Now globalTokenRegistry contains all tokens
@@ -2145,3 +2152,4 @@ If accepted:
 | 2026-01-10 | Clarified streaming SSR uses same Provider, added flushStyles API         | SemaJSX Team |
 | 2026-01-10 | Added hydration timing explanation with lazy fallback                     | SemaJSX Team |
 | 2026-01-10 | Added honest tree-shaking analysis (module vs property level)             | SemaJSX Team |
+| 2026-01-10 | Changed to named exports as default pattern for tree-shaking              | SemaJSX Team |
