@@ -695,30 +695,15 @@ interface StyleToken {
   toString(): string; // returns _ or empty string
 }
 
-/** Arbitrary value token (for Tailwind integration) */
-interface ArbitraryStyleToken {
-  readonly __kind: "arbitrary";
-  readonly _: string; // e.g., "p-v"
-  readonly __var: string; // e.g., "--p"
-  readonly __value: string; // e.g., "4px"
-  toString(): string;
-}
-
-/** All token types */
-type AnyStyleToken = StyleToken | ArbitraryStyleToken;
-
-// Type guards
+// Type guard
 function isStyleToken(value: unknown): value is StyleToken {
   return (
     typeof value === "object" && value !== null && "__kind" in value && value.__kind === "style"
   );
 }
 
-function isArbitraryToken(value: unknown): value is ArbitraryStyleToken {
-  return (
-    typeof value === "object" && value !== null && "__kind" in value && value.__kind === "arbitrary"
-  );
-}
+// Note: Arbitrary values (Tailwind p`4px` syntax) now return regular StyleToken
+// with dynamically generated class names. No separate ArbitraryStyleToken type needed.
 
 // Registry options
 interface RegistryOptions {
@@ -737,32 +722,19 @@ function rule(
 function rules(...tokens: StyleToken[]): StyleToken;
 ```
 
-### 8.3 Type Narrowing Examples
+### 8.3 Render System Integration
 
 ```ts
-// Using discriminated union for type-safe handling
-function processToken(token: AnyStyleToken) {
-  switch (token.__kind) {
-    case "style":
-      // TypeScript knows: token is StyleToken
-      inject(token);
-      break;
-
-    case "arbitrary":
-      // TypeScript knows: token is ArbitraryStyleToken
-      applyVariable(token.__var, token.__value);
-      break;
-  }
-}
-
-// In render system
-function resolveClass(value: AnyStyleToken, element: HTMLElement) {
-  if (value.__kind === "arbitrary") {
-    element.style.setProperty(value.__var, value.__value);
-    return value._;
+// In render system - resolve StyleToken to class name
+function resolveClass(value: StyleToken, element: HTMLElement): string {
+  // Inject CSS if not already injected
+  const target = getStyleTarget(); // document.head or shadow root
+  if (!value.__injected.has(target)) {
+    injectStyles(value.__css, target);
+    value.__injected.add(target);
   }
 
-  // StyleToken - set up signal bindings if present
+  // Set up signal bindings if present
   if (value.__bindings) {
     for (const [signal, varName, unit] of value.__bindings) {
       const update = () => {
@@ -1562,76 +1534,87 @@ import { spacing, colors } from "@semajsx/tailwind";
 <div class={[spacing.p4, spacing.m2, colors.bgBlue500, colors.textWhite]}>Hello</div>;
 ```
 
-### 10.3 Arbitrary Values with Inline Styles
+### 10.3 Arbitrary Values with Dynamic Classes
 
-For Tailwind's arbitrary value syntax (e.g., `p-[4px]`), we use inline styles directly instead of CSS variables. This avoids collision issues when the same utility is used multiple times:
+For Tailwind's arbitrary value syntax (e.g., `p-[4px]`), we generate unique class names and inject CSS rules dynamically:
 
 ```ts
 // @semajsx/tailwind/arbitrary.ts
+import { nanoid } from "nanoid";
 
-interface ArbitraryStyleToken {
-  readonly __kind: "arbitrary";
-  readonly __style: Record<string, string>; // inline style object
-  toString(): string; // returns "" (no class name)
-}
+// Cache: value → token (avoid duplicate class generation)
+const arbitraryCache = new Map<string, StyleToken>();
 
-export function p(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken {
-  const value = String.raw(strings, ...values);
-  return {
-    __kind: "arbitrary",
-    __style: { padding: value },
+function createArbitraryToken(property: string, prefix: string, value: string): StyleToken {
+  const cacheKey = `${property}:${value}`;
+
+  if (arbitraryCache.has(cacheKey)) {
+    return arbitraryCache.get(cacheKey)!;
+  }
+
+  // Generate unique class name: prefix + short hash
+  const className = `${prefix}-${nanoid(4)}`;
+
+  const token: StyleToken = {
+    __kind: "style",
+    _: className,
+    __css: `.${className} { ${property}: ${value}; }`,
+    __injected: new WeakSet(),
     toString() {
-      return "";
+      return this._;
     },
   };
+
+  arbitraryCache.set(cacheKey, token);
+  return token;
 }
 
-export function m(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken {
+export function p(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
   const value = String.raw(strings, ...values);
-  return {
-    __kind: "arbitrary",
-    __style: { margin: value },
-    toString() {
-      return "";
-    },
-  };
+  return createArbitraryToken("padding", "p", value);
 }
 
-export function w(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken {
+export function m(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
   const value = String.raw(strings, ...values);
-  return {
-    __kind: "arbitrary",
-    __style: { width: value },
-    toString() {
-      return "";
-    },
-  };
+  return createArbitraryToken("margin", "m", value);
+}
+
+export function w(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
+  const value = String.raw(strings, ...values);
+  return createArbitraryToken("width", "w", value);
+}
+
+export function h(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
+  const value = String.raw(strings, ...values);
+  return createArbitraryToken("height", "h", value);
 }
 
 // Directional variants
-export function pt(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken {
+export function pt(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
   const value = String.raw(strings, ...values);
-  return {
-    __kind: "arbitrary",
-    __style: { paddingTop: value },
-    toString() {
-      return "";
-    },
-  };
+  return createArbitraryToken("padding-top", "pt", value);
 }
 // pb, pl, pr, px, py, mt, mb, ml, mr, mx, my, etc.
 ```
 
-**Why inline styles instead of CSS variables?**
+**How it works:**
 
 ```tsx
-// ❌ CSS variable approach - collision!
-<div class={[p`4px`, p`8px`]}>  {/* Both use --p, later overwrites */}
+p`4px`   // → { _: "p-x7f3", __css: ".p-x7f3 { padding: 4px; }" }
+p`8px`   // → { _: "p-b2c4", __css: ".p-b2c4 { padding: 8px; }" }
+p`4px`   // → same cached token as first call (same value)
 
-// ✅ Inline style approach - no collision
-<div class={[p`4px`]} />  {/* style={{ padding: "4px" }} */}
-<div class={[p`8px`]} />  {/* style={{ padding: "8px" }} */}
+// No collision - different values get different class names
+<div class={p`4px`} />   {/* class="p-x7f3" */}
+<div class={p`8px`} />   {/* class="p-b2c4" */}
 ```
+
+**Benefits:**
+
+- **No collision**: Different values = different class names
+- **Cached**: Same value always returns same token (deduped)
+- **Auto-inject**: Works with existing `cx()` and injection system
+- **No manual style handling**: Just use in `class` prop like any other token
 
 Usage:
 
@@ -1652,26 +1635,21 @@ import { w, bg } from "@semajsx/tailwind/arbitrary";
 
 ### 10.4 Render Handling
 
-The render system detects `ArbitraryStyleToken` and merges inline styles:
+Since arbitrary values now return regular `StyleToken`, no special handling is needed. Both predefined and arbitrary tokens are processed identically:
 
 ```ts
-function resolveClassAndStyle(values: Array<StyleToken | ArbitraryStyleToken>) {
+function resolveClass(values: StyleToken[]): string {
   const classes: string[] = [];
-  const styles: Record<string, string> = {};
 
   for (const token of values.flat().filter(Boolean)) {
-    if (isArbitraryToken(token)) {
-      // Merge inline styles
-      Object.assign(styles, token.__style);
-    } else if (isStyleToken(token)) {
+    if (isStyleToken(token)) {
+      // Inject CSS if not already done
+      injectIfNeeded(token);
       if (token._) classes.push(token._);
     }
   }
 
-  return {
-    class: classes.join(" "),
-    style: styles,
-  };
+  return classes.join(" ");
 }
 ```
 
@@ -1681,18 +1659,23 @@ Rendered output:
 // Input
 <div class={[spacing.p4, w`calc(100% - 40px)`, bg`#f5f5f5`]}>
 
-// Output
-<div class="p-4" style="width: calc(100% - 40px); background-color: #f5f5f5">
+// Output (all class-based, CSS injected automatically)
+<div class="p-4 w-x7f3 bg-b2c4">
 ```
 
-### 10.5 Advantages of Inline Style Approach
+### 10.5 Why Dynamic Classes (Not Inline Styles)
 
-| Aspect          | Dynamic Class Generation | Inline Style Approach |
-| --------------- | ------------------------ | --------------------- |
-| Class conflicts | Possible                 | None                  |
-| CSS bundle size | Grows with usage         | Zero                  |
-| Runtime         | Inject CSS rules         | Set style directly    |
-| Specificity     | Class-level              | Inline (highest)      |
+We chose dynamic class generation over inline styles for arbitrary values:
+
+| Aspect           | Dynamic Classes (chosen)          | Inline Styles              |
+| ---------------- | --------------------------------- | -------------------------- |
+| API consistency  | ✅ Same as predefined tokens      | ❌ Mixed class + style     |
+| Component usage  | ✅ Just use in `class` prop       | ❌ Must handle `style` too |
+| Caching          | ✅ Same value = same cached token | ❌ Creates new object      |
+| CSS cascade      | ✅ Works with other classes       | ⚠️ Highest specificity     |
+| DevTools inspect | ✅ See class name in Elements     | ⚠️ Inline style noise      |
+
+**Trade-off**: Slightly larger CSS output, but simpler developer experience.
 
 ### 10.6 Complete Example
 
@@ -1704,13 +1687,13 @@ function Card({ width, children }) {
   return (
     <div
       class={[
-        // Predefined values (IDE autocomplete, class-based)
+        // Predefined values (IDE autocomplete)
         spacing.p4,
         spacing.m2,
         colors.bgWhite,
         flex.col,
 
-        // Arbitrary values (inline styles)
+        // Arbitrary values (dynamic classes, same API)
         w`${width}px`,
         h`calc(100vh - 80px)`,
       ]}
@@ -1720,11 +1703,12 @@ function Card({ width, children }) {
   );
 }
 
-// Rendered:
-// <div
-//   class="p-4 m-2 bg-white flex-col"
-//   style="width: 300px; height: calc(100vh - 80px)"
-// >
+// Rendered (all class-based):
+// <div class="p-4 m-2 bg-white flex-col w-x7f3 h-b2c4">
+//
+// Injected CSS:
+// .w-x7f3 { width: 300px; }
+// .h-b2c4 { height: calc(100vh - 80px); }
 ```
 
 ### 10.7 Code Generation from Tailwind Config
@@ -2402,7 +2386,7 @@ If accepted:
 
 - **ClassRef**: A reference object that stringifies to a hashed class name
 - **StyleToken**: Contains className (optional) + CSS rule(s), used in class props or injected
-- **ArbitraryStyleToken**: A token for arbitrary values that uses CSS variables instead of generating classes
+- **Arbitrary Value**: Tailwind-style arbitrary syntax (e.g., `p\`4px\``) that generates a StyleToken with dynamic class name
 - **ReactiveVar**: Signal binding info for dynamic CSS variables
 - **Dynamic Rule**: A function that accepts props object with signals and returns a StyleToken (like Component)
 - **App Anchor**: Global style injection target (default: document.head)
@@ -2447,7 +2431,8 @@ If accepted:
 | 2026-01-10 | Redesigned cx() to always return string, use anchor for signal bindings   | SemaJSX Team |
 | 2026-01-10 | Unified StyleProvider and SignalStyleAnchor into single StyleAnchor       | SemaJSX Team |
 | 2026-01-10 | Fixed CSS variable collision: use sig- prefix + nanoid per signal         | SemaJSX Team |
-| 2026-01-10 | Changed ArbitraryStyleToken to use inline styles instead of CSS vars      | SemaJSX Team |
 | 2026-01-10 | Fixed StyleAnchor first render: default to document.head for CSS inject   | SemaJSX Team |
 | 2026-01-10 | Added toString() implementation to StyleToken and rules() return          | SemaJSX Team |
 | 2026-01-10 | Clarified rules() returns token without className (injection only)        | SemaJSX Team |
+| 2026-01-10 | Changed arbitrary values to dynamic classes (not inline styles)           | SemaJSX Team |
+| 2026-01-10 | Removed ArbitraryStyleToken type - arbitrary values return StyleToken     | SemaJSX Team |
