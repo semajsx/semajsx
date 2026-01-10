@@ -142,45 +142,36 @@ const c = classes(["root", "icon", "label"]);
 
 export const button = {
   /** display: inline-flex; padding: 8px 16px */
-  root: rule(
-    c.root,
-    `
+  root: rule`${c.root} {
     display: inline-flex;
     padding: 8px 16px;
-  `,
-  ),
+  }`,
 
   /** width: 18px; height: 18px */
-  icon: rule(
-    c.icon,
-    `
+  icon: rule`${c.icon} {
     width: 18px;
     height: 18px;
-  `,
-  ),
+  }`,
 
   /** font-weight: 500 */
-  label: rule(
-    c.label,
-    `
+  label: rule`${c.label} {
     font-weight: 500;
-  `,
-  ),
+  }`,
 
   /** margin-right: 8px (icon inside root) */
-  rootIcon: rule`${c.root} > ${c.icon}`(`
+  rootIcon: rule`${c.root} > ${c.icon} {
     margin-right: 8px;
-  `),
+  }`,
 
   /** hover state */
-  rootHover: rule`${c.root}:hover`(`
+  rootHover: rule`${c.root}:hover {
     background: var(--hover);
-  `),
+  }`,
 
   /** multiple rules for states */
   states: rules(
-    rule`${c.root}:active`(`transform: scale(0.98);`),
-    rule`${c.root}:disabled`(`opacity: 0.5; cursor: not-allowed;`),
+    rule`${c.root}:active { transform: scale(0.98); }`,
+    rule`${c.root}:disabled { opacity: 0.5; cursor: not-allowed; }`,
   ),
 };
 ```
@@ -236,42 +227,45 @@ c.root.toString(); // "root-x7f3a"
 `${c.root}`; // "root-x7f3a"
 ```
 
-#### `rule(selector, css): StyleToken` - Function Call Syntax
+#### `` rule`selector { css }` `` - Tagged Template Syntax
 
-Creates a StyleToken for a single CSS rule with class selector.
+Creates a StyleToken from a tagged template containing selector and CSS block.
 
 ```ts
-// Class selector - returns StyleToken with className
-const root = rule(c.root, `padding: 8px;`);
+// Simple class selector
+const root = rule`${c.root} {
+  padding: 8px 16px;
+  display: flex;
+}`;
 // root._ = "root-x7f3a"
-// root.__css = ".root-x7f3a { padding: 8px; }"
-```
+// root.__css = ".root-x7f3a { padding: 8px 16px; display: flex; }"
 
-#### ``rule`selector`(css)`` - Tagged Template Syntax
-
-For complex selectors (pseudo-classes, combinators), use tagged template syntax. This preserves ClassRef references correctly.
-
-```ts
 // Pseudo-class selector
-const rootHover = rule`${c.root}:hover`(`background: blue;`);
-// rootHover._ = undefined (no direct className)
+const rootHover = rule`${c.root}:hover {
+  background: blue;
+}`;
+// rootHover._ = undefined (no direct className, injection only)
 // rootHover.__css = ".root-x7f3a:hover { background: blue; }"
 
 // Descendant combinator
-const rootIcon = rule`${c.root} > ${c.icon}`(`margin-right: 8px;`);
+const rootIcon = rule`${c.root} > ${c.icon} {
+  margin-right: 8px;
+}`;
 // rootIcon.__css = ".root-x7f3a > .icon-b2c4d { margin-right: 8px; }"
 
 // Attribute selector
-const rootDisabled = rule`${c.root}[disabled]`(`opacity: 0.5;`);
+const rootDisabled = rule`${c.root}[disabled] { opacity: 0.5; }`;
 
-// Multiple pseudo-classes
-const rootFocusVisible = rule`${c.root}:focus-visible`(`outline: 2px solid blue;`);
+// Global selector (no ClassRef)
+const bodyReset = rule`body { margin: 0; }`;
 ```
 
-**Why tagged template?** Using `` rule`${a} > ${b}` `` instead of ``rule(`${a} > ${b}`, ...)``:
+**Why tagged template?**
 
-- Template strings in function arguments immediately convert to strings, losing ClassRef references
-- Tagged templates receive the interpolated values as separate arguments, preserving type information
+- Single unified syntax for all selectors (simple, complex, global)
+- ClassRef interpolation preserves type information and generates correct hashes
+- Native CSS syntax - selector and block together, just like real CSS
+- No confusion between function call vs tagged template
 
 #### `rules(...tokens): StyleToken` - Combine Multiple Rules
 
@@ -279,17 +273,17 @@ Combines multiple StyleTokens into a single token for grouped injection.
 
 ```ts
 const buttonStates = rules(
-  rule`${c.root}:hover`(`background: blue;`),
-  rule`${c.root}:active`(`transform: scale(0.98);`),
-  rule`${c.root}:disabled`(`opacity: 0.5;`),
+  rule`${c.root}:hover { background: blue; }`,
+  rule`${c.root}:active { transform: scale(0.98); }`,
+  rule`${c.root}:disabled { opacity: 0.5; }`,
 );
 // buttonStates.__css contains all three rules concatenated
 
-// Can also combine rule() and rule`` syntax
+// Combine base styles with states
 const allStyles = rules(
-  rule(c.root, `padding: 8px;`),
-  rule(c.icon, `width: 18px;`),
-  rule`${c.root} > ${c.icon}`(`margin-right: 8px;`),
+  rule`${c.root} { padding: 8px; }`,
+  rule`${c.icon} { width: 18px; }`,
+  rule`${c.root} > ${c.icon} { margin-right: 8px; }`,
 );
 ```
 
@@ -368,14 +362,8 @@ interface RegistryOptions {
   dedupe?: boolean;
 }
 
-// rule() function overloads
-function rule(selector: ClassRef, css: string): StyleToken;
-
-// rule`` tagged template - returns a function that takes CSS
-function rule(
-  strings: TemplateStringsArray,
-  ...values: (ClassRef | string)[]
-): (css: string) => StyleToken;
+// rule`` tagged template - creates StyleToken from selector + CSS block
+function rule(strings: TemplateStringsArray, ...values: (ClassRef | string)[]): StyleToken;
 
 // rules() - combines multiple StyleTokens
 function rules(...tokens: StyleToken[]): StyleToken;
@@ -481,9 +469,7 @@ const c = classes(["root", "icon", "label", "large", "primary"]);
 
 export const button = {
   /** Base button styles */
-  root: rule(
-    c.root,
-    `
+  root: rule`${c.root} {
     display: inline-flex;
     align-items: center;
     padding: 8px 16px;
@@ -491,27 +477,26 @@ export const button = {
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
-  `,
-  ),
+  }`,
 
   /** Button states */
   states: rules(
-    rule`${c.root}:hover`(`transform: translateY(-1px);`),
-    rule`${c.root}:disabled`(`opacity: 0.5; cursor: not-allowed;`),
+    rule`${c.root}:hover { transform: translateY(-1px); }`,
+    rule`${c.root}:disabled { opacity: 0.5; cursor: not-allowed; }`,
   ),
 
   /** Icon styling */
-  icon: rule(c.icon, `width: 18px; height: 18px;`),
-  iconInRoot: rule`${c.root} > ${c.icon}:first-child`(`margin-right: 8px;`),
+  icon: rule`${c.icon} { width: 18px; height: 18px; }`,
+  iconInRoot: rule`${c.root} > ${c.icon}:first-child { margin-right: 8px; }`,
 
   /** Label styling */
-  label: rule(c.label, `font-weight: 500;`),
+  label: rule`${c.label} { font-weight: 500; }`,
 
   /** Size variants */
-  large: rule(c.large, `padding: 12px 24px;`),
+  large: rule`${c.large} { padding: 12px 24px; }`,
 
   /** Color variants */
-  primary: rule(c.primary, `background: var(--primary); color: white;`),
+  primary: rule`${c.primary} { background: var(--primary); color: white; }`,
 };
 ```
 
@@ -694,26 +679,25 @@ btn2.className = cx(button.root, button.primary, "custom");
 ### 9.4 Global Styles
 
 ```ts
-import { classes, rule, rules } from "@semajsx/style";
+import { classes, rule, rules, inject } from "@semajsx/style";
 
 const c = classes(["reset"]);
 
 export const globals = rules(
-  // Global styles using raw CSS selectors
-  rule`:root`(`
+  rule`:root {
     --primary: #3b82f6;
     --hover: #2563eb;
-  `),
+  }`,
 
-  rule`*, *::before, *::after`(`box-sizing: border-box;`),
+  rule`*, *::before, *::after { box-sizing: border-box; }`,
 
-  rule`body`(`
+  rule`body {
     margin: 0;
     font-family: system-ui, sans-serif;
-  `),
+  }`,
 
   // Scoped class
-  rule(c.reset, `all: unset;`),
+  rule`${c.reset} { all: unset; }`,
 );
 
 // Inject globals at app start
@@ -728,21 +712,21 @@ import { classes } from "@semajsx/style";
 export const c = classes(["button", "card", "input", "icon"]);
 
 // button.style.ts
-import { rule, rules } from "@semajsx/style";
+import { rule } from "@semajsx/style";
 import { c } from "./tokens";
 
 export const button = {
-  root: rule(c.button, `...`),
-  icon: rule`${c.button} > ${c.icon}`(`...`),
+  root: rule`${c.button} { ... }`,
+  icon: rule`${c.button} > ${c.icon} { ... }`,
 };
 
 // card.style.ts
-import { rule, rules } from "@semajsx/style";
+import { rule } from "@semajsx/style";
 import { c } from "./tokens";
 
 export const card = {
-  root: rule(c.card, `...`),
-  button: rule`${c.card} ${c.button}`(`width: 100%;`),
+  root: rule`${c.card} { ... }`,
+  button: rule`${c.card} ${c.button} { width: 100%; }`,
 };
 ```
 
@@ -791,30 +775,30 @@ const c = classes([
 
 export const spacing = {
   /** padding: 0 */
-  p0: rule(c.p0, `padding: 0;`),
+  p0: rule`${c.p0} { padding: 0; }`,
   /** padding: 0.25rem (4px) */
-  p1: rule(c.p1, `padding: 0.25rem;`),
+  p1: rule`${c.p1} { padding: 0.25rem; }`,
   /** padding: 0.5rem (8px) */
-  p2: rule(c.p2, `padding: 0.5rem;`),
+  p2: rule`${c.p2} { padding: 0.5rem; }`,
   /** padding: 1rem (16px) */
-  p4: rule(c.p4, `padding: 1rem;`),
+  p4: rule`${c.p4} { padding: 1rem; }`,
   /** padding: 2rem (32px) */
-  p8: rule(c.p8, `padding: 2rem;`),
+  p8: rule`${c.p8} { padding: 2rem; }`,
   /** padding: 1px */
-  px: rule(c.px, `padding: 1px;`),
+  px: rule`${c.px} { padding: 1px; }`,
 
   /** margin: 0 */
-  m0: rule(c.m0, `margin: 0;`),
+  m0: rule`${c.m0} { margin: 0; }`,
   /** margin: 0.25rem (4px) */
-  m1: rule(c.m1, `margin: 0.25rem;`),
+  m1: rule`${c.m1} { margin: 0.25rem; }`,
   /** margin: 0.5rem (8px) */
-  m2: rule(c.m2, `margin: 0.5rem;`),
+  m2: rule`${c.m2} { margin: 0.5rem; }`,
   /** margin: 1rem (16px) */
-  m4: rule(c.m4, `margin: 1rem;`),
+  m4: rule`${c.m4} { margin: 1rem; }`,
   /** margin: 2rem (32px) */
-  m8: rule(c.m8, `margin: 2rem;`),
+  m8: rule`${c.m8} { margin: 2rem; }`,
   /** margin: auto */
-  mauto: rule(c.mauto, `margin: auto;`),
+  mauto: rule`${c.mauto} { margin: auto; }`,
   // ...
 };
 ```
@@ -1020,7 +1004,7 @@ function generateSpacing(): string {
     // Generate property with JSDoc
     const pxValue = convertToPixels(value); // e.g., "1rem" -> "16px"
     props.push(`  /** padding: ${value}${pxValue ? ` (${pxValue})` : ""} */`);
-    props.push(`  ${name}: rule(c.${name}, \`padding: ${value};\`),`);
+    props.push(`  ${name}: rule\`\${c.${name}} { padding: ${value}; }\`,`);
   }
 
   return `
@@ -1122,7 +1106,7 @@ class StyleRegistry {
 }
 ```
 
-### 13.2 Performance: Batching and Preload
+### 13.2 Performance: Explicit Preload
 
 ```ts
 // Problem: Multiple cx() calls cause multiple style injections
@@ -1130,37 +1114,37 @@ cx(button.root); // inject
 cx(button.icon); // inject
 cx(button.label); // inject  <- 3 separate DOM writes
 
-// Solution 1: Batch inject via preload()
+// Solution: Explicit preload() at app/route entry
 import { preload } from "@semajsx/style";
 
-// At app startup or route entry
+// At app startup
 preload(button, card, input); // Single batched injection
 
-// Solution 2: Automatic batching with microtask
-const pendingInjections = new Set<StyleToken>();
-let scheduled = false;
+// Or at route entry
+function ProductPage() {
+  // Preload all styles needed for this page
+  preload(productCard, pricing, gallery);
 
-function scheduleInject(token: StyleToken, target: Element) {
-  pendingInjections.add(token);
-
-  if (!scheduled) {
-    scheduled = true;
-    queueMicrotask(() => {
-      batchInject([...pendingInjections], target);
-      pendingInjections.clear();
-      scheduled = false;
-    });
-  }
+  return <div>...</div>;
 }
 ```
+
+Benefits of explicit preload:
+
+- Predictable injection timing
+- Developer controls when styles are added
+- No hidden microtask overhead
+- Easier to debug and profile
 
 ### 13.3 Error Handling
 
 ```ts
 // Dev mode: validate CSS at definition time
-function rule(selector: ClassRef, css: string): StyleToken {
+function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
+  const cssBlock = buildCSSBlock(strings, values);
+
   if (process.env.NODE_ENV === "development") {
-    validateCSS(css); // Throws with helpful message
+    validateCSS(cssBlock); // Throws with helpful message
   }
   // ...
 }
@@ -1260,7 +1244,7 @@ function injectToShadow(token: StyleToken, shadow: ShadowRoot) {
 ## 16. Open Questions
 
 - [ ] **Q1**: Should CSS be auto-split per class for finer tree-shaking?
-  - **Context**: Currently, entire `rule()` block is one unit
+  - **Context**: Currently, entire `rule` block is one unit
   - **Options**: A) Keep as-is (simpler), B) Compile-time splitting
   - **Leaning**: A - per-component granularity is sufficient
 
@@ -1272,21 +1256,8 @@ function injectToShadow(token: StyleToken, shadow: ShadowRoot) {
   - **Context**: Users may prefer writing `.css` files
   - **Options**: A) Vite plugin, B) CLI tool, C) Both, D) None (manual)
 
-- [ ] **Q4**: Is the dual syntax for `rule()` confusing?
-  - **Context**: `rule(c.root, css)` for simple selectors vs ``rule`${c.root}:hover`(css)`` for complex
-  - **Options**:
-    - A) Keep dual syntax (clear separation of use cases)
-    - B) Always use tagged template: ``rule`${c.root}`(css)``
-    - C) Add helper for pseudo-classes: `rule.hover(c.root, css)`
-  - **Leaning**: A - the distinction is meaningful (simple class vs complex selector)
-
-- [ ] **Q5**: Should `preload()` be automatic or explicit?
-  - **Context**: Batching style injections improves performance
-  - **Options**:
-    - A) Explicit `preload()` call at app/route entry
-    - B) Automatic batching via microtask queue
-    - C) Both (auto-batch by default, explicit for control)
-  - **Leaning**: C - sensible defaults with escape hatch
+- [x] ~~**Q4**: Is the dual syntax for `rule()` confusing?~~
+  - **Resolved**: Unified to single tagged template syntax: `` rule`${c.root} { ... }` ``
 
 ---
 
@@ -1349,3 +1320,5 @@ If accepted:
 | 2026-01-10 | Added tagged template syntax for complex selectors                        | SemaJSX Team |
 | 2026-01-10 | Added React/Vue integrations with Provider + useStyle() hook              | SemaJSX Team |
 | 2026-01-10 | Added memory management, performance, error handling, Shadow DOM sections | SemaJSX Team |
+| 2026-01-10 | Unified to single tagged template syntax: rule\`selector { css }\`        | SemaJSX Team |
+| 2026-01-10 | Changed preload() to explicit only (no automatic batching)                | SemaJSX Team |
