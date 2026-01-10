@@ -81,8 +81,8 @@ const unsubscribe = count.subscribe(newValue => {
   console.log('Count changed:', newValue);
 });
 
-// Peek without subscribing
-const value = count.peek(); // 3
+// Clean up
+unsubscribe();
 ```
 
 ### Computed Signals - Explicit Dependencies
@@ -136,7 +136,7 @@ console.log(doubled.value); // 6
 ### Utility Functions
 
 ```tsx
-import { isSignal, unwrap, peek } from '@semajsx/signal';
+import { isSignal, unwrap } from '@semajsx/signal';
 
 const count = signal(5);
 
@@ -147,9 +147,6 @@ isSignal(5); // false
 // Unwrap a signal or return value as-is
 unwrap(count); // 5
 unwrap(5); // 5
-
-// Peek at signal value without subscribing
-peek(count); // 5
 ```
 
 ### Integration with JSX
@@ -242,14 +239,12 @@ interface WritableSignal<T> {
   value: T;                              // Read/write value
   set(value: T): void;                   // Set value
   update(fn: (prev: T) => T): void;      // Update based on previous
-  subscribe(listener: (value: T) => void): () => void;  // Subscribe
-  peek(): T;                             // Read without subscribing
+  subscribe(listener: (value: T) => void): () => void;  // Subscribe to changes
 }
 
 interface Signal<T> {
   readonly value: T;                     // Read-only value
-  subscribe(listener: (value: T) => void): () => void;
-  peek(): T;
+  subscribe(listener: (value: T) => void): () => void;  // Subscribe to changes
 }
 ```
 
@@ -279,7 +274,6 @@ function batch(fn: () => void): void
 // Utilities
 function isSignal<T>(value: unknown): value is Signal<T>
 function unwrap<T>(value: MaybeSignal<T>): T
-function peek<T>(value: MaybeSignal<T>): T
 ```
 
 ---
@@ -289,7 +283,6 @@ function peek<T>(value: MaybeSignal<T>): T
 1. **Phase 1**: Core signal primitives ✅
    - `signal()` with `.value`, `.set()`, `.update()`
    - `subscribe()` for reactive updates
-   - `peek()` for untracked reads
 
 2. **Phase 2**: Computed signals with explicit deps ✅
    - `computed([deps], fn)` signature
@@ -301,7 +294,7 @@ function peek<T>(value: MaybeSignal<T>): T
    - Microtask scheduling
 
 4. **Phase 4**: Utilities ✅
-   - `isSignal()`, `unwrap()`, `peek()`
+   - `isSignal()`, `unwrap()`
    - `memo` alias for `computed`
 
 5. **Phase 5**: JSX integration ✅
@@ -335,7 +328,20 @@ function peek<T>(value: MaybeSignal<T>): T
 
 **Trade-off**: No cleanup function pattern, but unsubscribe works fine.
 
-### 3. Batching via Microtasks
+### 3. No peek() Method
+
+**Decision**: Removed `peek()` method from signal interface
+
+**Rationale**:
+- Redundant in explicit dependency system (same as `.value`)
+- In auto-tracking systems, `peek()` reads without tracking
+- In SemaJSX, `.value` already doesn't track (dependencies are explicit)
+- Simpler interface (2 methods vs 3 methods)
+- Better third-party compatibility (Preact Signals 100% compatible)
+
+**Trade-off**: None - it was redundant anyway.
+
+### 4. Batching via Microtasks
 
 **Decision**: `batch()` uses microtasks, not macrotasks
 
