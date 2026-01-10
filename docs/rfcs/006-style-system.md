@@ -573,7 +573,266 @@ export const card = style(
 
 ---
 
-## 10. Alternatives Considered
+## 10. Tailwind CSS Integration
+
+The style system can integrate with Tailwind CSS to provide type-safe utility classes.
+
+### 10.1 Package Structure
+
+```
+@semajsx/tailwind/
+  ├── spacing.ts      # p, m, gap
+  ├── sizing.ts       # w, h, min-w, max-w
+  ├── colors.ts       # bg, text, border
+  ├── flex.ts         # flex, justify, items
+  ├── typography.ts   # font, text-size, leading
+  ├── arbitrary.ts    # Arbitrary value functions
+  └── index.ts        # Re-export all
+```
+
+### 10.2 Predefined Values
+
+Predefined Tailwind scale values are exported as direct properties:
+
+```ts
+// @semajsx/tailwind/spacing.ts
+import { classes, style } from "@semajsx/style";
+
+const c = classes([
+  "p0",
+  "p1",
+  "p2",
+  "p4",
+  "p8",
+  "px",
+  "m0",
+  "m1",
+  "m2",
+  "m4",
+  "m8",
+  "mx",
+  "my",
+  "mauto",
+  // ...
+]);
+
+export const spacing = style(
+  c,
+  `
+  .${c.p0} { padding: 0; }
+  .${c.p1} { padding: 0.25rem; }
+  .${c.p2} { padding: 0.5rem; }
+  .${c.p4} { padding: 1rem; }
+  .${c.p8} { padding: 2rem; }
+  .${c.px} { padding: 1px; }
+
+  .${c.m0} { margin: 0; }
+  .${c.m1} { margin: 0.25rem; }
+  .${c.m2} { margin: 0.5rem; }
+  .${c.m4} { margin: 1rem; }
+  .${c.m8} { margin: 2rem; }
+  .${c.mauto} { margin: auto; }
+  /* ... */
+`,
+);
+```
+
+Usage:
+
+```tsx
+import { spacing, colors } from "@semajsx/tailwind";
+
+<div class={[spacing.p4, spacing.m2, colors.bgBlue500, colors.textWhite]}>Hello</div>;
+```
+
+### 10.3 Arbitrary Values with CSS Variables
+
+For Tailwind's arbitrary value syntax (e.g., `p-[4px]`), we use CSS custom properties instead of generating new classes dynamically:
+
+```css
+/* @semajsx/tailwind/arbitrary.css - Pre-generated CSS */
+.p-v {
+  padding: var(--p);
+}
+.m-v {
+  margin: var(--m);
+}
+.w-v {
+  width: var(--w);
+}
+.h-v {
+  height: var(--h);
+}
+.bg-v {
+  background-color: var(--bg);
+}
+.text-v {
+  color: var(--text);
+}
+/* ... */
+```
+
+Template string functions return a special `ArbitraryStyleToken`:
+
+```ts
+// @semajsx/tailwind/arbitrary.ts
+
+interface ArbitraryStyleToken {
+  _: string; // "p-v"
+  __var: string; // "--p"
+  __value: string; // "4px"
+  __isArbitrary: true;
+}
+
+export function p(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken {
+  const value = String.raw(strings, ...values);
+  return {
+    _: "p-v",
+    __var: "--p",
+    __value: value,
+    __isArbitrary: true,
+  };
+}
+
+export function m(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken;
+export function w(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken;
+export function h(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken;
+export function bg(strings: TemplateStringsArray, ...values: unknown[]): ArbitraryStyleToken;
+// ...
+```
+
+Usage:
+
+```tsx
+import { spacing } from "@semajsx/tailwind";
+import { p, m, w, bg } from "@semajsx/tailwind/arbitrary";
+
+<div
+  class={[
+    spacing.p4, // Predefined: padding: 1rem
+    w`calc(100% - 40px)`, // Arbitrary: width: var(--w)
+    bg`#f5f5f5`, // Arbitrary: background: var(--bg)
+  ]}
+>
+  ...
+</div>;
+```
+
+### 10.4 Render Handling
+
+The render system detects `ArbitraryStyleToken` and merges CSS variables into the style attribute:
+
+```ts
+function resolveClassAndStyle(values: Array<StyleToken | ArbitraryStyleToken>) {
+  const classes: string[] = [];
+  const styleVars: Record<string, string> = {};
+
+  for (const token of values.flat().filter(Boolean)) {
+    if (isArbitraryToken(token)) {
+      classes.push(token._);
+      styleVars[token.__var] = token.__value;
+    } else if (isStyleToken(token)) {
+      classes.push(token._);
+    }
+  }
+
+  return {
+    class: classes.join(" "),
+    style: styleVars,
+  };
+}
+```
+
+Rendered output:
+
+```tsx
+// Input
+<div class={[spacing.p4, w`calc(100% - 40px)`, bg`#f5f5f5`]}>
+
+// Output
+<div class="p-4 w-v bg-v" style="--w: calc(100% - 40px); --bg: #f5f5f5">
+```
+
+### 10.5 Advantages of CSS Variable Approach
+
+| Aspect            | Dynamic Class Generation | CSS Variable Approach |
+| ----------------- | ------------------------ | --------------------- |
+| Generated classes | One per unique value     | Fixed set             |
+| CSS bundle size   | Grows with usage         | Fixed                 |
+| Runtime overhead  | Need to inject new rules | Only set variables    |
+| Implementation    | Requires hash/cache      | Simple                |
+
+### 10.6 Complete Example
+
+```tsx
+import { spacing, colors, flex } from "@semajsx/tailwind";
+import { p, m, w, h, bg } from "@semajsx/tailwind/arbitrary";
+
+function Card({ width, children }) {
+  return (
+    <div
+      class={[
+        // Predefined values (IDE autocomplete)
+        spacing.p4,
+        spacing.m2,
+        colors.bgWhite,
+        flex.col,
+
+        // Arbitrary values (template strings)
+        w`${width}px`,
+        h`calc(100vh - 80px)`,
+      ]}
+    >
+      {children}
+    </div>
+  );
+}
+
+// Rendered:
+// <div
+//   class="p-4 m-2 bg-white flex-col w-v h-v"
+//   style="--w: 300px; --h: calc(100vh - 80px)"
+// >
+```
+
+### 10.7 Code Generation from Tailwind Config
+
+A code generator reads Tailwind config to produce the style bundles:
+
+```ts
+// scripts/generate-tailwind.ts
+import resolveConfig from "tailwindcss/resolveConfig";
+import tailwindConfig from "../tailwind.config";
+
+const config = resolveConfig(tailwindConfig);
+
+function generateSpacing(): string {
+  const names: string[] = [];
+  const rules: string[] = [];
+
+  for (const [key, value] of Object.entries(config.theme.spacing)) {
+    const name = `p${key}`;
+    names.push(name);
+    rules.push(`.p${key} { padding: ${value}; }`);
+  }
+
+  return `
+import { classes, style } from "@semajsx/style";
+const c = classes(${JSON.stringify(names)});
+export const spacing = style(c, \`${rules.join("\n")}\`);
+`;
+}
+
+// Generate all category files
+generateSpacing();
+generateColors();
+generateFlex();
+// ...
+```
+
+---
+
+## 12. Alternatives Considered
 
 ### Alternative A: CSS-in-JS Object Syntax
 
@@ -609,7 +868,7 @@ const button = css`
 
 ---
 
-## 11. Risks and Mitigation
+## 13. Risks and Mitigation
 
 | Risk                               | Impact | Probability | Mitigation                                                |
 | ---------------------------------- | ------ | ----------- | --------------------------------------------------------- |
@@ -620,21 +879,21 @@ const button = css`
 
 ---
 
-## 12. Dependencies
+## 14. Dependencies
 
-### 12.1 Technical Dependencies
+### 14.1 Technical Dependencies
 
 - None for core `@semajsx/style` package
 - `@semajsx/dom` for SemaJSX integration (optional)
 
-### 12.2 Optional Build Tools
+### 14.2 Optional Build Tools
 
 - Vite plugin for `.css` → `.css.ts` transformation
 - CSS minification in production builds
 
 ---
 
-## 13. Open Questions
+## 15. Open Questions
 
 - [ ] **Q1**: Should CSS be auto-split per class for finer tree-shaking?
   - **Context**: Currently, entire `style()` block is one unit
@@ -651,7 +910,7 @@ const button = css`
 
 ---
 
-## 14. Success Criteria
+## 16. Success Criteria
 
 - [ ] `@semajsx/style` works standalone with any framework
 - [ ] Tree-shaking eliminates unused style bundles
@@ -663,7 +922,7 @@ const button = css`
 
 ---
 
-## 15. Next Steps
+## 17. Next Steps
 
 If accepted:
 
@@ -676,7 +935,7 @@ If accepted:
 
 ---
 
-## 16. Appendix
+## 18. Appendix
 
 ### References
 
@@ -684,6 +943,7 @@ If accepted:
 - [Vanilla Extract](https://vanilla-extract.style/)
 - [StyleX](https://stylexjs.com/)
 - [Panda CSS](https://panda-css.com/)
+- [Tailwind CSS](https://tailwindcss.com/)
 - [Shadow DOM Styling](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM)
 
 ### Glossary
@@ -691,11 +951,13 @@ If accepted:
 - **ClassRef**: A reference object that stringifies to a hashed class name
 - **StyleToken**: A ClassRef bound to its CSS, used in class props
 - **StyleBundle**: Collection of StyleTokens + full CSS string
+- **ArbitraryStyleToken**: A token for arbitrary values that uses CSS variables instead of generating classes
 - **App Anchor**: Global style injection target (default: document.head)
 - **Component Anchor**: Per-component injection target (doesn't affect children)
 
 ### Change Log
 
-| Date       | Change        | Author       |
-| ---------- | ------------- | ------------ |
-| 2026-01-10 | Initial draft | SemaJSX Team |
+| Date       | Change                         | Author       |
+| ---------- | ------------------------------ | ------------ |
+| 2026-01-10 | Initial draft                  | SemaJSX Team |
+| 2026-01-10 | Added Tailwind CSS integration | SemaJSX Team |
