@@ -381,165 +381,177 @@ const allStyles = rules(
 
 #### Reactive Values with Signals
 
-When a Signal is interpolated in the template, it automatically converts to a CSS variable. The framework's reactivity updates the variable without re-injecting CSS.
+When a signal is interpolated in `rule`, the system automatically:
 
-**Static Rule vs Dynamic Rule:**
+1. Generates CSS with `var()` placeholders
+2. Binds signals to CSS variables when the token is used in `class`
+3. Updates element styles when signals change
+
+**Design Principle:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  rule`${c.box} { height: ${signal}px; }`                    │
+│                 ↓                                           │
+│  CSS generated: .box-xxx { height: var(--_v0); }            │
+│  Token stores:  __bindings: [[signal, '--_v0', 'px']]       │
+│                 ↓                                           │
+│  class={token}  →  Inject CSS + subscribe signals           │
+│                 ↓                                           │
+│  Signal update  →  element.style.setProperty('--_v0', ...)  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Dynamic Rule with Signal Interpolation:**
 
 ```ts
-// Static rule - defined at module level, no signals
-const staticBox = rule`${c.box} { padding: 8px; }`;
+// box.style.ts
+import { classes, rule } from "@semajsx/style";
+import type { Signal } from "@semajsx/signal";
 
-// Dynamic rule - function that accepts props object (like Component)
-interface BoxStyleProps {
-  height: Signal<number>;
-  bg: Signal<string>;
-}
+const c = classes(["box"]);
 
-const dynamicBox = ({ height, bg }: BoxStyleProps) =>
+// Signals are interpolated directly in the template
+export const box = (height: Signal<number>, bg: Signal<string>) =>
   rule`${c.box} {
     height: ${height}px;
     background: ${bg};
+    transition: all 0.3s;
   }`;
 ```
 
-**Usage in SemaJSX component:**
+**Usage in SemaJSX - signal binding is automatic:**
 
 ```tsx
 import { signal } from "@semajsx/signal";
+import * as styles from "./box.style";
 
 function Box() {
   const height = signal(100);
   const color = signal("#3b82f6");
 
-  // Call dynamic rule with props object
-  const boxStyle = dynamicBox({ height, bg: color });
-
+  // Just use the token - signal binding is automatic
   return (
-    <div class={boxStyle} onClick={() => (height.value += 10)}>
+    <div class={styles.box(height, color)} onClick={() => (height.value += 10)}>
       Click to grow
     </div>
   );
 }
 
 // Rendered:
-// <div class="box-x7f3a" style="--box-h-abc: 100; --box-bg-def: #3b82f6">
+// <div class="box-x7f3a" style="--_v0: 100px; --_v1: #3b82f6">
 //
-// After click (no re-render, direct DOM update):
-// <div class="box-x7f3a" style="--box-h-abc: 110; --box-bg-def: #3b82f6">
-```
-
-**Usage in React (with useSignal hook):**
-
-```tsx
-import { useSignal } from "@semajsx/style/react";
-
-function Box() {
-  // useSignal creates a signal compatible with @semajsx/style
-  const height = useSignal(100);
-  const color = useSignal("#3b82f6");
-
-  const boxStyle = dynamicBox({ height, bg: color });
-
-  return (
-    <div className={boxStyle} onClick={() => (height.value += 10)}>
-      Click to grow
-    </div>
-  );
-}
-```
-
-`useSignal` implementation for React:
-
-```ts
-// @semajsx/style/react
-import { useSyncExternalStore, useRef } from "react";
-import { signal, type Signal } from "@semajsx/signal";
-
-export function useSignal<T>(initialValue: T): Signal<T> {
-  // Create signal once, persist across re-renders
-  const signalRef = useRef<Signal<T>>();
-  if (!signalRef.current) {
-    signalRef.current = signal(initialValue);
-  }
-
-  // Subscribe to signal changes (for React DevTools, optional)
-  useSyncExternalStore(
-    (cb) => signalRef.current!.subscribe(cb),
-    () => signalRef.current!.value,
-  );
-
-  return signalRef.current;
-}
+// After click (signal update, no re-render):
+// <div class="box-x7f3a" style="--_v0: 110px; --_v1: #3b82f6">
 ```
 
 **How it works internally:**
 
 ```ts
-// When rule`` receives a Signal in interpolation:
 function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
-  const cssVars: ReactiveVar[] = [];
-  let cssTemplate = "";
+  const bindings: SignalBinding[] = [];
+  let varIndex = 0;
 
-  for (let i = 0; i < strings.length; i++) {
-    cssTemplate += strings[i];
+  // Build CSS, replacing signals with var() references
+  const css = strings.reduce((acc, str, i) => {
+    if (i === 0) return str;
 
-    if (i < values.length) {
-      const value = values[i];
+    const value = values[i - 1];
 
-      if (isSignal(value)) {
-        // Generate unique CSS variable name
-        const varId = `--${generateId()}`;
-        const suffix = extractSuffix(strings[i + 1]); // "px", "%", etc.
-
-        cssVars.push({ id: varId, signal: value, suffix });
-        cssTemplate += `var(${varId})`;
-      } else if (isClassRef(value)) {
-        cssTemplate += `.${value}`;
-      } else {
-        cssTemplate += String(value);
-      }
+    if (isClassRef(value)) {
+      return acc + value.toString() + str;
     }
-  }
+
+    if (isSignal(value)) {
+      const varName = `--_v${varIndex++}`;
+      // Check if next char is a unit (px, em, %, etc.)
+      const unit = extractUnit(str);
+      bindings.push([value, varName, unit]);
+      return acc + `var(${varName})` + str;
+    }
+
+    return acc + String(value) + str;
+  }, "");
 
   return {
-    _: extractClassName(cssTemplate),
-    __css: cssTemplate,
-    __vars: cssVars.length > 0 ? cssVars : undefined,
+    __kind: "style",
+    _: extractClassName(css),
+    __css: css,
+    __bindings: bindings.length > 0 ? bindings : undefined,
     __injected: new WeakSet(),
   };
 }
 ```
 
-The render system detects `__vars` and:
+**Static Rules (no signals):**
 
-1. Injects the static CSS rule once
-2. Binds signal subscriptions to update CSS variables on the element's `style`
-3. No re-injection needed - just variable updates
+For static styles, just use regular values:
 
 ```ts
-// StyleToken with reactive vars
-interface StyleToken {
-  readonly _?: string;
-  readonly __css: string;
-  readonly __vars?: ReactiveVar[];
-  readonly __injected: WeakSet<Element | ShadowRoot>;
-}
-
-interface ReactiveVar {
-  id: string; // "--box-h-abc"
-  signal: Signal<any>; // The signal reference
-  suffix: string; // "px", "%", "", etc.
-}
+export const root = rule`${c.root} {
+  display: flex;
+  padding: 8px 16px;
+}`;
+// No __bindings, purely static CSS
 ```
 
-Benefits:
+**Token Caching:**
 
-- CSS rule injected once, never changes
-- Only CSS variable values update (cheap DOM operation)
-- CSS transitions/animations work naturally
-- No style string rebuilding or re-parsing
-- Works in React/Vue via `useSignal` hook
-- Dynamic rules are just functions - easy to understand
+Same signal instances produce the same token:
+
+```ts
+const h = signal(100);
+const c = signal("red");
+
+const token1 = box(h, c);
+const token2 = box(h, c);
+token1 === token2; // true - same signals, cached token
+
+const h2 = signal(100);
+const token3 = box(h2, c);
+token1 === token3; // false - different signal instance
+```
+
+**Usage in React:**
+
+```tsx
+import { useStyle, useSignal } from "@semajsx/style/react";
+import * as styles from "./box.style";
+
+function Box() {
+  const cx = useStyle();
+  const height = useSignal(100);
+  const color = useSignal("#3b82f6");
+
+  // cx() returns { className, ref } for reactive tokens
+  // The ref sets up signal subscriptions that bypass React re-renders
+  const props = cx(styles.box(height, color));
+
+  return (
+    <div {...props} onClick={() => (height.value += 10)}>
+      Click to grow
+    </div>
+  );
+}
+
+// Rendered:
+// <div class="box-x7f3a" style="--_v0: 100px; --_v1: #3b82f6">
+//
+// After click (signal update directly to DOM, no React re-render!):
+// <div class="box-x7f3a" style="--_v0: 110px; --_v1: #3b82f6">
+```
+
+**How it works:**
+
+The `cx()` function for reactive tokens returns props including a `ref` callback. When React attaches the ref to the DOM element, it sets up signal subscriptions that update CSS variables directly, bypassing React's reconciliation.
+
+**Benefits:**
+
+- **Ergonomic**: Signal interpolation looks natural in CSS
+- **Automatic binding**: No manual CSS variable mapping
+- **Efficient updates**: Only CSS variable values change, no CSS re-injection
+- **CSS transitions work**: `transition: all 0.3s` applies to variable changes
+- **Memoized tokens**: Same signals = same cached token
 
 #### `inject(tokens, options?): () => void`
 
@@ -605,23 +617,17 @@ type ClassRefs<T extends readonly string[]> = {
 // Discriminated union for token types
 // Use __kind for type narrowing in TypeScript
 
-/** Static style token (no reactive values) */
-interface StaticStyleToken {
-  readonly __kind: "static";
+/** Signal binding: [signal, varName, unit] */
+type SignalBinding = [Signal<unknown>, string, string];
+
+/** Style token - CSS with optional signal bindings */
+interface StyleToken {
+  readonly __kind: "style";
   readonly _?: string; // className (only for class selectors)
-  readonly __css: string; // full CSS rule(s)
+  readonly __css: string; // CSS with var() for signals
+  readonly __bindings?: SignalBinding[]; // signal → CSS variable bindings
   readonly __injected: WeakSet<Element | ShadowRoot>;
   toString(): string; // returns _ or empty string
-}
-
-/** Reactive style token (has CSS variable bindings) */
-interface ReactiveStyleToken {
-  readonly __kind: "reactive";
-  readonly _?: string;
-  readonly __css: string;
-  readonly __vars: ReactiveVar[];
-  readonly __injected: WeakSet<Element | ShadowRoot>;
-  toString(): string;
 }
 
 /** Arbitrary value token (for Tailwind integration) */
@@ -633,26 +639,13 @@ interface ArbitraryStyleToken {
   toString(): string;
 }
 
-/** Union of all style token types */
-type StyleToken = StaticStyleToken | ReactiveStyleToken;
-
-/** All token types including arbitrary */
+/** All token types */
 type AnyStyleToken = StyleToken | ArbitraryStyleToken;
-
-/** Reactive CSS variable binding */
-interface ReactiveVar {
-  id: string; // "--box-h-abc"
-  signal: Signal<unknown>; // The signal reference
-  suffix: string; // "px", "%", "", etc.
-}
 
 // Type guards
 function isStyleToken(value: unknown): value is StyleToken {
   return (
-    typeof value === "object" &&
-    value !== null &&
-    "__kind" in value &&
-    (value.__kind === "static" || value.__kind === "reactive")
+    typeof value === "object" && value !== null && "__kind" in value && value.__kind === "style"
   );
 }
 
@@ -662,10 +655,6 @@ function isArbitraryToken(value: unknown): value is ArbitraryStyleToken {
   );
 }
 
-function isReactiveToken(token: StyleToken): token is ReactiveStyleToken {
-  return token.__kind === "reactive";
-}
-
 // Registry options
 interface RegistryOptions {
   target?: Element | ShadowRoot;
@@ -673,7 +662,11 @@ interface RegistryOptions {
 }
 
 // rule`` tagged template - creates StyleToken from selector + CSS block
-function rule(strings: TemplateStringsArray, ...values: (ClassRef | string)[]): StyleToken;
+// Accepts ClassRef, Signal, string, or number as interpolated values
+function rule(
+  strings: TemplateStringsArray,
+  ...values: (ClassRef | Signal<unknown> | string | number)[]
+): StyleToken;
 
 // rules() - combines multiple StyleTokens
 function rules(...tokens: StyleToken[]): StyleToken;
@@ -685,15 +678,9 @@ function rules(...tokens: StyleToken[]): StyleToken;
 // Using discriminated union for type-safe handling
 function processToken(token: AnyStyleToken) {
   switch (token.__kind) {
-    case "static":
-      // TypeScript knows: token is StaticStyleToken
+    case "style":
+      // TypeScript knows: token is StyleToken
       inject(token);
-      break;
-
-    case "reactive":
-      // TypeScript knows: token is ReactiveStyleToken
-      inject(token);
-      bindSignals(token.__vars); // __vars is available
       break;
 
     case "arbitrary":
@@ -710,12 +697,15 @@ function resolveClass(value: AnyStyleToken, element: HTMLElement) {
     return value._;
   }
 
-  if (value.__kind === "reactive") {
-    // Set up signal subscriptions for CSS variable updates
-    for (const v of value.__vars) {
-      v.signal.subscribe((val) => {
-        element.style.setProperty(v.id, String(val) + v.suffix);
-      });
+  // StyleToken - set up signal bindings if present
+  if (value.__bindings) {
+    for (const [signal, varName, unit] of value.__bindings) {
+      const update = () => {
+        const v = unit ? `${signal.value}${unit}` : String(signal.value);
+        element.style.setProperty(varName, v);
+      };
+      update(); // Initial value
+      signal.subscribe(update);
     }
   }
 
@@ -725,7 +715,7 @@ function resolveClass(value: AnyStyleToken, element: HTMLElement) {
 
 ### 8.4 Global Token Registry
 
-The runtime maintains a global registry that maps token hashes to their definitions. This is essential for SSR hydration and deduplication.
+The runtime maintains a global registry that maps token hashes to their definitions. This is essential for SSR hydration, deduplication, and signal-based token caching.
 
 ```ts
 // Internal global registry
@@ -733,19 +723,25 @@ const globalTokenRegistry = new Map<string, StyleToken>();
 
 // Automatically populated when rule() is called
 function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
-  const css = buildCSS(strings, values);
-  const hash = computeHash(css);
+  // Hash includes template strings + signal identities (not values)
+  const hashKey =
+    strings.join("\0") + values.map((v) => (isSignal(v) ? v.id : String(v))).join("\0");
 
-  // Check if already registered
+  const hash = computeHash(hashKey);
+
+  // Return cached token if exists
   if (globalTokenRegistry.has(hash)) {
     return globalTokenRegistry.get(hash)!;
   }
 
+  // Build CSS with var() for signals
+  const { css, bindings } = buildCSSWithBindings(strings, values);
+
   const token: StyleToken = {
-    __kind: isReactive(values) ? "reactive" : "static",
+    __kind: "style",
     _: extractClassName(css),
     __css: css,
-    __vars: extractVars(values),
+    __bindings: bindings.length > 0 ? bindings : undefined,
     __injected: new WeakSet(),
   };
 
@@ -756,88 +752,64 @@ function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
 
 **Why a global registry?**
 
-1. **Deduplication**: Same CSS content returns the same token instance
-2. **SSR Hydration**: `hydrateStyles()` can mark existing tokens as already injected
-3. **Memory Efficiency**: Avoid creating duplicate token objects
+1. **Token caching**: Same template + same signals = same token instance
+2. **CSS deduplication**: Same CSS (even with different signals) shares the same stylesheet
+3. **SSR Hydration**: `hydrateStyles()` can mark existing tokens as already injected
+4. **Memory efficiency**: Avoid creating duplicate token objects
 
 **Registry Lifecycle**:
 
-- Tokens are registered at module load time (when `rule()` is called)
+- Static tokens are registered at module load time
+- Dynamic tokens (with signals) are registered on first call with those signal instances
 - Registry persists for the application lifetime
 - In SSR, each request should use a fresh registry (via `collectStyles()` context)
 
-**Dynamic Rules and Registry**:
-
-Dynamic rules (functions that return StyleTokens) have special registry behavior:
+**Dynamic Rules and Token Caching**:
 
 ```ts
 // Dynamic rule definition
-const boxStyle = ({ height, bg }: BoxStyleProps) =>
+const boxStyle = (height: Signal<number>, bg: Signal<string>) =>
   rule`${c.box} { height: ${height}px; background: ${bg}; }`;
 
-// Each call returns same token if signals are same
+// Same signal instances = same cached token
 const h = signal(100);
 const c = signal("red");
 
-const token1 = boxStyle({ height: h, bg: c });
-const token2 = boxStyle({ height: h, bg: c });
-token1 === token2; // true - same signals, same token
+const token1 = boxStyle(h, c);
+const token2 = boxStyle(h, c);
+token1 === token2; // true - same signals, cached token
 
-// Different signal instances = different tokens (but same CSS template)
-const h2 = signal(100);
-const token3 = boxStyle({ height: h2, bg: c });
+// Different signal instances = different tokens
+const h2 = signal(100); // new signal with same value
+const token3 = boxStyle(h2, c);
 token1 === token3; // false - different signal instance
 ```
 
-**Hash computation for reactive rules**:
+**Why cache by signal identity?**
 
-```ts
-function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
-  // For reactive values, hash includes signal identity (not value)
-  const hashKey = strings.join("") + values.map((v) => (isSignal(v) ? v.id : String(v))).join("");
-
-  const hash = computeHash(hashKey);
-
-  if (globalTokenRegistry.has(hash)) {
-    return globalTokenRegistry.get(hash)!;
-  }
-  // ... create new token
-}
-```
+Each token stores its own `__bindings` array referencing specific signal instances. If two different signals were used to create the "same" token, they would conflict when setting up subscriptions.
 
 **Preventing unbounded growth**:
 
-1. **Same signals → same token**: Memoization via hash prevents duplicates
-2. **Signal identity, not value**: Hash uses `signal.id`, not `signal.value`
-3. **Component unmount**: Signals are garbage collected, but tokens remain (small footprint)
-4. **Typical usage**: Most apps create finite dynamic rules (per-component, not per-render)
-
-For apps with truly dynamic style generation (e.g., user-generated colors), consider:
-
-```ts
-// Limit: Use a fixed set of CSS variables instead of dynamic rules
-const boxStyle = rule`${c.box} { height: var(--box-h); background: var(--box-bg); }`;
-
-// Update via style attribute, not new tokens
-element.style.setProperty("--box-h", `${height}px`);
-```
+1. **Same signals → same token**: Hash by signal identity prevents duplicates
+2. **Typical usage**: Components create signals once, so tokens are created once
+3. **Token footprint is small**: Just CSS string + binding references
+4. **Signals GC'd, tokens remain**: Tokens stay in registry but bindings become inactive
 
 ### 8.5 rules() Return Type
 
-When combining multiple tokens with `rules()`, the return type depends on the inputs:
+When combining multiple tokens with `rules()`, bindings from all tokens are merged:
 
 ```ts
 function rules(...tokens: StyleToken[]): StyleToken {
-  const hasReactive = tokens.some((t) => t.__kind === "reactive");
   const combinedCSS = tokens.map((t) => t.__css).join("\n");
-  const combinedVars = tokens.flatMap((t) => (t.__kind === "reactive" ? t.__vars : []));
+  const allBindings = tokens.flatMap((t) => t.__bindings ?? []);
 
   return {
-    // If ANY input is reactive, output is reactive
-    __kind: hasReactive ? "reactive" : "static",
+    __kind: "style",
     _: undefined, // Combined rules have no single class name
     __css: combinedCSS,
-    __vars: hasReactive ? combinedVars : undefined,
+    __bindings: allBindings.length > 0 ? allBindings : undefined,
     __injected: new WeakSet(),
   };
 }
@@ -845,9 +817,10 @@ function rules(...tokens: StyleToken[]): StyleToken {
 
 **Behavior**:
 
-- All static inputs → static output
-- Any reactive input → reactive output (merges all `__vars`)
+- All CSS rules are concatenated
+- All signal bindings are merged into a single array
 - The combined token has no `_` (class name) since it may contain multiple selectors
+- When used in `class`, all signal subscriptions are set up on the element
 
 ### 8.6 SemaJSX Integration (`@semajsx/dom`)
 
@@ -1185,21 +1158,22 @@ function Box() {
   const height = useSignal(100);
   const color = useSignal("#3b82f6");
 
-  // Same pattern as SemaJSX - props object
-  const style = boxStyle({ height, bg: color });
+  // cx() returns { className, ref } for reactive tokens
+  // The ref sets up signal subscriptions that bypass React re-renders
+  const props = cx(boxStyle({ height, bg: color }));
 
   return (
-    <div className={cx(style)} onClick={() => (height.value += 10)}>
+    <div {...props} onClick={() => (height.value += 10)}>
       Click to grow
     </div>
   );
 }
 
 // Rendered:
-// <div class="box-x7f3a" style="--v1: 100; --v2: #3b82f6">
+// <div class="box-x7f3a" style="--_v0: 100px; --_v1: #3b82f6">
 //
-// After click (signal update, no React re-render!):
-// <div class="box-x7f3a" style="--v1: 110; --v2: #3b82f6">
+// After click (signal update directly to DOM, no React re-render!):
+// <div class="box-x7f3a" style="--_v0: 110px; --_v1: #3b82f6">
 ```
 
 Vue with `useSignal`:
@@ -1212,11 +1186,12 @@ const cx = useStyle();
 const height = useSignal(100);
 const color = useSignal("#3b82f6");
 
-const style = boxStyle({ height, bg: color });
+// cx() returns bindings directive for reactive tokens
+const boxProps = cx(boxStyle({ height, bg: color }));
 </script>
 
 <template>
-  <div :class="cx(style)" @click="height.value += 10">Click to grow</div>
+  <div v-bind="boxProps" @click="height.value += 10">Click to grow</div>
 </template>
 ```
 
@@ -2256,3 +2231,4 @@ If accepted:
 | 2026-01-10 | Added Tailwind tree-shaking trade-off explanation                         | SemaJSX Team |
 | 2026-01-10 | Added dynamic rules registry behavior (hash by signal identity)           | SemaJSX Team |
 | 2026-01-10 | Changed hydration to hash-based matching (minification-safe)              | SemaJSX Team |
+| 2026-01-10 | Redesigned reactive: signals in template, auto-binding via \_\_bindings   | SemaJSX Team |
