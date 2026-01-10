@@ -99,7 +99,6 @@ No built-in solution for:
 ## 5. Non-Goals
 
 - **CSS preprocessor features**: No built-in Sass/Less compilation (use external tools)
-- **Critical CSS extraction**: Not handling SSR critical path optimization
 - **Atomic CSS generation**: Not auto-generating utility classes like Tailwind
 - **CSS-in-JS object syntax**: We explicitly prefer native CSS strings
 - **Hot Module Replacement**: HMR is a build tool concern, not runtime
@@ -510,12 +509,68 @@ type ClassRefs<T extends readonly string[]> = {
   readonly [K in T[number]]: ClassRef;
 };
 
-// Style token (returned by style())
-interface StyleToken {
+// Discriminated union for token types
+// Use __kind for type narrowing in TypeScript
+
+/** Static style token (no reactive values) */
+interface StaticStyleToken {
+  readonly __kind: "static";
   readonly _?: string; // className (only for class selectors)
   readonly __css: string; // full CSS rule(s)
-  readonly __injected: Set<Element | ShadowRoot>;
+  readonly __injected: WeakSet<Element | ShadowRoot>;
   toString(): string; // returns _ or empty string
+}
+
+/** Reactive style token (has CSS variable bindings) */
+interface ReactiveStyleToken {
+  readonly __kind: "reactive";
+  readonly _?: string;
+  readonly __css: string;
+  readonly __vars: ReactiveVar[];
+  readonly __injected: WeakSet<Element | ShadowRoot>;
+  toString(): string;
+}
+
+/** Arbitrary value token (for Tailwind integration) */
+interface ArbitraryStyleToken {
+  readonly __kind: "arbitrary";
+  readonly _: string; // e.g., "p-v"
+  readonly __var: string; // e.g., "--p"
+  readonly __value: string; // e.g., "4px"
+  toString(): string;
+}
+
+/** Union of all style token types */
+type StyleToken = StaticStyleToken | ReactiveStyleToken;
+
+/** All token types including arbitrary */
+type AnyStyleToken = StyleToken | ArbitraryStyleToken;
+
+/** Reactive CSS variable binding */
+interface ReactiveVar {
+  id: string; // "--box-h-abc"
+  signal: Signal<unknown>; // The signal reference
+  suffix: string; // "px", "%", "", etc.
+}
+
+// Type guards
+function isStyleToken(value: unknown): value is StyleToken {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "__kind" in value &&
+    (value.__kind === "static" || value.__kind === "reactive")
+  );
+}
+
+function isArbitraryToken(value: unknown): value is ArbitraryStyleToken {
+  return (
+    typeof value === "object" && value !== null && "__kind" in value && value.__kind === "arbitrary"
+  );
+}
+
+function isReactiveToken(token: StyleToken): token is ReactiveStyleToken {
+  return token.__kind === "reactive";
 }
 
 // Registry options
@@ -531,7 +586,51 @@ function rule(strings: TemplateStringsArray, ...values: (ClassRef | string)[]): 
 function rules(...tokens: StyleToken[]): StyleToken;
 ```
 
-### 8.3 SemaJSX Integration (`@semajsx/dom`)
+### 8.3 Type Narrowing Examples
+
+```ts
+// Using discriminated union for type-safe handling
+function processToken(token: AnyStyleToken) {
+  switch (token.__kind) {
+    case "static":
+      // TypeScript knows: token is StaticStyleToken
+      inject(token);
+      break;
+
+    case "reactive":
+      // TypeScript knows: token is ReactiveStyleToken
+      inject(token);
+      bindSignals(token.__vars); // __vars is available
+      break;
+
+    case "arbitrary":
+      // TypeScript knows: token is ArbitraryStyleToken
+      applyVariable(token.__var, token.__value);
+      break;
+  }
+}
+
+// In render system
+function resolveClass(value: AnyStyleToken, element: HTMLElement) {
+  if (value.__kind === "arbitrary") {
+    element.style.setProperty(value.__var, value.__value);
+    return value._;
+  }
+
+  if (value.__kind === "reactive") {
+    // Set up signal subscriptions for CSS variable updates
+    for (const v of value.__vars) {
+      v.signal.subscribe((val) => {
+        element.style.setProperty(v.id, String(val) + v.suffix);
+      });
+    }
+  }
+
+  return value._ ?? "";
+}
+```
+
+### 8.4 SemaJSX Integration (`@semajsx/dom`)
 
 #### Class Property Enhancement
 
@@ -1490,21 +1589,207 @@ function injectToShadow(token: StyleToken, shadow: ShadowRoot) {
 
 ---
 
-## 15. Dependencies
+## 15. Server-Side Rendering (SSR)
 
-### 15.1 Technical Dependencies
+### 15.1 SSR Strategy
+
+The style system supports SSR by collecting styles during server render and injecting them into the HTML:
+
+```ts
+// @semajsx/style/server
+import { collectStyles, renderStylesToString } from "@semajsx/style/server";
+
+// Server-side render
+const styleCollector = collectStyles();
+
+const html = renderToString(
+  <StyleCollectorProvider collector={styleCollector}>
+    <App />
+  </StyleCollectorProvider>
+);
+
+// Get collected CSS
+const css = renderStylesToString(styleCollector);
+
+// Inject into HTML
+const fullHtml = `
+<!DOCTYPE html>
+<html>
+  <head>
+    <style id="__semajsx_styles__">${css}</style>
+  </head>
+  <body>
+    <div id="root">${html}</div>
+  </body>
+</html>
+`;
+```
+
+### 15.2 Style Collection
+
+During SSR, the `cx()` function collects styles instead of injecting to DOM:
+
+```ts
+// Server-side cx() implementation
+function createServerCx(collector: StyleCollector) {
+  return function cx(...args: CxArg[]): string {
+    const classes: string[] = [];
+
+    for (const arg of args) {
+      if (!arg) continue;
+
+      if (isStyleToken(arg)) {
+        // Collect CSS instead of injecting
+        collector.add(arg.__css);
+        if (arg._) classes.push(arg._);
+      } else {
+        classes.push(String(arg));
+      }
+    }
+
+    return classes.join(" ");
+  };
+}
+
+interface StyleCollector {
+  styles: Set<string>;
+  add(css: string): void;
+}
+
+export function collectStyles(): StyleCollector {
+  return {
+    styles: new Set(),
+    add(css: string) {
+      this.styles.add(css);
+    },
+  };
+}
+
+export function renderStylesToString(collector: StyleCollector): string {
+  return [...collector.styles].join("\n");
+}
+```
+
+### 15.3 Hydration
+
+On client-side hydration, skip re-injection for styles already in the page:
+
+```ts
+// Client-side hydration
+import { hydrateStyles } from "@semajsx/style";
+
+// Mark existing styles as injected
+hydrateStyles();
+
+// Now cx() won't re-inject styles that are already in <style id="__semajsx_styles__">
+```
+
+Implementation:
+
+```ts
+export function hydrateStyles() {
+  const styleEl = document.getElementById("__semajsx_styles__");
+  if (!styleEl) return;
+
+  // Parse existing CSS to mark tokens as injected
+  const existingCSS = styleEl.textContent || "";
+
+  // Mark all rule hashes as already injected to document.head
+  for (const [hash, token] of globalTokenRegistry) {
+    if (existingCSS.includes(token.__css)) {
+      token.__injected.add(document.head);
+    }
+  }
+}
+```
+
+### 15.4 Streaming SSR
+
+For streaming SSR (React 18+), styles can be flushed incrementally:
+
+```ts
+// Streaming SSR with style chunks
+import { renderToPipeableStream } from "react-dom/server";
+import { StyleCollectorProvider, flushStyles } from "@semajsx/style/server";
+
+const collector = collectStyles();
+
+const { pipe } = renderToPipeableStream(
+  <StyleCollectorProvider collector={collector}>
+    <App />
+  </StyleCollectorProvider>,
+  {
+    onShellReady() {
+      // Flush styles collected so far
+      const css = flushStyles(collector);
+      res.write(`<style>${css}</style>`);
+      pipe(res);
+    },
+  }
+);
+```
+
+### 15.5 Framework Integration
+
+**Next.js App Router:**
+
+```tsx
+// app/layout.tsx
+import { StyleCollectorProvider, renderStylesToString } from "@semajsx/style/server";
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <head>
+        <StyleRegistry />
+      </head>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+**Remix:**
+
+```tsx
+// root.tsx
+import { collectStyles, renderStylesToString } from "@semajsx/style/server";
+
+export default function App() {
+  const collector = collectStyles();
+
+  return (
+    <html>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: renderStylesToString(collector) }} />
+      </head>
+      <body>
+        <StyleCollectorProvider collector={collector}>
+          <Outlet />
+        </StyleCollectorProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+---
+
+## 16. Dependencies
+
+### 16.1 Technical Dependencies
 
 - None for core `@semajsx/style` package
 - `@semajsx/dom` for SemaJSX integration (optional)
 
-### 15.2 Optional Build Tools
+### 16.2 Optional Build Tools
 
 - Vite plugin for `.css` → `.css.ts` transformation
 - CSS minification in production builds
 
 ---
 
-## 16. Open Questions
+## 17. Open Questions
 
 - [ ] **Q1**: Should CSS be auto-split per class for finer tree-shaking?
   - **Context**: Currently, entire `rule` block is one unit
@@ -1524,7 +1809,7 @@ function injectToShadow(token: StyleToken, shadow: ShadowRoot) {
 
 ---
 
-## 17. Success Criteria
+## 18. Success Criteria
 
 - [ ] `@semajsx/style` works standalone with any framework
 - [ ] Tree-shaking eliminates unused style bundles
@@ -1538,21 +1823,49 @@ function injectToShadow(token: StyleToken, shadow: ShadowRoot) {
 
 ---
 
-## 18. Next Steps
+## 19. Next Steps
 
 If accepted:
 
+### 19.1 Phase 1: Core Implementation
+
 - [ ] Create design document: `docs/designs/style-system-design.md`
-- [ ] Implement `@semajsx/style` package
+- [ ] Implement `@semajsx/style` package (core runtime)
 - [ ] Integrate with `@semajsx/dom` class property handling
 - [ ] Add StyleAnchor components
-- [ ] Implement `preload()` and automatic batching
+- [ ] Implement `preload()` and dev mode warnings
 - [ ] Write documentation and examples
-- [ ] Create Vite plugin for `.css` transformation (optional)
+
+### 19.2 Phase 2: Framework Integrations
+
+- [ ] Implement `@semajsx/style/react` (StyleProvider, useStyle, useSignal)
+- [ ] Implement `@semajsx/style/vue` (useStyle, useSignal composables)
+- [ ] Implement `@semajsx/style/server` (SSR support)
+- [ ] Add hydration support
+
+### 19.3 Phase 3: Toolchain
+
+- [ ] **Vite Plugin** (`vite-plugin-semajsx-style`)
+  - Transform `.css` files to `.css.ts` modules
+  - Automatic class name extraction
+  - HMR support for style changes
+  - Production CSS minification
+
+- [ ] **VSCode Extension** (`vscode-semajsx-style`)
+  - CSS syntax highlighting in `rule\`\`` templates
+  - Go-to-definition for ClassRef references
+  - Autocomplete for class names
+  - CSS validation and linting
+  - Hover hints for class name hashes
+
+- [ ] **ESLint Plugin** (`eslint-plugin-semajsx-style`)
+  - Warn on unused style tokens
+  - Enforce `preload()` usage
+  - Detect potential memory leaks
 
 ---
 
-## 19. Appendix
+## 20. Appendix
 
 ### References
 
@@ -1591,3 +1904,6 @@ If accepted:
 | 2026-01-10 | Introduced dynamic rules (functions) + useSignal hook for React/Vue       | SemaJSX Team |
 | 2026-01-10 | Changed dynamic rule to use props object pattern (like Component)         | SemaJSX Team |
 | 2026-01-10 | Added dev mode warning for non-preloaded style injections                 | SemaJSX Team |
+| 2026-01-10 | Added SSR support (style collection, hydration, streaming)                | SemaJSX Team |
+| 2026-01-10 | Type system cleanup with discriminated union pattern                      | SemaJSX Team |
+| 2026-01-10 | Added toolchain planning (Vite plugin, VSCode extension, ESLint)          | SemaJSX Team |
