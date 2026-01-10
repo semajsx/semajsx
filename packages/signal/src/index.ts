@@ -5,6 +5,6 @@
 export { signal } from "./signal";
 export { computed, memo } from "./computed";
 export { batch } from "./batch";
-export { isSignal, unwrap, peek } from "./utils";
+export { isSignal, unwrap } from "./utils";
 
-export type { Signal, WritableSignal, MaybeSignal, SignalValue } from "./types";
+export type { MaybeSignal, ReadableSignal, Signal, SignalValue, WritableSignal } from "./types";

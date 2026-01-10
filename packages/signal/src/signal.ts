@@ -20,10 +20,6 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
       }
     },
 
-    peek() {
-      return value;
-    },
-
     set(newValue: T) {
       this.value = newValue;
     },

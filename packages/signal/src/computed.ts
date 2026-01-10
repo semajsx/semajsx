@@ -1,4 +1,4 @@
-import type { Signal } from "./types";
+import type { ReadableSignal } from "./types";
 import { scheduleUpdate } from "./batch";
 
 /**
@@ -15,23 +15,23 @@ import { scheduleUpdate } from "./batch";
  */
 
 // Single dependency overload
-export function computed<T, R>(dep: Signal<T>, compute: (value: T) => R): Signal<R>;
+export function computed<T, R>(dep: ReadableSignal<T>, compute: (value: T) => R): ReadableSignal<R>;
 
 // Multiple dependencies overload
-export function computed<T extends readonly Signal<any>[], R>(
+export function computed<T extends readonly ReadableSignal<any>[], R>(
   deps: [...T],
-  compute: (...values: { [K in keyof T]: T[K] extends Signal<infer V> ? V : never }) => R,
-): Signal<R>;
+  compute: (...values: { [K in keyof T]: T[K] extends ReadableSignal<infer V> ? V : never }) => R,
+): ReadableSignal<R>;
 
 // Implementation
-export function computed(deps: any, compute: any): Signal<any> {
-  const depsArray: Signal<any>[] = Array.isArray(deps) ? deps : [deps];
+export function computed(deps: any, compute: any): ReadableSignal<any> {
+  const depsArray: ReadableSignal<any>[] = Array.isArray(deps) ? deps : [deps];
 
   let value: any;
   const subscribers = new Set<(value: any) => void>();
 
   // Get current values from all dependencies
-  const getValues = () => depsArray.map((dep) => dep.peek());
+  const getValues = () => depsArray.map((dep) => dep.value);
 
   // Recompute when dependencies change
   const recompute = () => {
@@ -68,10 +68,6 @@ export function computed(deps: any, compute: any): Signal<any> {
 
   return {
     get value() {
-      return value;
-    },
-
-    peek() {
       return value;
     },
 

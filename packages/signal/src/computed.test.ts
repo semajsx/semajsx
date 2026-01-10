@@ -93,13 +93,6 @@ describe("computed", () => {
     expect(quadrupled.value).toBe(20);
   });
 
-  it("should peek without subscribing", () => {
-    const count = signal(5);
-    const doubled = computed([count], (c) => c * 2);
-
-    expect(doubled.peek()).toBe(10);
-  });
-
   it("should handle complex computations", async () => {
     const firstName = signal("John");
     const lastName = signal("Doe");

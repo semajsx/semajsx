@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { signal, isSignal, unwrap, peek } from "@semajsx/signal";
+import { signal, isSignal, unwrap } from "@semajsx/signal";
 
 describe("signal utils", () => {
   describe("isSignal", () => {
@@ -28,18 +28,6 @@ describe("signal utils", () => {
       expect(unwrap(42)).toBe(42);
       expect(unwrap("hello")).toBe("hello");
       expect(unwrap(null)).toBe(null);
-    });
-  });
-
-  describe("peek", () => {
-    it("should peek signal value", () => {
-      const s = signal(100);
-      expect(peek(s)).toBe(100);
-    });
-
-    it("should return non-signal as-is", () => {
-      expect(peek(42)).toBe(42);
-      expect(peek("world")).toBe("world");
     });
   });
 });

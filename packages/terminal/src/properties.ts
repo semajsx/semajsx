@@ -28,7 +28,7 @@ export function setSignalProperty<T = unknown>(
   signal: Signal<T>,
 ): () => void {
   // Set initial value
-  setProperty(node, key, signal.peek());
+  setProperty(node, key, signal.value);
 
   // Subscribe to changes
   return signal.subscribe((value: T) => {
