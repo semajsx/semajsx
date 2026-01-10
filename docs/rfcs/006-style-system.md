@@ -101,7 +101,7 @@ No built-in solution for:
 - **CSS preprocessor features**: No built-in Sass/Less compilation (use external tools)
 - **Atomic CSS generation**: Not auto-generating utility classes like Tailwind
 - **CSS-in-JS object syntax**: We explicitly prefer native CSS strings
-- **Runtime HMR**: HMR is a build tool concern, not a runtime feature (Vite plugin provides HMR)
+- **Runtime HMR**: HMR is handled by build tools (Vite plugin), not the runtime
 
 ---
 
@@ -766,6 +766,62 @@ function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
 - Registry persists for the application lifetime
 - In SSR, each request should use a fresh registry (via `collectStyles()` context)
 
+**Dynamic Rules and Registry**:
+
+Dynamic rules (functions that return StyleTokens) have special registry behavior:
+
+```ts
+// Dynamic rule definition
+const boxStyle = ({ height, bg }: BoxStyleProps) =>
+  rule`${c.box} { height: ${height}px; background: ${bg}; }`;
+
+// Each call returns same token if signals are same
+const h = signal(100);
+const c = signal("red");
+
+const token1 = boxStyle({ height: h, bg: c });
+const token2 = boxStyle({ height: h, bg: c });
+token1 === token2; // true - same signals, same token
+
+// Different signal instances = different tokens (but same CSS template)
+const h2 = signal(100);
+const token3 = boxStyle({ height: h2, bg: c });
+token1 === token3; // false - different signal instance
+```
+
+**Hash computation for reactive rules**:
+
+```ts
+function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
+  // For reactive values, hash includes signal identity (not value)
+  const hashKey = strings.join("") + values.map((v) => (isSignal(v) ? v.id : String(v))).join("");
+
+  const hash = computeHash(hashKey);
+
+  if (globalTokenRegistry.has(hash)) {
+    return globalTokenRegistry.get(hash)!;
+  }
+  // ... create new token
+}
+```
+
+**Preventing unbounded growth**:
+
+1. **Same signals → same token**: Memoization via hash prevents duplicates
+2. **Signal identity, not value**: Hash uses `signal.id`, not `signal.value`
+3. **Component unmount**: Signals are garbage collected, but tokens remain (small footprint)
+4. **Typical usage**: Most apps create finite dynamic rules (per-component, not per-render)
+
+For apps with truly dynamic style generation (e.g., user-generated colors), consider:
+
+```ts
+// Limit: Use a fixed set of CSS variables instead of dynamic rules
+const boxStyle = rule`${c.box} { height: var(--box-h); background: var(--box-bg); }`;
+
+// Update via style attribute, not new tokens
+element.style.setProperty("--box-h", `${height}px`);
+```
+
 ### 8.5 rules() Return Type
 
 When combining multiple tokens with `rules()`, the return type depends on the inputs:
@@ -1247,7 +1303,16 @@ The style system can integrate with Tailwind CSS to provide type-safe utility cl
 
 ### 10.2 Predefined Values
 
-Predefined Tailwind scale values are exported as direct properties with JSDoc comments for IDE hover hints. JSDoc is placed directly on the object properties:
+Predefined Tailwind scale values are exported as object properties with JSDoc comments for IDE hover hints.
+
+**Note on tree-shaking**: Unlike component styles (Section 6.4), Tailwind utilities use object exports for ergonomics. This is acceptable because:
+
+1. **Module-level tree-shaking still works**: If you don't import `spacing.ts`, it's eliminated
+2. **Utilities are small**: Each rule is ~50 bytes, entire `spacing` object is ~500 bytes
+3. **Typically used together**: Users import a category (spacing, colors) and use many values
+4. **DOM injection is selective**: Even if bundled, only used rules are injected
+
+For component styles where each rule is larger and usage is selective, prefer named exports (Section 6.4).
 
 ```ts
 // @semajsx/tailwind/spacing.ts
@@ -1858,39 +1923,51 @@ import { hydrateStyles } from "@semajsx/style";
 hydrateStyles(); // Now globalTokenRegistry contains all tokens
 ```
 
-Implementation with lazy hydration fallback:
+**Implementation with hash-based matching**:
+
+SSR embeds token hashes in a data attribute, enabling reliable matching even after CSS minification:
+
+```html
+<!-- Server-rendered HTML -->
+<style id="__semajsx_styles__" data-hashes="a1b2c3,d4e5f6,g7h8i9">
+  .root-a1b2c3 { ... }
+  .icon-d4e5f6 { ... }
+</style>
+```
 
 ```ts
-let existingCSS: string | null = null;
+let hydratedHashes: Set<string> | null = null;
 
-function getExistingCSS(): string {
-  if (existingCSS === null) {
+function getHydratedHashes(): Set<string> {
+  if (hydratedHashes === null) {
     const styleEl = document.getElementById("__semajsx_styles__");
-    existingCSS = styleEl?.textContent || "";
+    const hashAttr = styleEl?.getAttribute("data-hashes") || "";
+    hydratedHashes = new Set(hashAttr.split(",").filter(Boolean));
   }
-  return existingCSS;
+  return hydratedHashes;
 }
 
 export function hydrateStyles() {
-  const css = getExistingCSS();
-  if (!css) return;
+  const hashes = getHydratedHashes();
+  if (hashes.size === 0) return;
 
-  // Mark all currently registered tokens as injected
+  // Mark tokens whose hash exists in SSR'd styles
   for (const [hash, token] of globalTokenRegistry) {
-    if (css.includes(token.__css)) {
+    if (hashes.has(hash)) {
       token.__injected.add(document.head);
     }
   }
 }
 
-// Also check during inject() for lazy-loaded modules
+// Lazy hydration check in inject()
 function inject(token: StyleToken, options?: InjectOptions) {
   const target = options?.target ?? document.head;
 
-  // Lazy hydration check for SSR'd styles
   if (target === document.head && !token.__injected.has(target)) {
-    const css = getExistingCSS();
-    if (css && css.includes(token.__css)) {
+    const hashes = getHydratedHashes();
+    const tokenHash = computeHash(token.__css);
+
+    if (hashes.has(tokenHash)) {
       token.__injected.add(target);
       return; // Already in page, skip injection
     }
@@ -1900,10 +1977,33 @@ function inject(token: StyleToken, options?: InjectOptions) {
 }
 ```
 
+**Why hash-based matching?**
+
+1. **Minification-safe**: Hash comparison works regardless of whitespace changes
+2. **Fast lookup**: `Set.has()` is O(1) vs `String.includes()` which is O(n)
+3. **Reliable**: Exact match via hash, no false positives from partial matches
+
+**SSR style rendering with hashes**:
+
+```ts
+export function renderStylesToString(collector: StyleCollector): string {
+  const hashes: string[] = [];
+  const css: string[] = [];
+
+  for (const [hash, cssContent] of collector.styles) {
+    hashes.push(hash);
+    css.push(cssContent);
+  }
+
+  return `<style id="__semajsx_styles__" data-hashes="${hashes.join(",")}">${css.join("\n")}</style>`;
+}
+```
+
 This dual approach ensures:
 
 - **Eager hydration**: `hydrateStyles()` marks all known tokens immediately
 - **Lazy hydration**: Tokens from lazy-loaded modules are checked on first use
+- **Minification-safe**: Hash comparison works after CSS minification
 
 ### 14.4 Streaming SSR
 
@@ -2153,3 +2253,6 @@ If accepted:
 | 2026-01-10 | Added hydration timing explanation with lazy fallback                     | SemaJSX Team |
 | 2026-01-10 | Added honest tree-shaking analysis (module vs property level)             | SemaJSX Team |
 | 2026-01-10 | Changed to named exports as default pattern for tree-shaking              | SemaJSX Team |
+| 2026-01-10 | Added Tailwind tree-shaking trade-off explanation                         | SemaJSX Team |
+| 2026-01-10 | Added dynamic rules registry behavior (hash by signal identity)           | SemaJSX Team |
+| 2026-01-10 | Changed hydration to hash-based matching (minification-safe)              | SemaJSX Team |
