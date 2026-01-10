@@ -1061,10 +1061,8 @@ import { isStyleToken, type StyleToken, type SignalBindingDef } from "@semajsx/s
 interface StyleAnchorRegistry {
   // Signal → CSS variable name (unique within this anchor)
   signalVars: WeakMap<Signal<unknown>, string>;
-  // Arbitrary value cache: "property:value" → StyleToken
-  arbitraryTokens: Map<string, StyleToken>;
-  // Already injected CSS (by hash)
-  injectedCSS: Set<string>;
+  // Already injected classNames (for deduplication)
+  injectedClasses: Set<string>;
   // Process a token: assign var names, inject CSS, set up subscriptions
   processToken: (token: StyleToken, element: HTMLElement) => void;
 }
@@ -1122,13 +1120,11 @@ export function StyleAnchor({
   const registryRef = useRef<StyleAnchorRegistry | null>(null);
   if (!registryRef.current) {
     const signalVars = new WeakMap<Signal<unknown>, string>();
-    const arbitraryTokens = new Map<string, StyleToken>();
-    const injectedCSS = new Set<string>();
+    const injectedClasses = new Set<string>();
 
     registryRef.current = {
       signalVars,
-      arbitraryTokens,
-      injectedCSS,
+      injectedClasses,
 
       processToken(token: StyleToken, element: HTMLElement) {
         // 1. Generate final CSS by replacing placeholders with var names
@@ -1149,12 +1145,12 @@ export function StyleAnchor({
           }
         }
 
-        // 2. Inject CSS if not already done
-        const cssHash = computeHash(css);
-        if (!injectedCSS.has(cssHash)) {
+        // 2. Inject CSS if className not already injected
+        const className = token._;
+        if (className && !injectedClasses.has(className)) {
           const injectionTarget = target ?? document.head;
           injectStyles(css, injectionTarget);
-          injectedCSS.add(cssHash);
+          injectedClasses.add(className);
         }
 
         // 3. Set up signal subscriptions on the anchor element
@@ -1194,55 +1190,15 @@ export function StyleAnchor({
   );
 }
 
-// Helper: Create arbitrary value token using anchor's cache
-export function useArbitrary() {
-  const registry = useContext(StyleAnchorContext);
-
-  return {
-    p: (strings: TemplateStringsArray, ...values: unknown[]) => {
-      const value = String.raw(strings, ...values);
-      return createArbitraryToken(registry, "padding", "p", value);
-    },
-    m: (strings: TemplateStringsArray, ...values: unknown[]) => {
-      const value = String.raw(strings, ...values);
-      return createArbitraryToken(registry, "margin", "m", value);
-    },
-    // ... other utilities
-  };
-}
-
-function createArbitraryToken(
-  registry: StyleAnchorRegistry | null,
-  property: string,
-  prefix: string,
-  value: string,
-): StyleToken {
-  const cacheKey = `${property}:${value}`;
-
-  // Use anchor's cache if available
-  if (registry?.arbitraryTokens.has(cacheKey)) {
-    return registry.arbitraryTokens.get(cacheKey)!;
-  }
-
-  const className = `${prefix}-${nanoid(4)}`;
-  const token: StyleToken = {
-    __kind: "style",
-    _: className,
-    __cssTemplate: `.${className} { ${property}: ${value}; }`,
-    toString() { return this._; },
-  };
-
-  registry?.arbitraryTokens.set(cacheKey, token);
-  return token;
-}
 ```
 
 **Key insight**: StyleAnchor manages all state and side effects:
 
 - Signal → CSS variable name mapping (scoped to anchor)
-- Arbitrary value token caching
-- CSS injection deduplication
+- CSS injection deduplication (by className)
 - Signal subscriptions with automatic cleanup
+
+Note: Arbitrary values no longer need anchor-scoped caching because they use deterministic classNames (see Section 10.3).
 
 #### Core JS Implementation (`@semajsx/style`)
 
@@ -1260,10 +1216,8 @@ import { nanoid } from "nanoid";
 export class StyleRegistry {
   // Signal → CSS variable name
   private signalVars = new WeakMap<Signal<unknown>, string>();
-  // Arbitrary value cache
-  private arbitraryTokens = new Map<string, StyleToken>();
-  // Already injected CSS
-  private injectedCSS = new Set<string>();
+  // Already injected classNames (for deduplication)
+  private injectedClasses = new Set<string>();
   // Active subscriptions (for cleanup)
   private subscriptions = new Set<() => void>();
   // Injection target
@@ -1298,11 +1252,11 @@ export class StyleRegistry {
       }
     }
 
-    // 2. Inject CSS
-    const cssHash = computeHash(css);
-    if (!this.injectedCSS.has(cssHash)) {
+    // 2. Inject CSS if className not already injected
+    const className = token._;
+    if (className && !this.injectedClasses.has(className)) {
       injectStyles(css, this.target);
-      this.injectedCSS.add(cssHash);
+      this.injectedClasses.add(className);
     }
 
     // 3. Set up signal subscriptions
@@ -1320,27 +1274,6 @@ export class StyleRegistry {
     }
 
     return token._ ?? "";
-  }
-
-  /** Create or get cached arbitrary token */
-  createArbitraryToken(property: string, prefix: string, value: string): StyleToken {
-    const cacheKey = `${property}:${value}`;
-    if (this.arbitraryTokens.has(cacheKey)) {
-      return this.arbitraryTokens.get(cacheKey)!;
-    }
-
-    const className = `${prefix}-${nanoid(4)}`;
-    const token: StyleToken = {
-      __kind: "style",
-      _: className,
-      __cssTemplate: `.${className} { ${property}: ${value}; }`,
-      toString() {
-        return this._;
-      },
-    };
-
-    this.arbitraryTokens.set(cacheKey, token);
-    return token;
   }
 
   /** Cleanup all subscriptions */
@@ -1574,9 +1507,19 @@ The style system can integrate with Tailwind CSS to provide type-safe utility cl
   └── index.ts        # Re-export all
 ```
 
-### 10.2 Predefined Values
+### 10.2 Predefined Values (Template-First Approach)
 
-Predefined Tailwind scale values are exported as object properties with JSDoc comments for IDE hover hints.
+Predefined Tailwind scale values use a **template-first approach**: define the utility template once, then generate all predefined values from it. This ensures consistency between predefined and arbitrary values.
+
+**Design decision**: We chose template-first over direct CSS for predefined values because:
+
+| Aspect              | Template-First (chosen)                    | Direct CSS                     |
+| ------------------- | ------------------------------------------ | ------------------------------ |
+| Single source       | ✅ Property defined once in template       | ❌ Repeated in each rule       |
+| className prefix    | ✅ Automatically consistent                | ❌ Manual consistency required |
+| Arbitrary values    | ✅ Same template, same prefix              | ❌ Separate implementation     |
+| Runtime performance | ✅ Static tokens (generated at definition) | ✅ Static tokens               |
+| Code size           | ✅ Less duplication                        | ❌ More verbose                |
 
 **Note on tree-shaking**: Unlike component styles (Section 6.4), Tailwind utilities use object exports for ergonomics. This is acceptable because:
 
@@ -1589,52 +1532,80 @@ For component styles where each rule is larger and usage is selective, prefer na
 
 ```ts
 // @semajsx/tailwind/spacing.ts
-import { classes, rule } from "@semajsx/style";
+import { classes } from "@semajsx/style";
 
-const c = classes([
-  "p0",
-  "p1",
-  "p2",
-  "p4",
-  "p8",
-  "px",
-  "m0",
-  "m1",
-  "m2",
-  "m4",
-  "m8",
-  "mauto",
-  // ...
-]);
+// 1. Define class names (single source of truth)
+const c = classes(["p", "m"]);
 
+// 2. Create utility template (defines property + className prefix)
+function createUtility(property: string, classPrefix: string) {
+  return (value: string): StyleToken => ({
+    __kind: "style",
+    _: `${classPrefix}-${valueToSuffix(value)}`,
+    __cssTemplate: `.${classPrefix}-${valueToSuffix(value)} { ${property}: ${value}; }`,
+    toString() {
+      return this._;
+    },
+  });
+}
+
+// Helper: Convert value to deterministic suffix
+function valueToSuffix(value: string): string {
+  // Simple values: use directly (sanitized)
+  if (/^[\w.]+$/.test(value)) {
+    return value.replace(".", "_");
+  }
+  // Complex values (calc, etc.): use short hash
+  return hashString(value).slice(0, 6);
+}
+
+// 3. Create templates for each property
+const padding = createUtility("padding", c.p.toString());
+const margin = createUtility("margin", c.m.toString());
+
+// 4. Generate predefined values (static tokens at definition time)
 export const spacing = {
   /** padding: 0 */
-  p0: rule`${c.p0} { padding: 0; }`,
+  p0: padding("0"),
   /** padding: 0.25rem (4px) */
-  p1: rule`${c.p1} { padding: 0.25rem; }`,
+  p1: padding("0.25rem"),
   /** padding: 0.5rem (8px) */
-  p2: rule`${c.p2} { padding: 0.5rem; }`,
+  p2: padding("0.5rem"),
   /** padding: 1rem (16px) */
-  p4: rule`${c.p4} { padding: 1rem; }`,
+  p4: padding("1rem"),
   /** padding: 2rem (32px) */
-  p8: rule`${c.p8} { padding: 2rem; }`,
-  /** padding: 1px */
-  px: rule`${c.px} { padding: 1px; }`,
+  p8: padding("2rem"),
 
   /** margin: 0 */
-  m0: rule`${c.m0} { margin: 0; }`,
+  m0: margin("0"),
   /** margin: 0.25rem (4px) */
-  m1: rule`${c.m1} { margin: 0.25rem; }`,
+  m1: margin("0.25rem"),
   /** margin: 0.5rem (8px) */
-  m2: rule`${c.m2} { margin: 0.5rem; }`,
+  m2: margin("0.5rem"),
   /** margin: 1rem (16px) */
-  m4: rule`${c.m4} { margin: 1rem; }`,
+  m4: margin("1rem"),
   /** margin: 2rem (32px) */
-  m8: rule`${c.m8} { margin: 2rem; }`,
+  m8: margin("2rem"),
   /** margin: auto */
-  mauto: rule`${c.mauto} { margin: auto; }`,
-  // ...
+  mauto: margin("auto"),
 };
+
+// 5. Export templates for arbitrary values (same prefix!)
+export { padding as p, margin as m };
+```
+
+**How it works:**
+
+```ts
+// Predefined values - generated from template at definition time
+spacing.p4._; // "p-1rem" (deterministic)
+spacing.p4.__cssTemplate; // ".p-1rem { padding: 1rem; }"
+
+// Arbitrary values - same template, same prefix
+p("4px")._; // "p-4px" (deterministic)
+p("calc(100% - 40px)")._; // "p-a1b2c3" (hash for complex values)
+
+// Prefix is always consistent: both come from c.p
 ```
 
 IDE hover example:
@@ -1666,106 +1637,93 @@ import { spacing, colors } from "@semajsx/tailwind";
 <div class={[spacing.p4, spacing.m2, colors.bgBlue500, colors.textWhite]}>Hello</div>;
 ```
 
-### 10.3 Arbitrary Values with Dynamic Classes
+### 10.3 Arbitrary Values (Same Template)
 
-For Tailwind's arbitrary value syntax (e.g., `p-[4px]`), we generate unique class names. Caching is handled by `StyleRegistry` (anchor-scoped):
+Arbitrary values use the **same template** as predefined values, ensuring consistent className prefixes. The className is **deterministic** based on the value, enabling deduplication by className.
 
 ```ts
-// @semajsx/tailwind/arbitrary.ts
-import { nanoid } from "nanoid";
-import type { StyleToken, StyleRegistry } from "@semajsx/style";
+// @semajsx/tailwind/spacing.ts (continued from 10.2)
 
-/**
- * Create arbitrary token - uses registry cache if available
- * Falls back to creating uncached token if no registry
- */
-function createArbitraryToken(
-  registry: StyleRegistry | null,
-  property: string,
-  prefix: string,
-  value: string,
-): StyleToken {
-  // Use registry's cache if available
-  if (registry) {
-    return registry.createArbitraryToken(property, prefix, value);
-  }
+// The same templates used for predefined values work for arbitrary values!
+// p("4px") uses the same `padding` template, same `c.p` prefix
 
-  // Fallback: create uncached token
-  const className = `${prefix}-${nanoid(4)}`;
-  return {
-    __kind: "style",
-    _: className,
-    __cssTemplate: `.${className} { ${property}: ${value}; }`,
-    toString() {
-      return this._;
-    },
-  };
+// Tagged template syntax for ergonomics
+export function pTemplate(strings: TemplateStringsArray, ...values: unknown[]) {
+  const value = String.raw(strings, ...values);
+  return padding(value); // Uses same createUtility result
 }
 
-// Factory that creates utilities bound to a registry
-export function createArbitraryUtils(registry: StyleRegistry | null) {
-  return {
-    p: (strings: TemplateStringsArray, ...values: unknown[]) =>
-      createArbitraryToken(registry, "padding", "p", String.raw(strings, ...values)),
-    m: (strings: TemplateStringsArray, ...values: unknown[]) =>
-      createArbitraryToken(registry, "margin", "m", String.raw(strings, ...values)),
-    w: (strings: TemplateStringsArray, ...values: unknown[]) =>
-      createArbitraryToken(registry, "width", "w", String.raw(strings, ...values)),
-    h: (strings: TemplateStringsArray, ...values: unknown[]) =>
-      createArbitraryToken(registry, "height", "h", String.raw(strings, ...values)),
-    // ... other utilities
-  };
+export function mTemplate(strings: TemplateStringsArray, ...values: unknown[]) {
+  const value = String.raw(strings, ...values);
+  return margin(value);
 }
 
-// React hook
-export function useArbitrary() {
-  const registry = useContext(StyleAnchorContext);
-  return useMemo(() => createArbitraryUtils(registry), [registry]);
-}
+// Export as p`...` and m`...`
+export { pTemplate as p, mTemplate as m };
 ```
 
 **How it works:**
 
-```tsx
-const { p, w } = useArbitrary();
+```ts
+import { spacing, p, m } from "@semajsx/tailwind/spacing";
 
-p`4px`   // → { _: "p-x7f3", __cssTemplate: ".p-x7f3 { padding: 4px; }" }
-p`8px`   // → { _: "p-b2c4", __cssTemplate: ".p-b2c4 { padding: 8px; }" }
-p`4px`   // → same cached token (from registry cache)
+// Predefined and arbitrary share the same className prefix
+spacing.p4._; // "p-abc123-1rem"  (c.p prefix + value suffix)
+p`4px`._; // "p-abc123-4px"  (same c.p prefix + value suffix)
+p`calc(100% - 40px)`._; // "p-abc123-a1b2c3"  (hash for complex)
 
-// No collision - different values get different class names
-<div class={p`4px`} />   {/* class="p-x7f3" */}
-<div class={p`8px`} />   {/* class="p-b2c4" */}
+// Same value = same className = deduplication works
+p`4px` === p`4px`; // Same token (deterministic)
+```
+
+**Deduplication by className:**
+
+The `StyleRegistry` deduplicates by className (not CSS hash), which is simpler and more efficient:
+
+```ts
+// StyleRegistry.processToken() - simplified
+processToken(token: StyleToken): string {
+  const className = token._;
+  if (!className) return "";
+
+  // Dedupe by className - simple Set lookup
+  if (!this.injectedClasses.has(className)) {
+    injectStyles(token.__cssTemplate, this.target);
+    this.injectedClasses.add(className);
+  }
+
+  return className;
+}
 ```
 
 **Benefits:**
 
-- **No collision**: Different values = different class names
-- **Anchor-scoped cache**: Cache lives in registry, cleaned up with anchor
-- **SSR-friendly**: No global state
-- **No manual style handling**: Just use in `class` prop like any other token
+- **Deterministic**: Same value always produces same className
+- **Consistent prefix**: Predefined and arbitrary share `c.p`, `c.m` prefixes
+- **Simple deduplication**: Just check className in Set
+- **No registry needed for tokens**: Tokens are pure, registry only handles injection
 
 Usage:
 
 ```tsx
-import { spacing } from "@semajsx/tailwind";
-import { useArbitrary } from "@semajsx/tailwind/arbitrary";
+import { spacing, p, w, bg } from "@semajsx/tailwind";
 
 function Card() {
-  const { w, bg } = useArbitrary();
-
   return (
     <div
       class={[
-        spacing.p4, // Predefined
-        w`calc(100% - 40px)`, // Arbitrary (cached in registry)
-        bg`#f5f5f5`, // Arbitrary (cached in registry)
+        spacing.p4, // Predefined: "p-xxx-1rem"
+        w`calc(100% - 40px)`, // Arbitrary: "w-xxx-a1b2c3"
+        bg`#f5f5f5`, // Arbitrary: "bg-xxx-f5f5f5"
       ]}
     >
       ...
     </div>
   );
 }
+
+// All class-based, deduplication by className
+// If w`calc(100% - 40px)` appears twice, CSS only injected once
 ```
 
 ### 10.4 Render Handling
@@ -2576,3 +2534,7 @@ If accepted:
 | 2026-01-10 | Introduced StyleRegistry class for anchor-scoped state management         | SemaJSX Team |
 | 2026-01-10 | Moved all caches (signalVars, arbitraryTokens, injectedCSS) to registry   | SemaJSX Team |
 | 2026-01-10 | Added core JS implementation before framework integrations                | SemaJSX Team |
+| 2026-01-10 | Redesigned Tailwind utils with template-first approach                    | SemaJSX Team |
+| 2026-01-10 | Changed arbitrary values to use deterministic className (valueToSuffix)   | SemaJSX Team |
+| 2026-01-10 | Changed deduplication from CSS hash to className (simpler, faster)        | SemaJSX Team |
+| 2026-01-10 | Removed arbitraryTokens cache (deterministic tokens don't need caching)   | SemaJSX Team |
