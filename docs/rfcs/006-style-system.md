@@ -592,7 +592,7 @@ The style system can integrate with Tailwind CSS to provide type-safe utility cl
 
 ### 10.2 Predefined Values
 
-Predefined Tailwind scale values are exported as direct properties:
+Predefined Tailwind scale values are exported as direct properties with JSDoc comments for IDE hover hints:
 
 ```ts
 // @semajsx/tailwind/spacing.ts
@@ -635,6 +635,47 @@ export const spacing = style(
   /* ... */
 `,
 );
+
+// Type definitions with JSDoc for IDE hover hints
+export interface SpacingStyles {
+  /** padding: 0 */
+  p0: StyleToken;
+  /** padding: 0.25rem (4px) */
+  p1: StyleToken;
+  /** padding: 0.5rem (8px) */
+  p2: StyleToken;
+  /** padding: 1rem (16px) */
+  p4: StyleToken;
+  /** padding: 2rem (32px) */
+  p8: StyleToken;
+  /** padding: 1px */
+  px: StyleToken;
+
+  /** margin: 0 */
+  m0: StyleToken;
+  /** margin: 0.25rem (4px) */
+  m1: StyleToken;
+  /** margin: 0.5rem (8px) */
+  m2: StyleToken;
+  /** margin: 1rem (16px) */
+  m4: StyleToken;
+  /** margin: 2rem (32px) */
+  m8: StyleToken;
+  /** margin: auto */
+  mauto: StyleToken;
+  // ...
+}
+```
+
+IDE hover example:
+
+```
+spacing.p4
+         ↓
+┌─────────────────────────┐
+│ (property) p4           │
+│ padding: 1rem (16px)    │
+└─────────────────────────┘
 ```
 
 Usage:
@@ -797,7 +838,7 @@ function Card({ width, children }) {
 
 ### 10.7 Code Generation from Tailwind Config
 
-A code generator reads Tailwind config to produce the style bundles:
+A code generator reads Tailwind config to produce the style bundles with JSDoc comments:
 
 ```ts
 // scripts/generate-tailwind.ts
@@ -809,17 +850,29 @@ const config = resolveConfig(tailwindConfig);
 function generateSpacing(): string {
   const names: string[] = [];
   const rules: string[] = [];
+  const typeProps: string[] = [];
 
   for (const [key, value] of Object.entries(config.theme.spacing)) {
     const name = `p${key}`;
     names.push(name);
-    rules.push(`.p${key} { padding: ${value}; }`);
+    rules.push(`.${name} { padding: ${value}; }`);
+
+    // Generate JSDoc for type definition
+    const pxValue = convertToPixels(value); // e.g., "1rem" -> "16px"
+    typeProps.push(`  /** padding: ${value}${pxValue ? ` (${pxValue})` : ""} */`);
+    typeProps.push(`  ${name}: StyleToken;`);
   }
 
   return `
-import { classes, style } from "@semajsx/style";
+import { classes, style, StyleToken } from "@semajsx/style";
+
 const c = classes(${JSON.stringify(names)});
+
 export const spacing = style(c, \`${rules.join("\n")}\`);
+
+export interface SpacingStyles {
+${typeProps.join("\n")}
+}
 `;
 }
 
