@@ -291,40 +291,32 @@ const allStyles = rules(
 
 When a Signal is interpolated in the template, it automatically converts to a CSS variable. The framework's reactivity updates the variable without re-injecting CSS.
 
+**Static Rule vs Dynamic Rule:**
+
 ```ts
-import { signal } from "@semajsx/signal";
+// Static rule - defined at module level, no signals
+const staticBox = rule`${c.box} { padding: 8px; }`;
 
-const height = signal(100);
-const color = signal("#3b82f6");
-
-// Signal interpolation → CSS variable
-const box = rule`${c.box} {
-  height: ${height}px;
-  background: ${color};
-}`;
-
-// Internally generates:
-// .box-x7f3a {
-//   height: var(--box-h-abc);
-//   background: var(--box-bg-def);
-// }
-
-// box.__vars = [
-//   { id: "--box-h-abc", signal: height, suffix: "px" },
-//   { id: "--box-bg-def", signal: color, suffix: "" },
-// ]
+// Dynamic rule - function that accepts signals, returns StyleToken
+// Like Component vs JSX element relationship
+const dynamicBox = (height: Signal<number>, bg: Signal<string>) =>
+  rule`${c.box} {
+    height: ${height}px;
+    background: ${bg};
+  }`;
 ```
 
-Usage in component:
+**Usage in SemaJSX component:**
 
 ```tsx
+import { signal } from "@semajsx/signal";
+
 function Box() {
   const height = signal(100);
+  const color = signal("#3b82f6");
 
-  const boxStyle = rule`${c.box} {
-    height: ${height}px;
-    transition: height 0.3s;
-  }`;
+  // Call dynamic rule with signals
+  const boxStyle = dynamicBox(height, color);
 
   return (
     <div class={boxStyle} onClick={() => (height.value += 10)}>
@@ -334,11 +326,92 @@ function Box() {
 }
 
 // Rendered:
-// <div class="box-x7f3a" style="--box-h-abc: 100">
+// <div class="box-x7f3a" style="--box-h-abc: 100; --box-bg-def: #3b82f6">
 //
-// After click:
-// <div class="box-x7f3a" style="--box-h-abc: 110">
-// (CSS transition animates the change!)
+// After click (no re-render, direct DOM update):
+// <div class="box-x7f3a" style="--box-h-abc: 110; --box-bg-def: #3b82f6">
+```
+
+**Usage in React (with useSignal hook):**
+
+```tsx
+import { useSignal } from "@semajsx/style/react";
+
+function Box() {
+  // useSignal creates a signal compatible with @semajsx/style
+  const height = useSignal(100);
+  const color = useSignal("#3b82f6");
+
+  const boxStyle = dynamicBox(height, color);
+
+  return (
+    <div className={boxStyle} onClick={() => (height.value += 10)}>
+      Click to grow
+    </div>
+  );
+}
+```
+
+`useSignal` implementation for React:
+
+```ts
+// @semajsx/style/react
+import { useSyncExternalStore, useRef } from "react";
+import { signal, type Signal } from "@semajsx/signal";
+
+export function useSignal<T>(initialValue: T): Signal<T> {
+  // Create signal once, persist across re-renders
+  const signalRef = useRef<Signal<T>>();
+  if (!signalRef.current) {
+    signalRef.current = signal(initialValue);
+  }
+
+  // Subscribe to signal changes (for React DevTools, optional)
+  useSyncExternalStore(
+    (cb) => signalRef.current!.subscribe(cb),
+    () => signalRef.current!.value,
+  );
+
+  return signalRef.current;
+}
+```
+
+**How it works internally:**
+
+```ts
+// When rule`` receives a Signal in interpolation:
+function rule(strings: TemplateStringsArray, ...values: unknown[]): StyleToken {
+  const cssVars: ReactiveVar[] = [];
+  let cssTemplate = "";
+
+  for (let i = 0; i < strings.length; i++) {
+    cssTemplate += strings[i];
+
+    if (i < values.length) {
+      const value = values[i];
+
+      if (isSignal(value)) {
+        // Generate unique CSS variable name
+        const varId = `--${generateId()}`;
+        const suffix = extractSuffix(strings[i + 1]); // "px", "%", etc.
+
+        cssVars.push({ id: varId, signal: value, suffix });
+        cssTemplate += `var(${varId})`;
+      } else if (isClassRef(value)) {
+        cssTemplate += `.${value}`;
+      } else {
+        cssTemplate += String(value);
+      }
+    }
+  }
+
+  return {
+    _: extractClassName(cssTemplate),
+    __css: cssTemplate,
+    __vars: cssVars.length > 0 ? cssVars : undefined,
+    __injected: new WeakSet(),
+  };
+}
 ```
 
 The render system detects `__vars` and:
@@ -369,6 +442,8 @@ Benefits:
 - Only CSS variable values update (cheap DOM operation)
 - CSS transitions/animations work naturally
 - No style string rebuilding or re-parsing
+- Works in React/Vue via `useSignal` hook
+- Dynamic rules are just functions - easy to understand
 
 #### `inject(tokens, options?): () => void`
 
@@ -759,107 +834,76 @@ const btn2 = document.createElement("button");
 btn2.className = cx(button.root, button.primary, "custom");
 ```
 
-#### Reactive Values in React/Vue
+#### Reactive Styles in React/Vue
 
-For frameworks without native signals, use `vars()` to bind dynamic values. The `cx()` returns an object with both `className` and `style`:
+React and Vue use the same signal-based approach via `useSignal` hook:
 
 ```tsx
-// React - Reactive values with vars()
-import { useState } from "react";
-import { useStyle, vars } from "@semajsx/style/react";
+// React - Reactive values with useSignal
+import { useStyle, useSignal } from "@semajsx/style/react";
 import { classes, rule } from "@semajsx/style";
 
 const c = classes(["box"]);
 
-// Define style with placeholder variables
-const boxStyle = rule`${c.box} {
-  height: var(--h);
-  background: var(--bg);
-  transition: all 0.3s;
-}`;
+// Dynamic rule - function that accepts signals
+const boxStyle = (height: Signal<number>, bg: Signal<string>) =>
+  rule`${c.box} {
+    height: ${height}px;
+    background: ${bg};
+    transition: all 0.3s;
+  }`;
 
 function Box() {
-  const [height, setHeight] = useState(100);
-  const [color, setColor] = useState("#3b82f6");
   const cx = useStyle();
+  const height = useSignal(100);
+  const color = useSignal("#3b82f6");
 
-  // vars() creates CSS variable bindings
-  const { className, style } = cx(boxStyle, vars({ "--h": `${height}px`, "--bg": color }));
+  // Same pattern as SemaJSX - signals in rule
+  const style = boxStyle(height, color);
 
   return (
-    <div className={className} style={style} onClick={() => setHeight((h) => h + 10)}>
+    <div className={cx(style)} onClick={() => (height.value += 10)}>
       Click to grow
     </div>
   );
 }
 
 // Rendered:
-// <div class="box-x7f3a" style="--h: 100px; --bg: #3b82f6">
+// <div class="box-x7f3a" style="--v1: 100; --v2: #3b82f6">
+//
+// After click (signal update, no React re-render!):
+// <div class="box-x7f3a" style="--v1: 110; --v2: #3b82f6">
 ```
 
-`vars()` helper:
-
-```ts
-interface VarsToken {
-  __vars: Record<string, string>;
-  __isVars: true;
-}
-
-function vars(values: Record<string, string>): VarsToken {
-  return { __vars: values, __isVars: true };
-}
-
-// Updated cx() to handle vars
-function cx(...args): { className: string; style?: Record<string, string> } {
-  const classes: string[] = [];
-  let styleVars: Record<string, string> | undefined;
-
-  for (const arg of args) {
-    if (!arg) continue;
-
-    if (isVarsToken(arg)) {
-      styleVars = { ...styleVars, ...arg.__vars };
-    } else if (isStyleToken(arg)) {
-      inject(arg);
-      if (arg._) classes.push(arg._);
-    } else if (typeof arg === "string") {
-      classes.push(arg);
-    }
-  }
-
-  return {
-    className: classes.join(" "),
-    ...(styleVars && { style: styleVars }),
-  };
-}
-```
-
-Vue with reactive refs:
+Vue with `useSignal`:
 
 ```vue
 <script setup lang="ts">
-import { ref } from "vue";
-import { useStyle, vars } from "@semajsx/style/vue";
+import { useStyle, useSignal } from "@semajsx/style/vue";
 
-const height = ref(100);
 const cx = useStyle();
+const height = useSignal(100);
+const color = useSignal("#3b82f6");
 
-const { className, style } = cx(boxStyle, vars({ "--h": `${height.value}px` }));
+const style = boxStyle(height, color);
 </script>
 
 <template>
-  <div :class="className" :style="style" @click="height += 10">Click to grow</div>
+  <div :class="cx(style)" @click="height.value += 10">Click to grow</div>
 </template>
 ```
 
-**SemaJSX vs React/Vue for reactive styles:**
+**Unified API across frameworks:**
 
-| Aspect           | SemaJSX (Signal)                    | React/Vue (vars())                |
-| ---------------- | ----------------------------------- | --------------------------------- |
-| Definition       | `rule\`..${signal}px..\``           | `rule\`..var(--h)..\``+`vars()`   |
-| Auto-binding     | Yes - signal subscription automatic | No - manual `vars()` call         |
-| Re-render needed | No - direct DOM update              | Yes - React/Vue re-render         |
-| Syntax           | `<div class={boxStyle}>`            | `<div className={cn} style={st}>` |
+| Aspect           | SemaJSX                   | React/Vue                      |
+| ---------------- | ------------------------- | ------------------------------ |
+| Create signal    | `signal(100)`             | `useSignal(100)`               |
+| Dynamic rule     | `boxStyle(height, color)` | `boxStyle(height, color)`      |
+| Update           | `height.value += 10`      | `height.value += 10`           |
+| Re-render needed | No - direct DOM update    | No - signal bypasses React/Vue |
+| Syntax           | `<div class={style}>`     | `<div className={cx(style)}>`  |
+
+The key insight: **signals bypass framework re-renders**. The CSS variable update happens directly on the DOM element via signal subscription, not through React/Vue's reconciliation.
 
 ### 9.4 Global Styles
 
@@ -1490,8 +1534,8 @@ If accepted:
 - **ClassRef**: A reference object that stringifies to a hashed class name
 - **StyleToken**: Contains className (optional) + CSS rule(s), used in class props or injected
 - **ArbitraryStyleToken**: A token for arbitrary values that uses CSS variables instead of generating classes
-- **VarsToken**: A token containing CSS variable bindings for React/Vue reactive values
-- **ReactiveVar**: Signal binding info for SemaJSX reactive CSS variables
+- **ReactiveVar**: Signal binding info for dynamic CSS variables
+- **Dynamic Rule**: A function that accepts signals and returns a StyleToken (like Component vs JSX)
 - **App Anchor**: Global style injection target (default: document.head)
 - **Component Anchor**: Per-component injection target (doesn't affect children)
 
@@ -1510,4 +1554,4 @@ If accepted:
 | 2026-01-10 | Unified to single tagged template syntax: rule\`selector { css }\`        | SemaJSX Team |
 | 2026-01-10 | Changed preload() to explicit only (no automatic batching)                | SemaJSX Team |
 | 2026-01-10 | Added reactive values with signals (CSS variables for dynamic updates)    | SemaJSX Team |
-| 2026-01-10 | Added vars() helper for React/Vue reactive CSS variables                  | SemaJSX Team |
+| 2026-01-10 | Introduced dynamic rules (functions) + useSignal hook for React/Vue       | SemaJSX Team |
