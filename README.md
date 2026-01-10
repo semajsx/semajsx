@@ -41,7 +41,8 @@ import { render, signal, computed } from "semajsx";
 
 function Counter() {
   const count = signal(0);
-  const doubled = computed(() => count.value * 2);
+  // Computed requires explicit dependency array
+  const doubled = computed([count], (c) => c * 2);
 
   return (
     <div>
@@ -62,7 +63,7 @@ render(<Counter />, document.getElementById("root")!);
 Signals are reactive primitives that automatically track dependencies and trigger updates.
 
 ```tsx
-import { signal, computed, effect } from "semajsx";
+import { signal, computed } from "semajsx";
 
 // Create a signal
 const count = signal(0);
@@ -73,12 +74,12 @@ console.log(count.value); // 0
 // Update the value
 count.value++;
 
-// Create computed signals
-const doubled = computed(() => count.value * 2);
+// Create computed signals with explicit dependencies
+const doubled = computed([count], (c) => c * 2);
 
-// Create effects
-effect(() => {
-  console.log("Count changed:", count.value);
+// Subscribe to changes
+count.subscribe((value) => {
+  console.log("Count changed:", value);
 });
 ```
 
@@ -124,7 +125,7 @@ Use computed signals for conditional rendering:
 ```tsx
 function App() {
   const show = signal(true);
-  const content = computed(() => (show.value ? <p>Visible</p> : <p>Hidden</p>));
+  const content = computed([show], (s) => (s ? <p>Visible</p> : <p>Hidden</p>));
 
   return (
     <div>
@@ -151,8 +152,8 @@ count.value = 10;
 count.set(10);
 count.update((prev) => prev + 1);
 
-// Read without tracking
-count.peek();
+// Read value
+console.log(count.value); // 11
 
 // Subscribe to changes
 const unsubscribe = count.subscribe((value) => {
@@ -164,30 +165,36 @@ const unsubscribe = count.subscribe((value) => {
 
 ```typescript
 const count = signal(0);
-const doubled = computed(() => count.value * 2);
+// Computed requires explicit dependency array
+const doubled = computed([count], (c) => c * 2);
 
 // Computed values are read-only
 console.log(doubled.value); // 0
 ```
 
-### Effects
+### Subscriptions
 
 ```typescript
 const count = signal(0);
 
-// Effect runs immediately and when dependencies change
-effect(() => {
-  console.log("Count is:", count.value);
+// Subscribe to changes
+const unsubscribe = count.subscribe((value) => {
+  console.log("Count is:", value);
 });
 
-// Effect with cleanup
-effect(() => {
+// Subscription with cleanup
+const unsubscribe2 = count.subscribe((value) => {
   const timer = setInterval(() => {
-    count.value++;
+    console.log("Current:", value);
   }, 1000);
 
+  // Return cleanup function
   return () => clearInterval(timer);
 });
+
+// Clean up when done
+unsubscribe();
+unsubscribe2();
 ```
 
 ### Batching Updates
@@ -208,7 +215,7 @@ batch(() => {
 ### Utilities
 
 ```typescript
-import { isSignal, unwrap, untrack, peek } from "semajsx";
+import { isSignal, unwrap } from "semajsx";
 
 // Check if value is a signal
 if (isSignal(value)) {
@@ -216,13 +223,8 @@ if (isSignal(value)) {
 }
 
 // Get value from signal or plain value
+// Works with both signals and plain values
 const plainValue = unwrap(maybeSignal);
-
-// Read signal without tracking
-const value = untrack(() => signal.value);
-
-// Peek at signal value
-const peeked = peek(maybeSignal);
 ```
 
 ## Project Structure
@@ -234,7 +236,7 @@ semajsx/
 │   │   ├── signal.ts         # Core signal implementation
 │   │   ├── computed.ts       # Computed signals
 │   │   ├── batch.ts          # Batching utilities
-│   │   ├── utils.ts          # Signal utilities (isSignal, unwrap, peek)
+│   │   ├── utils.ts          # Signal utilities (isSignal, unwrap)
 │   │   └── types.ts          # Type definitions
 │   │
 │   ├── runtime/              # Core runtime (platform-agnostic)

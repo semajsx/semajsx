@@ -24,3 +24,6 @@ export type {
 } from "./types";
 
 export type { RenderedNode, RenderStrategy } from "./render-core";
+
+// Signal interfaces - core reactive primitives
+export type { MaybeSignal, ReadableSignal, Signal, SignalValue, WritableSignal } from "./signal";

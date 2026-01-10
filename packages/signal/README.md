@@ -45,8 +45,9 @@ import { signal, computed } from "@semajsx/signal";
 const firstName = signal("John");
 const lastName = signal("Doe");
 
-const fullName = computed(() => {
-  return `${firstName.value} ${lastName.value}`;
+// Computed requires explicit dependency array
+const fullName = computed([firstName, lastName], (first, last) => {
+  return `${first} ${last}`;
 });
 
 console.log(fullName.value); // "John Doe"
@@ -55,32 +56,33 @@ firstName.value = "Jane";
 console.log(fullName.value); // "Jane Doe"
 ```
 
-### Effects
+### Subscribing to Changes
 
 ```typescript
-import { signal, effect } from "@semajsx/signal";
+import { signal } from "@semajsx/signal";
 
 const count = signal(0);
 
-// Effect runs automatically when dependencies change
-const dispose = effect(() => {
-  console.log("Count is:", count.value);
+// Subscribe to changes
+const unsubscribe = count.subscribe((newValue) => {
+  console.log("Count is:", newValue);
 });
 
 count.value = 1; // Logs: "Count is: 1"
 count.value = 2; // Logs: "Count is: 2"
 
 // Clean up
-dispose();
+unsubscribe();
 ```
 
 ### Batching Updates
 
 ```typescript
-import { signal, batch } from "@semajsx/signal";
+import { signal, computed, batch } from "@semajsx/signal";
 
 const count = signal(0);
-const doubled = computed(() => count.value * 2);
+// Use explicit dependency array
+const doubled = computed([count], (c) => c * 2);
 
 // Batch multiple updates
 batch(() => {
@@ -96,7 +98,7 @@ console.log(doubled.value); // 6
 ### Utility Functions
 
 ```typescript
-import { signal, isSignal, unwrap, peek } from "@semajsx/signal";
+import { signal, isSignal, unwrap } from "@semajsx/signal";
 
 const count = signal(5);
 
@@ -105,30 +107,34 @@ isSignal(count); // true
 isSignal(5); // false
 
 // Unwrap a signal or return value as-is
+// Works with both signals and plain values
 unwrap(count); // 5
 unwrap(5); // 5
-
-// Peek at signal value without tracking
-peek(count); // 5
 ```
 
 ## API
 
-### `signal<T>(initialValue: T): Signal<T>`
+### `signal<T>(initialValue: T): WritableSignal<T>`
 
 Create a writable signal.
 
-### `computed<T>(fn: () => T): ReadonlySignal<T>`
+### `computed<T, R>(dep: Signal<T>, compute: (value: T) => R): Signal<R>`
 
-Create a computed signal that automatically updates when dependencies change.
+### `computed<T[], R>(deps: T[], compute: (...values) => R): Signal<R>`
 
-### `effect(fn: () => void | (() => void)): () => void`
+Create a computed signal with explicit dependencies. Supports single or multiple dependencies.
 
-Run a function that automatically re-runs when its signal dependencies change.
+```typescript
+// Single dependency
+const doubled = computed([count], (c) => c * 2);
+
+// Multiple dependencies
+const fullName = computed([firstName, lastName], (f, l) => `${f} ${l}`);
+```
 
 ### `batch(fn: () => void): void`
 
-Batch multiple signal updates to trigger effects only once.
+Batch multiple signal updates to trigger subscribers only once.
 
 ### `isSignal<T>(value: unknown): value is Signal<T>`
 
@@ -136,11 +142,7 @@ Check if a value is a signal.
 
 ### `unwrap<T>(value: MaybeSignal<T>): T`
 
-Unwrap a signal or return the value as-is.
-
-### `peek<T>(value: MaybeSignal<T>): T`
-
-Get the value of a signal without tracking (useful inside effects).
+Unwrap a signal or return the value as-is. Works with both signals and plain values.
 
 ## License
 

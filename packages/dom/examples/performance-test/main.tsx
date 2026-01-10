@@ -84,7 +84,7 @@ function KeyedListTest() {
 
         <button
           onclick={() => {
-            items.value = [...items.peek()].reverse();
+            items.value = [...items.value].reverse();
             console.log("List reversed - DOM nodes should be moved, not recreated");
           }}
         >
@@ -93,7 +93,7 @@ function KeyedListTest() {
 
         <button
           onclick={() => {
-            const arr = [...items.peek()];
+            const arr = [...items.value];
             for (let i = arr.length - 1; i > 0; i--) {
               const j = Math.floor(Math.random() * (i + 1));
               [arr[i], arr[j]] = [arr[j]!, arr[i]!];
@@ -107,8 +107,8 @@ function KeyedListTest() {
 
         <button
           onclick={() => {
-            const newId = Math.max(...items.peek().map((i) => i.id)) + 1;
-            items.value = [...items.peek(), { id: newId, text: `Item ${newId}` }];
+            const newId = Math.max(...items.value.map((i) => i.id)) + 1;
+            items.value = [...items.value, { id: newId, text: `Item ${newId}` }];
             console.log("Item added");
           }}
         >
@@ -117,8 +117,8 @@ function KeyedListTest() {
 
         <button
           onclick={() => {
-            if (items.peek().length > 0) {
-              items.value = items.peek().slice(1);
+            if (items.value.length > 0) {
+              items.value = items.value.slice(1);
               console.log("First item removed");
             }
           }}
@@ -149,7 +149,7 @@ function NodePoolingTest() {
 
         <button
           onclick={() => {
-            text.value = text.peek() + "!";
+            text.value = text.value + "!";
             console.log("Text updated - text node should be reused, not replaced");
           }}
         >

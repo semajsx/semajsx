@@ -68,7 +68,7 @@ function App() {
 
 ## Computed Signals
 
-Create derived values with `computed()`:
+Create derived values with `computed()` using explicit dependencies:
 
 ```tsx
 import { signal, computed } from "semajsx/signal";
@@ -76,8 +76,8 @@ import { signal, computed } from "semajsx/signal";
 const firstName = signal("John");
 const lastName = signal("Doe");
 
-// Automatically updates when firstName or lastName changes
-const fullName = computed(() => `${firstName.value} ${lastName.value}`);
+// Computed requires explicit dependency array
+const fullName = computed([firstName, lastName], (first, last) => `${first} ${last}`);
 
 console.log(fullName.value); // "John Doe"
 
@@ -85,22 +85,25 @@ firstName.value = "Jane";
 console.log(fullName.value); // "Jane Doe"
 ```
 
-## Effects
+## Subscriptions
 
-Run side effects when signals change using `effect()`:
+Subscribe to signal changes with the `subscribe()` method:
 
 ```tsx
-import { signal, effect } from "semajsx/signal";
+import { signal } from "semajsx/signal";
 
 const count = signal(0);
 
-// Run whenever count changes
-effect(() => {
-  console.log(`Count is now: ${count.value}`);
+// Subscribe to changes
+const unsubscribe = count.subscribe((value) => {
+  console.log(`Count is now: ${value}`);
 });
 
 count.value = 1; // Logs: "Count is now: 1"
 count.value = 2; // Logs: "Count is now: 2"
+
+// Clean up
+unsubscribe();
 ```
 
 ## Batching Updates
@@ -133,7 +136,7 @@ Use batching when updating multiple signals at once to minimize re-renders.
 1. **Keep signals simple** - Store primitive values or immutable data
 2. **Use computed for derived values** - Don't manually sync related signals
 3. **Batch related updates** - Group multiple signal changes together
-4. **Cleanup effects** - Return cleanup functions from effects when needed
+4. **Use explicit dependencies** - Always specify dependencies in computed signals
 
 ## Next Steps
 

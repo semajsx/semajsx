@@ -1,4 +1,4 @@
-import type { Signal, WritableSignal } from "@semajsx/signal";
+import type { ReadableSignal, WritableSignal } from "./signal";
 
 /**
  * Special VNode type for fragment support
@@ -43,7 +43,7 @@ export type JSXNode =
   | VNode
   | JSXPrimitive
   | Iterable<JSXNode>
-  | Signal<JSXNode>
+  | ReadableSignal<JSXNode>
   | Promise<JSXNode>
   | AsyncIterableIterator<JSXNode>;
 
@@ -102,7 +102,7 @@ export interface ContextProps {
 /**
  * Helper type to allow Signal values for any attribute
  */
-export type SignalOr<T> = T | Signal<T>;
+export type SignalOr<T> = T | ReadableSignal<T>;
 
 /**
  * Makes all properties in T accept Signal values

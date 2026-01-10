@@ -164,7 +164,8 @@ import { signal, computed } from "semajsx/signal";
 
 function Counter() {
   const count = signal(0);
-  const doubled = computed(() => count.value * 2);
+  // Computed requires explicit dependency array
+  const doubled = computed([count], (c) => c * 2);
 
   return (
     <div>

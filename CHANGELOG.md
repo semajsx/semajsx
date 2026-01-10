@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Signal-based reactivity system with fine-grained updates
   - Computed signals with automatic dependency tracking
   - Batch updates for performance optimization
-  - Signal utilities (isSignal, unwrap, peek)
+  - Signal utilities (isSignal, unwrap)
 
 - **Dual Rendering Targets**
   - DOM rendering with full browser support

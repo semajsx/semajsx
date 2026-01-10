@@ -28,11 +28,6 @@ describe("signal", () => {
     expect(s.value).toBe(10);
   });
 
-  it("should peek without subscribing", () => {
-    const s = signal(100);
-    expect(s.peek()).toBe(100);
-  });
-
   it("should notify subscribers on change", async () => {
     const s = signal(0);
     const listener = vi.fn();

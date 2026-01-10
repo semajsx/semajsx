@@ -224,7 +224,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
     const marker = strategy.createComment("signal");
 
     // Get initial value and render it
-    const initialValue = signal.peek();
+    const initialValue = signal.value;
     let currentRendered = renderValueToNode(initialValue, contextForSignal);
 
     const subscriptions: Array<() => void> = [];

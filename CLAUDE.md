@@ -6,6 +6,56 @@ This file provides guidance to Claude Code when working with this repository.
 
 SemaJSX is a lightweight, signal-based reactive JSX runtime for building modern web applications. It uses fine-grained reactivity with signals for efficient updates without virtual DOM diffing.
 
+## Documentation Organization
+
+**IMPORTANT**: This project has two distinct types of documentation:
+
+### 1. Internal Development Documentation
+**Purpose**: For contributors, maintainers, and AI assistants
+**Audience**: People building and maintaining SemaJSX
+
+**Key Documents**:
+- `CLAUDE.md` - AI instructions (this file)
+- `CONTRIBUTING.md` - Contribution guidelines
+- `MONOREPO_ARCHITECTURE.md` - Architecture details
+- `TESTING.md` - Testing strategy
+- `docs/workflow.md` - Development workflow
+- `docs/designs/` - Technical design documents
+- `docs/rfcs/` - Feature proposals
+- `docs/adrs/` - Architecture decisions
+
+**Characteristics**:
+- Technical and detailed
+- Explains "why" and "how we built it"
+- Contains design rationale and trade-offs
+- Located in root or `docs/{rfcs,designs,adrs}`
+
+### 2. User-Facing Documentation
+**Purpose**: Teaching users how to use SemaJSX
+**Audience**: Developers building applications with SemaJSX
+
+**Key Documents**:
+- `README.md` - Project introduction
+- `CHANGELOG.md` - Version history
+- `packages/*/README.md` - Package usage guides
+- `apps/docs/content/` - Tutorials and API reference (published to docs site)
+
+**Characteristics**:
+- Practical and example-focused
+- Explains "how to use it"
+- Tutorial and reference style
+- Located in package READMEs or `apps/docs/content/`
+
+**See [DOCS.md](./DOCS.md) for complete documentation index.**
+
+### When Writing Documentation
+
+- **Designing a feature?** → Create design doc in `docs/designs/`
+- **Teaching users?** → Add tutorial in `apps/docs/content/guides/`
+- **Documenting an API?** → Update package README or `apps/docs/content/docs/`
+- **Making architectural decision?** → Create ADR in `docs/adrs/`
+- **Proposing major feature?** → Create RFC in `docs/rfcs/`
+
 ## Architecture
 
 ### Monorepo Structure
@@ -204,6 +254,58 @@ See [MONOREPO_ARCHITECTURE.md](./MONOREPO_ARCHITECTURE.md) for details on the Is
    - Use workspace protocol (`workspace:*`) for internal dependencies
    - Always run `bun install` from the root directory
    - Use `bun --filter <package-name>` to run commands in specific packages from root
+
+## Development Workflow
+
+This project follows a structured development workflow for major features and changes. See [docs/workflow.md](./docs/workflow.md) for complete details.
+
+### Workflow Stages
+
+1. **Discovery** - Define requirements and conduct research
+2. **Design** - Create detailed design documents
+3. **Implementation** - Write code and tests
+4. **Verification** - Validate quality and functionality
+5. **Archive** - Document and clean up
+
+### Document Types
+
+- **RFC** (`docs/rfcs/`) - Requirements and feature proposals
+- **Design Docs** (`docs/designs/`) - Detailed technical designs
+- **ADR** (`docs/adrs/`) - Architecture Decision Records
+
+### Temporary Workspace
+
+The `.workspace/` directory is for temporary work-in-progress:
+- `research/` - Research materials
+- `drafts/` - Design document drafts
+- `discussions/` - Meeting notes
+- `experiments/` - Prototype code
+
+This directory is git-ignored. Move final artifacts to `apps/docs/` when complete.
+
+### When to Use
+
+**Full Workflow** (RFC + Design + ADR):
+- Major new features
+- Breaking changes
+- Architectural changes
+
+**Simplified Workflow** (Design Doc only):
+- Minor features
+- Enhancements
+- Complex bug fixes
+
+**Direct Implementation** (PR only):
+- Simple bug fixes
+- Documentation updates
+- Typo fixes
+
+**Guidelines**:
+- Large features should have design documents before implementation
+- Architecture decisions should be recorded in ADRs
+- When in doubt, create a design document
+
+See [Workflow Guide](./docs/workflow.md) for templates and detailed process.
 
 ## Code Quality
 

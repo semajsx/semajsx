@@ -7,9 +7,9 @@ Official documentation site for SemaJSX, built with `@semajsx/ssg`.
 ```
 apps/docs/
 ├── content/              # Documentation content
-│   ├── docs/            # Documentation pages
+│   ├── docs/            # API reference pages
 │   └── guides/          # Tutorial guides
-├── components/          # Reusable components
+├── components/          # Reusable doc site components
 │   ├── Layout.tsx       # Main layout
 │   ├── Callout.tsx      # Callout component
 │   └── CodeBlock.tsx    # Code syntax highlighting
@@ -17,6 +17,10 @@ apps/docs/
 ├── styles.css           # Global styles
 └── package.json
 ```
+
+This directory contains **user-facing documentation** for SemaJSX - tutorials, guides, and API references published to the documentation website.
+
+**Note**: For internal development documentation (RFCs, design docs, ADRs), see the [docs/](../../docs/) directory in the project root.
 
 ## Development
 
