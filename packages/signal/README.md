@@ -98,7 +98,7 @@ console.log(doubled.value); // 6
 ### Utility Functions
 
 ```typescript
-import { signal, isSignal, unwrap, peek } from "@semajsx/signal";
+import { signal, isSignal, unwrap } from "@semajsx/signal";
 
 const count = signal(5);
 
@@ -107,11 +107,9 @@ isSignal(count); // true
 isSignal(5); // false
 
 // Unwrap a signal or return value as-is
+// Works with both signals and plain values
 unwrap(count); // 5
 unwrap(5); // 5
-
-// Peek at signal value without tracking
-peek(count); // 5
 ```
 
 ## API
@@ -121,6 +119,7 @@ peek(count); // 5
 Create a writable signal.
 
 ### `computed<T, R>(dep: Signal<T>, compute: (value: T) => R): Signal<R>`
+
 ### `computed<T[], R>(deps: T[], compute: (...values) => R): Signal<R>`
 
 Create a computed signal with explicit dependencies. Supports single or multiple dependencies.
@@ -143,11 +142,7 @@ Check if a value is a signal.
 
 ### `unwrap<T>(value: MaybeSignal<T>): T`
 
-Unwrap a signal or return the value as-is.
-
-### `peek<T>(value: MaybeSignal<T>): T`
-
-Get the value of a signal without triggering subscriptions.
+Unwrap a signal or return the value as-is. Works with both signals and plain values.
 
 ## License
 

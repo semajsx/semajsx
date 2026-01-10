@@ -152,8 +152,8 @@ count.value = 10;
 count.set(10);
 count.update((prev) => prev + 1);
 
-// Read without tracking
-count.peek();
+// Read value
+console.log(count.value); // 11
 
 // Subscribe to changes
 const unsubscribe = count.subscribe((value) => {
@@ -215,7 +215,7 @@ batch(() => {
 ### Utilities
 
 ```typescript
-import { isSignal, unwrap, peek } from "semajsx";
+import { isSignal, unwrap } from "semajsx";
 
 // Check if value is a signal
 if (isSignal(value)) {
@@ -223,10 +223,8 @@ if (isSignal(value)) {
 }
 
 // Get value from signal or plain value
+// Works with both signals and plain values
 const plainValue = unwrap(maybeSignal);
-
-// Peek at signal value without tracking
-const peeked = peek(maybeSignal);
 ```
 
 ## Project Structure
@@ -238,7 +236,7 @@ semajsx/
 │   │   ├── signal.ts         # Core signal implementation
 │   │   ├── computed.ts       # Computed signals
 │   │   ├── batch.ts          # Batching utilities
-│   │   ├── utils.ts          # Signal utilities (isSignal, unwrap, peek)
+│   │   ├── utils.ts          # Signal utilities (isSignal, unwrap)
 │   │   └── types.ts          # Type definitions
 │   │
 │   ├── runtime/              # Core runtime (platform-agnostic)
