@@ -126,7 +126,7 @@ No built-in solution for:
 
 ### 6.3 Key Insight
 
-The key insight is treating **each `style()` call as a tree-shakeable unit**. If a `style()` export isn't imported, its CSS is eliminated entirely.
+The key insight is treating **each `rule()` call as a tree-shakeable unit**. If a `rule()` export isn't imported, its CSS is eliminated entirely.
 
 ---
 
@@ -136,13 +136,13 @@ The key insight is treating **each `style()` call as a tree-shakeable unit**. If
 
 ```ts
 // button.style.ts
-import { classes, style } from "@semajsx/style";
+import { classes, rule, rules } from "@semajsx/style";
 
 const c = classes(["root", "icon", "label"]);
 
 export const button = {
   /** display: inline-flex; padding: 8px 16px */
-  root: style(
+  root: rule(
     c.root,
     `
     display: inline-flex;
@@ -151,7 +151,7 @@ export const button = {
   ),
 
   /** width: 18px; height: 18px */
-  icon: style(
+  icon: rule(
     c.icon,
     `
     width: 18px;
@@ -160,7 +160,7 @@ export const button = {
   ),
 
   /** font-weight: 500 */
-  label: style(
+  label: rule(
     c.label,
     `
     font-weight: 500;
@@ -168,25 +168,19 @@ export const button = {
   ),
 
   /** margin-right: 8px (icon inside root) */
-  rootIcon: style(
-    `${c.root} > ${c.icon}`,
-    `
+  rootIcon: rule`${c.root} > ${c.icon}`(`
     margin-right: 8px;
-  `,
-  ),
+  `),
 
   /** hover state */
-  rootHover: style(
-    `${c.root}:hover`,
-    `
+  rootHover: rule`${c.root}:hover`(`
     background: var(--hover);
-  `,
-  ),
+  `),
 
   /** multiple rules for states */
-  states: style(
-    [`${c.root}:active`, `transform: scale(0.98);`],
-    [`${c.root}:disabled`, `opacity: 0.5; cursor: not-allowed;`],
+  states: rules(
+    rule`${c.root}:active`(`transform: scale(0.98);`),
+    rule`${c.root}:disabled`(`opacity: 0.5; cursor: not-allowed;`),
   ),
 };
 ```
@@ -242,36 +236,61 @@ c.root.toString(); // "root-x7f3a"
 `${c.root}`; // "root-x7f3a"
 ```
 
-#### `style(selector, css): StyleToken` - Single Rule
+#### `rule(selector, css): StyleToken` - Function Call Syntax
 
-Creates a StyleToken for a single CSS rule.
+Creates a StyleToken for a single CSS rule with class selector.
 
 ```ts
 // Class selector - returns StyleToken with className
-const root = style(c.root, `padding: 8px;`);
+const root = rule(c.root, `padding: 8px;`);
 // root._ = "root-x7f3a"
 // root.__css = ".root-x7f3a { padding: 8px; }"
-
-// Complex selector - returns StyleToken without className (injection only)
-const rootHover = style(`${c.root}:hover`, `background: blue;`);
-// rootHover._ = undefined
-// rootHover.__css = ".root-x7f3a:hover { background: blue; }"
-
-// Nested selector
-const rootIcon = style(`${c.root} > ${c.icon}`, `margin-right: 8px;`);
 ```
 
-#### `style(...rules): StyleToken` - Multiple Rules
+#### ``rule`selector`(css)`` - Tagged Template Syntax
 
-Creates a StyleToken containing multiple CSS rules.
+For complex selectors (pseudo-classes, combinators), use tagged template syntax. This preserves ClassRef references correctly.
 
 ```ts
-const states = style(
-  [`${c.root}:hover`, `background: blue;`],
-  [`${c.root}:active`, `transform: scale(0.98);`],
-  [`${c.root}:disabled`, `opacity: 0.5;`],
+// Pseudo-class selector
+const rootHover = rule`${c.root}:hover`(`background: blue;`);
+// rootHover._ = undefined (no direct className)
+// rootHover.__css = ".root-x7f3a:hover { background: blue; }"
+
+// Descendant combinator
+const rootIcon = rule`${c.root} > ${c.icon}`(`margin-right: 8px;`);
+// rootIcon.__css = ".root-x7f3a > .icon-b2c4d { margin-right: 8px; }"
+
+// Attribute selector
+const rootDisabled = rule`${c.root}[disabled]`(`opacity: 0.5;`);
+
+// Multiple pseudo-classes
+const rootFocusVisible = rule`${c.root}:focus-visible`(`outline: 2px solid blue;`);
+```
+
+**Why tagged template?** Using `` rule`${a} > ${b}` `` instead of ``rule(`${a} > ${b}`, ...)``:
+
+- Template strings in function arguments immediately convert to strings, losing ClassRef references
+- Tagged templates receive the interpolated values as separate arguments, preserving type information
+
+#### `rules(...tokens): StyleToken` - Combine Multiple Rules
+
+Combines multiple StyleTokens into a single token for grouped injection.
+
+```ts
+const buttonStates = rules(
+  rule`${c.root}:hover`(`background: blue;`),
+  rule`${c.root}:active`(`transform: scale(0.98);`),
+  rule`${c.root}:disabled`(`opacity: 0.5;`),
 );
-// states.__css contains all three rules
+// buttonStates.__css contains all three rules concatenated
+
+// Can also combine rule() and rule`` syntax
+const allStyles = rules(
+  rule(c.root, `padding: 8px;`),
+  rule(c.icon, `width: 18px;`),
+  rule`${c.root} > ${c.icon}`(`margin-right: 8px;`),
+);
 ```
 
 #### `inject(tokens, options?): () => void`
@@ -349,10 +368,17 @@ interface RegistryOptions {
   dedupe?: boolean;
 }
 
-// style() function overloads
-function style(selector: ClassRef, css: string): StyleToken;
-function style(selector: string, css: string): StyleToken;
-function style(...rules: [string, string][]): StyleToken;
+// rule() function overloads
+function rule(selector: ClassRef, css: string): StyleToken;
+
+// rule`` tagged template - returns a function that takes CSS
+function rule(
+  strings: TemplateStringsArray,
+  ...values: (ClassRef | string)[]
+): (css: string) => StyleToken;
+
+// rules() - combines multiple StyleTokens
+function rules(...tokens: StyleToken[]): StyleToken;
 ```
 
 ### 8.3 SemaJSX Integration (`@semajsx/dom`)
@@ -449,14 +475,15 @@ function resolveClass(value, context) {
 
 ```ts
 // button.style.ts
-import { classes, style } from "@semajsx/style";
+import { classes, rule, rules } from "@semajsx/style";
 
 const c = classes(["root", "icon", "label", "large", "primary"]);
 
-export const button = style(
-  c,
-  `
-  .${c.root} {
+export const button = {
+  /** Base button styles */
+  root: rule(
+    c.root,
+    `
     display: inline-flex;
     align-items: center;
     padding: 8px 16px;
@@ -464,40 +491,28 @@ export const button = style(
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
-  }
+  `,
+  ),
 
-  .${c.root}:hover {
-    transform: translateY(-1px);
-  }
+  /** Button states */
+  states: rules(
+    rule`${c.root}:hover`(`transform: translateY(-1px);`),
+    rule`${c.root}:disabled`(`opacity: 0.5; cursor: not-allowed;`),
+  ),
 
-  .${c.root}:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  /** Icon styling */
+  icon: rule(c.icon, `width: 18px; height: 18px;`),
+  iconInRoot: rule`${c.root} > ${c.icon}:first-child`(`margin-right: 8px;`),
 
-  .${c.icon} {
-    width: 18px;
-    height: 18px;
-  }
+  /** Label styling */
+  label: rule(c.label, `font-weight: 500;`),
 
-  .${c.root} > .${c.icon}:first-child {
-    margin-right: 8px;
-  }
+  /** Size variants */
+  large: rule(c.large, `padding: 12px 24px;`),
 
-  .${c.label} {
-    font-weight: 500;
-  }
-
-  .${c.large} {
-    padding: 12px 24px;
-  }
-
-  .${c.primary} {
-    background: var(--primary);
-    color: white;
-  }
-`,
-);
+  /** Color variants */
+  primary: rule(c.primary, `background: var(--primary); color: white;`),
+};
 ```
 
 ```tsx
@@ -561,31 +576,26 @@ btn.className = String(button.root);
 ### 9.4 Global Styles
 
 ```ts
+import { classes, rule, rules } from "@semajsx/style";
+
 const c = classes(["reset"]);
 
-export const globals = style(
-  c,
-  `
-  /* Global styles - use regular selectors */
-  :root {
+export const globals = rules(
+  // Global styles using raw CSS selectors
+  rule`:root`(`
     --primary: #3b82f6;
     --hover: #2563eb;
-  }
+  `),
 
-  *, *::before, *::after {
-    box-sizing: border-box;
-  }
+  rule`*, *::before, *::after`(`box-sizing: border-box;`),
 
-  body {
+  rule`body`(`
     margin: 0;
     font-family: system-ui, sans-serif;
-  }
+  `),
 
-  /* Scoped class still works */
-  .${c.reset} {
-    all: unset;
-  }
-`,
+  // Scoped class
+  rule(c.reset, `all: unset;`),
 );
 
 // Inject globals at app start
@@ -596,29 +606,26 @@ inject(globals);
 
 ```ts
 // tokens.ts
+import { classes } from "@semajsx/style";
 export const c = classes(["button", "card", "input", "icon"]);
 
 // button.style.ts
+import { rule, rules } from "@semajsx/style";
 import { c } from "./tokens";
 
-export const button = style(
-  c,
-  `
-  .${c.button} { ... }
-  .${c.button} > .${c.icon} { ... }
-`,
-);
+export const button = {
+  root: rule(c.button, `...`),
+  icon: rule`${c.button} > ${c.icon}`(`...`),
+};
 
 // card.style.ts
+import { rule, rules } from "@semajsx/style";
 import { c } from "./tokens";
 
-export const card = style(
-  c,
-  `
-  .${c.card} { ... }
-  .${c.card} .${c.button} { width: 100%; }
-`,
-);
+export const card = {
+  root: rule(c.card, `...`),
+  button: rule`${c.card} ${c.button}`(`width: 100%;`),
+};
 ```
 
 ---
@@ -646,7 +653,7 @@ Predefined Tailwind scale values are exported as direct properties with JSDoc co
 
 ```ts
 // @semajsx/tailwind/spacing.ts
-import { classes, style } from "@semajsx/style";
+import { classes, rule } from "@semajsx/style";
 
 const c = classes([
   "p0",
@@ -666,30 +673,30 @@ const c = classes([
 
 export const spacing = {
   /** padding: 0 */
-  p0: style(c.p0, `padding: 0;`),
+  p0: rule(c.p0, `padding: 0;`),
   /** padding: 0.25rem (4px) */
-  p1: style(c.p1, `padding: 0.25rem;`),
+  p1: rule(c.p1, `padding: 0.25rem;`),
   /** padding: 0.5rem (8px) */
-  p2: style(c.p2, `padding: 0.5rem;`),
+  p2: rule(c.p2, `padding: 0.5rem;`),
   /** padding: 1rem (16px) */
-  p4: style(c.p4, `padding: 1rem;`),
+  p4: rule(c.p4, `padding: 1rem;`),
   /** padding: 2rem (32px) */
-  p8: style(c.p8, `padding: 2rem;`),
+  p8: rule(c.p8, `padding: 2rem;`),
   /** padding: 1px */
-  px: style(c.px, `padding: 1px;`),
+  px: rule(c.px, `padding: 1px;`),
 
   /** margin: 0 */
-  m0: style(c.m0, `margin: 0;`),
+  m0: rule(c.m0, `margin: 0;`),
   /** margin: 0.25rem (4px) */
-  m1: style(c.m1, `margin: 0.25rem;`),
+  m1: rule(c.m1, `margin: 0.25rem;`),
   /** margin: 0.5rem (8px) */
-  m2: style(c.m2, `margin: 0.5rem;`),
+  m2: rule(c.m2, `margin: 0.5rem;`),
   /** margin: 1rem (16px) */
-  m4: style(c.m4, `margin: 1rem;`),
+  m4: rule(c.m4, `margin: 1rem;`),
   /** margin: 2rem (32px) */
-  m8: style(c.m8, `margin: 2rem;`),
+  m8: rule(c.m8, `margin: 2rem;`),
   /** margin: auto */
-  mauto: style(c.mauto, `margin: auto;`),
+  mauto: rule(c.mauto, `margin: auto;`),
   // ...
 };
 ```
@@ -875,7 +882,7 @@ function Card({ width, children }) {
 
 ### 10.7 Code Generation from Tailwind Config
 
-A code generator reads Tailwind config to produce the style objects with JSDoc comments:
+A code generator reads Tailwind config to produce the rule objects with JSDoc comments:
 
 ```ts
 // scripts/generate-tailwind.ts
@@ -895,11 +902,11 @@ function generateSpacing(): string {
     // Generate property with JSDoc
     const pxValue = convertToPixels(value); // e.g., "1rem" -> "16px"
     props.push(`  /** padding: ${value}${pxValue ? ` (${pxValue})` : ""} */`);
-    props.push(`  ${name}: style(c.${name}, \`padding: ${value};\`),`);
+    props.push(`  ${name}: rule(c.${name}, \`padding: ${value};\`),`);
   }
 
   return `
-import { classes, style } from "@semajsx/style";
+import { classes, rule } from "@semajsx/style";
 
 const c = classes(${JSON.stringify(names)});
 
@@ -1042,9 +1049,11 @@ If accepted:
 
 ### Change Log
 
-| Date       | Change                                          | Author       |
-| ---------- | ----------------------------------------------- | ------------ |
-| 2026-01-10 | Initial draft                                   | SemaJSX Team |
-| 2026-01-10 | Added Tailwind CSS integration                  | SemaJSX Team |
-| 2026-01-10 | Refined style() API: per-property with JSDoc    | SemaJSX Team |
-| 2026-01-10 | Added batch inject() and multiple rules support | SemaJSX Team |
+| Date       | Change                                             | Author       |
+| ---------- | -------------------------------------------------- | ------------ |
+| 2026-01-10 | Initial draft                                      | SemaJSX Team |
+| 2026-01-10 | Added Tailwind CSS integration                     | SemaJSX Team |
+| 2026-01-10 | Refined style() API: per-property with JSDoc       | SemaJSX Team |
+| 2026-01-10 | Added batch inject() and multiple rules support    | SemaJSX Team |
+| 2026-01-10 | Renamed style→rule, added rules() for combining    | SemaJSX Team |
+| 2026-01-10 | Added tagged template syntax for complex selectors | SemaJSX Team |
