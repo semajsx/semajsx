@@ -549,28 +549,146 @@ class MyElement extends HTMLElement {
 }
 ```
 
-### 9.3 Standalone (React/Vue/Vanilla)
+### 9.3 Framework Integrations
+
+#### React Integration (`@semajsx/style/react`)
+
+Provider + hook pattern for seamless React usage:
 
 ```tsx
-// React
-import { button, inject } from "./button.style";
-import { useEffect } from "react";
+// App.tsx
+import { StyleProvider } from "@semajsx/style/react";
 
-function Button({ children }) {
-  useEffect(() => inject(button), []);
+function App() {
+  return (
+    <StyleProvider>
+      <MyApp />
+    </StyleProvider>
+  );
+}
 
-  return <button className={String(button.root)}>{children}</button>;
+// For Shadow DOM
+function WebComponent() {
+  const shadowRef = useRef<ShadowRoot>(null);
+
+  return (
+    <StyleProvider target={shadowRef.current}>
+      <Content />
+    </StyleProvider>
+  );
 }
 ```
 
-```ts
-// Vanilla JS
-import { button, inject } from "./button.style";
+```tsx
+// Button.tsx
+import { useStyle } from "@semajsx/style/react";
+import { button } from "./button.style";
 
+function Button({ large, primary, disabled, children }) {
+  const cx = useStyle();
+
+  return (
+    <button
+      className={cx(
+        button.root, // StyleToken
+        button.states, // Combined rules
+        large && button.large, // Conditional
+        primary && button.primary,
+        "custom-class", // Plain string
+      )}
+      disabled={disabled}
+    >
+      {children}
+    </button>
+  );
+}
+```
+
+The `useStyle()` hook returns a `cx` function that:
+
+- Accepts StyleTokens, strings, and falsy values (like clsx)
+- Auto-injects CSS for StyleTokens into the Provider's target
+- Returns a combined className string
+- Deduplicates injections automatically
+
+```ts
+// @semajsx/style/react implementation sketch
+import { createContext, useContext, useCallback, useMemo } from "react";
+import { inject, isStyleToken, type StyleToken } from "@semajsx/style";
+
+const StyleContext = createContext<Element | ShadowRoot | null>(null);
+
+export function StyleProvider({ target, children }: {
+  target?: Element | ShadowRoot;
+  children: React.ReactNode;
+}) {
+  return (
+    <StyleContext.Provider value={target ?? null}>
+      {children}
+    </StyleContext.Provider>
+  );
+}
+
+type CxArg = StyleToken | string | false | null | undefined;
+
+export function useStyle() {
+  const target = useContext(StyleContext);
+
+  const cx = useCallback((...args: CxArg[]): string => {
+    const classes: string[] = [];
+
+    for (const arg of args) {
+      if (!arg) continue;
+
+      if (isStyleToken(arg)) {
+        // Inject if not already injected to this target
+        inject(arg, { target: target ?? undefined });
+        if (arg._) classes.push(arg._);
+      } else {
+        classes.push(arg);
+      }
+    }
+
+    return classes.join(" ");
+  }, [target]);
+
+  return cx;
+}
+```
+
+#### Vue Integration (`@semajsx/style/vue`)
+
+```vue
+<script setup lang="ts">
+import { useStyle } from "@semajsx/style/vue";
+import { button } from "./button.style";
+
+const props = defineProps<{ large?: boolean; primary?: boolean }>();
+const cx = useStyle();
+</script>
+
+<template>
+  <button :class="cx(button.root, large && button.large, primary && button.primary)">
+    <slot />
+  </button>
+</template>
+```
+
+#### Vanilla JS
+
+```ts
+import { inject, cx } from "@semajsx/style";
+import { button } from "./button.style";
+
+// Option 1: Pre-inject all styles
 inject(button);
 
 const btn = document.createElement("button");
 btn.className = String(button.root);
+
+// Option 2: Use cx() helper (auto-injects)
+const btn2 = document.createElement("button");
+btn2.className = cx(button.root, button.primary, "custom");
 ```
 
 ### 9.4 Global Styles
@@ -1049,11 +1167,12 @@ If accepted:
 
 ### Change Log
 
-| Date       | Change                                             | Author       |
-| ---------- | -------------------------------------------------- | ------------ |
-| 2026-01-10 | Initial draft                                      | SemaJSX Team |
-| 2026-01-10 | Added Tailwind CSS integration                     | SemaJSX Team |
-| 2026-01-10 | Refined style() API: per-property with JSDoc       | SemaJSX Team |
-| 2026-01-10 | Added batch inject() and multiple rules support    | SemaJSX Team |
-| 2026-01-10 | Renamed style→rule, added rules() for combining    | SemaJSX Team |
-| 2026-01-10 | Added tagged template syntax for complex selectors | SemaJSX Team |
+| Date       | Change                                                       | Author       |
+| ---------- | ------------------------------------------------------------ | ------------ |
+| 2026-01-10 | Initial draft                                                | SemaJSX Team |
+| 2026-01-10 | Added Tailwind CSS integration                               | SemaJSX Team |
+| 2026-01-10 | Refined style() API: per-property with JSDoc                 | SemaJSX Team |
+| 2026-01-10 | Added batch inject() and multiple rules support              | SemaJSX Team |
+| 2026-01-10 | Renamed style→rule, added rules() for combining              | SemaJSX Team |
+| 2026-01-10 | Added tagged template syntax for complex selectors           | SemaJSX Team |
+| 2026-01-10 | Added React/Vue integrations with Provider + useStyle() hook | SemaJSX Team |
