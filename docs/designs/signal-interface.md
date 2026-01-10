@@ -55,7 +55,55 @@ Define a minimal, pluggable Signal interface in `@semajsx/core` to enable third-
 
 ---
 
-## Interface Design
+## Interface Design Principles
+
+### Key Principles
+
+1. **Minimal Interface**: Only 2 required properties/methods
+2. **Clear Naming**: `ReadableSignal` vs `WritableSignal` (not just `Signal`)
+3. **Convenience Methods Are Implementation Details**: `set()` and `update()` are NOT in the interface
+4. **Maximum Compatibility**: Easy for third-party libraries to adopt
+
+### Why set() and update() Are Not in the Interface
+
+**Current Problem**:
+```typescript
+// ❌ If we require set/update in the interface
+interface WritableSignal<T> {
+  value: T;
+  set(value: T): void;       // Redundant with .value =
+  update(fn: (prev: T) => T): void;  // Redundant with .value++
+  subscribe(fn): () => void;
+}
+```
+
+**Issues**:
+- `set()` is just `signal.value = x` - redundant
+- `update()` is just `signal.value = fn(signal.value)` - redundant
+- Forces all implementations to provide these methods
+- Preact Signals doesn't have them (but still compatible!)
+
+**Solution**: These are **implementation details**, not interface requirements.
+
+```typescript
+// ✅ Core interface: minimal
+interface WritableSignal<T> extends ReadableSignal<T> {
+  value: T;  // Only this is required
+}
+
+// ✅ Implementation can add convenience methods
+export function signal<T>(initialValue: T): WritableSignal<T> {
+  return {
+    get value() { return value; },
+    set value(v) { value = v; },
+    subscribe(fn) { /* ... */ },
+
+    // Convenience methods (not in interface)
+    set(v) { this.value = v; },
+    update(fn) { this.value = fn(value); }
+  };
+}
+```
 
 ### Minimal Signal Interface
 
@@ -69,10 +117,13 @@ Define a minimal, pluggable Signal interface in `@semajsx/core` to enable third-
  * Only 2 methods required for maximum compatibility:
  * - .value: Read current value
  * - .subscribe(): React to changes
+ *
+ * Note: Methods like set() and update() are NOT part of the core interface.
+ * They are convenience methods provided by implementations (e.g., @semajsx/signal).
  */
 export interface ReadableSignal<T> {
   /**
-   * Current value of the signal
+   * Current value of the signal (read-only)
    */
   readonly value: T;
 
@@ -81,16 +132,30 @@ export interface ReadableSignal<T> {
    *
    * @param listener - Callback invoked on each change with new value
    * @returns Unsubscribe function
+   *
+   * @example
+   * const unsubscribe = count.subscribe(value => {
+   *   console.log('New value:', value);
+   * });
+   * // Later...
+   * unsubscribe();
    */
   subscribe(listener: (value: T) => void): () => void;
 }
 
 /**
  * Writable signal (extends readable with write capability)
+ *
+ * Only adds writable .value property.
+ * Convenience methods (set, update) are implementation details,
+ * not part of the core interface requirement.
  */
 export interface WritableSignal<T> extends ReadableSignal<T> {
   /**
    * Current value (writable)
+   *
+   * Overrides the readonly value from ReadableSignal.
+   * This is the ONLY addition for writable signals in the core interface.
    */
   value: T;
 }
@@ -99,6 +164,7 @@ export interface WritableSignal<T> extends ReadableSignal<T> {
  * Type guard to check if value is a signal
  *
  * Uses duck typing - checks for required methods only.
+ * Does NOT check for set() or update() - those are implementation details.
  */
 export function isSignal<T = any>(value: unknown): value is ReadableSignal<T> {
   return (
@@ -338,6 +404,8 @@ render(<div>{count}</div>, document.body);
 
 ### Implementing Custom Signal
 
+**Minimal Implementation** (core interface only):
+
 ```typescript
 import type { WritableSignal } from "@semajsx/core";
 
@@ -360,14 +428,68 @@ function mySignal<T>(initialValue: T): WritableSignal<T> {
 
 // Works with SemaJSX!
 const count = mySignal(0);
+count.value++; // ✅ Works
+```
+
+**With Convenience Methods** (optional):
+
+```typescript
+function mySignalWithHelpers<T>(initialValue: T): WritableSignal<T> & {
+  set(v: T): void;
+  update(fn: (prev: T) => T): void;
+} {
+  let value = initialValue;
+  const listeners = new Set<(v: T) => void>();
+
+  return {
+    get value() { return value; },
+    set value(v) {
+      value = v;
+      listeners.forEach(fn => fn(v));
+    },
+    subscribe(fn) {
+      listeners.add(fn);
+      return () => listeners.delete(fn);
+    },
+
+    // Optional convenience methods
+    set(v) { this.value = v; },
+    update(fn) { this.value = fn(value); }
+  };
+}
+
+const count = mySignalWithHelpers(0);
+count.value++;      // ✅ Works
+count.set(5);       // ✅ Works (convenience)
+count.update(n => n + 1); // ✅ Works (convenience)
 ```
 
 ---
 
+## Design Decisions Summary
+
+### 1. No peek() Method ✅
+- **Reason**: Redundant in explicit dependency system
+- **Impact**: Interface simplified from 3 to 2 methods
+
+### 2. No set()/update() in Interface ✅
+- **Reason**: Convenience methods, not core requirements
+- **Impact**: Easier third-party adoption
+- **Note**: Implementations can still provide them
+
+### 3. ReadableSignal Naming ✅
+- **Reason**: Clear semantics (not just "Signal")
+- **Impact**: Better developer experience
+
+### 4. Duck Typing for isSignal() ✅
+- **Reason**: Maximum flexibility
+- **Check**: Only `value` + `subscribe` existence
+
 ## Success Metrics
 
 - ✅ Core package has zero dependencies
-- ✅ Interface is minimal (2 methods)
+- ✅ Interface minimal (only 2 properties: value + subscribe)
+- ✅ Convenience methods (set/update) are implementation details
 - ✅ Preact Signals work without adapter (100% compatible)
 - ✅ Clear documentation for custom signals
 - ✅ No breaking changes for users
