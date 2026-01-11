@@ -10,6 +10,21 @@ This skill system automates the SemaJSX development workflow using:
 - **Context fork**: Isolated verification to keep conversations clean
 - **Auto-resume**: Resume work from any point via git state
 
+## File Structure
+
+Each skill follows the **multi-file structure** for progressive disclosure:
+
+```
+skill-name/
+├── SKILL.md        # Core documentation (≤400 lines)
+└── examples.md     # Detailed usage examples (≤200 lines)
+```
+
+**Benefits**:
+- **SKILL.md**: Focused on core concepts and usage
+- **examples.md**: Loaded on-demand for detailed patterns
+- **Progressive disclosure**: Claude loads only what's needed
+
 ## Skills
 
 ### User-Facing Skills (Invokable via `/`)
