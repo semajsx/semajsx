@@ -1,0 +1,283 @@
+# SemaJSX Workflow Skills
+
+Git-backed workflow automation skills for Claude Code, following the structured development workflow defined in [docs/workflow.md](../../docs/workflow.md).
+
+## Overview
+
+This skill system automates the SemaJSX development workflow using:
+- **Git-based memory**: All state persisted via conventional commits
+- **Claude Code 2.1.0+ hooks**: PreToolUse, PostToolUse, Stop for automation
+- **Context fork**: Isolated verification to keep conversations clean
+- **Auto-resume**: Resume work from any point via git state
+
+## Skills
+
+### User-Facing Skills (Invokable via `/`)
+
+**`/workflow`** - Workflow Orchestrator
+- Auto-resume active implementations
+- Coordinate task group execution
+- Manage validation and progress tracking
+- Ensure completeness before stopping
+
+**`/verify`** - Verification Suite
+- Run all validation commands in forked context
+- Generate clean structured reports
+- Return results without polluting main conversation
+- **Uses `context: fork`** for isolation
+
+**`/archive`** - Implementation Archiver
+- Complete implementation with retrospective
+- Update CHANGELOG
+- Generate metrics analysis
+- Mark implementation complete
+
+### Internal Skills (Auto-invoked)
+
+**`/implement`** - Task Group Executor
+- Execute task groups from plan.md
+- Write code and tests
+- Run validation suite
+- Update progress automatically
+
+**`/track`** - Progress Tracker
+- Update progress.md with task completion
+- Record validation results
+- Track metrics and blockers
+- Auto-commit updates
+
+**`/decide`** - Decision Logger
+- Log technical decisions interactively
+- Structured format (context, options, rationale, consequences)
+- Append to decisions.md
+- Auto-commit with decision number
+
+## Usage
+
+### Starting New Implementation
+
+```bash
+# Create implementation plan first
+mkdir -p docs/implementation/NNN-feature-name
+vim docs/implementation/NNN-feature-name/plan.md
+
+# Start workflow
+/workflow
+```
+
+The skill will:
+1. Detect the new implementation
+2. Initialize tracking files (progress.md, decisions.md, retrospective.md)
+3. Start Task Group 1
+
+### Resuming Work
+
+```bash
+# Simply invoke workflow - it auto-resumes
+/workflow
+```
+
+The skill will:
+1. Find active implementation (Status ≠ Complete)
+2. Load context from progress.md and plan.md
+3. Check git log for last activity
+4. Determine current/next task group
+5. Prompt to continue
+
+### Running Verification
+
+```bash
+/verify
+```
+
+Runs in **forked context**:
+- Full validation suite (build, test, coverage, typecheck, lint)
+- Returns clean markdown report
+- Main conversation stays uncluttered
+
+### Completing Implementation
+
+```bash
+/archive
+```
+
+When all task groups complete:
+1. Verifies completion (all validation passed, no blockers)
+2. Generates retrospective with metrics analysis
+3. Updates CHANGELOG
+4. Marks implementation complete
+5. Creates final commit
+
+## Git Memory System
+
+Every workflow action persists to git:
+
+```bash
+# Implementation lifecycle
+chore(impl): start implementation - <name>
+chore(impl): start task group N - <name>
+chore(impl): validation results - <name>
+feat(impl): complete task group N - <name>
+docs(impl): decision NNN - <title>
+docs(impl): add retrospective - <name>
+chore(impl): complete implementation - <name>
+```
+
+**Resume capability**: Any session resumes from:
+- `git log --grep="chore(impl):"` - Execution history
+- `docs/implementation/*/progress.md` - Current state
+- Can resume from any commit point
+
+## Hooks
+
+### PreToolUse Hooks
+
+**`/archive`**: Verification before archiving
+- Ensures all task groups complete
+- All validation passed
+- No blockers
+- Git state clean
+- **Blocks archiving if incomplete**
+
+### PostToolUse Hooks
+
+**`/workflow`**: Auto-update progress after validation
+- Detects validation commands (build, test, coverage, etc.)
+- Extracts results (pass/fail, metrics)
+- Updates progress.md
+- Auto-commits changes
+
+**`/track`**: Auto-commit progress updates
+- Commits progress.md after edits
+- Generates descriptive commit messages
+
+**`/decide`**: Auto-commit decision logs
+- Counts decision entries for numbering
+- Commits decisions.md with decision number
+
+**`/archive`**: Auto-commit retrospective and completion
+- Commits retrospective.md
+- Commits progress.md completion marker
+- Commits CHANGELOG updates
+
+### Stop Hooks
+
+**`/workflow`**: Completeness check before stopping
+- Verifies validation passed (if run)
+- Ensures task group complete
+- Checks for uncommitted changes
+- **Prevents premature stopping**
+
+**`/implement`**: Task group completion verification
+- All tasks in task group complete
+- Validation run and passed
+- Progress.md updated
+- Changes committed
+
+## File Structure
+
+```
+docs/implementation/NNN-feature-name/
+├── plan.md              # Static plan (created manually)
+├── progress.md          # Live progress (auto-updated)
+├── decisions.md         # Technical decisions (append-only)
+└── retrospective.md     # Post-completion analysis (generated by /archive)
+```
+
+## Testing
+
+A test implementation exists at `docs/implementation/999-test-skill-system/`:
+
+```bash
+# Test the workflow
+/workflow
+
+# Should detect 999-test-skill-system
+# Start Task Group 1 (create test file)
+# Run validation
+# Update progress
+# Continue to Task Group 2
+```
+
+## Best Practices
+
+1. **Always use /workflow as entry point** - Don't jump directly to other skills
+2. **Trust auto-resume** - It knows where you left off from git state
+3. **Let hooks run** - They ensure consistency and completeness
+4. **Check git status** - Skills auto-commit, but review changes
+5. **Don't skip validation** - Stop hooks prevent this, but be aware
+
+## Design Principles
+
+1. **Git as Memory System** - Every session state persisted via atomic commits
+2. **Hook-Driven Automation** - PreToolUse validates, PostToolUse updates, Stop ensures completeness
+3. **Context Isolation** - Fork context for verification to avoid polluting main conversation
+4. **Zero Manual Tracking** - Progress updates happen automatically via hooks
+5. **Resumable Sessions** - Any session can resume from git state + progress.md
+
+## Troubleshooting
+
+### Skills not showing in slash menu
+
+**Solution**: Restart Claude Code to reload skills
+
+```bash
+# Exit and restart claude-code CLI
+```
+
+### Hook not triggering
+
+**Check**:
+1. Hook matcher pattern matches tool being used
+2. Hook timeout not too short (default: 30s)
+3. Check Claude Code logs for hook errors
+
+### Can't resume implementation
+
+**Check**:
+1. `docs/implementation/*/progress.md` exists
+2. Status field not "Complete"
+3. Git working tree clean
+4. Run: `git log --grep="chore(impl):"` to see history
+
+### Verification hanging
+
+**Cause**: Validation command waiting for input
+
+**Solution**: Ensure all commands run non-interactively
+- Use `CI=true` environment variable if needed
+- Check for interactive prompts in scripts
+
+## Implementation Details
+
+See [plan file](../../../.claude/plans/cached-coalescing-engelbart.md) for complete design document including:
+- Architecture and skill hierarchy
+- Hook implementation details
+- Context recovery mechanism
+- Alternative approaches considered
+- Success metrics
+
+## Contributing
+
+When modifying skills:
+
+1. **Follow Claude Code best practices**:
+   - Use `type: prompt` for complex logic (not bash scripts)
+   - Add `allowed-tools` restrictions
+   - Set `user-invocable` appropriately
+   - Add `timeout` to hooks (30s default)
+
+2. **Test thoroughly**:
+   - Use test implementation (999-test-skill-system)
+   - Verify hooks trigger correctly
+   - Test resume capability
+   - Check auto-commit behavior
+
+3. **Document changes**:
+   - Update skill SKILL.md files
+   - Update this README
+   - Add design rationale sections
+
+## License
+
+Same as SemaJSX project (see root LICENSE file)
