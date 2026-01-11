@@ -2,6 +2,8 @@
 
 This directory contains detailed implementation plans, progress tracking, and decision records for major SemaJSX features.
 
+**IMPORTANT**: This project is designed for **AI Agent execution**, not traditional human team management. Plans focus on task dependencies, complexity assessment, and validation criteria rather than calendar timelines.
+
 ## 📁 Directory Structure
 
 Each implementation is tracked in its own directory with the following structure:
@@ -9,8 +11,8 @@ Each implementation is tracked in its own directory with the following structure
 ```
 docs/implementation/
 ├── 001-style-system/
-│   ├── plan.md            # Detailed implementation plan (week-by-week, day-by-day)
-│   ├── progress.md        # Progress tracking (updated weekly)
+│   ├── plan.md            # Task-based implementation plan (by dependency, not time)
+│   ├── progress.md        # Progress tracking (updated as tasks complete)
 │   ├── decisions.md       # Technical decisions made during implementation
 │   └── retrospective.md   # Post-implementation review (lessons learned)
 ├── 002-react-adapter/
@@ -23,82 +25,123 @@ docs/implementation/
 
 ## 📝 File Purposes
 
-### `plan.md` - Implementation Plan
+### `plan.md` - Implementation Plan (AI Agent-Oriented)
 
-**Purpose**: Detailed breakdown of implementation tasks
+**Purpose**: Detailed breakdown of implementation tasks organized by dependency and complexity
 
 **Contents**:
 
-- Week-by-week task lists
-- Day-by-day activities (for critical phases)
-- Code snippets and API designs
-- Acceptance criteria
-- Dependencies and blockers
+- **Task Dependency Graph** - Visual representation of execution order
+- **Task Groups** - Organized by dependencies, not calendar time
+- **Complexity Assessment** - Low/Medium/High ratings instead of time estimates
+- **Validation Criteria** - Clear, testable completion standards
+- **Blocking Relationships** - Explicit declaration of task dependencies
+- **Reference Implementations** - Code examples for guidance
 
 **Status**: Static after initial creation (only updated if major scope changes)
+
+**AI Agent Approach**: Unlike traditional human team planning (Week 1-2, Day 1-3), this uses:
+
+- Task Group 1, 2, 3... (numbered by dependency order)
+- Priority levels (P0, P1, P2)
+- Complexity ratings (affects agent's execution strategy)
+- Automated validation commands (e.g., `bun run test:coverage`)
 
 **Example**:
 
 ```markdown
-## Week 1-2: Style System Core
+## Task Dependency Graph
+```
 
-### Day 1-3: Project Setup
+Foundation Setup
+↓
+classes() Implementation
+↓
+rule() Implementation
+↓
+...
+
+````
+
+## Task Group 1: Foundation Setup
+
+**Priority**: P0
+**Complexity**: Low
+**Dependencies**: None
+
+### Tasks
 
 - [ ] Create `packages/style/` directory
 - [ ] Configure package.json
 - [ ] Setup Vitest
 
-### Day 4-7: Implement classes()
+### Validation Criteria
 
-- [ ] ClassRef interface
-- [ ] Hash generation
-- [ ] Unit tests
-```
+```bash
+bun run build      # ✅ Must pass
+bun run test       # ✅ Must pass
+bun run typecheck  # ✅ Must pass
+````
+
+### Blocking Next Steps
+
+- ❌ Cannot implement classes() without foundation
+
+````
 
 ---
 
-### `progress.md` - Progress Tracking
+### `progress.md` - Progress Tracking (AI Agent-Oriented)
 
-**Purpose**: Track weekly progress and current status
+**Purpose**: Track task completion status and current execution state
 
 **Contents**:
 
-- Weekly updates
-- Completed tasks
-- Blocked items
-- Risk flags
-- Next week's focus
+- Task Group completion status
+- Completed validation criteria
+- Blocked items (with blocker details)
+- Current execution focus
+- Performance metrics achieved
 
-**Status**: **Updated weekly** (every Friday)
+**Status**: **Updated as tasks complete** (not time-based)
+
+**AI Agent Approach**: Instead of "Week 1", use "Task Group N" or "Session N". Focus on what's complete vs. what's blocking, not calendar time.
 
 **Example**:
 
 ```markdown
 # Progress - Style System
 
-## Week 1 (2026-01-10 to 2026-01-17)
+## Current Session: 2026-01-11
 
-**Status**: 🟢 On Track
+**Current Focus**: Task Group 3 - rule() Implementation
 
-**Completed**:
+**Completed Task Groups**:
 
-- ✅ Project setup complete
-- ✅ ClassRef interface implemented
-- ✅ Hash generation working
+- ✅ Task Group 1: Foundation Setup (all validation passed)
+- ✅ Task Group 2: classes() Implementation (coverage: 92%)
 
 **In Progress**:
 
-- 🚧 Unit tests for classes() (80% done)
+- 🚧 Task Group 3: rule() Implementation
+  - ✅ Template string parsing complete
+  - ✅ ClassRef interpolation complete
+  - 🚧 Signal detection (in progress)
+  - ⏳ Plain value interpolation (pending)
 
 **Blocked**:
 
 - None
 
-**Next Week**:
+**Metrics Achieved**:
 
-- Complete classes() unit tests
-- Start rule() implementation
-```
+- Coverage: 92% (Task Group 2)
+- Build time: 1.2s
+
+**Next Task Group**:
+
+- Task Group 4: rules() Combinator (after Task Group 3 complete)
+````
 
 ---
 
@@ -206,70 +249,132 @@ docs/implementation/
 
 ---
 
-## 🔄 Workflow
+## 🔄 Workflow (AI Agent Execution Model)
 
 ### 1. Starting a New Implementation
 
+**For AI Agents**:
+
 1. Create directory: `docs/implementation/{number}-{name}/`
-2. Write `plan.md` with detailed task breakdown
-3. Create empty `progress.md` with first week template
+2. Write `plan.md` with:
+   - Task dependency graph
+   - Task groups (numbered by dependency order)
+   - Complexity ratings (Low/Medium/High)
+   - Validation criteria (automated tests)
+   - Blocking relationships
+3. Create empty `progress.md` with initial session template
 4. Create empty `decisions.md` with header
 5. Create empty `retrospective.md` placeholder
 
-### 2. During Implementation (Weekly)
+**Key Differences from Human Planning**:
 
-**Every Friday**:
+- ❌ No "Week 1-2" or "Day 1-3" time estimates
+- ✅ Use "Task Group N" with complexity ratings
+- ❌ No "assign to team members"
+- ✅ Use dependency graphs and blockers
+- ❌ No "estimated hours"
+- ✅ Use automated validation commands
 
-1. Update `progress.md` with week's achievements
-2. Mark completed tasks
-3. Identify blockers
-4. Plan next week's focus
+### 2. During Implementation (Task-Based, Not Time-Based)
+
+**After Completing Each Task Group**:
+
+1. Run all validation criteria:
+   ```bash
+   bun run build          # Must pass
+   bun run test:coverage  # Must meet target
+   bun run typecheck      # Must pass
+   ```
+2. Update `progress.md` with:
+   - Task group completion status
+   - Validation results
+   - Metrics achieved
+   - Next task group to execute
+3. Mark blockers immediately (don't wait for "end of week")
 
 **When Making Technical Decisions**:
 
-1. Add entry to `decisions.md`
+1. Add entry to `decisions.md` immediately
 2. Use decision template (context, options, decision, rationale)
 3. Reference decision number in commit messages
+4. Continue execution (don't wait for "approval")
+
+**Agent Execution Loop**:
+
+```
+While (incomplete task groups exist):
+  1. Select next task group (by dependency order)
+  2. Check dependencies met (all validation passed)
+  3. Execute tasks in task group
+  4. Run validation criteria
+  5. If validation fails:
+     - Log blocker in progress.md
+     - Investigate and fix
+     - Re-run validation
+  6. If validation passes:
+     - Mark task group complete
+     - Update progress.md
+     - Move to next task group
+```
 
 ### 3. After Completion
 
-1. Write `retrospective.md`
-2. Archive implementation directory (no further updates)
-3. Update main ROADMAP.md if needed
-4. Share retrospective with team
+1. Run final validation suite:
+   ```bash
+   bun run build
+   bun run test:coverage
+   bun run test:memory
+   bun run test:perf
+   ```
+2. Write `retrospective.md` with:
+   - Complexity assessment accuracy
+   - Validation criteria effectiveness
+   - Blockers encountered
+   - Metrics achieved vs. targets
+3. Archive implementation directory
+4. Update main ROADMAP.md if needed
 
 ---
 
-## 📋 Templates
+## 📋 Templates (AI Agent-Oriented)
 
 ### Progress Update Template
 
 ```markdown
-## Week N (YYYY-MM-DD to YYYY-MM-DD)
+## Session: YYYY-MM-DD
 
-**Status**: 🟢 On Track / 🟡 At Risk / 🔴 Blocked
+**Current Focus**: Task Group N - [Name]
 
-**Completed**:
+**Completed Task Groups**:
 
-- ✅ Task 1
-- ✅ Task 2
+- ✅ Task Group 1: [Name] (validation: ✅ all passed, coverage: XX%)
+- ✅ Task Group 2: [Name] (validation: ✅ all passed, coverage: XX%)
 
 **In Progress**:
 
-- 🚧 Task 3 (X% done)
+- 🚧 Task Group N: [Name]
+  - ✅ Subtask 1 complete
+  - 🚧 Subtask 2 in progress
+  - ⏳ Subtask 3 pending
 
 **Blocked**:
 
-- 🚫 Task 4 - Reason
+- 🚫 Task Group X - Reason (dependency: Task Group Y incomplete)
 
-**Risks**:
+**Validation Results**:
 
-- ⚠️ Risk description
+- `bun run build`: ✅ Passed (1.2s)
+- `bun run test:coverage`: ✅ 92% (target: ≥90%)
+- `bun run typecheck`: ✅ Passed
 
-**Next Week**:
+**Metrics Achieved**:
 
-- Task 5
-- Task 6
+- Bundle size: 12KB (target: ≤15KB) ✅
+- Performance: 1.8ms (target: <2ms) ✅
+
+**Next Task Group**:
+
+- Task Group X: [Name] (depends on: Task Group N)
 ```
 
 ### Decision Template
@@ -340,45 +445,107 @@ docs/
 
 ---
 
-## ❓ FAQ
+## ❓ FAQ (AI Agent-Specific)
 
 ### Q: When should I create a new implementation directory?
 
 **A**: Create a directory when:
 
-- Implementation spans multiple weeks (≥2 weeks)
-- Task is complex and needs detailed tracking
-- Multiple people will collaborate
-- Feature is a major milestone in the roadmap
+- Implementation has **multiple task groups** (≥3 task groups)
+- Task complexity is **Medium or High**
+- Feature requires **dependency tracking**
+- Feature is a **major milestone** in the roadmap
 
 **Don't create** for:
 
-- Simple bug fixes
+- Simple bug fixes (single task group)
 - Documentation updates
-- Single-day tasks
+- Trivial changes (Low complexity, no dependencies)
 
 ### Q: How detailed should the plan.md be?
 
-**A**: Detailed enough that:
+**A (for AI Agents)**: Detailed enough that:
 
-- Anyone can understand what needs to be done
-- Tasks can be distributed to multiple people
-- Progress can be objectively measured
-- Acceptance criteria are clear
+- **Dependency graph is clear** - Agent knows execution order
+- **Validation is automated** - Agent can verify completion without human judgment
+- **Blockers are explicit** - Agent knows what prevents next steps
+- **Reference implementations exist** - Agent has code examples to follow
 
-But not so detailed that it becomes a burden to maintain.
+**Include**:
+
+- ✅ Automated test commands (`bun run test:coverage`)
+- ✅ Complexity ratings (Low/Medium/High)
+- ✅ Blocking relationships (Task A blocks Task B)
+- ✅ Code snippets and API signatures
+
+**Avoid**:
+
+- ❌ Time estimates (weeks, days, hours)
+- ❌ Resource allocation (who does what)
+- ❌ Subjective completion criteria ("looks good")
 
 ### Q: What if the plan changes significantly during implementation?
 
 **A**:
 
 - For minor adjustments: Add note in `decisions.md`
-- For major scope changes: Update `plan.md` and add note explaining why
-- Update ROADMAP.md if timeline changes significantly
+- For complexity re-assessment: Update task group complexity rating
+- For dependency changes: Update dependency graph and blocking relationships
+- For major scope changes: Update `plan.md` and log decision in `decisions.md`
+- Update ROADMAP.md if deliverables or metrics change significantly
+
+**Agent behavior**: Continue execution with updated plan. No need to wait for "approval" - document decision and proceed.
 
 ### Q: Can I reference decisions in commit messages?
 
 **A**: Yes! Use format: `feat: implement X (see implementation/001-style-system/decisions.md#decision-003)`
+
+### Q: How should an AI Agent handle blockers?
+
+**A (Agent Instructions)**:
+
+1. **Detect blocker**: Validation fails or dependency not met
+2. **Log immediately**: Update `progress.md` with blocker details
+3. **Investigate**: Analyze error messages, read related code
+4. **Attempt resolution**: Fix if possible
+5. **Re-validate**: Run automated tests again
+6. **If still blocked**:
+   - Document root cause in `progress.md`
+   - Add decision to `decisions.md` if workaround chosen
+   - Report blocker (implementation paused)
+
+**Do NOT**:
+
+- ❌ Wait for "end of week" to log blocker
+- ❌ Proceed to next task group if validation fails
+- ❌ Skip validation steps
+
+### Q: How do I know when a task group is "complete"?
+
+**A (Agent Validation)**:
+
+A task group is complete when **ALL** of the following are true:
+
+1. ✅ All subtasks checked off
+2. ✅ All validation commands pass:
+   ```bash
+   bun run build          # Exit code: 0
+   bun run test:coverage  # Coverage ≥ target
+   bun run typecheck      # Exit code: 0
+   ```
+3. ✅ Metrics meet targets (bundle size, performance, etc.)
+4. ✅ No blockers remain for this task group
+
+**Automated check**:
+
+```bash
+# Example validation script
+if [ $? -eq 0 ] && [ $COVERAGE -ge 90 ] && [ $BUNDLE_SIZE -le 15 ]; then
+  echo "✅ Task Group complete"
+else
+  echo "❌ Task Group incomplete"
+fi
+```
 
 ---
 
