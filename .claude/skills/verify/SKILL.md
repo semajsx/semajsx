@@ -36,22 +36,24 @@ Run comprehensive validation suite in isolated forked context and return clean s
 ## Purpose
 
 This skill runs validation in a **separate forked context** to:
+
 - **Avoid cluttering main conversation** with verbose test output
 - **Generate clean reports** without noise
 - **Allow parallel execution** with main work
 - **Provide independent verification**
 
+**See also**: [examples.md](examples.md) for detailed usage examples
+
 ## Usage
 
 ```
 Run full verification
-
 Check coverage only
-
 Verify all validation passes
 ```
 
 The skill will:
+
 1. Execute in forked context (isolated)
 2. Run all validation commands
 3. Collect results and metrics
@@ -64,16 +66,19 @@ The skill will:
 This skill uses `context: fork`, meaning:
 
 **Isolated Execution**:
+
 - Runs in separate conversation thread
 - Verbose output doesn't pollute main chat
 - Only final report returns to parent
 
 **Parallel Execution**:
+
 - Main conversation can continue while verification runs
 - Multiple verifications can run concurrently
 - Non-blocking operation
 
 **Flow**:
+
 ```
 Main Context                  Forked Context
     │                              │
@@ -136,10 +141,10 @@ After all commands complete, generates markdown report:
 
 ## Metrics
 
-| Metric         | Target  | Actual | Status |
-|----------------|---------|--------|--------|
-| Test Coverage  | ≥80%    | 91%    | ✅     |
-| Test Pass Rate | 100%    | 100%   | ✅     |
+| Metric         | Target | Actual | Status |
+| -------------- | ------ | ------ | ------ |
+| Test Coverage  | ≥80%   | 91%    | ✅     |
+| Test Pass Rate | 100%   | 100%   | ✅     |
 
 ## Summary
 
@@ -153,11 +158,13 @@ After all commands complete, generates markdown report:
 **Type**: `prompt` (LLM-based)
 
 **Why prompt instead of command?**
+
 - Reminder about forked context
 - Ensures proper behavior
 - Prevents accidental progress.md updates
 
 **What it does**:
+
 - Reminds you're in forked context
 - Lists commands to run
 - Clarifies read-only mode
@@ -167,61 +174,51 @@ After all commands complete, generates markdown report:
 ### Called by `/workflow`
 
 ```
-/workflow verify
-  ↓
-  Calls: /verify
-  ↓
-  [Forked context runs validation]
-  ↓
-  Returns: Markdown report
-  ↓
-  /workflow displays report
+/workflow verify → Calls: /verify
+  → [Forked context runs validation]
+  → Returns: Markdown report
+  → /workflow displays report
 ```
 
 ### Called by `/implement`
 
 ```
-/implement 3
-  ↓
-  [Task group execution]
-  ↓
-  Needs validation check
-  ↓
-  Calls: /verify
-  ↓
-  Returns: Results
-  ↓
-  /implement proceeds based on results
+/implement 3 → [Task group execution]
+  → Needs validation check
+  → Calls: /verify
+  → Returns: Results
+  → /implement proceeds based on results
 ```
 
 ### Direct invocation
 
 ```
 User: "Run full verification"
-  ↓
-  /verify invoked
-  ↓
-  [Forked context runs all commands]
-  ↓
-  Returns: Clean report
+  → /verify invoked
+  → [Forked context runs all commands]
+  → Returns: Clean report
 ```
 
 ## File Structure
 
 **Reads**:
+
 - `package.json` - Available scripts
 - `docs/implementation/*/progress.md` - Target metrics
 - Git state - Commit hash, branch
 
 **Does NOT Write**:
+
 - No file modifications (read-only mode)
 - No commits
 - No progress updates
 
 **Returns**:
+
 - Markdown report (to parent context)
 
 **Allowed Tools**:
+
 - `Read` - Read files for context
 - `Bash` - Run validation commands
 
@@ -232,33 +229,7 @@ User: "Run full verification"
 ```
 User: Run full verification
 
-[Forked context begins]
-
-🔍 Running verification suite...
-
-$ bun run build
-[build output...]
-✅ Build passed (1.2s)
-
-$ bun run test
-[test output...]
-✅ 89/89 tests passed (2.1s)
-
-$ bun run test:coverage
-[coverage output...]
-✅ Coverage: 91%
-
-$ bun run typecheck
-[typecheck output...]
-✅ No errors (0.8s)
-
-$ bun run lint
-[lint output...]
-✅ No errors (0.3s)
-
-Generating report...
-
-[Returns to main context]
+[Forked context runs all validation]
 
 # Verification Report
 
@@ -293,8 +264,6 @@ Generating report...
 
 ```
 User: Check if everything passes
-
-[Forked context runs validation]
 
 # Verification Report
 
@@ -333,30 +302,12 @@ User: Check if everything passes
 3. Re-run verification
 ```
 
-### Example 3: Quick Coverage Check
-
-```
-User: What's our test coverage?
-
-[Skill runs bun run test:coverage in fork]
-
-# Coverage Check
-
-**Coverage**: 91% (target: ≥80%)
-
-✅ Coverage meets target
-
-**Breakdown**:
-- packages/core: 94%
-- packages/dom: 88%
-- packages/signal: 96%
-```
-
 ## Benefits of Context Fork
 
 ### 1. Clean Main Conversation
 
 **Without fork**:
+
 ```
 User: /verify
 Agent: Running bun run test...
@@ -367,6 +318,7 @@ Agent: All tests passed
 ```
 
 **With fork**:
+
 ```
 User: /verify
 Agent: Running verification in isolated context...
@@ -389,24 +341,11 @@ Main: [continues Task Group 3 work]
 [Verification completes]
   ↓
 Main: Verification report: ✅ All passed
-  ↓
-Main: [continues Task Group 3]
 ```
 
 ### 3. Token Efficiency
 
 Verbose output stays in forked context, doesn't consume tokens in main conversation.
-
-### 4. Multiple Verifications
-
-Can run multiple verifications in parallel:
-
-```
-/verify (for current implementation)
-/verify (for different branch)
-```
-
-Both execute independently, return separate reports.
 
 ## Best Practices
 
@@ -418,66 +357,48 @@ Both execute independently, return separate reports.
 
 ## Troubleshooting
 
-### Issue: Forked context hangs
+### Forked context hangs
 
 **Cause**: Validation command hanging (e.g., interactive prompt)
 
-**Solution**:
-- Check validation commands run non-interactively
-- Ensure no prompts in test/build scripts
-- Use `CI=true` environment variable if needed
+**Solution**: Check validation commands run non-interactively. Ensure no prompts in test/build scripts. Use `CI=true` environment variable if needed.
 
-### Issue: Report missing metrics
+### Report missing metrics
 
 **Cause**: Command output format different than expected
 
-**Solution**:
-- Check command actually ran successfully
-- Review exit codes and output
-- Manually run commands to see actual format
+**Solution**: Check command actually ran successfully. Review exit codes and output. Manually run commands to see actual format.
 
-### Issue: Fork not returning
+### Fork not returning
 
 **Cause**: Context fork timeout or error
 
-**Solution**:
-- Wait longer (may be running tests)
-- Check validation commands work manually
-- Report issue if consistent problem
+**Solution**: Wait longer (may be running tests). Check validation commands work manually. Report issue if consistent problem.
 
 ## Design Rationale
 
-### Why `context: fork`?
+**Why `context: fork`?**
 
-**Considered alternatives**:
-1. ❌ Run in main context (clutters conversation)
-2. ❌ Suppress output (lose debugging info)
-3. ✅ Fork context (isolated, clean)
-
-**Chosen**: `context: fork` because:
 - Keeps main conversation clean
 - Preserves full output for debugging
 - Allows parallel execution
 - Returns structured report only
 
-### Why `user-invocable: true`?
+**Why `user-invocable: true`?**
 
-Unlike other skills, this is **user-facing**:
 - Users want to manually check validation
 - Should be visible in `/` menu
 - Common operation during development
 
-### Why restrict to `Read` and `Bash`?
+**Why restrict to `Read` and `Bash`?**
 
-**Security and scope**:
 - No file modifications needed
 - No git operations needed
 - Read-only verification
 - Clear audit trail
 
-### Why `type: prompt` for PreToolUse?
+**Why `type: prompt` for PreToolUse?**
 
-**Better than command**:
 - Flexible reminder
 - Can adapt to context
 - Explains read-only mode
@@ -507,10 +428,10 @@ Unlike other skills, this is **user-facing**:
 
 ## Metrics
 
-| Metric         | Target  | Actual | Status |
-|----------------|---------|--------|--------|
-| Test Coverage  | ≥N%     | N%     | [✅/❌] |
-| Test Pass Rate | 100%    | N%     | [✅/❌] |
+| Metric         | Target | Actual | Status  |
+| -------------- | ------ | ------ | ------- |
+| Test Coverage  | ≥N%    | N%     | [✅/❌] |
+| Test Pass Rate | 100%   | N%     | [✅/❌] |
 
 ## Summary
 

@@ -34,29 +34,29 @@ Update `progress.md` files with structured progress information: task completion
 ## Purpose
 
 This skill provides a structured way to update progress tracking, ensuring:
+
 - Consistent formatting across all implementations
 - Automatic git commits for audit trail
 - Real-time progress visibility
 
 **Note**: This is an internal skill, primarily called by `/workflow` and `/implement`. You can also invoke it directly for manual updates.
 
+**See also**: [examples.md](examples.md) for detailed usage examples
+
 ## Usage
 
-This skill works by **reading your intent from context** and updating progress.md accordingly. Simply describe what you want to update:
+Simply describe what you want to update:
 
 ```
 Update progress to mark task group 3 as complete with 94% coverage
-
 Log a blocker for task group 4: TypeScript error in dependencies
-
 Start task group 5
-
 Update metrics: bundle size 12KB, coverage 91%
-
 Show current implementation status
 ```
 
 The skill will:
+
 1. Read the active implementation's progress.md
 2. Update the appropriate section
 3. Auto-commit the change
@@ -88,11 +88,13 @@ When you describe an update, the skill:
 **Type**: `prompt` (LLM-based, context-aware)
 
 **Why prompt instead of command?**
+
 - Progress updates vary in context
 - Commit messages should reflect intent
 - Claude understands what was changed better than regex
 
 **What it does**:
+
 - Detects when progress.md was modified
 - Reads the changes to understand context
 - Generates appropriate commit message
@@ -105,6 +107,7 @@ When you describe an update, the skill:
 **Intent**: "Mark task group 3 complete with 94% coverage"
 
 **Updates**:
+
 ```markdown
 ## Completed Task Groups
 
@@ -116,13 +119,12 @@ When you describe an update, the skill:
 
 **Commit**: `chore(impl): complete task group 3 - style-system`
 
----
-
 ### Log Blocker
 
 **Intent**: "Log blocker for task group 4: TypeScript error in @types/node"
 
 **Updates**:
+
 ```markdown
 ## Blocked
 
@@ -133,13 +135,12 @@ When you describe an update, the skill:
 
 **Commit**: `chore(impl): blocker logged - style-system`
 
----
-
 ### Start Task Group
 
 **Intent**: "Start task group 5"
 
 **Updates**:
+
 ```markdown
 ## Current Session: 2026-01-11
 
@@ -155,13 +156,12 @@ When you describe an update, the skill:
 
 **Commit**: `chore(impl): start task group 5 - style-system`
 
----
-
 ### Update Metrics
 
 **Intent**: "Update metrics: bundle size 12KB, coverage 91%, build time 1.2s"
 
 **Updates**:
+
 ```markdown
 ## Metrics Achieved
 
@@ -172,40 +172,7 @@ When you describe an update, the skill:
 
 **Commit**: `chore(impl): metrics updated - style-system`
 
----
-
-### Show Status
-
-**Intent**: "Show current implementation status"
-
-**Output** (read-only, no file changes):
-```
-📊 Implementation Status
-
-Name: Style System (001-style-system)
-Progress: 4/7 task groups (57%)
-
-✅ Completed:
-  - Task Group 1: Foundation Setup (coverage: 100%)
-  - Task Group 2: classes() Implementation (coverage: 92%)
-  - Task Group 3: rule() Implementation (coverage: 94%)
-  - Task Group 4: rules() Combinator (coverage: 88%)
-
-🚧 In Progress:
-  - Task Group 5: Theme Support
-
-📋 Pending:
-  - Task Group 6: Media Queries
-  - Task Group 7: Server-Side Rendering
-
-🚫 Blockers: None
-
-📝 Last Update: 2026-01-11T14:30:00Z
-```
-
 ## Template Formats
-
-The skill follows these standard formats when updating progress.md:
 
 ### Completed Task Group
 
@@ -253,54 +220,46 @@ The skill follows these standard formats when updating progress.md:
 ### Called by `/workflow`
 
 ```
-/workflow
-  ↓
-  Detects next task group: 4
-  ↓
-  Updates: "Start task group 4"
-  ↓
-  progress.md updated + auto-committed
+/workflow → Detects next task group: 4
+  → Updates: "Start task group 4"
+  → progress.md updated + auto-committed
 ```
 
 ### Called by `/implement`
 
 ```
-/implement 3
-  ↓
-  Task group 3 execution complete
-  ↓
-  Validation passed (coverage: 94%)
-  ↓
-  Updates: "Mark task group 3 complete with 94% coverage"
-  ↓
-  progress.md updated + auto-committed
+/implement 3 → Task group 3 execution complete
+  → Validation passed (coverage: 94%)
+  → Updates: "Mark task group 3 complete with 94% coverage"
+  → progress.md updated + auto-committed
 ```
 
 ### Direct invocation
 
 ```
 User: "Log a blocker: waiting for upstream API"
-  ↓
-  /track invoked automatically
-  ↓
-  progress.md updated with blocker entry
-  ↓
-  Auto-committed: chore(impl): blocker logged
+  → /track invoked automatically
+  → progress.md updated with blocker entry
+  → Auto-committed: chore(impl): blocker logged
 ```
 
 ## File Structure
 
 **Reads**:
+
 - `docs/implementation/*/progress.md` - Current state
 - `docs/implementation/*/plan.md` - Task group names/details
 
 **Writes**:
+
 - `docs/implementation/*/progress.md` - All sections
 
 **Commits**:
+
 - `chore(impl): [action] - [impl-name]`
 
 **Allowed Tools**:
+
 - `Read` - Read progress.md and plan.md
 - `Write` / `Edit` - Update progress.md
 - `Bash(git:*)` - Git operations only
@@ -311,9 +270,6 @@ User: "Log a blocker: waiting for upstream API"
 
 ```
 User: Mark task group 2 complete with 92% coverage, all validation passed
-
-[Skill reads progress.md and plan.md]
-[Skill updates progress.md]
 
 Before:
 **In Progress**:
@@ -326,8 +282,7 @@ After:
   - Coverage: 92% (target: ≥90%)
   - Completed: 2026-01-11
 
-[PostToolUse hook triggers]
-[Auto-commits: chore(impl): complete task group 2 - style-system]
+[Auto-committed: chore(impl): complete task group 2 - style-system]
 
 ✅ Task Group 2 marked complete and committed
 ```
@@ -337,66 +292,21 @@ After:
 ```
 User: Log blocker for task group 4: dependency issue with @types/react@19
 
-[Skill updates progress.md]
-
 Added:
 **Blocked**:
 - 🚫 Task Group 4: Dependency issue with @types/react@19
   - Logged: 2026-01-11T15:20:00Z
   - Status: Investigating
 
-[Auto-commits: chore(impl): blocker logged - style-system]
+[Auto-committed: chore(impl): blocker logged - style-system]
 
 ✅ Blocker logged and committed
 ```
 
-### Example 3: Starting Task Group
-
-```
-User: Start task group 5
-
-[Skill reads plan.md for task group 5 details]
-[Skill updates progress.md]
-
-Updated:
-**Current Focus**: Task Group 5 - Theme Support
-
-**In Progress**:
-- 🚧 Task Group 5: Theme Support
-  - Started: 2026-01-11
-  - Priority: P1
-  - Complexity: Medium
-
-[Auto-commits: chore(impl): start task group 5 - style-system]
-
-✅ Task Group 5 started and committed
-```
-
-### Example 4: Updating Metrics
-
-```
-User: Update metrics: bundle size 12.3KB, build time 1.1s, coverage 94%
-
-[Skill reads plan.md for targets]
-[Skill updates progress.md]
-
-Updated:
-**Metrics Achieved**:
-- Bundle size: 12.3KB (target: ≤15KB) ✅
-- Build time: 1.1s (target: <5s) ✅
-- Coverage: 94% (target: ≥80%) ✅
-
-[Auto-commits: chore(impl): metrics updated - style-system]
-
-✅ Metrics updated and committed
-```
-
-### Example 5: Checking Status
+### Example 3: Checking Status
 
 ```
 User: What's the current implementation status?
-
-[Skill reads progress.md]
 
 📊 Implementation Status
 
@@ -446,71 +356,52 @@ None
 
 ## Troubleshooting
 
-### Issue: Hook not committing
+### Hook not committing
 
 **Check**:
+
 ```bash
 git status
 ```
 
-**If progress.md uncommitted**:
-- Hook may have failed
-- Manually commit:
-  ```bash
-  git add docs/implementation/*/progress.md
-  git commit -m "chore(impl): progress updated"
-  ```
+**If progress.md uncommitted**, manually commit:
 
-### Issue: Wrong section updated
+```bash
+git add docs/implementation/*/progress.md
+git commit -m "chore(impl): progress updated"
+```
+
+### Wrong section updated
 
 **Cause**: Ambiguous update description
 
-**Solution**:
-- Be specific: "Mark task group 3 **complete**" not just "update task group 3"
-- Specify section: "Log **blocker**", "Update **metrics**"
+**Solution**: Be specific - "Mark task group 3 **complete**" not just "update task group 3". Specify section: "Log **blocker**", "Update **metrics**"
 
-### Issue: Format doesn't match template
+### Format doesn't match template
 
 **Cause**: Manual edits broke structure
 
-**Solution**:
-- Use this skill for all updates
-- If manual edit needed, follow templates exactly
-- Regenerate from plan.md if corrupted
+**Solution**: Use this skill for all updates. If manual edit needed, follow templates exactly. Regenerate from plan.md if corrupted.
 
 ## Design Rationale
 
-### Why `type: prompt` for PostToolUse?
+**Why `type: prompt` for PostToolUse?**
 
-**Considered alternatives**:
-1. ❌ Complex bash script parsing commit type
-2. ❌ Regex matching file changes
-3. ✅ LLM-based context understanding
-
-**Chosen**: `type: prompt` because:
-- Claude understands **what** changed (completed vs blocked vs started)
-- Can read change content and generate **appropriate** commit message
+- Claude understands what changed (completed vs blocked vs started)
+- Can read change content and generate appropriate commit message
 - More maintainable than regex parsing
 - Handles edge cases naturally
 
-### Why `user-invocable: false`?
+**Why `user-invocable: false`?**
 
-This skill is primarily an **internal helper**:
+- Primarily an internal helper
 - Called by `/workflow` and `/implement`
 - Can still be invoked directly by describing intent
 - Not shown in `/` menu to reduce clutter
-- Auto-discoverable when user mentions "progress" or "track"
 
-### Why restrict to `Bash(git:*)`?
+**Why restrict to `Bash(git:*)`?**
 
-**Security**: Only git operations needed
+- Only git operations needed
 - Can't accidentally run destructive commands
 - Can't modify files outside progress.md
-- Clear audit trail of what skill can do
-
-### Why no `args` in frontmatter?
-
-**Best practice**: Skills receive context through markdown body and conversation, not structured args
-- More flexible (user can describe intent naturally)
-- Claude parses intent from context
-- No rigid parameter structure
+- Clear audit trail

@@ -58,6 +58,7 @@ Complete implementation by generating retrospective, updating CHANGELOG, and mar
 ## Purpose
 
 This skill finalizes implementations:
+
 - **Verify all task groups complete**
 - **Generate retrospective** with metrics analysis
 - **Update CHANGELOG** with release notes
@@ -65,6 +66,8 @@ This skill finalizes implementations:
 - **Clean up** temporary files
 
 **Note**: User-facing skill, run when all task groups done.
+
+**See also**: [examples.md](examples.md) for detailed usage examples
 
 ## Usage
 
@@ -77,6 +80,7 @@ Generate retrospective
 ```
 
 The skill will:
+
 1. Verify completion readiness
 2. Generate retrospective from data
 3. Update CHANGELOG
@@ -150,12 +154,14 @@ Updates progress.md:
 **Type**: `prompt` (LLM-based)
 
 **Why prompt?**
+
 - Needs to understand completion state
 - Check multiple conditions
 - Read from multiple files
 - More flexible than bash
 
 **What it does**:
+
 - Reads plan.md and progress.md
 - Counts completed task groups
 - Checks validation status
@@ -167,12 +173,14 @@ Updates progress.md:
 **Type**: `prompt` (LLM-based)
 
 **Why prompt?**
+
 - Context-aware commit messages
 - Handles different file types
 - Extracts implementation name
 - More maintainable
 
 **What it does**:
+
 - Detects retrospective.md writes
 - Detects progress.md completion marker
 - Detects CHANGELOG updates
@@ -218,25 +226,30 @@ User: "Archive implementation"
 ## File Structure
 
 **Reads**:
+
 - `docs/implementation/*/plan.md` - Targets
 - `docs/implementation/*/progress.md` - State
 - `docs/implementation/*/decisions.md` - Count
 - `git log` - History
 
 **Writes**:
+
 - `docs/implementation/*/retrospective.md` - Retrospective
 - `docs/implementation/*/progress.md` - Completion marker
 - `CHANGELOG.md` - Release notes
 
 **Deletes**:
+
 - `.workspace/drafts/*` - Temp files
 
 **Commits**:
+
 - `docs(impl): add retrospective - <name>`
 - `chore(impl): complete implementation - <name>`
 - `docs: update CHANGELOG`
 
 **Allowed Tools**:
+
 - `Read`, `Grep`, `Glob` - Read files
 - `Write`, `Edit` - Update files
 - `Bash(git:*)` - Git only
@@ -311,6 +324,7 @@ Ready for release!
 **Cause**: Something incomplete
 
 **Solution**:
+
 - Check what PreToolUse reports
 - Complete missing work
 - Re-run /archive
@@ -320,6 +334,7 @@ Ready for release!
 **Cause**: progress.md format unexpected
 
 **Solution**:
+
 - Manually review retrospective.md
 - Edit to add missing info
 - Recommit
@@ -329,6 +344,7 @@ Ready for release!
 ### Why `type: prompt` for both hooks?
 
 **Context awareness**:
+
 - PreToolUse needs to check multiple conditions
 - PostToolUse needs to generate commit messages
 - More flexible than bash
@@ -337,6 +353,7 @@ Ready for release!
 ### Why `user-invocable: true`?
 
 **User-facing operation**:
+
 - Users explicitly complete implementations
 - Should be in `/` menu
 - Milestone action
@@ -345,6 +362,7 @@ Ready for release!
 ### Why verify before proceeding?
 
 **Data integrity**:
+
 - Ensure nothing missed
 - Prevent incomplete archives
 - Maintain quality

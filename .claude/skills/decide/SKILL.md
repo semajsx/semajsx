@@ -29,6 +29,7 @@ Log technical decisions during implementation with structured format including c
 ## Purpose
 
 This skill ensures technical decisions are:
+
 - **Documented immediately** when made (not remembered later)
 - **Consistently formatted** for easy reference
 - **Linked to commits** for traceability
@@ -36,19 +37,20 @@ This skill ensures technical decisions are:
 
 **Note**: This is an internal skill, primarily called during `/implement` execution when Claude faces design choices. Can also be invoked directly.
 
+**See also**: [examples.md](examples.md) for detailed usage examples
+
 ## Usage
 
 Describe the decision you need to log:
 
 ```
 Log decision: Use nanoid for class hash generation
-
 Record decision to use Proxy-based reactivity instead of getters
-
 Document choice: Function params for context API vs React.createContext
 ```
 
 The skill will:
+
 1. Prompt for decision details (context, options, rationale, consequences)
 2. Append to `decisions.md` with proper formatting
 3. Auto-commit with decision number
@@ -78,6 +80,7 @@ Each answer is captured and formatted into a structured decision entry.
 **Context**: [Why was this decision needed?]
 
 **Options Considered**:
+
 1. [Option 1] - [Brief description + key pro/con]
 2. [Option 2] - [Brief description + key pro/con]
 3. [Option 3] - [Brief description + key pro/con]
@@ -85,6 +88,7 @@ Each answer is captured and formatted into a structured decision entry.
 **Decision**: [What was decided?]
 
 **Rationale**:
+
 - [Reason 1]
 - [Reason 2]
 - [Reason 3]
@@ -92,20 +96,24 @@ Each answer is captured and formatted into a structured decision entry.
 **Consequences**:
 
 Positive:
+
 - [Benefit 1]
 - [Benefit 2]
 
 Negative:
+
 - [Drawback 1]
 - [Drawback 2]
 
 Neutral/Trade-offs:
+
 - [Trade-off 1]
 ```
 
 ### Auto-Commit
 
 PostToolUse hook automatically commits:
+
 ```bash
 git commit -m "docs(impl): decision 003 - use nanoid for class hash generation"
 ```
@@ -115,98 +123,19 @@ git commit -m "docs(impl): decision 003 - use nanoid for class hash generation"
 **Type**: `prompt` (LLM-based)
 
 **Why prompt instead of command?**
+
 - Decision titles vary in length and format
 - Claude can extract decision number by counting
 - Claude can generate descriptive commit message
 - More maintainable than bash parsing
 
 **What it does**:
+
 1. Detects when decisions.md was modified
 2. Counts decision entries to get number
 3. Extracts decision title
 4. Generates commit message
 5. Executes git commit
-
-## Interactive Prompts
-
-The skill walks you through each field:
-
-### 1. Context
-
-```
-Why was this decision needed?
-
-Example:
-"Need to generate unique class names with low collision risk and short length for optimal bundle size"
-
-Your answer:
->
-```
-
-### 2. Options Considered
-
-```
-What alternatives were evaluated? List them:
-
-Example:
-1. UUID v4 - Standard, but 36 chars too long
-2. MD5 hash - Content-based, but 32 chars still too long
-3. nanoid - Configurable length, wide adoption
-
-Your answer:
->
-```
-
-### 3. Decision
-
-```
-What was decided?
-
-Example:
-"Use nanoid with 8-character length"
-
-Your answer:
->
-```
-
-### 4. Rationale
-
-```
-Why this option? List key reasons:
-
-Example:
-- Collision probability ~1M years at 8 chars
-- Smaller bundle size (nanoid ~1KB vs uuid ~9KB)
-- URL-safe alphabet by default
-
-Your answer:
->
-```
-
-### 5. Consequences
-
-```
-What are the trade-offs and implications?
-
-Format as:
-Positive:
-- [Benefit]
-
-Negative:
-- [Drawback]
-
-Example:
-Positive:
-- Short class names (.rule-a1b2c3d4)
-- Minimal bundle impact
-
-Negative:
-- Adds dependency
-- Not semantic names
-
-Your answer:
->
-```
 
 ## Decision Status
 
@@ -219,56 +148,42 @@ Decisions can have different statuses:
 
 **Default**: "Accepted" (when logging during implementation)
 
-To update status later, manually edit decisions.md and commit.
-
 ## Integration
 
 ### Called during `/implement`
 
 ```
-/implement 3
-  ↓
-  [Implementing rule() template parsing]
-  ↓
-  Design choice: How to detect signals?
-  ↓
-  "Need to decide on signal detection approach"
-  ↓
-  /decide invoked
-  ↓
-  [Interactive prompts]
-  ↓
-  Decision logged and committed
-  ↓
-  [Continue implementation]
+/implement 3 → [Implementing rule() template parsing]
+  → Design choice: How to detect signals?
+  → /decide invoked → [Interactive prompts]
+  → Decision logged and committed → [Continue implementation]
 ```
 
 ### Direct invocation
 
 ```
 User: "Log decision to use nanoid for class hashing"
-  ↓
-  /decide invoked
-  ↓
-  [Interactive prompts]
-  ↓
-  Decision appended to decisions.md
-  ↓
-  Auto-committed: docs(impl): decision 003 - use nanoid
+  → /decide invoked → [Interactive prompts]
+  → Decision appended to decisions.md
+  → Auto-committed: docs(impl): decision 003 - use nanoid
 ```
 
 ## File Structure
 
 **Reads**:
+
 - `docs/implementation/*/decisions.md` - Existing decisions (to count)
 
 **Appends**:
+
 - `docs/implementation/*/decisions.md` - New decision entry
 
 **Commits**:
+
 - `docs(impl): decision NNN - [title]`
 
 **Allowed Tools**:
+
 - `Read` - Read existing decisions
 - `Write` / `Edit` - Append new decision
 - `Bash(git:*)` - Git operations only
@@ -282,26 +197,26 @@ User: Log decision to use function params for context API
 
 🤔 Logging technical decision...
 
-1️⃣ **Context**: Why was this decision needed?
+1️⃣ Context:
 > Designing SemaJSX context API - choose between React.createContext or function parameters
 
-2️⃣ **Options Considered**: List alternatives
+2️⃣ Options Considered:
 > 1. React.createContext clone - Familiar, implicit context
 > 2. Solid.js function params - Explicit passing, better DX
 > 3. Global registry - Singleton-based
 > 4. Hybrid approach - Allow both
 
-3️⃣ **Decision**: What was decided?
+3️⃣ Decision:
 > Use function parameters (Solid.js style)
 
-4️⃣ **Rationale**: Why this option?
+4️⃣ Rationale:
 > - More explicit data flow
 > - Better TypeScript inference
 > - Aligns with signal philosophy
 > - Simpler implementation
 > - Easier to test
 
-5️⃣ **Consequences**: Trade-offs?
+5️⃣ Consequences:
 > Positive:
 > - Explicit context passing clarifies data flow
 > - TypeScript infers types automatically
@@ -310,127 +225,36 @@ User: Log decision to use function params for context API
 > Negative:
 > - More verbose than React
 > - No React.createContext compatibility
->
-> Neutral:
-> - Different from React (learning curve)
 
-📝 Writing to decisions.md...
-
-## Decision 004: Use Function Params for Context API
-
-**Date**: 2026-01-11
-**Status**: Accepted
-
-**Context**: Designing SemaJSX context API - choose between React.createContext or function parameters
-
-**Options Considered**:
-1. React.createContext clone - Familiar, implicit context
-2. Solid.js function params - Explicit passing, better DX
-3. Global registry - Singleton-based
-4. Hybrid approach - Allow both
-
-**Decision**: Use function parameters (Solid.js style)
-
-**Rationale**:
-- More explicit data flow
-- Better TypeScript inference
-- Aligns with signal philosophy
-- Simpler implementation
-- Easier to test
-
-**Consequences**:
-
-Positive:
-- Explicit context passing clarifies data flow
-- TypeScript infers types automatically
-- Easier to test (no Provider)
-
-Negative:
-- More verbose than React
-- No React.createContext compatibility
-
-Neutral:
-- Different from React (learning curve)
-
-[PostToolUse hook triggers]
-[Auto-commits: docs(impl): decision 004 - use function params for context API]
+[Auto-committed: docs(impl): decision 004 - use function params for context API]
 
 ✅ Decision 004 logged and committed
 ```
 
-### Example 2: Performance Decision
-
-```
-User: Record decision on memoization strategy for computed signals
-
-🤔 Logging technical decision...
-
-1️⃣ **Context**:
-> Computed signals recalculating unnecessarily - need caching strategy
-
-2️⃣ **Options Considered**:
-> 1. No memoization - Recalculate every access
-> 2. WeakMap cache - Cache per instance
-> 3. LRU cache - Bounded memory
-> 4. Dependency tracking - Recalc only when deps change
-
-3️⃣ **Decision**:
-> Use dependency tracking (option 4)
-
-4️⃣ **Rationale**:
-> - Most efficient (only recalc when needed)
-> - Proven approach (Solid.js, Vue)
-> - Automatic dependency collection
-> - No memory leaks
-
-5️⃣ **Consequences**:
-> Positive:
-> - Optimal performance
-> - No manual invalidation
->
-> Negative:
-> - More complex implementation
-> - Edge cases with conditional deps
->
-> Trade-offs:
-> - Bundle size +2KB for dep tracking
-> - Runtime overhead <0.1ms per computed
-
-📝 Writing to decisions.md...
-
-## Decision 007: Use Dependency Tracking for Computed Memoization
-
-[... formatted decision ...]
-
-[Auto-committed: docs(impl): decision 007 - use dependency tracking]
-
-✅ Decision 007 logged
-```
-
-### Example 3: Simple Tool Choice
+### Example 2: Tool Choice
 
 ```
 User: Log decision to use nanoid for class hashing
 
 🤔 Logging technical decision...
 
-1️⃣ **Context**:
+1️⃣ Context:
 > Need unique class names, short length, low collision risk
 
-2️⃣ **Options**:
+2️⃣ Options:
 > 1. UUID v4 - Too long (36 chars)
 > 2. MD5 hash - Still long (32 chars)
 > 3. nanoid - Configurable (8 chars)
 
-3️⃣ **Decision**:
+3️⃣ Decision:
 > Use nanoid with 8-character length
 
-4️⃣ **Rationale**:
+4️⃣ Rationale:
 > - Collision probability: ~1M years at 8 chars
 > - Small bundle (1KB vs 9KB for uuid)
 > - Wide adoption
 
-5️⃣ **Consequences**:
+5️⃣ Consequences:
 > Positive:
 > - Short class names
 > - Minimal bundle impact
@@ -439,19 +263,12 @@ User: Log decision to use nanoid for class hashing
 > - Adds dependency
 > - Not semantic names
 
-📝 Writing to decisions.md...
-
-[Decision formatted and appended]
-[Auto-committed: docs(impl): decision 003 - use nanoid for class hashing]
-
 ✅ Decision 003 logged
 ```
 
 ## Linking Decisions to Code
 
 ### In Commit Messages
-
-Reference decision in implementation commits:
 
 ```bash
 git commit -m "feat: implement rule() with signal detection
@@ -465,16 +282,14 @@ See: docs/implementation/001-style-system/decisions.md#decision-005"
 ```typescript
 // Use nanoid for hash generation (Decision 003)
 // Rationale: Balance between uniqueness and bundle size
-import { nanoid } from 'nanoid'
+import { nanoid } from "nanoid";
 
 function generateClassName(): string {
-  return `rule-${nanoid(8)}`
+  return `rule-${nanoid(8)}`;
 }
 ```
 
 ### In decisions.md
-
-After implementation, update decision with links:
 
 ```markdown
 ## Decision 003: Use nanoid for Class Hash Generation
@@ -482,6 +297,7 @@ After implementation, update decision with links:
 [... decision content ...]
 
 **Implementation**:
+
 - Implemented in: packages/style/src/hash.ts (commit: a1b2c3d)
 - Tests: packages/style/src/hash.test.ts (commit: b2c3d4e)
 ```
@@ -498,71 +314,53 @@ After implementation, update decision with links:
 
 ## Troubleshooting
 
-### Issue: Decision number incorrect
+### Decision number incorrect
 
-**Cause**: Manual edit broke numbering
+**Solution**: Hook counts decisions automatically. If numbering off, manually renumber in decisions.md and recommit.
 
-**Solution**:
-- Hook counts decisions automatically
-- If numbering off, manually renumber in decisions.md
-- Recommit with corrected message
-
-### Issue: Hook not committing
+### Hook not committing
 
 **Check**:
+
 ```bash
 git status
 ```
 
-**If decisions.md uncommitted**:
-- Hook may have failed
-- Manually commit:
-  ```bash
-  git add docs/implementation/*/decisions.md
-  git commit -m "docs(impl): decision NNN - <title>"
-  ```
+**If decisions.md uncommitted**, manually commit:
 
-### Issue: Lost context during prompts
+```bash
+git add docs/implementation/*/decisions.md
+git commit -m "docs(impl): decision NNN - <title>"
+```
 
-**Solution**:
-- Prepare decision notes beforehand
-- Copy/paste into prompts
-- Or manually write to decisions.md as fallback
+### Lost context during prompts
+
+**Solution**: Prepare decision notes beforehand and copy/paste into prompts, or manually write to decisions.md as fallback.
 
 ## Design Rationale
 
-### Why `type: prompt` for PostToolUse?
+**Why `type: prompt` for PostToolUse?**
 
-**Considered alternatives**:
-1. ❌ Bash script counting decisions with grep
-2. ❌ Regex extracting title from file
-3. ✅ LLM-based understanding
-
-**Chosen**: `type: prompt` because:
 - Claude can count decision entries accurately
 - Claude can extract title from decision content
 - Claude generates descriptive commit messages
 - Handles edge cases (formatting variations)
-- More maintainable
 
-### Why `user-invocable: false`?
+**Why `user-invocable: false`?**
 
-This skill is primarily **internal**:
-- Called during `/implement` when design choices arise
+- Primarily internal (called during `/implement`)
 - Can still be invoked by describing intent
 - Not shown in `/` menu
-- Auto-discoverable when mentioning "decision" or "decide"
+- Auto-discoverable when mentioning "decision"
 
-### Why restrict to `Bash(git:*)`?
+**Why restrict to `Bash(git:*)`?**
 
-**Security**: Only git operations needed
+- Only git operations needed
 - Can't run other commands
-- Can't modify files beyond decisions.md
 - Clear audit trail
 
-### Why interactive prompts?
+**Why interactive prompts?**
 
-**Better than structured args**:
 - Natural conversation flow
 - Claude can ask follow-up questions
 - Users can provide context freely
@@ -579,6 +377,7 @@ This skill is primarily **internal**:
 **Context**: [1-2 sentences describing the problem]
 
 **Options Considered**:
+
 1. [Option 1] - [Brief description + key trade-offs]
 2. [Option 2] - [Brief description + key trade-offs]
 3. [Option 3] - [Brief description + key trade-offs]
@@ -586,6 +385,7 @@ This skill is primarily **internal**:
 **Decision**: [What was chosen? 1 sentence]
 
 **Rationale**:
+
 - [Key reason 1]
 - [Key reason 2]
 - [Key reason 3]
@@ -593,21 +393,26 @@ This skill is primarily **internal**:
 **Consequences**:
 
 Positive:
+
 - [Benefit 1]
 - [Benefit 2]
 
 Negative:
+
 - [Drawback 1]
 - [Drawback 2]
 
 Neutral/Trade-offs:
+
 - [Trade-off 1]
 
 **References** (optional):
+
 - [RFC link]
 - [External docs]
 
 **Implementation** (added after coding):
+
 - Implemented in: [file paths]
 - Related commits: [hashes]
 ```

@@ -40,6 +40,7 @@ Execute task groups from implementation plans - reads plan.md, implements code a
 ## Purpose
 
 This skill executes individual task groups:
+
 - **Read plan.md** for task details
 - **Implement code** following plan
 - **Write tests** with ≥80% coverage
@@ -47,6 +48,8 @@ This skill executes individual task groups:
 - **Update progress** via `/track`
 
 **Note**: Internal skill, called by `/workflow`. Can be invoked directly but workflow is preferred.
+
+**See also**: [examples.md](examples.md) for detailed usage examples
 
 ## Usage
 
@@ -61,6 +64,7 @@ Work on the next task group
 ```
 
 The skill will:
+
 1. Load plan.md for task group details
 2. Check dependencies met
 3. Execute tasks
@@ -88,6 +92,7 @@ The skill will:
    - Commit incrementally
 
 4. **Run Validation**
+
    ```bash
    bun run build        # Must pass
    bun run test         # All pass
@@ -106,12 +111,14 @@ The skill will:
 **Type**: `prompt` (LLM-based)
 
 **Why prompt?**
+
 - Needs to understand task context
 - Verify all subtasks complete
 - Check validation passed
 - Ensure proper commit
 
 **What it does**:
+
 - Reviews task list from plan.md
 - Checks all validation passed
 - Ensures progress.md updated
@@ -157,20 +164,24 @@ User: "Execute task group 2"
 ## File Structure
 
 **Reads**:
+
 - `docs/implementation/*/plan.md` - Task structure
 - `docs/implementation/*/progress.md` - Current state
 
 **Writes**:
+
 - Source files (`packages/*/src/*.ts`)
 - Test files (`packages/*/src/*.test.ts`)
 - `docs/implementation/*/progress.md` - Updates
 
 **Commits**:
+
 - `feat: implement X` - Code commits
 - `test: add tests for X` - Test commits
 - `feat(impl): complete task group N - [name]` - Completion
 
 **Allowed Tools**:
+
 - All standard tools (Read, Write, Edit, Bash, etc.)
 
 ## Examples
@@ -233,6 +244,7 @@ Task Group 3 complete. Ready for Task Group 4.
 ### Why `user-invocable: false`?
 
 **Internal coordination**:
+
 - Primarily called by `/workflow`
 - User can still invoke by describing intent
 - Not shown in `/` menu
@@ -241,6 +253,7 @@ Task Group 3 complete. Ready for Task Group 4.
 ### Why `type: prompt` for Stop hook?
 
 **Context awareness needed**:
+
 - Must understand task completion
 - Verify validation passed
 - Check all subtasks done
@@ -249,6 +262,7 @@ Task Group 3 complete. Ready for Task Group 4.
 ### Why no strict file scope validation?
 
 **Flexibility**:
+
 - Implementation may need related files
 - Trust Claude to follow plan
 - PreToolUse validation too restrictive
