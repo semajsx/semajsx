@@ -1,6 +1,8 @@
 # SemaJSX Roadmap
 
-**Vision**: Transform SemaJSX into a **complete independent framework** with signal-based reactivity, supporting multiple rendering targets (DOM, Terminal, SSR, SSG)
+**Vision**: SemaJSX is a **complete independent framework** with signal-based reactivity, supporting multiple rendering targets (DOM, Terminal, SSR, SSG)
+
+**Current Focus**: Establish SemaJSX as the preferred **no-build component library runtime** (Stage 1)
 
 **Last Updated**: 2026-01-11
 
@@ -8,26 +10,30 @@
 
 ---
 
-## 🎯 Strategic Goals
+## 🎯 Development Strategy
 
-**Stage 1: No-Build Component Library Runtime** (Phase 1-3)
+SemaJSX is a complete framework, but development is staged to ensure each capability is production-ready before expanding.
+
+**Stage 1: No-Build Component Library Runtime** (Phase 1-3) - **Current Focus**
 
 - Build-free styling system with Tailwind integration
 - Cross-framework adapters (React/Vue bidirectional nesting)
 - Production component library with SSR support
+- **Goal**: Establish as preferred no-build component runtime
 
-**Stage 2: Complete Independent Framework** (Phase 4-6)
+**Stage 2: Complete Framework Capabilities** (Phase 4-6) - **Future**
 
 - Full SSR/SSG capabilities with routing
 - Terminal rendering enhancements
 - Build tooling and meta-framework integration
-- Developer experience and ecosystem
+- **Goal**: Full-featured independent framework
 
-**Stage 3: Production & Enterprise** (Phase 7+)
+**Stage 3: Production & Enterprise** (Phase 7-8) - **Future**
 
 - Performance optimization and scalability
 - Enterprise-grade tooling and support
 - Ecosystem growth and adoption
+- **Goal**: Production-grade framework with enterprise support
 
 ---
 
@@ -696,7 +702,7 @@ Deliverables:
 
 ## 🎯 Unique Value Proposition
 
-> **"SemaJSX is a complete independent framework with signal-based reactivity, supporting multiple rendering targets (DOM, Terminal, SSR, SSG) without requiring a build step. Start with framework-agnostic components, scale to full applications with routing, SSR, and SSG."**
+> **"SemaJSX is a complete independent framework with signal-based reactivity, supporting multiple rendering targets (DOM, Terminal, SSR, SSG). Current focus: establishing as the preferred no-build component library runtime with build-free styling and cross-framework compatibility."**
 
 ### Competitive Advantages
 
@@ -753,19 +759,22 @@ This roadmap provides **high-level strategic direction** for the SemaJSX project
 
 **For AI Agents**:
 
-- Execute **3 stages sequentially**: Component Library Runtime → Independent Framework → Production
-- Each stage contains multiple phases - complete in dependency order
+- **Current focus**: Stage 1 (No-Build Component Library Runtime)
+- Execute Phase 1-3 sequentially before considering Stage 2
+- Each phase contains multiple phases - complete in dependency order
 - Follow **dependency chains** within each phase
 - Use **complexity ratings** (High/Medium/Low) to guide execution strategy
-- Achieve **success metrics** before moving to next phase/stage
+- Achieve **success metrics** before moving to next phase
 
 **For Implementation Details**:
 
-- Stage 1 (Phase 1-3): See `/docs/implementation/001-style-system/` and future directories
-- Stage 2 (Phase 4-6): Create implementation directories as phases start
-- Stage 3 (Phase 7-8): Create implementation directories as phases start
+- **Active**: Stage 1 (Phase 1-3) - See `/docs/implementation/001-style-system/` and future directories
+- **Future**: Stage 2 (Phase 4-6) - Create implementation directories when Stage 1 complete
+- **Future**: Stage 3 (Phase 7-8) - Create implementation directories when Stage 2 complete
 - Validation commands: See `plan.md` in each implementation directory
 - Progress tracking: `progress.md` files (session-based)
 - Technical decisions: `decisions.md` files (append-only)
 
 **Current Focus**: Stage 1, Phase 1 (Style Foundation) - See `/docs/implementation/001-style-system/`
+
+**Note**: Stage 2-3 planning is for long-term vision. Current development focuses exclusively on Stage 1.
