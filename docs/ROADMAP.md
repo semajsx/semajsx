@@ -1,6 +1,6 @@
 # SemaJSX Roadmap
 
-**Vision**: Position SemaJSX as the preferred no-build component library runtime platform
+**Vision**: Transform SemaJSX into a **complete independent framework** with signal-based reactivity, supporting multiple rendering targets (DOM, Terminal, SSR, SSG)
 
 **Last Updated**: 2026-01-11
 
@@ -10,12 +10,24 @@
 
 ## 🎯 Strategic Goals
 
-Transform SemaJSX into a **no-build component library runtime** with the following core capabilities:
+**Stage 1: No-Build Component Library Runtime** (Phase 1-3)
 
-1. ✅ **Signal Reactivity System** - Production-ready, simpler than React hooks
-2. 🚧 **Style System + Tailwind** - Build-free styling with full Tailwind support (High complexity, Phase 1)
-3. 🚧 **Cross-Framework Adapters** - React/Vue bidirectional nesting with style integration (Medium complexity, Phase 2)
-4. 📅 **Component Library Ecosystem** - 25+ production components with SSR support (High complexity, Phase 3+)
+- Build-free styling system with Tailwind integration
+- Cross-framework adapters (React/Vue bidirectional nesting)
+- Production component library with SSR support
+
+**Stage 2: Complete Independent Framework** (Phase 4-6)
+
+- Full SSR/SSG capabilities with routing
+- Terminal rendering enhancements
+- Build tooling and meta-framework integration
+- Developer experience and ecosystem
+
+**Stage 3: Production & Enterprise** (Phase 7+)
+
+- Performance optimization and scalability
+- Enterprise-grade tooling and support
+- Ecosystem growth and adoption
 
 ---
 
@@ -23,11 +35,27 @@ Transform SemaJSX into a **no-build component library runtime** with the followi
 
 **Dependency-Based Execution**: Each phase builds on the previous. Start next phase only when current phase success metrics are met.
 
+### Stage 1: No-Build Component Library Runtime
+
 ```
-Phase 1: Style Foundation   - Core style system + Tailwind integration
-Phase 2: Framework Adapters - React + Vue adapters with style integration
-Phase 3: Component Library  - Production components + SSR + Documentation site
-Phase 4: Production         - Performance + Tooling + Enterprise readiness
+Phase 1: Style Foundation      - Core style system + Tailwind integration
+Phase 2: Framework Adapters    - React + Vue adapters with style integration
+Phase 3: Component Library     - 25+ components + Basic SSR + Documentation
+```
+
+### Stage 2: Complete Independent Framework
+
+```
+Phase 4: SSR/SSG Framework     - Full SSR + SSG + Style hydration + Islands
+Phase 5: Routing & Integration - File-based routing + Next.js/Remix/Nuxt patterns
+Phase 6: Terminal & Multi-Target - Enhanced Terminal rendering + Unified runtime
+```
+
+### Stage 3: Production & Enterprise
+
+```
+Phase 7: Performance & Tooling - Optimization + VSCode + CLI + Build tools
+Phase 8: Enterprise & Ecosystem - Enterprise support + Community growth
 ```
 
 ---
@@ -250,18 +278,224 @@ Deliverables:
 
 ---
 
-## ⚡ Phase 4: Production Readiness
+## 🔥 Phase 4: SSR/SSG Framework
 
-**Goal**: Performance optimization + Tooling + Enterprise readiness
+**Goal**: Full server-side rendering and static site generation capabilities
 
 ### Dependency Chain
 
 ```
-Phase 3 Complete (SSR + Documentation)
+Phase 3 Complete (Component Library + Basic SSR)
+    ↓
+    ├─→ Full SSR Implementation (parallel with SSG)
+    │       ↓
+    └─→ SSG & Static Export ──→ Islands Architecture
+                                      ↓
+                                  Hydration & Streaming
+```
+
+### Key Deliverables
+
+**Full SSR Implementation**
+
+- **Complexity**: High
+- **Priority**: P0
+- **Dependencies**: Phase 3 complete
+
+Deliverables:
+
+- Complete `@semajsx/ssr` package
+- Streaming SSR support
+- Automatic code splitting
+- Server components pattern
+- Edge runtime support
+
+**SSG & Static Export**
+
+- **Complexity**: High
+- **Priority**: P0
+- **Dependencies**: Full SSR (can run parallel)
+
+Deliverables:
+
+- Static site generation engine
+- Incremental static regeneration (ISR)
+- Build-time rendering
+- Static export CLI
+- Pre-rendering optimization
+
+**Islands Architecture**
+
+- **Complexity**: Medium
+- **Priority**: P1
+- **Dependencies**: SSR + SSG complete
+
+Deliverables:
+
+- Island component pattern
+- Selective hydration
+- Partial hydration strategy
+- Client-side navigation
+- Progressive enhancement
+
+### Success Metrics
+
+- ✅ Full SSR with streaming support
+- ✅ SSG with ISR capabilities
+- ✅ Islands architecture implemented
+- ✅ Hydration performance < 50ms
+- ✅ Build time < 10s for 100 pages
+
+---
+
+## 🛣️ Phase 5: Routing & Meta-Framework Integration
+
+**Goal**: File-based routing and meta-framework patterns
+
+### Dependency Chain
+
+```
+Phase 4 Complete (SSR/SSG)
+    ↓
+    ├─→ File-Based Routing (parallel with Layouts)
+    │       ↓
+    └─→ Layouts & Middleware ──→ Meta-Framework Patterns
+```
+
+### Key Deliverables
+
+**File-Based Routing**
+
+- **Complexity**: Medium
+- **Priority**: P0
+- **Dependencies**: Phase 4 complete
+
+Deliverables:
+
+- File-based routing system
+- Dynamic routes ([id].tsx)
+- Catch-all routes ([...slug].tsx)
+- API routes support
+- Nested routing
+
+**Layouts & Middleware**
+
+- **Complexity**: Medium
+- **Priority**: P0
+- **Dependencies**: Routing system (can run parallel)
+
+Deliverables:
+
+- Layout system (nested layouts)
+- Route middleware
+- Loading states
+- Error boundaries
+- Not found pages
+
+**Meta-Framework Patterns**
+
+- **Complexity**: Medium
+- **Priority**: P1
+- **Dependencies**: Routing + Layouts complete
+
+Deliverables:
+
+- Next.js patterns (App Router style)
+- Remix patterns (loaders/actions)
+- Nuxt patterns (composables)
+- SvelteKit patterns (load functions)
+- Migration guides
+
+### Success Metrics
+
+- ✅ File-based routing complete
+- ✅ Nested layouts and middleware working
+- ✅ Meta-framework patterns documented
+- ✅ Migration tools available
+- ✅ Performance matches Next.js/Remix
+
+---
+
+## 🖥️ Phase 6: Terminal & Multi-Target Rendering
+
+**Goal**: Enhanced terminal rendering and unified multi-target runtime
+
+### Dependency Chain
+
+```
+Phase 5 Complete (Routing)
+    ↓
+    ├─→ Terminal Enhancements (parallel with Unified Runtime)
+    │       ↓
+    └─→ Unified Runtime ──→ Custom Rendering Targets
+```
+
+### Key Deliverables
+
+**Terminal Rendering Enhancements**
+
+- **Complexity**: Medium
+- **Priority**: P1
+- **Dependencies**: Phase 5 complete
+
+Deliverables:
+
+- Enhanced terminal components
+- Interactive TUI patterns
+- Terminal SSR support
+- ANSI color optimization
+- Terminal-specific hooks
+
+**Unified Rendering Runtime**
+
+- **Complexity**: High
+- **Priority**: P0
+- **Dependencies**: Phase 5 complete (can run parallel)
+
+Deliverables:
+
+- Unified render API (DOM, Terminal, Custom)
+- Render target abstraction
+- Target-specific optimizations
+- Cross-target components
+- Render target switching
+
+**Custom Rendering Targets**
+
+- **Complexity**: High
+- **Priority**: P2
+- **Dependencies**: Unified Runtime complete
+
+Deliverables:
+
+- Custom renderer API
+- Canvas rendering target
+- PDF rendering target
+- Native rendering exploration
+- Renderer plugin system
+
+### Success Metrics
+
+- ✅ Terminal rendering enhanced
+- ✅ Unified runtime for all targets
+- ✅ Custom renderer API available
+- ✅ Performance matches target-specific frameworks
+- ✅ Example renderers documented
+
+---
+
+## ⚡ Phase 7: Performance & Tooling
+
+**Goal**: Production-grade performance and developer tooling
+
+### Dependency Chain
+
+```
+Phase 6 Complete (Multi-Target Runtime)
     ↓
     ├─→ Performance Optimization (parallel with Tooling)
     │       ↓
-    └─→ Tooling ──→ Enterprise Readiness (depends on all above)
+    └─→ Developer Tooling ──→ Build System Integration
 ```
 
 ### Key Deliverables
@@ -270,70 +504,165 @@ Phase 3 Complete (SSR + Documentation)
 
 - **Complexity**: High
 - **Priority**: P0
-- **Dependencies**: Phase 3 complete (all features implemented)
+- **Dependencies**: Phase 6 complete
 
 Deliverables:
 
-- Tree-shaking improvements, code splitting
-- Virtual scrolling, lazy loading, memoization
-- CSS injection batching, Constructable Stylesheets
-- Memory leak fixes, large-scale testing (10,000+ components)
-- **Target**: Bundle < 10KB, render < 5ms
+- Tree-shaking improvements
+- Code splitting optimization
+- Virtual scrolling
+- Lazy loading strategies
+- CSS injection batching
+- Memory leak fixes
+- **Target**: Bundle < 12KB, render < 5ms
 
-**Tooling**
+**Developer Tooling**
+
+- **Complexity**: Medium
+- **Priority**: P0
+- **Dependencies**: Phase 6 complete (can run parallel)
+
+Deliverables:
+
+- VSCode extension (syntax, auto-complete)
+- ESLint plugin (best practices)
+- Prettier plugin (formatting)
+- DevTools browser extension
+- Debug tooling
+
+**Build System Integration**
 
 - **Complexity**: Medium
 - **Priority**: P1
-- **Dependencies**: Phase 3 complete (can run parallel with Performance)
+- **Dependencies**: Performance + Tooling
 
 Deliverables:
 
-- VSCode extension (syntax highlighting, auto-complete, CSS validation)
-- ESLint plugin (unused style detection, best practices)
-- Vite plugin (`.css` → `.css.ts` transform, HMR)
-- CLI tools (scaffolding, generators, migration)
-
-**Enterprise Readiness**
-
-- **Complexity**: High
-- **Priority**: P0
-- **Dependencies**: Performance Optimization + Tooling complete
-
-Deliverables:
-
-- E2E test suite, visual regression testing
-- Security audit (dependency scanning, XSS protection, OWASP)
-- LTS version planning, upgrade guides
-- Enterprise support options, training materials, case studies
+- Vite plugin (HMR, transforms)
+- Webpack plugin
+- Rollup plugin
+- esbuild plugin
+- CLI scaffolding tools
 
 ### Success Metrics
 
-- ✅ Bundle < 10KB, render < 5ms
-- ✅ Production-grade testing and security
-- ✅ Enterprise-ready tooling and documentation
+- ✅ Bundle < 12KB, render < 5ms
+- ✅ Developer tooling complete
+- ✅ Build tool plugins available
+- ✅ Performance benchmarks published
+- ✅ DevTools extension released
+
+---
+
+## 🏢 Phase 8: Enterprise & Ecosystem
+
+**Goal**: Enterprise readiness and ecosystem growth
+
+### Dependency Chain
+
+```
+Phase 7 Complete (Performance & Tooling)
+    ↓
+    ├─→ Enterprise Features (parallel with Ecosystem)
+    │       ↓
+    └─→ Ecosystem Growth ──→ Community & Adoption
+```
+
+### Key Deliverables
+
+**Enterprise Features**
+
+- **Complexity**: High
+- **Priority**: P0
+- **Dependencies**: Phase 7 complete
+
+Deliverables:
+
+- E2E test suite
+- Visual regression testing
+- Security audit (OWASP)
+- LTS version planning
+- SLA and support options
+- Enterprise documentation
+
+**Ecosystem Growth**
+
+- **Complexity**: Medium
+- **Priority**: P0
+- **Dependencies**: Phase 7 complete (can run parallel)
+
+Deliverables:
+
+- Component library ecosystem
+- Plugin marketplace
+- Template gallery
+- Starter kits
+- Integration examples
+- Third-party adapters
+
+**Community & Adoption**
+
+- **Complexity**: Medium
+- **Priority**: P1
+- **Dependencies**: Enterprise + Ecosystem
+
+Deliverables:
+
+- Community forum
+- Discord server
+- YouTube tutorials
+- Conference talks
+- Training materials
+- Case studies
+
+### Success Metrics
+
 - ✅ First enterprise customer
+- ✅ 10+ third-party component libraries
+- ✅ 1000+ GitHub stars
+- ✅ 5000+ weekly downloads
+- ✅ 100+ production applications
 
 ---
 
 ## 📊 Key Metrics
 
-### Technical Metrics
+### Stage 1: No-Build Component Library Runtime
 
-| Metric            | Phase 1        | Phase 2       | Phase 3     | Phase 4 |
-| ----------------- | -------------- | ------------- | ----------- | ------- |
-| Bundle Size       | ≤15KB (style)  | ≤20KB (total) | ≤18KB       | ≤12KB   |
-| Component Count   | 0 (style only) | 0 (adapters)  | 25+         | 30+     |
-| Framework Support | None           | React + Vue   | React + Vue | All     |
-| Test Coverage     | ≥80%           | ≥85%          | ≥88%        | ≥90%    |
+| Metric            | Phase 1 | Phase 2     | Phase 3     |
+| ----------------- | ------- | ----------- | ----------- |
+| Bundle Size       | ≤15KB   | ≤20KB       | ≤18KB       |
+| Component Count   | 0       | 0           | 25+         |
+| Framework Support | None    | React + Vue | React + Vue |
+| Test Coverage     | ≥80%    | ≥85%        | ≥88%        |
+| GitHub Stars      | 50+     | 200+        | 500+        |
+| Weekly Downloads  | 20+     | 100+        | 500+        |
 
-### Ecosystem Metrics
+### Stage 2: Complete Independent Framework
 
-| Metric             | Phase 1 | Phase 2 | Phase 3 | Phase 4 |
-| ------------------ | ------- | ------- | ------- | ------- |
-| GitHub Stars       | 50+     | 200+    | 700+    | 1000+   |
-| Weekly Downloads   | 20+     | 100+    | 1000+   | 5000+   |
-| External Libraries | 0       | 0       | 2+      | 5+      |
-| Production Apps    | 0       | 5+      | 50+     | 100+    |
+| Metric            | Phase 4   | Phase 5    | Phase 6  |
+| ----------------- | --------- | ---------- | -------- |
+| Rendering Targets | DOM + SSR | DOM + SSR  | All      |
+| Routing           | None      | File-based | Advanced |
+| SSG Support       | ✅        | ✅         | ✅       |
+| Terminal Support  | Basic     | Basic      | Enhanced |
+| Test Coverage     | ≥88%      | ≥88%       | ≥90%     |
+| GitHub Stars      | 700+      | 1000+      | 1500+    |
+| Weekly Downloads  | 1000+     | 2000+      | 3000+    |
+
+### Stage 3: Production & Enterprise
+
+| Metric              | Phase 7 | Phase 8 |
+| ------------------- | ------- | ------- |
+| Bundle Size         | ≤12KB   | ≤10KB   |
+| Build Performance   | Fast    | Optimal |
+| DevTools            | ✅      | ✅      |
+| Enterprise Support  | Basic   | Full    |
+| Test Coverage       | ≥90%    | ≥95%    |
+| GitHub Stars        | 2000+   | 5000+   |
+| Weekly Downloads    | 5000+   | 10000+  |
+| Component Libraries | 5+      | 10+     |
+| Production Apps     | 100+    | 500+    |
 
 ---
 
@@ -341,49 +670,71 @@ Deliverables:
 
 **Progression Model**: Complete all success metrics for current phase before starting next phase.
 
-### Phase 1 → Phase 2 (Style Foundation → Framework Adapters)
+### Stage 1: No-Build Component Library Runtime
 
-- Style system complete (classes, rule, rules)
-- Tailwind integration tested
-- Advanced styling features available
-- Bundle ≤15KB, coverage ≥80%
+**Phase 1 → 2**: Style system + Tailwind complete, bundle ≤15KB
 
-### Phase 2 → Phase 3 (Framework Adapters → Component Library)
+**Phase 2 → 3**: React + Vue adapters complete, style integration working
 
-- React and Vue adapters complete
-- Bidirectional nesting working
-- Style integration tested in both frameworks
-- Example apps demonstrate adapter features
+**Phase 3 → Stage 2**: 25+ components, basic SSR working, documentation live
 
-### Phase 3 → Phase 4 (Component Library → Production)
+### Stage 2: Complete Independent Framework
 
-- 25+ components with full accessibility
-- SSR working in Next.js/Nuxt/Remix
-- Documentation site live
-- All components have framework wrappers
+**Phase 4 → 5**: Full SSR + SSG + Islands, hydration < 50ms
 
-### Phase 4 → v1.0 Release (Production → Enterprise)
+**Phase 5 → 6**: File-based routing + layouts + meta-framework patterns
 
-- Bundle < 12KB, render < 5ms
-- Production-grade testing and security
-- Enterprise tooling complete
-- First enterprise customer
+**Phase 6 → Stage 3**: Multi-target rendering working (DOM + Terminal + Custom)
+
+### Stage 3: Production & Enterprise
+
+**Phase 7 → 8**: Bundle < 12KB, performance optimized, tooling complete
+
+**Phase 8 → v1.0**: Enterprise features + ecosystem + first customer
 
 ---
 
 ## 🎯 Unique Value Proposition
 
-> **"SemaJSX is the first no-build component library runtime combining signal reactivity with a build-free style system for framework-agnostic component development. Write once, use in React, Vue, or any framework."**
+> **"SemaJSX is a complete independent framework with signal-based reactivity, supporting multiple rendering targets (DOM, Terminal, SSR, SSG) without requiring a build step. Start with framework-agnostic components, scale to full applications with routing, SSR, and SSG."**
 
 ### Competitive Advantages
 
-| Solution       | Approach            | SemaJSX Advantage                        |
-| -------------- | ------------------- | ---------------------------------------- |
-| Web Components | Browser standard    | Lighter weight, better DX                |
-| Mitosis        | Compile-time        | Runtime-first, better reactivity         |
-| Stencil        | Compile to WC       | No build required                        |
-| Lit            | Lightweight WC      | Fine-grained signals, better performance |
-| Preact Signals | Signal library only | Complete component system + styling      |
+**vs Component Libraries**
+
+- Not just a component library - full framework capabilities
+- No build required for component development
+- Cross-framework compatibility (React, Vue, standalone)
+
+**vs Full Frameworks (Next.js, Remix, Nuxt)**
+
+- Lighter weight and faster (signal-based, no VDOM)
+- Multi-target rendering (DOM, Terminal, Custom)
+- Build-free development mode
+- Framework-agnostic core
+
+**vs Web Components**
+
+- Better DX with JSX and signals
+- Lighter weight and faster hydration
+- No Shadow DOM limitations
+
+**vs Terminal Frameworks (Ink, Blessed)**
+
+- Unified codebase for web and terminal
+- Signal-based reactivity
+- SSR/SSG support for terminal apps
+
+| Feature           | SemaJSX | Next.js | Remix | Astro | Lit | Ink   |
+| ----------------- | ------- | ------- | ----- | ----- | --- | ----- |
+| Signals           | ✅      | ❌      | ❌    | ✅    | ❌  | ❌    |
+| No Build (Dev)    | ✅      | ❌      | ❌    | ❌    | ✅  | ❌    |
+| SSR/SSG           | ✅      | ✅      | ✅    | ✅    | ❌  | ❌    |
+| Terminal UI       | ✅      | ❌      | ❌    | ❌    | ❌  | ✅    |
+| Islands           | ✅      | Partial | ❌    | ✅    | ❌  | ❌    |
+| Cross-Framework   | ✅      | ❌      | ❌    | ✅    | ✅  | ❌    |
+| File-based Router | ✅      | ✅      | ✅    | ✅    | ❌  | ❌    |
+| Bundle Size       | 12KB    | 90KB+   | 70KB+ | 40KB+ | 8KB | 50KB+ |
 
 ---
 
@@ -402,13 +753,19 @@ This roadmap provides **high-level strategic direction** for the SemaJSX project
 
 **For AI Agents**:
 
-- Follow **dependency chains** - complete prerequisites before dependent tasks
+- Execute **3 stages sequentially**: Component Library Runtime → Independent Framework → Production
+- Each stage contains multiple phases - complete in dependency order
+- Follow **dependency chains** within each phase
 - Use **complexity ratings** (High/Medium/Low) to guide execution strategy
-- Achieve **success metrics** before moving to next phase
+- Achieve **success metrics** before moving to next phase/stage
 
 **For Implementation Details**:
 
-- Task breakdown: `/docs/implementation/` directories
+- Stage 1 (Phase 1-3): See `/docs/implementation/001-style-system/` and future directories
+- Stage 2 (Phase 4-6): Create implementation directories as phases start
+- Stage 3 (Phase 7-8): Create implementation directories as phases start
 - Validation commands: See `plan.md` in each implementation directory
 - Progress tracking: `progress.md` files (session-based)
 - Technical decisions: `decisions.md` files (append-only)
+
+**Current Focus**: Stage 1, Phase 1 (Style Foundation) - See `/docs/implementation/001-style-system/`
