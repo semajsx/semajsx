@@ -21,7 +21,8 @@ Quick reference to all documentation in SemaJSX.
 - [CONTRIBUTING.md](./CONTRIBUTING.md) - How to contribute
 - [MONOREPO_ARCHITECTURE.md](./MONOREPO_ARCHITECTURE.md) - Monorepo structure
 - [TESTING.md](./TESTING.md) - Testing guide
-- [docs/workflow.md](./docs/workflow.md) - Development workflow
+- [WORKFLOW.md](./WORKFLOW.md) - Development workflow
+- [DOCUMENTING.md](./DOCUMENTING.md) - Documentation system design
 
 ### Design & Decisions
 
@@ -69,7 +70,7 @@ Quick reference to all documentation in SemaJSX.
 | Contribute code         | [CONTRIBUTING.md](./CONTRIBUTING.md)                   |
 | Understand architecture | [MONOREPO_ARCHITECTURE.md](./MONOREPO_ARCHITECTURE.md) |
 | Write tests             | [TESTING.md](./TESTING.md)                             |
-| Design a feature        | [docs/workflow.md](./docs/workflow.md)                 |
+| Design a feature        | [WORKFLOW.md](./WORKFLOW.md)                           |
 | See design decisions    | [docs/designs/](./docs/designs/)                       |
 
 ---
