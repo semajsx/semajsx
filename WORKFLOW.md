@@ -153,20 +153,38 @@ bun run lint         # No lint errors
 
 ## When to Use Each Stage
 
-| Change Type   | Requirement | Research  | Design | Implementation | Test | Learn |
-| ------------- | ----------- | --------- | ------ | -------------- | ---- | ----- |
-| Major feature | Full RFC    | Deep      | Full   | Full           | Full | Full  |
-| Minor feature | Brief       | Quick     | Brief  | Full           | Full | Brief |
-| Bug fix       | Issue ref   | As needed | -      | Full           | Full | -     |
-| Refactor      | Brief       | Quick     | Brief  | Full           | Full | Brief |
-| Docs only     | -           | -         | -      | -              | -    | -     |
+```rust
+match change {
+    // Full workflow - all stages with depth
+    Major | Breaking | Architectural => {
+        Requirement(RFC) >> Research(Deep) >> Design(Full)
+            >> Impl >> Test >> Learn
+    }
 
-**Rule of thumb**:
+    // Simplified workflow - lighter documentation
+    Minor | Enhancement | Refactor => {
+        Requirement(Brief) >> Research(Quick) >> Design(Brief)
+            >> Impl >> Test >> Learn(Brief)
+    }
 
-- **Simple bug fix?** → Direct implementation + test
-- **Need to understand context?** → Add research
-- **Multiple solution paths?** → Full design phase
-- **Major feature or breaking?** → Full workflow with RFC
+    // Minimal workflow - just fix and verify
+    BugFix => Requirement(IssueRef) >> Research(AsNeeded) >> Impl >> Test,
+
+    // Direct change - no workflow overhead
+    Typo | DocsUpdate => Impl,
+}
+```
+
+**Decision helper**:
+
+```rust
+match (scope, uncertainty) {
+    (Large, High)  => full_workflow(),       // RFC + deep research + full design
+    (Large, Low)   => simplified_workflow(), // brief research + design
+    (Small, High)  => Research >> Impl >> Test,
+    (Small, Low)   => Impl >> Test,
+}
+```
 
 ---
 
