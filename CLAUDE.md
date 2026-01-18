@@ -21,10 +21,12 @@ SemaJSX is a lightweight, signal-based reactive JSX runtime for building modern 
 - `CONTRIBUTING.md` - Contribution guidelines
 - `MONOREPO_ARCHITECTURE.md` - Architecture details
 - `TESTING.md` - Testing strategy
-- `docs/workflow.md` - Development workflow
-- `docs/designs/` - Technical design documents
+- `WORKFLOW.md` - Development workflow
+- `DOCUMENTING.md` - Documentation system design
 - `docs/rfcs/` - Feature proposals
+- `docs/designs/` - Technical design documents
 - `docs/adrs/` - Architecture decisions
+- `tasks/` - Task workspaces (per-feature working documents)
 
 **Characteristics**:
 
@@ -52,7 +54,7 @@ SemaJSX is a lightweight, signal-based reactive JSX runtime for building modern 
 - Tutorial and reference style
 - Located in package READMEs or `apps/docs/content/`
 
-**See [DOCS.md](./DOCS.md) for complete documentation index.**
+**See [DOCUMENTING.md](./DOCUMENTING.md) for documentation system and index.**
 
 ### When Writing Documentation
 
@@ -263,42 +265,40 @@ See [MONOREPO_ARCHITECTURE.md](./MONOREPO_ARCHITECTURE.md) for details on the Is
 
 ## Development Workflow
 
-This project follows a structured development workflow for major features and changes. See [docs/workflow.md](./docs/workflow.md) for complete details.
+This project follows a structured development workflow for major features and changes. See [WORKFLOW.md](./WORKFLOW.md) for complete details, and [DOCUMENTING.md](./DOCUMENTING.md) for documentation system design.
 
 ### Workflow Stages
 
-1. **Discovery** - Define requirements and conduct research
-2. **Design** - Create detailed design documents
-3. **Implementation** - Write code and tests
-4. **Verification** - Validate quality and functionality
-5. **Archive** - Document and clean up
+1. **Requirement** - Define the problem and success criteria
+2. **Research** - Gather context and explore solution space
+3. **Design** - Determine how to implement and document trade-offs
+4. **Implementation** - Write code and tests
+5. **Test** - Validate implementation meets requirements
+6. **Learn** - Extract knowledge and improve process
 
-### Document Types
+### Document Organization
 
-- **RFC** (`docs/rfcs/`) - Requirements and feature proposals
-- **Design Docs** (`docs/designs/`) - Detailed technical designs
-- **ADR** (`docs/adrs/`) - Architecture Decision Records
+**Formal Documents** (`docs/`):
 
-### Temporary Workspace
+- **RFC** (`docs/rfcs/`) - Feature proposals (permanent)
+- **ADR** (`docs/adrs/`) - Cross-cutting architecture decisions (permanent)
 
-The `.workspace/` directory is for temporary work-in-progress:
+**Task Workspaces** (`tasks/`):
 
-- `research/` - Research materials
-- `drafts/` - Design document drafts
-- `discussions/` - Meeting notes
-- `experiments/` - Prototype code
-
-This directory is git-ignored. Move final artifacts to `apps/docs/` when complete.
+- Per-feature working directory
+- `README.md` - Final design (authoritative)
+- `EVOLUTION.md` - Evolution record (requirement → research → design → learnings)
+- Optional: `research/`, `adr-*.md` for task-specific materials
 
 ### When to Use
 
-**Full Workflow** (RFC + Design + ADR):
+**Full Workflow** (RFC + Task Workspace):
 
 - Major new features
 - Breaking changes
 - Architectural changes
 
-**Simplified Workflow** (Design Doc only):
+**Simplified Workflow** (Task Workspace only):
 
 - Minor features
 - Enhancements
@@ -312,11 +312,12 @@ This directory is git-ignored. Move final artifacts to `apps/docs/` when complet
 
 **Guidelines**:
 
-- Large features should have design documents before implementation
-- Architecture decisions should be recorded in ADRs
-- When in doubt, create a design document
+- Create `tasks/feature-name/` directory for any non-trivial work
+- Document evolution in `EVOLUTION.md` as you work
+- Finalize `README.md` when design is stable
+- Record cross-cutting decisions in `docs/adrs/`
 
-See [Workflow Guide](./docs/workflow.md) for templates and detailed process.
+See [WORKFLOW.md](./WORKFLOW.md) for detailed process.
 
 ## Code Quality
 
