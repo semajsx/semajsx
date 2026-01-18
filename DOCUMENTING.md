@@ -190,7 +190,7 @@ The evolution record captures the journey, not just the destination.
 
 The authoritative document for "how it works now."
 
-````markdown
+```markdown
 # Feature Name
 
 Brief description.
@@ -207,15 +207,11 @@ How components interact.
 
 ## Usage Examples
 
-```typescript
 // Example code
-```
-````
 
 ## Limitations
 
 Known constraints.
-
 ```
 
 ---
@@ -252,19 +248,17 @@ Periodically:
 ## Relationship Between Documents
 
 ```
-
-docs/rfcs/feature.md tasks/feature/ packages/\*/
-│ │ │
-│ "What & Why" │ "How" │ "Code"
-│ │ │
-└──────────────► README.md ◄─────────────────► Implementation
-(design) (source)
-│
-│
-EVOLUTION.md
-(history)
-
-````
+docs/rfcs/feature.md          tasks/feature/              packages/*/
+        │                            │                          │
+        │  "What & Why"              │  "How"                   │  "Code"
+        │                            │                          │
+        └──────────────► README.md ◄─────────────────► Implementation
+                         (design)                        (source)
+                             │
+                             │
+                       EVOLUTION.md
+                         (history)
+```
 
 - **RFC** → Defines requirements (input to task)
 - **README.md** → Final design (synced with code)
@@ -275,15 +269,15 @@ EVOLUTION.md
 
 ## When to Create What
 
-| Situation | Action |
-|-----------|--------|
-| Starting new feature | Create `tasks/feature-name/`, start `EVOLUTION.md` |
-| Major feature proposal | Create RFC in `docs/rfcs/` |
-| Cross-cutting decision | Create ADR in `docs/adrs/` |
-| Task-specific decision | Add to `EVOLUTION.md` or `tasks/feature/adr-*.md` |
-| Research findings | Add to `EVOLUTION.md` Research section |
-| Design complete | Write `tasks/feature/README.md` |
-| Task complete | Complete `EVOLUTION.md` Learnings section |
+| Situation              | Action                                             |
+| ---------------------- | -------------------------------------------------- |
+| Starting new feature   | Create `tasks/feature-name/`, start `EVOLUTION.md` |
+| Major feature proposal | Create RFC in `docs/rfcs/`                         |
+| Cross-cutting decision | Create ADR in `docs/adrs/`                         |
+| Task-specific decision | Add to `EVOLUTION.md` or `tasks/feature/adr-*.md`  |
+| Research findings      | Add to `EVOLUTION.md` Research section             |
+| Design complete        | Write `tasks/feature/README.md`                    |
+| Task complete          | Complete `EVOLUTION.md` Learnings section          |
 
 ---
 
@@ -313,14 +307,13 @@ Brief description of what this feature does.
 Description.
 
 **Parameters:**
+
 - `param` - Description
 
 **Returns:** Description
 
 **Example:**
-```typescript
-// usage
-````
+// usage code here
 
 ## Architecture
 
@@ -330,22 +323,17 @@ Describe how components work together.
 
 ### Basic Usage
 
-```typescript
-// example
-```
+// example code here
 
 ### Advanced Usage
 
-```typescript
-// example
-```
+// example code here
 
 ## Limitations
 
 - Known limitation 1
 - Known limitation 2
-
-````
+```
 
 ### EVOLUTION Template
 
@@ -355,45 +343,56 @@ Describe how components work together.
 ## 1. Requirement
 
 ### Problem
+
 What problem are we solving?
 
 ### Success Criteria
+
 How do we know we're done?
 
 ### Scope
+
 What's in and out of scope?
 
 ## 2. Research
 
 ### Existing Solutions
+
 - Solution A: pros/cons
 - Solution B: pros/cons
 
 ### Key Findings
+
 - Finding 1
 - Finding 2
 
 ### Constraints
+
 - Constraint 1
 - Constraint 2
 
 ## 3. Design Iterations
 
 ### v1 - [Date] Initial Approach
+
 Description of first attempt.
 
 **Issues:**
+
 - Problem discovered
 
 ### v2 - [Date] Refinement
+
 Changes made and why.
 
 ### v3 - Current
+
 See README.md for final design.
 
 ## 4. Decisions
 
 ### Decision 1: [Topic]
+
 **Choice:** X
 **Alternatives:** Y, Z
 **Rationale:** Why X over Y and Z
@@ -401,17 +400,20 @@ See README.md for final design.
 ## 5. Learnings
 
 ### What Worked
+
 - Thing 1
 - Thing 2
 
 ### What to Improve
+
 - Area 1
 - Area 2
 
 ### For Future Reference
+
 - Insight 1
 - Insight 2
-````
+```
 
 ---
 
