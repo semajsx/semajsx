@@ -54,7 +54,7 @@ SemaJSX is a lightweight, signal-based reactive JSX runtime for building modern 
 - Tutorial and reference style
 - Located in package READMEs or `apps/docs/content/`
 
-**See [DOCS.md](./DOCS.md) for complete documentation index.**
+**See [DOCUMENTING.md](./DOCUMENTING.md) for documentation system and index.**
 
 ### When Writing Documentation
 

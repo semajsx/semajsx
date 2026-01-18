@@ -2,6 +2,46 @@
 
 This document describes how documentation is organized in SemaJSX.
 
+---
+
+## Quick Index
+
+| Type         | Purpose              | Location                                          |
+| ------------ | -------------------- | ------------------------------------------------- |
+| **Internal** | How we build SemaJSX | Root (`*.md`) + `docs/` + `tasks/`                |
+| **User**     | How to use SemaJSX   | `README.md`, `packages/*/README.md`, `apps/docs/` |
+
+### Internal Documentation
+
+**Core Guides**:
+[CLAUDE.md](./CLAUDE.md) |
+[CONTRIBUTING.md](./CONTRIBUTING.md) |
+[MONOREPO_ARCHITECTURE.md](./MONOREPO_ARCHITECTURE.md) |
+[TESTING.md](./TESTING.md) |
+[WORKFLOW.md](./WORKFLOW.md)
+
+**Design & Decisions**:
+[docs/rfcs/](./docs/rfcs/) |
+[docs/designs/](./docs/designs/) |
+[docs/adrs/](./docs/adrs/) |
+[tasks/](./tasks/)
+
+### User Documentation
+
+**Main**: [README.md](./README.md) | [CHANGELOG.md](./CHANGELOG.md)
+
+**Packages**:
+[semajsx](./packages/semajsx/README.md) |
+[core](./packages/core/README.md) |
+[signal](./packages/signal/README.md) |
+[dom](./packages/dom/README.md) |
+[ssr](./packages/ssr/README.md) |
+[terminal](./packages/terminal/README.md) |
+[logger](./packages/logger/README.md) |
+[utils](./packages/utils/README.md)
+
+---
+
 ## Core Principles
 
 1. **Separate concerns**: Formal documents vs. working documents
