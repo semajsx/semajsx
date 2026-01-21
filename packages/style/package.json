@@ -20,11 +20,15 @@
   "types": "./dist/index.d.mts",
   "exports": {
     ".": "./src/index.ts",
+    "./react": "./src/react.ts",
+    "./vue": "./src/vue.ts",
     "./package.json": "./package.json"
   },
   "publishConfig": {
     "exports": {
       ".": "./dist/index.mjs",
+      "./react": "./dist/react.mjs",
+      "./vue": "./dist/vue.mjs",
       "./package.json": "./package.json"
     }
   },
@@ -42,8 +46,23 @@
   },
   "devDependencies": {
     "@semajsx/configs": "workspace:*",
+    "@types/react": "^19.1.8",
+    "react": "^19.1.0",
     "tsdown": "^0.16.8",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.16",
+    "vue": "^3.6.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "vue": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    }
   }
 }
