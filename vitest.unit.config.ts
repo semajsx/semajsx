@@ -8,6 +8,7 @@ export default defineConfig({
   test: {
     projects: [
       "packages/signal",
+      "packages/style",
       "packages/terminal",
       "packages/ssr",
       "packages/ssg",

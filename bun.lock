@@ -59,6 +59,7 @@
       "dependencies": {
         "@semajsx/core": "workspace:*",
         "@semajsx/signal": "workspace:*",
+        "@semajsx/style": "workspace:*",
         "@semajsx/utils": "workspace:*",
       },
       "devDependencies": {
@@ -165,6 +166,19 @@
       "optionalPeers": [
         "vite",
       ],
+    },
+    "packages/style": {
+      "name": "@semajsx/style",
+      "version": "0.1.0",
+      "dependencies": {
+        "@semajsx/signal": "workspace:*",
+      },
+      "devDependencies": {
+        "@semajsx/configs": "workspace:*",
+        "tsdown": "^0.16.8",
+        "typescript": "^5.9.3",
+        "vitest": "^4.0.16",
+      },
     },
     "packages/terminal": {
       "name": "@semajsx/terminal",
@@ -444,6 +458,8 @@
     "@semajsx/ssg": ["@semajsx/ssg@workspace:packages/ssg"],
 
     "@semajsx/ssr": ["@semajsx/ssr@workspace:packages/ssr"],
+
+    "@semajsx/style": ["@semajsx/style@workspace:packages/style"],
 
     "@semajsx/terminal": ["@semajsx/terminal@workspace:packages/terminal"],
 

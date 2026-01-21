@@ -39,6 +39,7 @@
   "dependencies": {
     "@semajsx/core": "workspace:*",
     "@semajsx/signal": "workspace:*",
+    "@semajsx/style": "workspace:*",
     "@semajsx/utils": "workspace:*"
   },
   "devDependencies": {

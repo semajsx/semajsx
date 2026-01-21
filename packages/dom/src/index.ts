@@ -20,3 +20,12 @@ export type { DOMRenderResult } from "./render";
 
 export { createPortal, PortalComponent } from "./portal";
 export type { PortalProps } from "./portal";
+
+export {
+  AppStyleAnchor,
+  ComponentStyleAnchor,
+  getStyleTarget,
+  setAppStyleTarget,
+  setComponentStyleTarget,
+} from "./style-anchor";
+export type { AppStyleAnchorProps, ComponentStyleAnchorProps } from "./style-anchor";

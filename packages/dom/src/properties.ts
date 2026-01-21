@@ -1,6 +1,50 @@
 import type { Signal } from "@semajsx/signal";
 import type { Ref } from "@semajsx/core";
 import { isSignal } from "@semajsx/signal";
+import { isStyleToken, inject, type StyleToken } from "@semajsx/style";
+
+/**
+ * Class value type - can be string, StyleToken, array, or falsy
+ */
+type ClassValue = string | StyleToken | ClassValue[] | false | null | undefined;
+
+/**
+ * Resolve a class value to a string
+ *
+ * Supports:
+ * - Strings: returned as-is
+ * - StyleTokens: injects CSS and returns className
+ * - Arrays: recursively resolves all values
+ * - Falsy values: filtered out
+ *
+ * @example
+ * resolveClass("btn") // "btn"
+ * resolveClass(button.root) // "root-x7f3a" (injects CSS)
+ * resolveClass([button.root, "custom", isLarge && button.large]) // "root-x7f3a custom large-y8g4b"
+ */
+function resolveClass(value: ClassValue): string {
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (isStyleToken(value)) {
+    // Inject CSS for the token
+    inject(value);
+    // Return the className (or empty string if none)
+    return value._ ?? "";
+  }
+
+  if (Array.isArray(value)) {
+    // Recursively resolve array values, filter empty strings
+    return value.map(resolveClass).filter(Boolean).join(" ");
+  }
+
+  return "";
+}
 
 /**
  * Set a property on an element
@@ -32,12 +76,19 @@ export function setProperty(element: Element, key: string, value: unknown): void
     return;
   }
 
-  // Handle className
+  // Handle className/class with StyleToken support
   if (key === "className" || key === "class") {
     if (value == null) {
       element.removeAttribute("class");
+      return;
+    }
+
+    // Resolve class value (may be string, StyleToken, or array)
+    const resolvedClass = resolveClass(value as ClassValue);
+    if (resolvedClass) {
+      element.setAttribute("class", resolvedClass);
     } else {
-      element.setAttribute("class", String(value));
+      element.removeAttribute("class");
     }
     return;
   }
