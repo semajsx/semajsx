@@ -1,11 +1,17 @@
 import { defineProject } from "vitest/config";
+import { playwright } from "@vitest/browser-playwright";
 
 export default defineProject({
+  optimizeDeps: {
+    include: ["react", "react-dom", "react-dom/client", "vue"],
+  },
   test: {
-    globals: true,
-    environment: "node",
+    browser: {
+      enabled: true,
+      headless: true,
+      provider: playwright(),
+      instances: [{ browser: "chromium" }],
+    },
     include: ["src/**/*.test.ts"],
-    // Tests requiring DOM or framework dependencies
-    exclude: ["src/react.test.ts", "src/vue.test.ts", "src/inject.test.ts", "src/registry.test.ts"],
   },
 });

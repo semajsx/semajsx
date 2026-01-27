@@ -26,6 +26,7 @@ import {
   inject,
   provide,
   ref,
+  onMounted,
   onUnmounted,
   defineComponent,
   h,
@@ -140,6 +141,28 @@ export const StyleAnchor = defineComponent({
     const subscriptions = new Set<() => void>();
     const signalVars = new WeakMap<Signal<unknown>, string>();
     const injectedClasses = new Set<string>();
+    // Store pending bindings to apply after mount
+    const pendingBindings: Array<{
+      signal: Signal<unknown>;
+      varName: string;
+      unit: string;
+    }> = [];
+
+    const applyBindings = (
+      bindings: Array<{ signal: Signal<unknown>; varName: string; unit: string }>,
+      element: HTMLElement,
+    ) => {
+      for (const { signal, varName, unit } of bindings) {
+        const value = unit ? `${signal.value}${unit}` : String(signal.value);
+        element.style.setProperty(varName, value);
+
+        const unsub = signal.subscribe((newValue: unknown) => {
+          const v = unit ? `${newValue}${unit}` : String(newValue);
+          element.style.setProperty(varName, v);
+        });
+        subscriptions.add(unsub);
+      }
+    };
 
     const registry: StyleAnchorRegistry = {
       signalVars,
@@ -185,20 +208,13 @@ export const StyleAnchor = defineComponent({
           }
         }
 
-        // 3. Set up signal subscriptions on the anchor element
+        // 3. Set up signal subscriptions on the anchor element (or defer if not mounted)
         const anchorElement = anchorRef.value;
-        if (anchorElement && bindings.length > 0) {
-          for (const { signal, varName, unit } of bindings) {
-            // Set initial value
-            const value = unit ? `${signal.value}${unit}` : String(signal.value);
-            anchorElement.style.setProperty(varName, value);
-
-            // Subscribe to changes
-            const unsub = signal.subscribe((newValue: unknown) => {
-              const v = unit ? `${newValue}${unit}` : String(newValue);
-              anchorElement.style.setProperty(varName, v);
-            });
-            subscriptions.add(unsub);
+        if (bindings.length > 0) {
+          if (anchorElement) {
+            applyBindings(bindings, anchorElement);
+          } else {
+            pendingBindings.push(...bindings);
           }
         }
 
@@ -212,6 +228,14 @@ export const StyleAnchor = defineComponent({
 
     // Provide registry to descendants
     provide(StyleAnchorKey, registry);
+
+    // Apply pending bindings after mount
+    onMounted(() => {
+      if (anchorRef.value && pendingBindings.length > 0) {
+        applyBindings(pendingBindings, anchorRef.value);
+        pendingBindings.length = 0;
+      }
+    });
 
     // Cleanup subscriptions on unmount
     onUnmounted(() => {

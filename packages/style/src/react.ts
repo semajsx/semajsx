@@ -162,6 +162,10 @@ export interface StyleAnchorProps {
 export function StyleAnchor({ target, children }: StyleAnchorProps) {
   const elementRef = useRef<HTMLDivElement>(null);
   const subscriptionsRef = useRef<Set<() => void>>(new Set());
+  // Store pending bindings to apply after mount
+  const pendingBindingsRef = useRef<
+    Array<{ signal: Signal<unknown>; varName: string; unit: string }>
+  >([]);
 
   // Create registry once per anchor instance
   const registryRef = useRef<StyleAnchorRegistry | null>(null);
@@ -212,20 +216,24 @@ export function StyleAnchor({ target, children }: StyleAnchorProps) {
           }
         }
 
-        // 3. Set up signal subscriptions on the anchor element
+        // 3. Set up signal subscriptions on the anchor element (or defer if not mounted)
         const anchorElement = elementRef.current;
-        if (anchorElement && bindings.length > 0) {
-          for (const { signal, varName, unit } of bindings) {
-            // Set initial value
-            const value = unit ? `${signal.value}${unit}` : String(signal.value);
-            anchorElement.style.setProperty(varName, value);
+        if (bindings.length > 0) {
+          if (anchorElement) {
+            // Element is available, apply bindings now
+            for (const { signal, varName, unit } of bindings) {
+              const value = unit ? `${signal.value}${unit}` : String(signal.value);
+              anchorElement.style.setProperty(varName, value);
 
-            // Subscribe to changes
-            const unsub = signal.subscribe((newValue: unknown) => {
-              const v = unit ? `${newValue}${unit}` : String(newValue);
-              anchorElement.style.setProperty(varName, v);
-            });
-            subscriptionsRef.current.add(unsub);
+              const unsub = signal.subscribe((newValue: unknown) => {
+                const v = unit ? `${newValue}${unit}` : String(newValue);
+                anchorElement.style.setProperty(varName, v);
+              });
+              subscriptionsRef.current.add(unsub);
+            }
+          } else {
+            // Element not yet available, store for later
+            pendingBindingsRef.current.push(...bindings);
           }
         }
 
@@ -237,6 +245,24 @@ export function StyleAnchor({ target, children }: StyleAnchorProps) {
       },
     };
   }
+
+  // Apply pending bindings after mount
+  useEffect(() => {
+    const anchorElement = elementRef.current;
+    if (anchorElement && pendingBindingsRef.current.length > 0) {
+      for (const { signal, varName, unit } of pendingBindingsRef.current) {
+        const value = unit ? `${signal.value}${unit}` : String(signal.value);
+        anchorElement.style.setProperty(varName, value);
+
+        const unsub = signal.subscribe((newValue: unknown) => {
+          const v = unit ? `${newValue}${unit}` : String(newValue);
+          anchorElement.style.setProperty(varName, v);
+        });
+        subscriptionsRef.current.add(unsub);
+      }
+      pendingBindingsRef.current = [];
+    }
+  });
 
   // Cleanup subscriptions on unmount
   useEffect(() => {

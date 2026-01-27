@@ -1,25 +1,42 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { createApp, defineComponent, h, nextTick } from "vue";
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from "vitest";
 import { signal } from "@semajsx/signal";
 import { classes } from "./classes";
 import { rule } from "./rule";
-import { StyleAnchor, useStyle, useSignal } from "./vue";
+
+// Dynamic imports for optional peer dependencies
+let Vue: typeof import("vue") | null = null;
+let styleVue: typeof import("./vue") | null = null;
+
+beforeAll(async () => {
+  try {
+    Vue = await import("vue");
+    styleVue = await import("./vue");
+  } catch {
+    // Vue not available
+  }
+});
 
 describe("Vue Integration", () => {
   let container: HTMLDivElement;
-  let app: ReturnType<typeof createApp> | null = null;
+  let app: ReturnType<typeof import("vue").createApp> | null = null;
 
   beforeEach(() => {
+    if (!Vue || !styleVue) return;
     container = document.createElement("div");
     document.body.appendChild(container);
   });
 
   afterEach(() => {
+    if (!container) return;
     app?.unmount();
     document.body.removeChild(container);
   });
 
-  it("should render StyleAnchor with children", async () => {
+  it("should render StyleAnchor with children", async ({ skip }) => {
+    if (!Vue || !styleVue) skip();
+    const { createApp, defineComponent, h, nextTick } = Vue!;
+    const { StyleAnchor, useStyle } = styleVue!;
+
     const c = classes(["box"]);
     const boxToken = rule`${c.box} { padding: 8px; }`;
 
@@ -46,7 +63,11 @@ describe("Vue Integration", () => {
     expect(box?.className).toContain(c.box.toString());
   });
 
-  it("should inject CSS when using cx with StyleToken", async () => {
+  it("should inject CSS when using cx with StyleToken", async ({ skip }) => {
+    if (!Vue || !styleVue) skip();
+    const { createApp, defineComponent, h, nextTick } = Vue!;
+    const { StyleAnchor, useStyle } = styleVue!;
+
     const c = classes(["btn"]);
     const btnToken = rule`${c.btn} { background: green; }`;
 
@@ -68,7 +89,6 @@ describe("Vue Integration", () => {
 
     await nextTick();
 
-    // Check that CSS was injected
     const styleEls = document.head.querySelectorAll("style");
     const hasStyle = Array.from(styleEls).some((el) =>
       el.textContent?.includes("background: green"),
@@ -76,7 +96,11 @@ describe("Vue Integration", () => {
     expect(hasStyle).toBe(true);
   });
 
-  it("should combine multiple class names with cx", async () => {
+  it("should combine multiple class names with cx", async ({ skip }) => {
+    if (!Vue || !styleVue) skip();
+    const { createApp, defineComponent, h, nextTick } = Vue!;
+    const { StyleAnchor, useStyle } = styleVue!;
+
     const c = classes(["base", "active"]);
     const baseToken = rule`${c.base} { padding: 8px; }`;
     const activeToken = rule`${c.active} { color: red; }`;
@@ -113,7 +137,11 @@ describe("Vue Integration", () => {
     expect(el?.className).toContain("custom");
   });
 
-  it("should filter falsy values in cx", async () => {
+  it("should filter falsy values in cx", async ({ skip }) => {
+    if (!Vue || !styleVue) skip();
+    const { createApp, defineComponent, h, nextTick } = Vue!;
+    const { StyleAnchor, useStyle } = styleVue!;
+
     const c = classes(["btn", "large"]);
     const btnToken = rule`${c.btn} { padding: 8px; }`;
     const largeToken = rule`${c.large} { font-size: 18px; }`;
@@ -150,7 +178,11 @@ describe("Vue Integration", () => {
     expect(btn?.className).not.toContain(c.large.toString());
   });
 
-  it("should handle signal bindings for reactive styles", async () => {
+  it("should handle signal bindings for reactive styles", async ({ skip }) => {
+    if (!Vue || !styleVue) skip();
+    const { createApp, defineComponent, h, nextTick } = Vue!;
+    const { StyleAnchor, useStyle, useSignal } = styleVue!;
+
     const c = classes(["box"]);
 
     const TestComponent = defineComponent({
@@ -186,13 +218,16 @@ describe("Vue Integration", () => {
 
     await nextTick();
 
-    // Check that the anchor element has the CSS variable
     const anchor = container.querySelector('div[style*="display: contents"]');
     expect(anchor).not.toBeNull();
     expect(anchor?.getAttribute("style")).toContain("100px");
   });
 
-  it("should work without StyleAnchor (fallback mode)", async () => {
+  it("should work without StyleAnchor (fallback mode)", async ({ skip }) => {
+    if (!Vue || !styleVue) skip();
+    const { createApp, defineComponent, h, nextTick } = Vue!;
+    const { useStyle } = styleVue!;
+
     const c = classes(["fallback"]);
     const token = rule`${c.fallback} { margin: 4px; }`;
 
@@ -203,18 +238,20 @@ describe("Vue Integration", () => {
       },
     });
 
-    // Render without StyleAnchor
     app = createApp(TestComponent);
     app.mount(container);
 
     await nextTick();
 
     const el = container.querySelector('[data-testid="fallback"]');
-    // Should still get the className even without StyleAnchor
     expect(el?.className).toContain(c.fallback.toString());
   });
 
-  it("should cleanup subscriptions on unmount", async () => {
+  it("should cleanup subscriptions on unmount", async ({ skip }) => {
+    if (!Vue || !styleVue) skip();
+    const { createApp, defineComponent, h, nextTick } = Vue!;
+    const { StyleAnchor, useStyle } = styleVue!;
+
     const c = classes(["cleanup"]);
     const height = signal(100);
     const boxToken = rule`${c.cleanup} { height: ${height}px; }`;
@@ -237,34 +274,37 @@ describe("Vue Integration", () => {
 
     await nextTick();
 
-    // Unmount
     app.unmount();
     app = null;
 
-    // Update signal after unmount - should not throw
     height.value = 300;
     await nextTick();
 
-    // Test passes if no error was thrown
     expect(true).toBe(true);
   });
 });
 
 describe("useSignal (Vue)", () => {
   let container: HTMLDivElement;
-  let app: ReturnType<typeof createApp> | null = null;
+  let app: ReturnType<typeof import("vue").createApp> | null = null;
 
   beforeEach(() => {
+    if (!Vue || !styleVue) return;
     container = document.createElement("div");
     document.body.appendChild(container);
   });
 
   afterEach(() => {
+    if (!container) return;
     app?.unmount();
     document.body.removeChild(container);
   });
 
-  it("should create a signal with initial value", async () => {
+  it("should create a signal with initial value", async ({ skip }) => {
+    if (!Vue || !styleVue) skip();
+    const { createApp, defineComponent, h, nextTick } = Vue!;
+    const { useSignal } = styleVue!;
+
     let capturedSignal: ReturnType<typeof useSignal<number>> | null = null;
 
     const TestComponent = defineComponent({
@@ -284,7 +324,11 @@ describe("useSignal (Vue)", () => {
     expect(capturedSignal?.value).toBe(42);
   });
 
-  it("should update signal value", async () => {
+  it("should update signal value", async ({ skip }) => {
+    if (!Vue || !styleVue) skip();
+    const { createApp, defineComponent, h, nextTick } = Vue!;
+    const { useSignal } = styleVue!;
+
     let capturedSignal: ReturnType<typeof useSignal<number>> | null = null;
 
     const TestComponent = defineComponent({
@@ -311,7 +355,6 @@ describe("useSignal (Vue)", () => {
 
     expect(capturedSignal?.value).toBe(0);
 
-    // Update signal
     capturedSignal!.value = 10;
 
     expect(capturedSignal?.value).toBe(10);
