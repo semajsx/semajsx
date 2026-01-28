@@ -113,3 +113,39 @@ export {
   colors,
   colorsArb,
 } from "./colors";
+
+// Flexbox utilities
+export type { FlexValues, FlexboxGroup, FlexboxArbGroup } from "./flexbox";
+export {
+  // Display
+  display,
+  // Flex direction & wrap
+  flexDirection,
+  flexWrap,
+  // Flex shorthand
+  flex,
+  grow,
+  shrink,
+  basis,
+  // Justify
+  justify,
+  justifyItems,
+  justifySelf,
+  // Align
+  content,
+  items,
+  self,
+  // Place
+  placeContent,
+  placeItems,
+  placeSelf,
+  // Order
+  order,
+  // Arbitrary value functions
+  flexArb,
+  basisArb,
+  orderArb,
+  // Grouped exports
+  flexbox,
+  flexboxArb,
+} from "./flexbox";
