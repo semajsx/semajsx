@@ -93,6 +93,100 @@ const hash = hashString(name + Date.now().toString(36));
 
 **Decision**: Tailwind package will NOT use `classes()`. Instead, use deterministic naming.
 
+### Proposal: Improve `classes()` API in @semajsx/style
+
+The discovery of `Date.now()` in `classes()` suggests a broader API redesign is needed. Here's a proposal:
+
+#### Current Problem
+
+```ts
+// Current: always hashes with Date.now() (non-deterministic)
+const c = classes(["root", "icon"]);
+// c.root.toString() -> "root-x7f3a" (different each time!)
+```
+
+#### Proposed Solution: Flexible Options
+
+```ts
+interface ClassesOptions {
+  /** Add prefix to all class names */
+  prefix?: string;
+  /** Hash strategy: false (default), "deterministic", or "unique" */
+  hash?: false | "deterministic" | "unique";
+  /** Namespace for deterministic hash (e.g., component name) */
+  namespace?: string;
+}
+```
+
+#### Usage Examples
+
+```ts
+// 1. Default: no hash (new behavior, breaking change)
+const c = classes(["root", "icon"]);
+// c.root.toString() -> "root"
+// c.icon.toString() -> "icon"
+
+// 2. With prefix (common for component libraries)
+const c = classes(["root", "icon"], { prefix: "btn-" });
+// c.root.toString() -> "btn-root"
+// c.icon.toString() -> "btn-icon"
+
+// 3. Deterministic hash (for guaranteed uniqueness, SSR-safe)
+const c = classes(["root", "icon"], { hash: "deterministic", namespace: "Button" });
+// c.root.toString() -> "Button-root-a1b2c" (same every time)
+// c.icon.toString() -> "Button-icon-d3e4f" (same every time)
+
+// 4. Unique hash (for runtime isolation, NOT SSR-safe)
+const c = classes(["root", "icon"], { hash: "unique" });
+// c.root.toString() -> "root-x7f3a" (different each time)
+// Used for: dynamically created components that need isolation
+```
+
+#### Alternative: Separate Functions
+
+```ts
+// Option B: Different functions for different use cases
+classes(["root", "icon"]); // "root", "icon"
+prefixedClasses("btn-", ["root"]); // "btn-root"
+hashedClasses(["root"], "Button"); // "Button-root-a1b2c" (deterministic)
+uniqueClasses(["root"]); // "root-x7f3a" (unique each time)
+```
+
+#### Recommendation
+
+**Option A (single function with options)** is preferred because:
+
+1. Single API to learn
+2. Options are explicit about intent
+3. TypeScript can enforce valid combinations
+4. Easier to add new options in future
+
+#### Migration Path
+
+```ts
+// Before (current behavior)
+classes(["root"]); // "root-x7f3a" (random hash)
+
+// After (new default)
+classes(["root"]); // "root" (no hash)
+
+// To get old behavior (if needed)
+classes(["root"], { hash: "unique" }); // "root-x7f3a" (random)
+
+// Better alternative (deterministic)
+classes(["root"], { hash: "deterministic", namespace: "MyComponent" });
+```
+
+#### Implementation Note
+
+This is a **breaking change** for `@semajsx/style`. Options:
+
+1. Major version bump (v1.0.0 → v2.0.0)
+2. New function name (`classNames()`) and deprecate `classes()`
+3. Feature flag for migration period
+
+**Scope**: This proposal is for `@semajsx/style`. The `@semajsx/tailwind` package will NOT use `classes()` at all - it generates class names directly (like `p-4`).
+
 ### Class Name Prefix Strategy (Deep Analysis)
 
 **Why consider a prefix at all?**
