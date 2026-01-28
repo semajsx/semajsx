@@ -1,62 +1,81 @@
 /**
- * Layout utilities: position, overflow, z-index, etc.
+ * Layout utilities: position, overflow, z-index, inset, etc.
  *
  * Usage:
  * ```ts
- * // Predefined values (via Proxy)
- * import { position, top, zIndex, overflow } from "@semajsx/tailwind";
- * <div class={[position.absolute, top["4"], zIndex["10"], overflow.hidden]}>
+ * // Flat exports (recommended)
+ * import { absolute, relative, top4, z10, overflowHidden } from "@semajsx/tailwind";
+ * <div class={cx(absolute, top4, z10, overflowHidden)}>
  *
- * // Arbitrary values (tagged template - same function!)
- * <div class={[top`100px`, zIndex`999`]}>
+ * // Namespace access
+ * import { layout } from "@semajsx/tailwind";
+ * <div class={cx(layout.absolute, layout.top4, layout.z10)}>
+ *
+ * // Arbitrary values (tagged template)
+ * import { top, left, z } from "@semajsx/tailwind";
+ * <div class={cx(top`100px`, left`50%`, z`999`)}>
  * ```
  */
 
 import type { StyleToken, TaggedUtilityFn } from "./types";
-import { createUtility, createTaggedUtility } from "./core";
+import { createUtility, createTaggedUtility, createMultiUtility } from "./core";
 import { getConfig } from "./config";
 
-/** Type for layout value records */
-export type LayoutValues = Record<string, StyleToken>;
+// ============================================
+// Scale definitions
+// ============================================
 
 // Position values
-const positionValues: Record<string, string> = {
-  static: "static",
-  fixed: "fixed",
-  absolute: "absolute",
-  relative: "relative",
-  sticky: "sticky",
-};
+const positionValues = ["static", "fixed", "absolute", "relative", "sticky"] as const;
 
-// Top/Right/Bottom/Left scale
+// Inset scale (top/right/bottom/left/inset)
 const insetScale: Record<string, string> = {
   "0": "0px",
   px: "1px",
   "0.5": "0.125rem",
   "1": "0.25rem",
+  "1.5": "0.375rem",
   "2": "0.5rem",
+  "2.5": "0.625rem",
   "3": "0.75rem",
+  "3.5": "0.875rem",
   "4": "1rem",
   "5": "1.25rem",
   "6": "1.5rem",
+  "7": "1.75rem",
   "8": "2rem",
+  "9": "2.25rem",
   "10": "2.5rem",
+  "11": "2.75rem",
   "12": "3rem",
+  "14": "3.5rem",
   "16": "4rem",
   "20": "5rem",
   "24": "6rem",
+  "28": "7rem",
   "32": "8rem",
+  "36": "9rem",
   "40": "10rem",
+  "44": "11rem",
   "48": "12rem",
+  "52": "13rem",
   "56": "14rem",
+  "60": "15rem",
   "64": "16rem",
+  "72": "18rem",
+  "80": "20rem",
+  "96": "24rem",
+};
+
+// Semantic inset values
+const insetSemanticValues: Record<string, string> = {
   auto: "auto",
-  "1/2": "50%",
-  "1/3": "33.333333%",
-  "2/3": "66.666667%",
-  "1/4": "25%",
-  "3/4": "75%",
   full: "100%",
+  half: "50%",
+  third: "33.333333%",
+  twoThirds: "66.666667%",
+  quarter: "25%",
+  threeQuarters: "75%",
 };
 
 // Z-index scale
@@ -71,634 +90,634 @@ const zIndexScale: Record<string, string> = {
 };
 
 // Overflow values
-const overflowValues: Record<string, string> = {
-  auto: "auto",
-  hidden: "hidden",
-  clip: "clip",
-  visible: "visible",
-  scroll: "scroll",
-};
+const overflowValues = ["auto", "hidden", "clip", "visible", "scroll"] as const;
 
 // Visibility values
-const visibilityValues: Record<string, string> = {
+const visibilityMap: Record<string, string> = {
   visible: "visible",
   invisible: "hidden",
   collapse: "collapse",
 };
 
-// Create utility functions
+// ============================================
+// Utility function creators
+// ============================================
+
 const topFn = createUtility("top", "top");
 const rightFn = createUtility("right", "right");
 const bottomFn = createUtility("bottom", "bottom");
 const leftFn = createUtility("left", "left");
 const zIndexFn = createUtility("z-index", "z");
-const overflowFn = createUtility("overflow", "overflow");
-const overflowXFn = createUtility("overflow-x", "overflow-x");
-const overflowYFn = createUtility("overflow-y", "overflow-y");
+const insetFn = createUtility("inset", "inset");
+const insetXFn = createMultiUtility(["left", "right"], "inset-x");
+const insetYFn = createMultiUtility(["top", "bottom"], "inset-y");
 
-/**
- * Create a layout utility that works as both namespace and tagged template
- */
-function createLayoutUtility(
+// ============================================
+// Token generators
+// ============================================
+
+function generatePositionTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
+
+  for (const value of positionValues) {
+    const className = `${prefix}${value}`;
+    tokens[value] = {
+      __kind: "style",
+      _: className,
+      __cssTemplate: `.${className} { position: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  }
+
+  return tokens;
+}
+
+function generateInsetTokens(
   utilityFn: (value: string, valueName?: string) => StyleToken,
-  scale: Record<string, string>,
-): TaggedUtilityFn & LayoutValues {
-  const tokenCache = new Map<string, StyleToken>();
-  const taggedFn = createTaggedUtility(utilityFn);
+  prefix: string,
+): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
 
-  const handler: ProxyHandler<TaggedUtilityFn> = {
-    get(target, prop: string): StyleToken | undefined {
-      if (prop === "length" || prop === "name" || prop === "prototype") {
-        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
-      }
+  // Number tokens: inset0, inset4, etc.
+  for (const [key, value] of Object.entries(insetScale)) {
+    const tokenKey = key.replace(".", "_");
+    const tokenName = `${prefix}${tokenKey}`;
+    tokens[tokenName] = utilityFn(value, key);
+  }
 
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
+  // px token
+  tokens[`${prefix}px`] = utilityFn("1px", "px");
 
-      if (prop in scale) {
-        const token = utilityFn(scale[prop]!, prop);
-        tokenCache.set(prop, token);
-        return token;
-      }
+  // Semantic tokens: insetAuto, insetFull, insetHalf
+  for (const [key, value] of Object.entries(insetSemanticValues)) {
+    const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+    const tokenName = `${prefix}${capKey}`;
+    tokens[tokenName] = utilityFn(value, key);
+  }
 
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in scale;
-    },
-
-    apply(target, thisArg, args) {
-      return Reflect.apply(target, thisArg, args);
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(scale);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in scale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  };
-
-  return new Proxy(taggedFn, handler) as TaggedUtilityFn & LayoutValues;
+  return tokens;
 }
 
-/**
- * Create a simple utility that only has predefined values (no arbitrary)
- */
-function createSimpleLayoutUtility(
-  utilityFn: (value: string, valueName?: string) => StyleToken,
-  scale: Record<string, string>,
-): LayoutValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateZIndexTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
 
-  return new Proxy({} as LayoutValues, {
-    get(_target, prop: string): StyleToken | undefined {
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
+  for (const [key, value] of Object.entries(zIndexScale)) {
+    if (key === "auto") {
+      tokens.zAuto = zIndexFn(value, "auto");
+    } else {
+      tokens[`z${key}`] = zIndexFn(value, key);
+    }
+  }
 
-      if (prop in scale) {
-        const token = utilityFn(scale[prop]!, prop);
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in scale;
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(scale);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in scale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  });
+  return tokens;
 }
 
-/**
- * Create position utility (special class names without prefix)
- */
-function createPositionUtility(): LayoutValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateOverflowTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
 
-  return new Proxy({} as LayoutValues, {
-    get(_target, prop: string): StyleToken | undefined {
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
-
-      if (prop in positionValues) {
-        const cfg = getConfig();
-        const prefix = cfg.prefix ?? "";
-        const className = `${prefix}${prop}`;
-        const value = positionValues[prop]!;
-
-        const token: StyleToken = {
-          __kind: "style",
-          _: className,
-          __cssTemplate: `.${className} { position: ${value}; }`,
-          toString() {
-            return this._;
-          },
-        };
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in positionValues;
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(positionValues);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in positionValues) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  });
-}
-
-/**
- * Create inset utility (combines top, right, bottom, left)
- */
-function createInsetUtility(): TaggedUtilityFn & LayoutValues {
-  const tokenCache = new Map<string, StyleToken>();
-
-  const createToken = (name: string, value: string): StyleToken => {
-    const cfg = getConfig();
-    const prefix = cfg.prefix ?? "";
-    const className = `${prefix}inset-${name}`;
-
-    return {
+  // Main overflow
+  for (const value of overflowValues) {
+    const capValue = value.charAt(0).toUpperCase() + value.slice(1);
+    const className = `${prefix}overflow-${value}`;
+    tokens[`overflow${capValue}`] = {
       __kind: "style",
       _: className,
-      __cssTemplate: `.${className} { inset: ${value}; }`,
+      __cssTemplate: `.${className} { overflow: ${value}; }`,
       toString() {
         return this._;
       },
     };
-  };
+  }
 
-  const insetFn = (value: string, valueName?: string): StyleToken => {
-    const cfg = getConfig();
-    const prefix = cfg.prefix ?? "";
-    const name = valueName ?? value.replace(/[^a-z0-9]/gi, "_");
-    const className = `${prefix}inset-${name}`;
-
-    return {
+  // Overflow-x
+  for (const value of overflowValues) {
+    const capValue = value.charAt(0).toUpperCase() + value.slice(1);
+    const className = `${prefix}overflow-x-${value}`;
+    tokens[`overflowX${capValue}`] = {
       __kind: "style",
       _: className,
-      __cssTemplate: `.${className} { inset: ${value}; }`,
+      __cssTemplate: `.${className} { overflow-x: ${value}; }`,
       toString() {
         return this._;
       },
     };
-  };
+  }
 
-  const taggedFn = createTaggedUtility(insetFn);
+  // Overflow-y
+  for (const value of overflowValues) {
+    const capValue = value.charAt(0).toUpperCase() + value.slice(1);
+    const className = `${prefix}overflow-y-${value}`;
+    tokens[`overflowY${capValue}`] = {
+      __kind: "style",
+      _: className,
+      __cssTemplate: `.${className} { overflow-y: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  }
 
-  const handler: ProxyHandler<TaggedUtilityFn> = {
-    get(target, prop: string): StyleToken | undefined {
-      if (prop === "length" || prop === "name" || prop === "prototype") {
-        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
-      }
-
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
-
-      if (prop in insetScale) {
-        const token = createToken(prop, insetScale[prop]!);
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in insetScale;
-    },
-
-    apply(target, thisArg, args) {
-      return Reflect.apply(target, thisArg, args);
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(insetScale);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in insetScale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  };
-
-  return new Proxy(taggedFn, handler) as TaggedUtilityFn & LayoutValues;
+  return tokens;
 }
 
-/**
- * Create insetX utility (combines left and right)
- */
-function createInsetXUtility(): TaggedUtilityFn & LayoutValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateVisibilityTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
 
-  const createToken = (name: string, value: string): StyleToken => {
-    const cfg = getConfig();
-    const prefix = cfg.prefix ?? "";
-    const className = `${prefix}inset-x-${name}`;
-
-    return {
+  for (const [key, value] of Object.entries(visibilityMap)) {
+    const className = `${prefix}${key}`;
+    tokens[key] = {
       __kind: "style",
       _: className,
-      __cssTemplate: `.${className} { left: ${value}; right: ${value}; }`,
+      __cssTemplate: `.${className} { visibility: ${value}; }`,
       toString() {
         return this._;
       },
     };
-  };
+  }
 
-  const insetXFn = (value: string, valueName?: string): StyleToken => {
-    const cfg = getConfig();
-    const prefix = cfg.prefix ?? "";
-    const name = valueName ?? value.replace(/[^a-z0-9]/gi, "_");
-    const className = `${prefix}inset-x-${name}`;
-
-    return {
-      __kind: "style",
-      _: className,
-      __cssTemplate: `.${className} { left: ${value}; right: ${value}; }`,
-      toString() {
-        return this._;
-      },
-    };
-  };
-
-  const taggedFn = createTaggedUtility(insetXFn);
-
-  const handler: ProxyHandler<TaggedUtilityFn> = {
-    get(target, prop: string): StyleToken | undefined {
-      if (prop === "length" || prop === "name" || prop === "prototype") {
-        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
-      }
-
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
-
-      if (prop in insetScale) {
-        const token = createToken(prop, insetScale[prop]!);
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in insetScale;
-    },
-
-    apply(target, thisArg, args) {
-      return Reflect.apply(target, thisArg, args);
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(insetScale);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in insetScale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  };
-
-  return new Proxy(taggedFn, handler) as TaggedUtilityFn & LayoutValues;
-}
-
-/**
- * Create insetY utility (combines top and bottom)
- */
-function createInsetYUtility(): TaggedUtilityFn & LayoutValues {
-  const tokenCache = new Map<string, StyleToken>();
-
-  const createToken = (name: string, value: string): StyleToken => {
-    const cfg = getConfig();
-    const prefix = cfg.prefix ?? "";
-    const className = `${prefix}inset-y-${name}`;
-
-    return {
-      __kind: "style",
-      _: className,
-      __cssTemplate: `.${className} { top: ${value}; bottom: ${value}; }`,
-      toString() {
-        return this._;
-      },
-    };
-  };
-
-  const insetYFn = (value: string, valueName?: string): StyleToken => {
-    const cfg = getConfig();
-    const prefix = cfg.prefix ?? "";
-    const name = valueName ?? value.replace(/[^a-z0-9]/gi, "_");
-    const className = `${prefix}inset-y-${name}`;
-
-    return {
-      __kind: "style",
-      _: className,
-      __cssTemplate: `.${className} { top: ${value}; bottom: ${value}; }`,
-      toString() {
-        return this._;
-      },
-    };
-  };
-
-  const taggedFn = createTaggedUtility(insetYFn);
-
-  const handler: ProxyHandler<TaggedUtilityFn> = {
-    get(target, prop: string): StyleToken | undefined {
-      if (prop === "length" || prop === "name" || prop === "prototype") {
-        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
-      }
-
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
-
-      if (prop in insetScale) {
-        const token = createToken(prop, insetScale[prop]!);
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in insetScale;
-    },
-
-    apply(target, thisArg, args) {
-      return Reflect.apply(target, thisArg, args);
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(insetScale);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in insetScale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  };
-
-  return new Proxy(taggedFn, handler) as TaggedUtilityFn & LayoutValues;
-}
-
-/**
- * Create visibility utility (special class names)
- */
-function createVisibilityUtility(): LayoutValues {
-  const tokenCache = new Map<string, StyleToken>();
-
-  return new Proxy({} as LayoutValues, {
-    get(_target, prop: string): StyleToken | undefined {
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
-
-      if (prop in visibilityValues) {
-        const cfg = getConfig();
-        const prefix = cfg.prefix ?? "";
-        const className = `${prefix}${prop}`;
-        const value = visibilityValues[prop]!;
-
-        const token: StyleToken = {
-          __kind: "style",
-          _: className,
-          __cssTemplate: `.${className} { visibility: ${value}; }`,
-          toString() {
-            return this._;
-          },
-        };
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in visibilityValues;
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(visibilityValues);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in visibilityValues) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  });
+  return tokens;
 }
 
 // ============================================
-// Layout Utilities
+// Generate all tokens
 // ============================================
 
-/**
- * Position utility
- * @example
- * position.absolute, position.relative, position.fixed // predefined
- */
-export const position: LayoutValues = createPositionUtility();
-
-/**
- * Inset utility (all directions)
- * @example
- * inset["0"], inset["4"], inset.auto // predefined
- * inset`100px` // arbitrary
- */
-export const inset: TaggedUtilityFn & LayoutValues = createInsetUtility();
-
-/**
- * Inset X utility (left and right)
- * @example
- * insetX["0"], insetX["4"] // predefined
- * insetX`100px` // arbitrary
- */
-export const insetX: TaggedUtilityFn & LayoutValues = createInsetXUtility();
-
-/**
- * Inset Y utility (top and bottom)
- * @example
- * insetY["0"], insetY["4"] // predefined
- * insetY`100px` // arbitrary
- */
-export const insetY: TaggedUtilityFn & LayoutValues = createInsetYUtility();
-
-/**
- * Top utility
- * @example
- * top["0"], top["4"], top.auto // predefined
- * top`100px` // arbitrary
- */
-export const top: TaggedUtilityFn & LayoutValues = createLayoutUtility(topFn, insetScale);
-
-/**
- * Right utility
- * @example
- * right["0"], right["4"], right.auto // predefined
- * right`100px` // arbitrary
- */
-export const right: TaggedUtilityFn & LayoutValues = createLayoutUtility(rightFn, insetScale);
-
-/**
- * Bottom utility
- * @example
- * bottom["0"], bottom["4"], bottom.auto // predefined
- * bottom`100px` // arbitrary
- */
-export const bottom: TaggedUtilityFn & LayoutValues = createLayoutUtility(bottomFn, insetScale);
-
-/**
- * Left utility
- * @example
- * left["0"], left["4"], left.auto // predefined
- * left`100px` // arbitrary
- */
-export const left: TaggedUtilityFn & LayoutValues = createLayoutUtility(leftFn, insetScale);
-
-/**
- * Z-index utility
- * @example
- * zIndex["10"], zIndex["50"], zIndex.auto // predefined
- * zIndex`999` // arbitrary
- */
-export const zIndex: TaggedUtilityFn & LayoutValues = createLayoutUtility(zIndexFn, zIndexScale);
-
-/**
- * Overflow utility
- * @example
- * overflow.hidden, overflow.auto, overflow.scroll // predefined
- */
-export const overflow: LayoutValues = createSimpleLayoutUtility(overflowFn, overflowValues);
-
-/**
- * Overflow X utility
- * @example
- * overflowX.hidden, overflowX.auto // predefined
- */
-export const overflowX: LayoutValues = createSimpleLayoutUtility(overflowXFn, overflowValues);
-
-/**
- * Overflow Y utility
- * @example
- * overflowY.hidden, overflowY.auto // predefined
- */
-export const overflowY: LayoutValues = createSimpleLayoutUtility(overflowYFn, overflowValues);
-
-/**
- * Visibility utility
- * @example
- * visibility.visible, visibility.invisible // predefined
- */
-export const visibility: LayoutValues = createVisibilityUtility();
+const positionTokens = generatePositionTokens();
+const topTokens = generateInsetTokens(topFn, "top");
+const rightTokens = generateInsetTokens(rightFn, "right");
+const bottomTokens = generateInsetTokens(bottomFn, "bottom");
+const leftTokens = generateInsetTokens(leftFn, "left");
+const insetTokens = generateInsetTokens(insetFn, "inset");
+const insetXTokens = generateInsetTokens(insetXFn, "insetX");
+const insetYTokens = generateInsetTokens(insetYFn, "insetY");
+const zIndexTokens = generateZIndexTokens();
+const overflowTokens = generateOverflowTokens();
+const visibilityTokens = generateVisibilityTokens();
 
 // ============================================
-// Grouped exports
+// Tagged template functions for arbitrary values
 // ============================================
 
-/** Grouped layout utilities */
-export interface LayoutGroup {
-  position: LayoutValues;
-  inset: TaggedUtilityFn & LayoutValues;
-  insetX: TaggedUtilityFn & LayoutValues;
-  insetY: TaggedUtilityFn & LayoutValues;
-  top: TaggedUtilityFn & LayoutValues;
-  right: TaggedUtilityFn & LayoutValues;
-  bottom: TaggedUtilityFn & LayoutValues;
-  left: TaggedUtilityFn & LayoutValues;
-  zIndex: TaggedUtilityFn & LayoutValues;
-  overflow: LayoutValues;
-  overflowX: LayoutValues;
-  overflowY: LayoutValues;
-  visibility: LayoutValues;
-}
+/** Top - arbitrary value: top`100px` */
+export const top: TaggedUtilityFn = createTaggedUtility(topFn);
 
-export const layout: LayoutGroup = {
-  position,
-  inset,
-  insetX,
-  insetY,
+/** Right - arbitrary value: right`100px` */
+export const right: TaggedUtilityFn = createTaggedUtility(rightFn);
+
+/** Bottom - arbitrary value: bottom`100px` */
+export const bottom: TaggedUtilityFn = createTaggedUtility(bottomFn);
+
+/** Left - arbitrary value: left`100px` */
+export const left: TaggedUtilityFn = createTaggedUtility(leftFn);
+
+/** Inset - arbitrary value: inset`100px` */
+export const inset: TaggedUtilityFn = createTaggedUtility(insetFn);
+
+/** Inset X - arbitrary value: insetX`100px` */
+export const insetX: TaggedUtilityFn = createTaggedUtility(insetXFn);
+
+/** Inset Y - arbitrary value: insetY`100px` */
+export const insetY: TaggedUtilityFn = createTaggedUtility(insetYFn);
+
+/** Z-index - arbitrary value: z`999` */
+export const z: TaggedUtilityFn = createTaggedUtility(zIndexFn);
+
+// ============================================
+// Individual token exports (flat) - Position
+// ============================================
+
+export const { static: positionStatic, fixed, absolute, relative, sticky } = positionTokens;
+
+// ============================================
+// Individual token exports (flat) - Top
+// ============================================
+
+export const {
+  top0,
+  toppx,
+  top0_5,
+  top1,
+  top1_5,
+  top2,
+  top2_5,
+  top3,
+  top3_5,
+  top4,
+  top5,
+  top6,
+  top7,
+  top8,
+  top9,
+  top10,
+  top11,
+  top12,
+  top14,
+  top16,
+  top20,
+  top24,
+  top28,
+  top32,
+  top36,
+  top40,
+  top44,
+  top48,
+  top52,
+  top56,
+  top60,
+  top64,
+  top72,
+  top80,
+  top96,
+  topAuto,
+  topFull,
+  topHalf,
+  topThird,
+  topTwoThirds,
+  topQuarter,
+  topThreeQuarters,
+} = topTokens;
+
+// ============================================
+// Individual token exports (flat) - Right
+// ============================================
+
+export const {
+  right0,
+  rightpx,
+  right0_5,
+  right1,
+  right1_5,
+  right2,
+  right2_5,
+  right3,
+  right3_5,
+  right4,
+  right5,
+  right6,
+  right7,
+  right8,
+  right9,
+  right10,
+  right11,
+  right12,
+  right14,
+  right16,
+  right20,
+  right24,
+  right28,
+  right32,
+  right36,
+  right40,
+  right44,
+  right48,
+  right52,
+  right56,
+  right60,
+  right64,
+  right72,
+  right80,
+  right96,
+  rightAuto,
+  rightFull,
+  rightHalf,
+  rightThird,
+  rightTwoThirds,
+  rightQuarter,
+  rightThreeQuarters,
+} = rightTokens;
+
+// ============================================
+// Individual token exports (flat) - Bottom
+// ============================================
+
+export const {
+  bottom0,
+  bottompx,
+  bottom0_5,
+  bottom1,
+  bottom1_5,
+  bottom2,
+  bottom2_5,
+  bottom3,
+  bottom3_5,
+  bottom4,
+  bottom5,
+  bottom6,
+  bottom7,
+  bottom8,
+  bottom9,
+  bottom10,
+  bottom11,
+  bottom12,
+  bottom14,
+  bottom16,
+  bottom20,
+  bottom24,
+  bottom28,
+  bottom32,
+  bottom36,
+  bottom40,
+  bottom44,
+  bottom48,
+  bottom52,
+  bottom56,
+  bottom60,
+  bottom64,
+  bottom72,
+  bottom80,
+  bottom96,
+  bottomAuto,
+  bottomFull,
+  bottomHalf,
+  bottomThird,
+  bottomTwoThirds,
+  bottomQuarter,
+  bottomThreeQuarters,
+} = bottomTokens;
+
+// ============================================
+// Individual token exports (flat) - Left
+// ============================================
+
+export const {
+  left0,
+  leftpx,
+  left0_5,
+  left1,
+  left1_5,
+  left2,
+  left2_5,
+  left3,
+  left3_5,
+  left4,
+  left5,
+  left6,
+  left7,
+  left8,
+  left9,
+  left10,
+  left11,
+  left12,
+  left14,
+  left16,
+  left20,
+  left24,
+  left28,
+  left32,
+  left36,
+  left40,
+  left44,
+  left48,
+  left52,
+  left56,
+  left60,
+  left64,
+  left72,
+  left80,
+  left96,
+  leftAuto,
+  leftFull,
+  leftHalf,
+  leftThird,
+  leftTwoThirds,
+  leftQuarter,
+  leftThreeQuarters,
+} = leftTokens;
+
+// ============================================
+// Individual token exports (flat) - Inset
+// ============================================
+
+export const {
+  inset0,
+  insetpx,
+  inset0_5,
+  inset1,
+  inset1_5,
+  inset2,
+  inset2_5,
+  inset3,
+  inset3_5,
+  inset4,
+  inset5,
+  inset6,
+  inset7,
+  inset8,
+  inset9,
+  inset10,
+  inset11,
+  inset12,
+  inset14,
+  inset16,
+  inset20,
+  inset24,
+  inset28,
+  inset32,
+  inset36,
+  inset40,
+  inset44,
+  inset48,
+  inset52,
+  inset56,
+  inset60,
+  inset64,
+  inset72,
+  inset80,
+  inset96,
+  insetAuto,
+  insetFull,
+  insetHalf,
+  insetThird,
+  insetTwoThirds,
+  insetQuarter,
+  insetThreeQuarters,
+} = insetTokens;
+
+// ============================================
+// Individual token exports (flat) - Inset X
+// ============================================
+
+export const {
+  insetX0,
+  insetXpx,
+  insetX0_5,
+  insetX1,
+  insetX1_5,
+  insetX2,
+  insetX2_5,
+  insetX3,
+  insetX3_5,
+  insetX4,
+  insetX5,
+  insetX6,
+  insetX7,
+  insetX8,
+  insetX9,
+  insetX10,
+  insetX11,
+  insetX12,
+  insetX14,
+  insetX16,
+  insetX20,
+  insetX24,
+  insetX28,
+  insetX32,
+  insetX36,
+  insetX40,
+  insetX44,
+  insetX48,
+  insetX52,
+  insetX56,
+  insetX60,
+  insetX64,
+  insetX72,
+  insetX80,
+  insetX96,
+  insetXAuto,
+  insetXFull,
+  insetXHalf,
+  insetXThird,
+  insetXTwoThirds,
+  insetXQuarter,
+  insetXThreeQuarters,
+} = insetXTokens;
+
+// ============================================
+// Individual token exports (flat) - Inset Y
+// ============================================
+
+export const {
+  insetY0,
+  insetYpx,
+  insetY0_5,
+  insetY1,
+  insetY1_5,
+  insetY2,
+  insetY2_5,
+  insetY3,
+  insetY3_5,
+  insetY4,
+  insetY5,
+  insetY6,
+  insetY7,
+  insetY8,
+  insetY9,
+  insetY10,
+  insetY11,
+  insetY12,
+  insetY14,
+  insetY16,
+  insetY20,
+  insetY24,
+  insetY28,
+  insetY32,
+  insetY36,
+  insetY40,
+  insetY44,
+  insetY48,
+  insetY52,
+  insetY56,
+  insetY60,
+  insetY64,
+  insetY72,
+  insetY80,
+  insetY96,
+  insetYAuto,
+  insetYFull,
+  insetYHalf,
+  insetYThird,
+  insetYTwoThirds,
+  insetYQuarter,
+  insetYThreeQuarters,
+} = insetYTokens;
+
+// ============================================
+// Individual token exports (flat) - Z-index
+// ============================================
+
+export const { z0, z10, z20, z30, z40, z50, zAuto } = zIndexTokens;
+
+// ============================================
+// Individual token exports (flat) - Overflow
+// ============================================
+
+export const {
+  overflowAuto,
+  overflowHidden,
+  overflowClip,
+  overflowVisible,
+  overflowScroll,
+  overflowXAuto,
+  overflowXHidden,
+  overflowXClip,
+  overflowXVisible,
+  overflowXScroll,
+  overflowYAuto,
+  overflowYHidden,
+  overflowYClip,
+  overflowYVisible,
+  overflowYScroll,
+} = overflowTokens;
+
+// ============================================
+// Individual token exports (flat) - Visibility
+// ============================================
+
+export const { visible, invisible, collapse } = visibilityTokens;
+
+// ============================================
+// Namespace export (grouped)
+// ============================================
+
+/** All layout tokens in a namespace */
+export const layout = {
+  // Position
+  ...positionTokens,
+  // Top
+  ...topTokens,
+  // Right
+  ...rightTokens,
+  // Bottom
+  ...bottomTokens,
+  // Left
+  ...leftTokens,
+  // Inset
+  ...insetTokens,
+  // Inset X
+  ...insetXTokens,
+  // Inset Y
+  ...insetYTokens,
+  // Z-index
+  ...zIndexTokens,
+  // Overflow
+  ...overflowTokens,
+  // Visibility
+  ...visibilityTokens,
+  // Arbitrary (tagged templates)
   top,
   right,
   bottom,
   left,
-  zIndex,
-  overflow,
-  overflowX,
-  overflowY,
-  visibility,
+  inset,
+  insetX,
+  insetY,
+  z,
 };
+
+// Type for the layout namespace
+export type LayoutNamespace = typeof layout;
+
+// Legacy type exports for backwards compatibility
+export type LayoutValues = Record<string, StyleToken>;
+export type LayoutGroup = LayoutNamespace;
 
 // Legacy exports for backwards compatibility
 export const layoutArb = {
@@ -706,8 +725,16 @@ export const layoutArb = {
   right,
   bottom,
   left,
-  zIndex,
   inset,
   insetX,
   insetY,
+  z,
 };
+
+// Legacy proxies (for backwards compatibility only)
+export const position = positionTokens;
+export const overflow = overflowTokens;
+export const overflowX = overflowTokens;
+export const overflowY = overflowTokens;
+export const visibility = visibilityTokens;
+export const zIndex = zIndexTokens;

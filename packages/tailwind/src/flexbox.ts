@@ -1,14 +1,19 @@
 /**
- * Flexbox utilities: flex, grid, justify, align, etc.
+ * Flexbox utilities: display, flex, justify, align, etc.
  *
  * Usage:
  * ```ts
- * // Predefined values (via Proxy)
- * import { display, flex, justify, items } from "@semajsx/tailwind";
- * <div class={[display.flex, justify.center, items.center]}>
+ * // Flat exports (recommended)
+ * import { flex, flexCol, justifyCenter, itemsCenter, gap4 } from "@semajsx/tailwind";
+ * <div class={cx(flex, flexCol, justifyCenter, itemsCenter, gap4)}>
  *
- * // Arbitrary values (tagged template - same function!)
- * <div class={[flex`2 1 50%`, basis`200px`]}>
+ * // Namespace access
+ * import { flexbox } from "@semajsx/tailwind";
+ * <div class={cx(flexbox.flex, flexbox.flexCol, flexbox.justifyCenter)}>
+ *
+ * // Arbitrary values (tagged template)
+ * import { basis, order } from "@semajsx/tailwind";
+ * <div class={cx(basis`200px`, order`99`)}>
  * ```
  */
 
@@ -16,168 +21,62 @@ import type { StyleToken, TaggedUtilityFn } from "./types";
 import { createUtility, createTaggedUtility } from "./core";
 import { getConfig } from "./config";
 
-/** Type for flexbox value records */
-export type FlexValues = Record<string, StyleToken>;
+// ============================================
+// Scale definitions
+// ============================================
 
-// Display values (camelCase for readability)
-const displayValues: Record<string, string> = {
-  block: "block",
-  inlineBlock: "inline-block",
-  inline: "inline",
-  flex: "flex",
-  inlineFlex: "inline-flex",
-  grid: "grid",
-  inlineGrid: "inline-grid",
-  contents: "contents",
-  hidden: "none",
+// Flex basis scale
+const basisScale: Record<string, string> = {
+  "0": "0px",
+  px: "1px",
+  "0.5": "0.125rem",
+  "1": "0.25rem",
+  "1.5": "0.375rem",
+  "2": "0.5rem",
+  "2.5": "0.625rem",
+  "3": "0.75rem",
+  "3.5": "0.875rem",
+  "4": "1rem",
+  "5": "1.25rem",
+  "6": "1.5rem",
+  "7": "1.75rem",
+  "8": "2rem",
+  "9": "2.25rem",
+  "10": "2.5rem",
+  "11": "2.75rem",
+  "12": "3rem",
+  "14": "3.5rem",
+  "16": "4rem",
+  "20": "5rem",
+  "24": "6rem",
+  "28": "7rem",
+  "32": "8rem",
+  "36": "9rem",
+  "40": "10rem",
+  "44": "11rem",
+  "48": "12rem",
+  "52": "13rem",
+  "56": "14rem",
+  "60": "15rem",
+  "64": "16rem",
+  "72": "18rem",
+  "80": "20rem",
+  "96": "24rem",
 };
 
-// Display class name mapping
-const displayClassMap: Record<string, string> = {
-  inlineBlock: "inline-block",
-  inlineFlex: "inline-flex",
-  inlineGrid: "inline-grid",
-};
-
-// Flex direction values (camelCase for readability)
-const flexDirectionValues: Record<string, string> = {
-  row: "row",
-  rowReverse: "row-reverse",
-  col: "column",
-  colReverse: "column-reverse",
-};
-
-// Flex direction class name mapping
-const flexDirectionClassMap: Record<string, string> = {
-  rowReverse: "row-reverse",
-  colReverse: "col-reverse",
-};
-
-// Flex wrap values (camelCase for readability)
-const flexWrapValues: Record<string, string> = {
-  wrap: "wrap",
-  wrapReverse: "wrap-reverse",
-  nowrap: "nowrap",
-};
-
-// Flex wrap class name mapping
-const flexWrapClassMap: Record<string, string> = {
-  wrapReverse: "wrap-reverse",
-};
-
-// Flex values (shorthand)
-const flexValues: Record<string, string> = {
-  "1": "1 1 0%",
-  auto: "1 1 auto",
-  initial: "0 1 auto",
-  none: "none",
-};
-
-// Flex grow values
-const flexGrowValues: Record<string, string> = {
-  "0": "0",
-  DEFAULT: "1",
-};
-
-// Flex shrink values
-const flexShrinkValues: Record<string, string> = {
-  "0": "0",
-  DEFAULT: "1",
-};
-
-// Justify content values
-const justifyContentValues: Record<string, string> = {
-  normal: "normal",
-  start: "flex-start",
-  end: "flex-end",
-  center: "center",
-  between: "space-between",
-  around: "space-around",
-  evenly: "space-evenly",
-  stretch: "stretch",
-};
-
-// Justify items values
-const justifyItemsValues: Record<string, string> = {
-  start: "start",
-  end: "end",
-  center: "center",
-  stretch: "stretch",
-};
-
-// Justify self values
-const justifySelfValues: Record<string, string> = {
+// Basis semantic values
+const basisSemanticValues: Record<string, string> = {
   auto: "auto",
-  start: "start",
-  end: "end",
-  center: "center",
-  stretch: "stretch",
+  full: "100%",
+  half: "50%",
+  third: "33.333333%",
+  twoThirds: "66.666667%",
+  quarter: "25%",
+  threeQuarters: "75%",
 };
 
-// Align content values
-const alignContentValues: Record<string, string> = {
-  normal: "normal",
-  start: "flex-start",
-  end: "flex-end",
-  center: "center",
-  between: "space-between",
-  around: "space-around",
-  evenly: "space-evenly",
-  baseline: "baseline",
-  stretch: "stretch",
-};
-
-// Align items values
-const alignItemsValues: Record<string, string> = {
-  start: "flex-start",
-  end: "flex-end",
-  center: "center",
-  baseline: "baseline",
-  stretch: "stretch",
-};
-
-// Align self values
-const alignSelfValues: Record<string, string> = {
-  auto: "auto",
-  start: "flex-start",
-  end: "flex-end",
-  center: "center",
-  baseline: "baseline",
-  stretch: "stretch",
-};
-
-// Place content values
-const placeContentValues: Record<string, string> = {
-  start: "start",
-  end: "end",
-  center: "center",
-  between: "space-between",
-  around: "space-around",
-  evenly: "space-evenly",
-  baseline: "baseline",
-  stretch: "stretch",
-};
-
-// Place items values
-const placeItemsValues: Record<string, string> = {
-  start: "start",
-  end: "end",
-  center: "center",
-  baseline: "baseline",
-  stretch: "stretch",
-};
-
-// Place self values
-const placeSelfValues: Record<string, string> = {
-  auto: "auto",
-  start: "start",
-  end: "end",
-  center: "center",
-  stretch: "stretch",
-};
-
-// Order values
-const orderValues: Record<string, string> = {
+// Order scale
+const orderScale: Record<string, string> = {
   "1": "1",
   "2": "2",
   "3": "3",
@@ -190,607 +89,766 @@ const orderValues: Record<string, string> = {
   "10": "10",
   "11": "11",
   "12": "12",
-  first: "-9999",
-  last: "9999",
-  none: "0",
 };
 
-// Flex basis scale
-const basisScale: Record<string, string> = {
-  "0": "0px",
-  "1": "0.25rem",
-  "2": "0.5rem",
-  "3": "0.75rem",
-  "4": "1rem",
-  "5": "1.25rem",
-  "6": "1.5rem",
-  "8": "2rem",
-  "10": "2.5rem",
-  "12": "3rem",
-  "16": "4rem",
-  "20": "5rem",
-  "24": "6rem",
-  "32": "8rem",
-  "40": "10rem",
-  "48": "12rem",
-  "56": "14rem",
-  "64": "16rem",
-  auto: "auto",
-  "1/2": "50%",
-  "1/3": "33.333333%",
-  "2/3": "66.666667%",
-  "1/4": "25%",
-  "2/4": "50%",
-  "3/4": "75%",
-  full: "100%",
-};
+// ============================================
+// Utility function creators
+// ============================================
 
-// Create utility functions
-const flexDirectionFn = createUtility("flex-direction", "flex");
-const flexWrapFn = createUtility("flex-wrap", "flex");
-const flexFn = createUtility("flex", "flex");
-const flexGrowFn = createUtility("flex-grow", "grow");
-const flexShrinkFn = createUtility("flex-shrink", "shrink");
-const justifyContentFn = createUtility("justify-content", "justify");
-const justifyItemsFn = createUtility("justify-items", "justify-items");
-const justifySelfFn = createUtility("justify-self", "justify-self");
-const alignContentFn = createUtility("align-content", "content");
-const alignItemsFn = createUtility("align-items", "items");
-const alignSelfFn = createUtility("align-self", "self");
-const placeContentFn = createUtility("place-content", "place-content");
-const placeItemsFn = createUtility("place-items", "place-items");
-const placeSelfFn = createUtility("place-self", "place-self");
-const orderFn = createUtility("order", "order");
 const flexBasisFn = createUtility("flex-basis", "basis");
+const orderFn = createUtility("order", "order");
+const flexShorthandFn = createUtility("flex", "flex");
 
-/**
- * Create a flexbox utility that works as both namespace and tagged template
- */
-function createFlexUtility(
-  utilityFn: (value: string, valueName?: string) => StyleToken,
-  scale: Record<string, string>,
-): TaggedUtilityFn & FlexValues {
-  const tokenCache = new Map<string, StyleToken>();
-  const taggedFn = createTaggedUtility(utilityFn);
+// ============================================
+// Token generators
+// ============================================
 
-  const handler: ProxyHandler<TaggedUtilityFn> = {
-    get(target, prop: string): StyleToken | undefined {
-      if (prop === "length" || prop === "name" || prop === "prototype") {
-        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
-      }
+function generateDisplayTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
 
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
+  const values: Record<string, [string, string]> = {
+    block: ["block", "block"],
+    inlineBlock: ["inline-block", "inline-block"],
+    inline: ["inline", "inline"],
+    flex: ["flex", "flex"],
+    inlineFlex: ["inline-flex", "inline-flex"],
+    grid: ["grid", "grid"],
+    inlineGrid: ["inline-grid", "inline-grid"],
+    contents: ["contents", "contents"],
+    hidden: ["hidden", "none"],
+  };
 
-      if (prop in scale) {
-        const token = utilityFn(scale[prop]!, prop);
-        tokenCache.set(prop, token);
-        return token;
-      }
+  for (const [key, [className, value]] of Object.entries(values)) {
+    tokens[key] = {
+      __kind: "style",
+      _: `${prefix}${className}`,
+      __cssTemplate: `.${prefix}${className} { display: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  }
 
-      return undefined;
+  return tokens;
+}
+
+function generateFlexDirectionTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
+
+  const values: Record<string, [string, string]> = {
+    flexRow: ["flex-row", "row"],
+    flexRowReverse: ["flex-row-reverse", "row-reverse"],
+    flexCol: ["flex-col", "column"],
+    flexColReverse: ["flex-col-reverse", "column-reverse"],
+  };
+
+  for (const [key, [className, value]] of Object.entries(values)) {
+    tokens[key] = {
+      __kind: "style",
+      _: `${prefix}${className}`,
+      __cssTemplate: `.${prefix}${className} { flex-direction: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  }
+
+  return tokens;
+}
+
+function generateFlexWrapTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
+
+  const values: Record<string, [string, string]> = {
+    flexWrap: ["flex-wrap", "wrap"],
+    flexWrapReverse: ["flex-wrap-reverse", "wrap-reverse"],
+    flexNowrap: ["flex-nowrap", "nowrap"],
+  };
+
+  for (const [key, [className, value]] of Object.entries(values)) {
+    tokens[key] = {
+      __kind: "style",
+      _: `${prefix}${className}`,
+      __cssTemplate: `.${prefix}${className} { flex-wrap: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  }
+
+  return tokens;
+}
+
+function generateFlexShorthandTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
+
+  const values: Record<string, [string, string]> = {
+    flex1: ["flex-1", "1 1 0%"],
+    flexAuto: ["flex-auto", "1 1 auto"],
+    flexInitial: ["flex-initial", "0 1 auto"],
+    flexNone: ["flex-none", "none"],
+  };
+
+  for (const [key, [className, value]] of Object.entries(values)) {
+    tokens[key] = {
+      __kind: "style",
+      _: `${prefix}${className}`,
+      __cssTemplate: `.${prefix}${className} { flex: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  }
+
+  return tokens;
+}
+
+function generateGrowShrinkTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
+
+  // Grow
+  tokens.grow = {
+    __kind: "style",
+    _: `${prefix}grow`,
+    __cssTemplate: `.${prefix}grow { flex-grow: 1; }`,
+    toString() {
+      return this._;
     },
-
-    has(_target, prop: string): boolean {
-      return prop in scale;
-    },
-
-    apply(target, thisArg, args) {
-      return Reflect.apply(target, thisArg, args);
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(scale);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in scale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
+  };
+  tokens.grow0 = {
+    __kind: "style",
+    _: `${prefix}grow-0`,
+    __cssTemplate: `.${prefix}grow-0 { flex-grow: 0; }`,
+    toString() {
+      return this._;
     },
   };
 
-  return new Proxy(taggedFn, handler) as TaggedUtilityFn & FlexValues;
+  // Shrink
+  tokens.shrink = {
+    __kind: "style",
+    _: `${prefix}shrink`,
+    __cssTemplate: `.${prefix}shrink { flex-shrink: 1; }`,
+    toString() {
+      return this._;
+    },
+  };
+  tokens.shrink0 = {
+    __kind: "style",
+    _: `${prefix}shrink-0`,
+    __cssTemplate: `.${prefix}shrink-0 { flex-shrink: 0; }`,
+    toString() {
+      return this._;
+    },
+  };
+
+  return tokens;
 }
 
-/**
- * Create a simple utility that only has predefined values (no arbitrary)
- */
-function createSimpleFlexUtility(
-  utilityFn: (value: string, valueName?: string) => StyleToken,
-  scale: Record<string, string>,
-): FlexValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateBasisTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
 
-  return new Proxy({} as FlexValues, {
-    get(_target, prop: string): StyleToken | undefined {
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
+  // Number tokens: basis0, basis4, etc.
+  for (const [key, value] of Object.entries(basisScale)) {
+    const tokenKey = key.replace(".", "_");
+    const tokenName = `basis${tokenKey}`;
+    tokens[tokenName] = flexBasisFn(value, key);
+  }
 
-      if (prop in scale) {
-        const token = utilityFn(scale[prop]!, prop);
-        tokenCache.set(prop, token);
-        return token;
-      }
+  // px token
+  tokens.basispx = flexBasisFn("1px", "px");
 
-      return undefined;
-    },
+  // Semantic tokens: basisAuto, basisFull, basisHalf
+  for (const [key, value] of Object.entries(basisSemanticValues)) {
+    const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+    const tokenName = `basis${capKey}`;
+    tokens[tokenName] = flexBasisFn(value, key);
+  }
 
-    has(_target, prop: string): boolean {
-      return prop in scale;
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(scale);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in scale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  });
+  return tokens;
 }
 
-/**
- * Create display utility (special class names, camelCase to kebab-case)
- */
-function createDisplayUtility(): FlexValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateJustifyContentTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
 
-  return new Proxy({} as FlexValues, {
-    get(_target, prop: string): StyleToken | undefined {
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
+  const values: Record<string, [string, string]> = {
+    justifyNormal: ["justify-normal", "normal"],
+    justifyStart: ["justify-start", "flex-start"],
+    justifyEnd: ["justify-end", "flex-end"],
+    justifyCenter: ["justify-center", "center"],
+    justifyBetween: ["justify-between", "space-between"],
+    justifyAround: ["justify-around", "space-around"],
+    justifyEvenly: ["justify-evenly", "space-evenly"],
+    justifyStretch: ["justify-stretch", "stretch"],
+  };
 
-      if (prop in displayValues) {
-        const cfg = getConfig();
-        const prefix = cfg.prefix ?? "";
-        const cssClassName = displayClassMap[prop] ?? prop;
-        const className = `${prefix}${cssClassName}`;
-        const value = displayValues[prop]!;
+  for (const [key, [className, value]] of Object.entries(values)) {
+    tokens[key] = {
+      __kind: "style",
+      _: `${prefix}${className}`,
+      __cssTemplate: `.${prefix}${className} { justify-content: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  }
 
-        const token: StyleToken = {
-          __kind: "style",
-          _: className,
-          __cssTemplate: `.${className} { display: ${value}; }`,
-          toString() {
-            return this._;
-          },
-        };
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in displayValues;
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(displayValues);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in displayValues) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  });
+  return tokens;
 }
 
-/**
- * Create flex direction utility (camelCase to kebab-case)
- */
-function createFlexDirectionUtility(): FlexValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateJustifyItemsTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
 
-  return new Proxy({} as FlexValues, {
-    get(_target, prop: string): StyleToken | undefined {
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
+  const values: Record<string, [string, string]> = {
+    justifyItemsStart: ["justify-items-start", "start"],
+    justifyItemsEnd: ["justify-items-end", "end"],
+    justifyItemsCenter: ["justify-items-center", "center"],
+    justifyItemsStretch: ["justify-items-stretch", "stretch"],
+  };
 
-      if (prop in flexDirectionValues) {
-        const cfg = getConfig();
-        const prefix = cfg.prefix ?? "";
-        const cssClassName = flexDirectionClassMap[prop] ?? prop;
-        const className = `${prefix}flex-${cssClassName}`;
-        const value = flexDirectionValues[prop]!;
+  for (const [key, [className, value]] of Object.entries(values)) {
+    tokens[key] = {
+      __kind: "style",
+      _: `${prefix}${className}`,
+      __cssTemplate: `.${prefix}${className} { justify-items: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  }
 
-        const token: StyleToken = {
-          __kind: "style",
-          _: className,
-          __cssTemplate: `.${className} { flex-direction: ${value}; }`,
-          toString() {
-            return this._;
-          },
-        };
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in flexDirectionValues;
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(flexDirectionValues);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in flexDirectionValues) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  });
+  return tokens;
 }
 
-/**
- * Create flex wrap utility (camelCase to kebab-case)
- */
-function createFlexWrapUtility(): FlexValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateJustifySelfTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
 
-  return new Proxy({} as FlexValues, {
-    get(_target, prop: string): StyleToken | undefined {
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
+  const values: Record<string, [string, string]> = {
+    justifySelfAuto: ["justify-self-auto", "auto"],
+    justifySelfStart: ["justify-self-start", "start"],
+    justifySelfEnd: ["justify-self-end", "end"],
+    justifySelfCenter: ["justify-self-center", "center"],
+    justifySelfStretch: ["justify-self-stretch", "stretch"],
+  };
 
-      if (prop in flexWrapValues) {
-        const cfg = getConfig();
-        const prefix = cfg.prefix ?? "";
-        const cssClassName = flexWrapClassMap[prop] ?? prop;
-        const className = `${prefix}flex-${cssClassName}`;
-        const value = flexWrapValues[prop]!;
+  for (const [key, [className, value]] of Object.entries(values)) {
+    tokens[key] = {
+      __kind: "style",
+      _: `${prefix}${className}`,
+      __cssTemplate: `.${prefix}${className} { justify-self: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  }
 
-        const token: StyleToken = {
-          __kind: "style",
-          _: className,
-          __cssTemplate: `.${className} { flex-wrap: ${value}; }`,
-          toString() {
-            return this._;
-          },
-        };
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in flexWrapValues;
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(flexWrapValues);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in flexWrapValues) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  });
+  return tokens;
 }
 
-/**
- * Create grow utility (special: DEFAULT maps to base class)
- */
-function createGrowUtility(): FlexValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateAlignContentTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
 
-  return new Proxy({} as FlexValues, {
-    get(_target, prop: string): StyleToken | undefined {
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
+  const values: Record<string, [string, string]> = {
+    contentNormal: ["content-normal", "normal"],
+    contentStart: ["content-start", "flex-start"],
+    contentEnd: ["content-end", "flex-end"],
+    contentCenter: ["content-center", "center"],
+    contentBetween: ["content-between", "space-between"],
+    contentAround: ["content-around", "space-around"],
+    contentEvenly: ["content-evenly", "space-evenly"],
+    contentBaseline: ["content-baseline", "baseline"],
+    contentStretch: ["content-stretch", "stretch"],
+  };
 
-      if (prop in flexGrowValues) {
-        const cfg = getConfig();
-        const prefix = cfg.prefix ?? "";
-        const className = prop === "DEFAULT" ? `${prefix}grow` : `${prefix}grow-${prop}`;
-        const value = flexGrowValues[prop]!;
+  for (const [key, [className, value]] of Object.entries(values)) {
+    tokens[key] = {
+      __kind: "style",
+      _: `${prefix}${className}`,
+      __cssTemplate: `.${prefix}${className} { align-content: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  }
 
-        const token: StyleToken = {
-          __kind: "style",
-          _: className,
-          __cssTemplate: `.${className} { flex-grow: ${value}; }`,
-          toString() {
-            return this._;
-          },
-        };
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in flexGrowValues;
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(flexGrowValues);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in flexGrowValues) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  });
+  return tokens;
 }
 
-/**
- * Create shrink utility (special: DEFAULT maps to base class)
- */
-function createShrinkUtility(): FlexValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateAlignItemsTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
 
-  return new Proxy({} as FlexValues, {
-    get(_target, prop: string): StyleToken | undefined {
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
+  const values: Record<string, [string, string]> = {
+    itemsStart: ["items-start", "flex-start"],
+    itemsEnd: ["items-end", "flex-end"],
+    itemsCenter: ["items-center", "center"],
+    itemsBaseline: ["items-baseline", "baseline"],
+    itemsStretch: ["items-stretch", "stretch"],
+  };
 
-      if (prop in flexShrinkValues) {
-        const cfg = getConfig();
-        const prefix = cfg.prefix ?? "";
-        const className = prop === "DEFAULT" ? `${prefix}shrink` : `${prefix}shrink-${prop}`;
-        const value = flexShrinkValues[prop]!;
+  for (const [key, [className, value]] of Object.entries(values)) {
+    tokens[key] = {
+      __kind: "style",
+      _: `${prefix}${className}`,
+      __cssTemplate: `.${prefix}${className} { align-items: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  }
 
-        const token: StyleToken = {
-          __kind: "style",
-          _: className,
-          __cssTemplate: `.${className} { flex-shrink: ${value}; }`,
-          toString() {
-            return this._;
-          },
-        };
-        tokenCache.set(prop, token);
-        return token;
-      }
+  return tokens;
+}
 
-      return undefined;
-    },
+function generateAlignSelfTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
 
-    has(_target, prop: string): boolean {
-      return prop in flexShrinkValues;
-    },
+  const values: Record<string, [string, string]> = {
+    selfAuto: ["self-auto", "auto"],
+    selfStart: ["self-start", "flex-start"],
+    selfEnd: ["self-end", "flex-end"],
+    selfCenter: ["self-center", "center"],
+    selfBaseline: ["self-baseline", "baseline"],
+    selfStretch: ["self-stretch", "stretch"],
+  };
 
-    ownKeys(): string[] {
-      return Object.keys(flexShrinkValues);
-    },
+  for (const [key, [className, value]] of Object.entries(values)) {
+    tokens[key] = {
+      __kind: "style",
+      _: `${prefix}${className}`,
+      __cssTemplate: `.${prefix}${className} { align-self: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  }
 
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in flexShrinkValues) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  });
+  return tokens;
+}
+
+function generatePlaceContentTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
+
+  const values: Record<string, [string, string]> = {
+    placeContentStart: ["place-content-start", "start"],
+    placeContentEnd: ["place-content-end", "end"],
+    placeContentCenter: ["place-content-center", "center"],
+    placeContentBetween: ["place-content-between", "space-between"],
+    placeContentAround: ["place-content-around", "space-around"],
+    placeContentEvenly: ["place-content-evenly", "space-evenly"],
+    placeContentBaseline: ["place-content-baseline", "baseline"],
+    placeContentStretch: ["place-content-stretch", "stretch"],
+  };
+
+  for (const [key, [className, value]] of Object.entries(values)) {
+    tokens[key] = {
+      __kind: "style",
+      _: `${prefix}${className}`,
+      __cssTemplate: `.${prefix}${className} { place-content: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  }
+
+  return tokens;
+}
+
+function generatePlaceItemsTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
+
+  const values: Record<string, [string, string]> = {
+    placeItemsStart: ["place-items-start", "start"],
+    placeItemsEnd: ["place-items-end", "end"],
+    placeItemsCenter: ["place-items-center", "center"],
+    placeItemsBaseline: ["place-items-baseline", "baseline"],
+    placeItemsStretch: ["place-items-stretch", "stretch"],
+  };
+
+  for (const [key, [className, value]] of Object.entries(values)) {
+    tokens[key] = {
+      __kind: "style",
+      _: `${prefix}${className}`,
+      __cssTemplate: `.${prefix}${className} { place-items: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  }
+
+  return tokens;
+}
+
+function generatePlaceSelfTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
+
+  const values: Record<string, [string, string]> = {
+    placeSelfAuto: ["place-self-auto", "auto"],
+    placeSelfStart: ["place-self-start", "start"],
+    placeSelfEnd: ["place-self-end", "end"],
+    placeSelfCenter: ["place-self-center", "center"],
+    placeSelfStretch: ["place-self-stretch", "stretch"],
+  };
+
+  for (const [key, [className, value]] of Object.entries(values)) {
+    tokens[key] = {
+      __kind: "style",
+      _: `${prefix}${className}`,
+      __cssTemplate: `.${prefix}${className} { place-self: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  }
+
+  return tokens;
+}
+
+function generateOrderTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+
+  // Number tokens: order1, order2, etc.
+  for (const [key, value] of Object.entries(orderScale)) {
+    const tokenName = `order${key}`;
+    tokens[tokenName] = orderFn(value, key);
+  }
+
+  // Semantic tokens
+  tokens.orderFirst = orderFn("-9999", "first");
+  tokens.orderLast = orderFn("9999", "last");
+  tokens.orderNone = orderFn("0", "none");
+
+  return tokens;
 }
 
 // ============================================
-// Flexbox Utilities
+// Generate all tokens
 // ============================================
 
-/**
- * Display utility (use camelCase for readability)
- * @example
- * display.flex, display.grid, display.inlineFlex, display.hidden // predefined
- */
-export const display: FlexValues = createDisplayUtility();
-
-/**
- * Flex direction utility (use camelCase for readability)
- * @example
- * flexDirection.row, flexDirection.col, flexDirection.rowReverse // predefined
- */
-export const flexDirection: FlexValues = createFlexDirectionUtility();
-
-/**
- * Flex wrap utility (use camelCase for readability)
- * @example
- * flexWrap.wrap, flexWrap.nowrap, flexWrap.wrapReverse // predefined
- */
-export const flexWrap: FlexValues = createFlexWrapUtility();
-
-/**
- * Flex utility
- * @example
- * flex["1"], flex.auto, flex.none // predefined
- * flex`2 1 50%` // arbitrary
- */
-export const flex: TaggedUtilityFn & FlexValues = createFlexUtility(flexFn, flexValues);
-
-/**
- * Flex grow utility
- * @example
- * grow.DEFAULT, grow["0"] // predefined
- */
-export const grow: FlexValues = createGrowUtility();
-
-/**
- * Flex shrink utility
- * @example
- * shrink.DEFAULT, shrink["0"] // predefined
- */
-export const shrink: FlexValues = createShrinkUtility();
-
-/**
- * Flex basis utility
- * @example
- * basis["4"], basis.auto, basis.full // predefined
- * basis`200px` // arbitrary
- */
-export const basis: TaggedUtilityFn & FlexValues = createFlexUtility(flexBasisFn, basisScale);
-
-/**
- * Justify content utility
- * @example
- * justify.center, justify.between, justify.start // predefined
- */
-export const justify: FlexValues = createSimpleFlexUtility(justifyContentFn, justifyContentValues);
-
-/**
- * Justify items utility
- * @example
- * justifyItems.start, justifyItems.center // predefined
- */
-export const justifyItems: FlexValues = createSimpleFlexUtility(justifyItemsFn, justifyItemsValues);
-
-/**
- * Justify self utility
- * @example
- * justifySelf.auto, justifySelf.start // predefined
- */
-export const justifySelf: FlexValues = createSimpleFlexUtility(justifySelfFn, justifySelfValues);
-
-/**
- * Align content utility
- * @example
- * content.center, content.start // predefined
- */
-export const content: FlexValues = createSimpleFlexUtility(alignContentFn, alignContentValues);
-
-/**
- * Align items utility
- * @example
- * items.center, items.start, items.baseline // predefined
- */
-export const items: FlexValues = createSimpleFlexUtility(alignItemsFn, alignItemsValues);
-
-/**
- * Align self utility
- * @example
- * self.auto, self.start, self.center // predefined
- */
-export const self: FlexValues = createSimpleFlexUtility(alignSelfFn, alignSelfValues);
-
-/**
- * Place content utility
- * @example
- * placeContent.center, placeContent.start // predefined
- */
-export const placeContent: FlexValues = createSimpleFlexUtility(placeContentFn, placeContentValues);
-
-/**
- * Place items utility
- * @example
- * placeItems.center, placeItems.start // predefined
- */
-export const placeItems: FlexValues = createSimpleFlexUtility(placeItemsFn, placeItemsValues);
-
-/**
- * Place self utility
- * @example
- * placeSelf.auto, placeSelf.center // predefined
- */
-export const placeSelf: FlexValues = createSimpleFlexUtility(placeSelfFn, placeSelfValues);
-
-/**
- * Order utility
- * @example
- * order["1"], order.first, order.last // predefined
- * order`99` // arbitrary
- */
-export const order: TaggedUtilityFn & FlexValues = createFlexUtility(orderFn, orderValues);
+const displayTokens = generateDisplayTokens();
+const flexDirectionTokens = generateFlexDirectionTokens();
+const flexWrapTokens = generateFlexWrapTokens();
+const flexShorthandTokens = generateFlexShorthandTokens();
+const growShrinkTokens = generateGrowShrinkTokens();
+const basisTokens = generateBasisTokens();
+const justifyContentTokens = generateJustifyContentTokens();
+const justifyItemsTokens = generateJustifyItemsTokens();
+const justifySelfTokens = generateJustifySelfTokens();
+const alignContentTokens = generateAlignContentTokens();
+const alignItemsTokens = generateAlignItemsTokens();
+const alignSelfTokens = generateAlignSelfTokens();
+const placeContentTokens = generatePlaceContentTokens();
+const placeItemsTokens = generatePlaceItemsTokens();
+const placeSelfTokens = generatePlaceSelfTokens();
+const orderTokens = generateOrderTokens();
 
 // ============================================
-// Grouped exports
+// Tagged template functions for arbitrary values
 // ============================================
 
-/** Grouped flexbox utilities */
-export interface FlexboxGroup {
-  display: FlexValues;
-  flexDirection: FlexValues;
-  flexWrap: FlexValues;
-  flex: TaggedUtilityFn & FlexValues;
-  grow: FlexValues;
-  shrink: FlexValues;
-  basis: TaggedUtilityFn & FlexValues;
-  justify: FlexValues;
-  justifyItems: FlexValues;
-  justifySelf: FlexValues;
-  content: FlexValues;
-  items: FlexValues;
-  self: FlexValues;
-  placeContent: FlexValues;
-  placeItems: FlexValues;
-  placeSelf: FlexValues;
-  order: TaggedUtilityFn & FlexValues;
-}
+/** Flex basis - arbitrary value: basis`200px` */
+export const basis: TaggedUtilityFn = createTaggedUtility(flexBasisFn);
 
-export const flexbox: FlexboxGroup = {
-  display,
-  flexDirection,
-  flexWrap,
-  flex,
-  grow,
-  shrink,
+/** Order - arbitrary value: order`99` */
+export const order: TaggedUtilityFn = createTaggedUtility(orderFn);
+
+/** Flex shorthand - arbitrary value: flexArb`2 2 0%` */
+export const flexArb: TaggedUtilityFn = createTaggedUtility(flexShorthandFn);
+
+// ============================================
+// Individual token exports (flat) - Display
+// ============================================
+
+export const { block, inlineBlock, inline, flex, inlineFlex, grid, inlineGrid, contents, hidden } =
+  displayTokens;
+
+// ============================================
+// Individual token exports (flat) - Flex Direction
+// ============================================
+
+export const { flexRow, flexRowReverse, flexCol, flexColReverse } = flexDirectionTokens;
+
+// ============================================
+// Individual token exports (flat) - Flex Wrap
+// ============================================
+
+export const { flexWrap, flexWrapReverse, flexNowrap } = flexWrapTokens;
+
+// ============================================
+// Individual token exports (flat) - Flex Shorthand
+// ============================================
+
+export const { flex1, flexAuto, flexInitial, flexNone } = flexShorthandTokens;
+
+// ============================================
+// Individual token exports (flat) - Grow/Shrink
+// ============================================
+
+export const { grow, grow0, shrink, shrink0 } = growShrinkTokens;
+
+// ============================================
+// Individual token exports (flat) - Basis
+// ============================================
+
+export const {
+  basis0,
+  basispx,
+  basis0_5,
+  basis1,
+  basis1_5,
+  basis2,
+  basis2_5,
+  basis3,
+  basis3_5,
+  basis4,
+  basis5,
+  basis6,
+  basis7,
+  basis8,
+  basis9,
+  basis10,
+  basis11,
+  basis12,
+  basis14,
+  basis16,
+  basis20,
+  basis24,
+  basis28,
+  basis32,
+  basis36,
+  basis40,
+  basis44,
+  basis48,
+  basis52,
+  basis56,
+  basis60,
+  basis64,
+  basis72,
+  basis80,
+  basis96,
+  basisAuto,
+  basisFull,
+  basisHalf,
+  basisThird,
+  basisTwoThirds,
+  basisQuarter,
+  basisThreeQuarters,
+} = basisTokens;
+
+// ============================================
+// Individual token exports (flat) - Justify Content
+// ============================================
+
+export const {
+  justifyNormal,
+  justifyStart,
+  justifyEnd,
+  justifyCenter,
+  justifyBetween,
+  justifyAround,
+  justifyEvenly,
+  justifyStretch,
+} = justifyContentTokens;
+
+// ============================================
+// Individual token exports (flat) - Justify Items
+// ============================================
+
+export const { justifyItemsStart, justifyItemsEnd, justifyItemsCenter, justifyItemsStretch } =
+  justifyItemsTokens;
+
+// ============================================
+// Individual token exports (flat) - Justify Self
+// ============================================
+
+export const {
+  justifySelfAuto,
+  justifySelfStart,
+  justifySelfEnd,
+  justifySelfCenter,
+  justifySelfStretch,
+} = justifySelfTokens;
+
+// ============================================
+// Individual token exports (flat) - Align Content
+// ============================================
+
+export const {
+  contentNormal,
+  contentStart,
+  contentEnd,
+  contentCenter,
+  contentBetween,
+  contentAround,
+  contentEvenly,
+  contentBaseline,
+  contentStretch,
+} = alignContentTokens;
+
+// ============================================
+// Individual token exports (flat) - Align Items
+// ============================================
+
+export const { itemsStart, itemsEnd, itemsCenter, itemsBaseline, itemsStretch } = alignItemsTokens;
+
+// ============================================
+// Individual token exports (flat) - Align Self
+// ============================================
+
+export const { selfAuto, selfStart, selfEnd, selfCenter, selfBaseline, selfStretch } =
+  alignSelfTokens;
+
+// ============================================
+// Individual token exports (flat) - Place Content
+// ============================================
+
+export const {
+  placeContentStart,
+  placeContentEnd,
+  placeContentCenter,
+  placeContentBetween,
+  placeContentAround,
+  placeContentEvenly,
+  placeContentBaseline,
+  placeContentStretch,
+} = placeContentTokens;
+
+// ============================================
+// Individual token exports (flat) - Place Items
+// ============================================
+
+export const {
+  placeItemsStart,
+  placeItemsEnd,
+  placeItemsCenter,
+  placeItemsBaseline,
+  placeItemsStretch,
+} = placeItemsTokens;
+
+// ============================================
+// Individual token exports (flat) - Place Self
+// ============================================
+
+export const { placeSelfAuto, placeSelfStart, placeSelfEnd, placeSelfCenter, placeSelfStretch } =
+  placeSelfTokens;
+
+// ============================================
+// Individual token exports (flat) - Order
+// ============================================
+
+export const {
+  order1,
+  order2,
+  order3,
+  order4,
+  order5,
+  order6,
+  order7,
+  order8,
+  order9,
+  order10,
+  order11,
+  order12,
+  orderFirst,
+  orderLast,
+  orderNone,
+} = orderTokens;
+
+// ============================================
+// Namespace export (grouped)
+// ============================================
+
+/** All flexbox tokens in a namespace */
+export const flexbox = {
+  // Display
+  ...displayTokens,
+  // Flex direction
+  ...flexDirectionTokens,
+  // Flex wrap
+  ...flexWrapTokens,
+  // Flex shorthand
+  ...flexShorthandTokens,
+  // Grow/Shrink
+  ...growShrinkTokens,
+  // Basis
+  ...basisTokens,
+  // Justify content
+  ...justifyContentTokens,
+  // Justify items
+  ...justifyItemsTokens,
+  // Justify self
+  ...justifySelfTokens,
+  // Align content
+  ...alignContentTokens,
+  // Align items
+  ...alignItemsTokens,
+  // Align self
+  ...alignSelfTokens,
+  // Place content
+  ...placeContentTokens,
+  // Place items
+  ...placeItemsTokens,
+  // Place self
+  ...placeSelfTokens,
+  // Order
+  ...orderTokens,
+  // Arbitrary (tagged templates)
   basis,
-  justify,
-  justifyItems,
-  justifySelf,
-  content,
-  items,
-  self,
-  placeContent,
-  placeItems,
-  placeSelf,
   order,
+  flexArb,
 };
+
+// Type for the flexbox namespace
+export type FlexboxNamespace = typeof flexbox;
+
+// Legacy type exports for backwards compatibility
+export type FlexValues = Record<string, StyleToken>;
+export type FlexboxGroup = FlexboxNamespace;
 
 // Legacy exports for backwards compatibility
 export const flexboxArb = {
-  flex,
   basis,
   order,
+  flex: flexArb,
 };
+
+// Legacy proxy exports (for backwards compatibility)
+export const display = displayTokens;
+export const flexDirection = flexDirectionTokens;
+export const flexWrapProxy = flexWrapTokens;
+export const justify = justifyContentTokens;
+export const justifyItems = justifyItemsTokens;
+export const justifySelf = justifySelfTokens;
+export const content = alignContentTokens;
+export const items = alignItemsTokens;
+export const self = alignSelfTokens;
+export const placeContent = placeContentTokens;
+export const placeItems = placeItemsTokens;
+export const placeSelf = placeSelfTokens;

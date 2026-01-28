@@ -1,96 +1,158 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { resetConfig, configureTailwind } from "./config";
-import { spacing, p, m, px, mx, gap } from "./spacing";
+import {
+  // Flat exports - padding
+  p0,
+  p4,
+  p8,
+  ppx,
+  p0_5,
+  px4,
+  py4,
+  pt4,
+  pr4,
+  pb4,
+  pl4,
+  // Flat exports - margin
+  m0,
+  m4,
+  m8,
+  mx4,
+  my4,
+  mt4,
+  mr4,
+  mb4,
+  ml4,
+  // Flat exports - gap
+  gap4,
+  gapX4,
+  gapY4,
+  // Tagged templates
+  p,
+  m,
+  px,
+  mx,
+  gap,
+  // Namespace
+  spacing,
+} from "./spacing";
 
-describe("spacing namespace - padding", () => {
+describe("flat exports - padding", () => {
   beforeEach(() => {
     resetConfig();
   });
 
-  it("generates spacing.p4 correctly", () => {
+  it("p4 generates correct token", () => {
+    expect(p4._).toBe("p-4");
+    expect(p4.__cssTemplate).toBe(".p-4 { padding: 1rem; }");
+  });
+
+  it("p0 generates correct token", () => {
+    expect(p0._).toBe("p-0");
+    expect(p0.__cssTemplate).toBe(".p-0 { padding: 0px; }");
+  });
+
+  it("ppx generates correct token", () => {
+    expect(ppx._).toBe("p-px");
+    expect(ppx.__cssTemplate).toBe(".p-px { padding: 1px; }");
+  });
+
+  it("p0_5 generates correct token (decimal)", () => {
+    expect(p0_5._).toBe("p-0.5");
+    expect(p0_5.__cssTemplate).toBe(".p-0\\.5 { padding: 0.125rem; }");
+  });
+
+  it("px4 generates correct token", () => {
+    expect(px4._).toBe("px-4");
+    expect(px4.__cssTemplate).toBe(".px-4 { padding-left: 1rem; padding-right: 1rem; }");
+  });
+
+  it("py4 generates correct token", () => {
+    expect(py4._).toBe("py-4");
+    expect(py4.__cssTemplate).toBe(".py-4 { padding-top: 1rem; padding-bottom: 1rem; }");
+  });
+
+  it("directional padding generates correct tokens", () => {
+    expect(pt4._).toBe("pt-4");
+    expect(pr4._).toBe("pr-4");
+    expect(pb4._).toBe("pb-4");
+    expect(pl4._).toBe("pl-4");
+  });
+});
+
+describe("flat exports - margin", () => {
+  beforeEach(() => {
+    resetConfig();
+  });
+
+  it("m4 generates correct token", () => {
+    expect(m4._).toBe("m-4");
+    expect(m4.__cssTemplate).toBe(".m-4 { margin: 1rem; }");
+  });
+
+  it("mx4 generates correct token", () => {
+    expect(mx4._).toBe("mx-4");
+    expect(mx4.__cssTemplate).toBe(".mx-4 { margin-left: 1rem; margin-right: 1rem; }");
+  });
+
+  it("my4 generates correct token", () => {
+    expect(my4._).toBe("my-4");
+    expect(my4.__cssTemplate).toBe(".my-4 { margin-top: 1rem; margin-bottom: 1rem; }");
+  });
+
+  it("directional margin generates correct tokens", () => {
+    expect(mt4._).toBe("mt-4");
+    expect(mr4._).toBe("mr-4");
+    expect(mb4._).toBe("mb-4");
+    expect(ml4._).toBe("ml-4");
+  });
+});
+
+describe("flat exports - gap", () => {
+  beforeEach(() => {
+    resetConfig();
+  });
+
+  it("gap4 generates correct token", () => {
+    expect(gap4._).toBe("gap-4");
+    expect(gap4.__cssTemplate).toBe(".gap-4 { gap: 1rem; }");
+  });
+
+  it("gapX4 generates correct token", () => {
+    expect(gapX4._).toBe("gap-x-4");
+    expect(gapX4.__cssTemplate).toBe(".gap-x-4 { column-gap: 1rem; }");
+  });
+
+  it("gapY4 generates correct token", () => {
+    expect(gapY4._).toBe("gap-y-4");
+    expect(gapY4.__cssTemplate).toBe(".gap-y-4 { row-gap: 1rem; }");
+  });
+});
+
+describe("spacing namespace", () => {
+  beforeEach(() => {
+    resetConfig();
+  });
+
+  it("spacing.p4 is same as p4", () => {
+    expect(spacing.p4).toBe(p4);
     expect(spacing.p4._).toBe("p-4");
-    expect(spacing.p4.__cssTemplate).toBe(".p-4 { padding: 1rem; }");
   });
 
-  it("generates spacing.p0 correctly", () => {
-    expect(spacing.p0._).toBe("p-0");
-    expect(spacing.p0.__cssTemplate).toBe(".p-0 { padding: 0px; }");
-  });
-
-  it("generates spacing.ppx correctly", () => {
-    expect(spacing.ppx._).toBe("p-px");
-    expect(spacing.ppx.__cssTemplate).toBe(".p-px { padding: 1px; }");
-  });
-
-  it("generates spacing.p0_5 correctly (decimal)", () => {
-    expect(spacing.p0_5._).toBe("p-0.5");
-    expect(spacing.p0_5.__cssTemplate).toBe(".p-0.5 { padding: 0.125rem; }");
-  });
-
-  it("generates spacing.px4 correctly", () => {
-    expect(spacing.px4._).toBe("px-4");
-    expect(spacing.px4.__cssTemplate).toBe(".px-4 { padding-left: 1rem; padding-right: 1rem; }");
-  });
-
-  it("generates spacing.py4 correctly", () => {
-    expect(spacing.py4._).toBe("py-4");
-    expect(spacing.py4.__cssTemplate).toBe(".py-4 { padding-top: 1rem; padding-bottom: 1rem; }");
-  });
-
-  it("generates directional padding correctly", () => {
-    expect(spacing.pt4._).toBe("pt-4");
-    expect(spacing.pr4._).toBe("pr-4");
-    expect(spacing.pb4._).toBe("pb-4");
-    expect(spacing.pl4._).toBe("pl-4");
-  });
-});
-
-describe("spacing namespace - margin", () => {
-  beforeEach(() => {
-    resetConfig();
-  });
-
-  it("generates spacing.m4 correctly", () => {
+  it("spacing.m4 is same as m4", () => {
+    expect(spacing.m4).toBe(m4);
     expect(spacing.m4._).toBe("m-4");
-    expect(spacing.m4.__cssTemplate).toBe(".m-4 { margin: 1rem; }");
   });
 
-  it("generates spacing.mx4 correctly", () => {
-    expect(spacing.mx4._).toBe("mx-4");
-    expect(spacing.mx4.__cssTemplate).toBe(".mx-4 { margin-left: 1rem; margin-right: 1rem; }");
-  });
-
-  it("generates spacing.my4 correctly", () => {
-    expect(spacing.my4._).toBe("my-4");
-    expect(spacing.my4.__cssTemplate).toBe(".my-4 { margin-top: 1rem; margin-bottom: 1rem; }");
-  });
-
-  it("generates directional margin correctly", () => {
-    expect(spacing.mt4._).toBe("mt-4");
-    expect(spacing.mr4._).toBe("mr-4");
-    expect(spacing.mb4._).toBe("mb-4");
-    expect(spacing.ml4._).toBe("ml-4");
-  });
-});
-
-describe("spacing namespace - gap", () => {
-  beforeEach(() => {
-    resetConfig();
-  });
-
-  it("generates spacing.gap4 correctly", () => {
+  it("spacing.gap4 is same as gap4", () => {
+    expect(spacing.gap4).toBe(gap4);
     expect(spacing.gap4._).toBe("gap-4");
-    expect(spacing.gap4.__cssTemplate).toBe(".gap-4 { gap: 1rem; }");
   });
 
-  it("generates spacing.gapX4 correctly", () => {
-    expect(spacing.gapX4._).toBe("gap-x-4");
-    expect(spacing.gapX4.__cssTemplate).toBe(".gap-x-4 { column-gap: 1rem; }");
-  });
-
-  it("generates spacing.gapY4 correctly", () => {
-    expect(spacing.gapY4._).toBe("gap-y-4");
-    expect(spacing.gapY4.__cssTemplate).toBe(".gap-y-4 { row-gap: 1rem; }");
+  it("includes tagged templates", () => {
+    expect(spacing.p).toBe(p);
+    expect(spacing.m).toBe(m);
+    expect(spacing.gap).toBe(gap);
   });
 });
 
@@ -193,5 +255,17 @@ describe("prefix configuration", () => {
     const token = p`10px`;
     expect(token._).toBe("s-p-10px");
     expect(token.__cssTemplate).toBe(".s-p-10px { padding: 10px; }");
+  });
+});
+
+describe("token properties", () => {
+  it("has __kind property", () => {
+    expect(p4.__kind).toBe("style");
+    expect(m4.__kind).toBe("style");
+  });
+
+  it("has toString method", () => {
+    expect(p4.toString()).toBe("p-4");
+    expect(m4.toString()).toBe("m-4");
   });
 });

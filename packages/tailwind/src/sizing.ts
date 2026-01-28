@@ -3,14 +3,16 @@
  *
  * Usage:
  * ```ts
- * // Predefined values (via Proxy)
+ * // Merged naming (recommended)
+ * import { w4, wFull, wHalf, h4, hScreen, maxWLg } from "@semajsx/tailwind";
+ * <div class={[w4, hFull]}>
+ *
+ * // Namespace access
+ * import { sizing } from "@semajsx/tailwind";
+ * <div class={[sizing.w4, sizing.hScreen]}>
+ *
+ * // Arbitrary values (tagged template)
  * import { w, h, maxW } from "@semajsx/tailwind";
- * <div class={[w.full, w["4"], h.screen, maxW.lg]}>
- *
- * // Destructuring works
- * const { full, screen, auto } = w;
- *
- * // Arbitrary values (tagged template - same function!)
  * <div class={[w`300px`, h`calc(100vh - 64px)`, maxW`800px`]}>
  * ```
  */
@@ -18,12 +20,12 @@
 import type { StyleToken, TaggedUtilityFn } from "./types";
 import { createUtility, createTaggedUtility } from "./core";
 
-/** Type for sizing value records */
-export type SizingValues = Record<string, StyleToken>;
+// ============================================
+// Scale definitions
+// ============================================
 
-// Tailwind sizing scale - combines spacing scale with additional values
-const sizingScale: Record<string, string> = {
-  // Spacing-based values
+// Spacing-based scale (numbers)
+const spacingScale: Record<string, string> = {
   "0": "0px",
   px: "1px",
   "0.5": "0.125rem",
@@ -59,34 +61,25 @@ const sizingScale: Record<string, string> = {
   "72": "18rem",
   "80": "20rem",
   "96": "24rem",
-  // Fractional values
-  "1/2": "50%",
-  "1/3": "33.333333%",
-  "2/3": "66.666667%",
-  "1/4": "25%",
-  "2/4": "50%",
-  "3/4": "75%",
-  "1/5": "20%",
-  "2/5": "40%",
-  "3/5": "60%",
-  "4/5": "80%",
-  "1/6": "16.666667%",
-  "2/6": "33.333333%",
-  "3/6": "50%",
-  "4/6": "66.666667%",
-  "5/6": "83.333333%",
-  "1/12": "8.333333%",
-  "2/12": "16.666667%",
-  "3/12": "25%",
-  "4/12": "33.333333%",
-  "5/12": "41.666667%",
-  "6/12": "50%",
-  "7/12": "58.333333%",
-  "8/12": "66.666667%",
-  "9/12": "75%",
-  "10/12": "83.333333%",
-  "11/12": "91.666667%",
-  // Special values
+};
+
+// Fraction values with semantic names
+const fractionScale: Record<string, string> = {
+  half: "50%",
+  third: "33.333333%",
+  twoThirds: "66.666667%",
+  quarter: "25%",
+  threeQuarters: "75%",
+  fifth: "20%",
+  twoFifths: "40%",
+  threeFifths: "60%",
+  fourFifths: "80%",
+  sixth: "16.666667%",
+  fiveSixths: "83.333333%",
+};
+
+// Semantic values
+const semanticScale: Record<string, string> = {
   auto: "auto",
   full: "100%",
   screen: "100vw",
@@ -98,22 +91,21 @@ const sizingScale: Record<string, string> = {
   fit: "fit-content",
 };
 
-// Height-specific scale (different screen units)
-const heightScale: Record<string, string> = {
-  ...sizingScale,
+// Height-specific semantic values
+const heightSemanticScale: Record<string, string> = {
+  auto: "auto",
+  full: "100%",
   screen: "100vh",
   svh: "100svh",
   lvh: "100lvh",
   dvh: "100dvh",
-};
-
-// Min/max width scale
-const minMaxWidthScale: Record<string, string> = {
-  "0": "0px",
-  full: "100%",
   min: "min-content",
   max: "max-content",
   fit: "fit-content",
+};
+
+// Max-width named sizes
+const maxWidthNamedScale: Record<string, string> = {
   xs: "20rem",
   sm: "24rem",
   md: "28rem",
@@ -126,27 +118,12 @@ const minMaxWidthScale: Record<string, string> = {
   "6xl": "72rem",
   "7xl": "80rem",
   prose: "65ch",
-  screenSm: "640px",
-  screenMd: "768px",
-  screenLg: "1024px",
-  screenXl: "1280px",
-  screen2xl: "1536px",
 };
 
-// Min/max height scale
-const minMaxHeightScale: Record<string, string> = {
-  "0": "0px",
-  full: "100%",
-  screen: "100vh",
-  svh: "100svh",
-  lvh: "100lvh",
-  dvh: "100dvh",
-  min: "min-content",
-  max: "max-content",
-  fit: "fit-content",
-};
+// ============================================
+// Utility function creators
+// ============================================
 
-// Create utility functions
 const widthFn = createUtility("width", "w");
 const minWidthFn = createUtility("min-width", "min-w");
 const maxWidthFn = createUtility("max-width", "max-w");
@@ -164,224 +141,428 @@ const sizeUtilityFn = (value: string, valueName?: string): StyleToken => {
   };
 };
 
-/**
- * Create a sizing utility that works as both:
- * - Proxy namespace for predefined values: w.full, w["4"]
- * - Tagged template function for arbitrary values: w`300px`
- */
-function createSizingUtility(
-  utilityFn: (value: string, valueName?: string) => StyleToken,
+// ============================================
+// Token generators
+// ============================================
+
+type UtilityFn = (value: string, valueName?: string) => StyleToken;
+
+function generateSpacingTokens(prefix: string, utilityFn: UtilityFn): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+
+  for (const [key, value] of Object.entries(spacingScale)) {
+    // Convert "0.5" to "0_5", "1.5" to "1_5"
+    const propKey = key.replace(".", "_");
+    const tokenName = `${prefix}${propKey}`;
+    tokens[tokenName] = utilityFn(value, key);
+  }
+
+  return tokens;
+}
+
+function generateFractionTokens(prefix: string, utilityFn: UtilityFn): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+
+  for (const [key, value] of Object.entries(fractionScale)) {
+    // Capitalize first letter: half -> Half
+    const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+    const tokenName = `${prefix}${capKey}`;
+    tokens[tokenName] = utilityFn(value, key);
+  }
+
+  return tokens;
+}
+
+function generateSemanticTokens(
+  prefix: string,
+  utilityFn: UtilityFn,
   scale: Record<string, string>,
-): TaggedUtilityFn & SizingValues {
-  const tokenCache = new Map<string, StyleToken>();
-  const taggedFn = createTaggedUtility(utilityFn);
+): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
 
-  const handler: ProxyHandler<TaggedUtilityFn> = {
-    get(target, prop: string): StyleToken | undefined {
-      if (prop === "length" || prop === "name" || prop === "prototype") {
-        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
-      }
+  for (const [key, value] of Object.entries(scale)) {
+    // Capitalize first letter: full -> Full
+    const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+    const tokenName = `${prefix}${capKey}`;
+    tokens[tokenName] = utilityFn(value, key);
+  }
 
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
-
-      // Check if prop exists in scale
-      if (prop in scale) {
-        const token = utilityFn(scale[prop]!, prop);
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in scale;
-    },
-
-    apply(target, thisArg, args) {
-      return Reflect.apply(target, thisArg, args);
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(scale);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in scale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  };
-
-  return new Proxy(taggedFn, handler) as TaggedUtilityFn & SizingValues;
+  return tokens;
 }
 
-// Special size utility that sets both width and height
-function createSizeUtility(scale: Record<string, string>): TaggedUtilityFn & SizingValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateMaxWidthNamedTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
 
-  const taggedFn: TaggedUtilityFn = (
-    strings: TemplateStringsArray,
-    ...values: unknown[]
-  ): StyleToken => {
-    let result = strings[0] ?? "";
-    for (let i = 0; i < values.length; i++) {
-      result += String(values[i]) + (strings[i + 1] ?? "");
-    }
-    return sizeUtilityFn(result);
-  };
+  for (const [key, value] of Object.entries(maxWidthNamedScale)) {
+    // Capitalize: sm -> Sm, 2xl -> 2xl (keep as is for numbers)
+    const capKey = key.match(/^\d/) ? key : key.charAt(0).toUpperCase() + key.slice(1);
+    const tokenName = `maxW${capKey}`;
+    tokens[tokenName] = maxWidthFn(value, key);
+  }
 
-  const handler: ProxyHandler<TaggedUtilityFn> = {
-    get(target, prop: string): StyleToken | undefined {
-      if (prop === "length" || prop === "name" || prop === "prototype") {
-        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
-      }
+  // Also add basic semantic values
+  tokens.maxW0 = maxWidthFn("0px", "0");
+  tokens.maxWFull = maxWidthFn("100%", "full");
+  tokens.maxWMin = maxWidthFn("min-content", "min");
+  tokens.maxWMax = maxWidthFn("max-content", "max");
+  tokens.maxWFit = maxWidthFn("fit-content", "fit");
 
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
+  return tokens;
+}
 
-      if (prop in scale) {
-        const token = sizeUtilityFn(scale[prop]!, prop);
-        tokenCache.set(prop, token);
-        return token;
-      }
+function generateMinWidthTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
 
-      return undefined;
-    },
+  tokens.minW0 = minWidthFn("0px", "0");
+  tokens.minWFull = minWidthFn("100%", "full");
+  tokens.minWMin = minWidthFn("min-content", "min");
+  tokens.minWMax = minWidthFn("max-content", "max");
+  tokens.minWFit = minWidthFn("fit-content", "fit");
 
-    has(_target, prop: string): boolean {
-      return prop in scale;
-    },
+  return tokens;
+}
 
-    apply(target, thisArg, args) {
-      return Reflect.apply(target, thisArg, args);
-    },
+function generateMinHeightTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
 
-    ownKeys(): string[] {
-      return Object.keys(scale);
-    },
+  tokens.minH0 = minHeightFn("0px", "0");
+  tokens.minHFull = minHeightFn("100%", "full");
+  tokens.minHScreen = minHeightFn("100vh", "screen");
+  tokens.minHSvh = minHeightFn("100svh", "svh");
+  tokens.minHLvh = minHeightFn("100lvh", "lvh");
+  tokens.minHDvh = minHeightFn("100dvh", "dvh");
+  tokens.minHMin = minHeightFn("min-content", "min");
+  tokens.minHMax = minHeightFn("max-content", "max");
+  tokens.minHFit = minHeightFn("fit-content", "fit");
 
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in scale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  };
+  return tokens;
+}
 
-  return new Proxy(taggedFn, handler) as TaggedUtilityFn & SizingValues;
+function generateMaxHeightTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+
+  tokens.maxH0 = maxHeightFn("0px", "0");
+  tokens.maxHFull = maxHeightFn("100%", "full");
+  tokens.maxHScreen = maxHeightFn("100vh", "screen");
+  tokens.maxHSvh = maxHeightFn("100svh", "svh");
+  tokens.maxHLvh = maxHeightFn("100lvh", "lvh");
+  tokens.maxHDvh = maxHeightFn("100dvh", "dvh");
+  tokens.maxHMin = maxHeightFn("min-content", "min");
+  tokens.maxHMax = maxHeightFn("max-content", "max");
+  tokens.maxHFit = maxHeightFn("fit-content", "fit");
+
+  return tokens;
 }
 
 // ============================================
-// Sizing Utilities (both namespace and tagged template)
+// Generate all tokens
 // ============================================
 
-/**
- * Width utility
- * @example
- * w.full, w["4"], w["1/2"] // predefined
- * w`300px` // arbitrary
- */
-export const w: TaggedUtilityFn & SizingValues = createSizingUtility(widthFn, sizingScale);
+// Width tokens: w0, w1, w2, w4, ..., wFull, wHalf, ...
+const widthTokens: Record<string, StyleToken> = {
+  ...generateSpacingTokens("w", widthFn),
+  ...generateFractionTokens("w", widthFn),
+  ...generateSemanticTokens("w", widthFn, semanticScale),
+};
 
-/**
- * Min-width utility
- * @example
- * minW.full, minW["0"] // predefined
- * minW`200px` // arbitrary
- */
-export const minW: TaggedUtilityFn & SizingValues = createSizingUtility(
-  minWidthFn,
-  minMaxWidthScale,
-);
+// Height tokens: h0, h1, h2, h4, ..., hFull, hScreen, ...
+const heightTokens: Record<string, StyleToken> = {
+  ...generateSpacingTokens("h", heightFn),
+  ...generateFractionTokens("h", heightFn),
+  ...generateSemanticTokens("h", heightFn, heightSemanticScale),
+};
 
-/**
- * Max-width utility
- * @example
- * maxW.lg, maxW.prose, maxW.screenSm // predefined
- * maxW`800px` // arbitrary
- */
-export const maxW: TaggedUtilityFn & SizingValues = createSizingUtility(
-  maxWidthFn,
-  minMaxWidthScale,
-);
+// Size tokens: size0, size4, sizeFull, ...
+const sizeTokens: Record<string, StyleToken> = {
+  ...generateSpacingTokens("size", sizeUtilityFn),
+  ...generateFractionTokens("size", sizeUtilityFn),
+  ...generateSemanticTokens("size", sizeUtilityFn, semanticScale),
+};
 
-/**
- * Height utility
- * @example
- * h.full, h.screen, h["4"] // predefined
- * h`100vh` // arbitrary
- */
-export const h: TaggedUtilityFn & SizingValues = createSizingUtility(heightFn, heightScale);
+// Min/max width tokens
+const minWidthTokens = generateMinWidthTokens();
+const maxWidthTokens = generateMaxWidthNamedTokens();
 
-/**
- * Min-height utility
- * @example
- * minH.full, minH.screen // predefined
- * minH`100px` // arbitrary
- */
-export const minH: TaggedUtilityFn & SizingValues = createSizingUtility(
-  minHeightFn,
-  minMaxHeightScale,
-);
-
-/**
- * Max-height utility
- * @example
- * maxH.full, maxH.screen // predefined
- * maxH`500px` // arbitrary
- */
-export const maxH: TaggedUtilityFn & SizingValues = createSizingUtility(
-  maxHeightFn,
-  minMaxHeightScale,
-);
-
-/**
- * Size utility (sets both width and height)
- * @example
- * size.full, size["4"] // predefined
- * size`48px` // arbitrary
- */
-export const size: TaggedUtilityFn & SizingValues = createSizeUtility(sizingScale);
+// Min/max height tokens
+const minHeightTokens = generateMinHeightTokens();
+const maxHeightTokens = generateMaxHeightTokens();
 
 // ============================================
-// Grouped exports
+// Tagged template functions for arbitrary values
 // ============================================
 
-/** Grouped sizing utilities */
-export interface SizingGroup {
-  w: TaggedUtilityFn & SizingValues;
-  minW: TaggedUtilityFn & SizingValues;
-  maxW: TaggedUtilityFn & SizingValues;
-  h: TaggedUtilityFn & SizingValues;
-  minH: TaggedUtilityFn & SizingValues;
-  maxH: TaggedUtilityFn & SizingValues;
-  size: TaggedUtilityFn & SizingValues;
-}
+/** Width - arbitrary value: w`300px` */
+export const w: TaggedUtilityFn = createTaggedUtility(widthFn);
 
-export const sizing: SizingGroup = {
+/** Height - arbitrary value: h`100vh` */
+export const h: TaggedUtilityFn = createTaggedUtility(heightFn);
+
+/** Min-width - arbitrary value: minW`200px` */
+export const minW: TaggedUtilityFn = createTaggedUtility(minWidthFn);
+
+/** Max-width - arbitrary value: maxW`800px` */
+export const maxW: TaggedUtilityFn = createTaggedUtility(maxWidthFn);
+
+/** Min-height - arbitrary value: minH`100px` */
+export const minH: TaggedUtilityFn = createTaggedUtility(minHeightFn);
+
+/** Max-height - arbitrary value: maxH`500px` */
+export const maxH: TaggedUtilityFn = createTaggedUtility(maxHeightFn);
+
+/** Size - arbitrary value: size`48px` (sets both width and height) */
+export const size: TaggedUtilityFn = ((
+  strings: TemplateStringsArray,
+  ...values: unknown[]
+): StyleToken => {
+  let result = strings[0] ?? "";
+  for (let i = 0; i < values.length; i++) {
+    result += String(values[i]) + (strings[i + 1] ?? "");
+  }
+  return sizeUtilityFn(result);
+}) as TaggedUtilityFn;
+
+// ============================================
+// Individual token exports (flat)
+// ============================================
+
+// Width
+export const {
+  w0,
+  wpx,
+  w0_5,
+  w1,
+  w1_5,
+  w2,
+  w2_5,
+  w3,
+  w3_5,
+  w4,
+  w5,
+  w6,
+  w7,
+  w8,
+  w9,
+  w10,
+  w11,
+  w12,
+  w14,
+  w16,
+  w20,
+  w24,
+  w28,
+  w32,
+  w36,
+  w40,
+  w44,
+  w48,
+  w52,
+  w56,
+  w60,
+  w64,
+  w72,
+  w80,
+  w96,
+  wHalf,
+  wThird,
+  wTwoThirds,
+  wQuarter,
+  wThreeQuarters,
+  wFifth,
+  wTwoFifths,
+  wThreeFifths,
+  wFourFifths,
+  wSixth,
+  wFiveSixths,
+  wAuto,
+  wFull,
+  wScreen,
+  wSvw,
+  wLvw,
+  wDvw,
+  wMin,
+  wMax,
+  wFit,
+} = widthTokens;
+
+// Height
+export const {
+  h0,
+  hpx,
+  h0_5,
+  h1,
+  h1_5,
+  h2,
+  h2_5,
+  h3,
+  h3_5,
+  h4,
+  h5,
+  h6,
+  h7,
+  h8,
+  h9,
+  h10,
+  h11,
+  h12,
+  h14,
+  h16,
+  h20,
+  h24,
+  h28,
+  h32,
+  h36,
+  h40,
+  h44,
+  h48,
+  h52,
+  h56,
+  h60,
+  h64,
+  h72,
+  h80,
+  h96,
+  hHalf,
+  hThird,
+  hTwoThirds,
+  hQuarter,
+  hThreeQuarters,
+  hFifth,
+  hTwoFifths,
+  hThreeFifths,
+  hFourFifths,
+  hSixth,
+  hFiveSixths,
+  hAuto,
+  hFull,
+  hScreen,
+  hSvh,
+  hLvh,
+  hDvh,
+  hMin,
+  hMax,
+  hFit,
+} = heightTokens;
+
+// Size
+export const {
+  size0,
+  sizepx,
+  size0_5,
+  size1,
+  size1_5,
+  size2,
+  size2_5,
+  size3,
+  size3_5,
+  size4,
+  size5,
+  size6,
+  size7,
+  size8,
+  size9,
+  size10,
+  size11,
+  size12,
+  size14,
+  size16,
+  size20,
+  size24,
+  size28,
+  size32,
+  size36,
+  size40,
+  size44,
+  size48,
+  size52,
+  size56,
+  size60,
+  size64,
+  size72,
+  size80,
+  size96,
+  sizeHalf,
+  sizeThird,
+  sizeTwoThirds,
+  sizeQuarter,
+  sizeThreeQuarters,
+  sizeFifth,
+  sizeTwoFifths,
+  sizeThreeFifths,
+  sizeFourFifths,
+  sizeSixth,
+  sizeFiveSixths,
+  sizeAuto,
+  sizeFull,
+  sizeScreen,
+  sizeSvw,
+  sizeLvw,
+  sizeDvw,
+  sizeMin,
+  sizeMax,
+  sizeFit,
+} = sizeTokens;
+
+// Min-width
+export const { minW0, minWFull, minWMin, minWMax, minWFit } = minWidthTokens;
+
+// Max-width
+export const {
+  maxW0,
+  maxWFull,
+  maxWMin,
+  maxWMax,
+  maxWFit,
+  maxWXs,
+  maxWSm,
+  maxWMd,
+  maxWLg,
+  maxWXl,
+  maxW2xl,
+  maxW3xl,
+  maxW4xl,
+  maxW5xl,
+  maxW6xl,
+  maxW7xl,
+  maxWProse,
+} = maxWidthTokens;
+
+// Min-height
+export const { minH0, minHFull, minHScreen, minHSvh, minHLvh, minHDvh, minHMin, minHMax, minHFit } =
+  minHeightTokens;
+
+// Max-height
+export const { maxH0, maxHFull, maxHScreen, maxHSvh, maxHLvh, maxHDvh, maxHMin, maxHMax, maxHFit } =
+  maxHeightTokens;
+
+// ============================================
+// Namespace export (grouped)
+// ============================================
+
+/** All sizing tokens in a namespace */
+export const sizing = {
+  // Width
+  ...widthTokens,
+  // Height
+  ...heightTokens,
+  // Size
+  ...sizeTokens,
+  // Min-width
+  ...minWidthTokens,
+  // Max-width
+  ...maxWidthTokens,
+  // Min-height
+  ...minHeightTokens,
+  // Max-height
+  ...maxHeightTokens,
+  // Arbitrary (tagged templates)
   w,
+  h,
   minW,
   maxW,
-  h,
   minH,
   maxH,
   size,
 };
 
-// Legacy type exports for backwards compatibility
-export type { SizingGroup as SizingArbGroup };
-export type SizingNamespace = SizingGroup;
-export const sizingArb: SizingGroup = sizing;
+// Type for the sizing namespace
+export type SizingNamespace = typeof sizing;

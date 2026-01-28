@@ -1,18 +1,94 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { resetConfig } from "./config";
 import {
-  fontSize,
-  fontWeight,
-  fontFamily,
-  fontStyle,
-  lineHeight,
-  letterSpacing,
-  textAlign,
-  textDecoration,
-  textTransform,
-  whitespace,
-  wordBreak,
+  // Font size
+  textXs,
+  textSm,
+  textBase,
+  textLg,
+  textXl,
+  text2xl,
+  text3xl,
+  text4xl,
+  text5xl,
+  text6xl,
+  text7xl,
+  text8xl,
+  text9xl,
+  text,
+  // Font weight
+  fontThin,
+  fontExtralight,
+  fontLight,
+  fontNormal,
+  fontMedium,
+  fontSemibold,
+  fontBold,
+  fontExtrabold,
+  fontBlack,
+  // Font family
+  fontSans,
+  fontSerif,
+  fontMono,
+  // Font style
+  italic,
+  notItalic,
+  // Line height
+  leadingNone,
+  leadingTight,
+  leadingSnug,
+  leadingNormal,
+  leadingRelaxed,
+  leadingLoose,
+  leading3,
+  leading4,
+  leading5,
+  leading6,
+  leading7,
+  leading8,
+  leading9,
+  leading10,
+  leading,
+  // Letter spacing
+  trackingTighter,
+  trackingTight,
+  trackingNormal,
+  trackingWide,
+  trackingWider,
+  trackingWidest,
+  tracking,
+  // Text align
+  textLeft,
+  textCenter,
+  textRight,
+  textJustify,
+  textStart,
+  textEnd,
+  // Text decoration
+  underline,
+  overline,
+  lineThrough,
+  noUnderline,
+  // Text transform
+  uppercase,
+  lowercase,
+  capitalize,
+  normalCase,
+  // Whitespace
+  whitespaceNormal,
+  whitespaceNowrap,
+  whitespacePre,
+  whitespacePreLine,
+  whitespacePreWrap,
+  whitespaceBreakSpaces,
+  // Word break
+  breakNormal,
+  breakWords,
+  breakAll,
+  breakKeep,
+  // Truncate
   truncate,
+  // Namespace
   typography,
 } from "./typography";
 
@@ -21,34 +97,28 @@ describe("font size utilities", () => {
     resetConfig();
   });
 
-  it("generates text-base correctly", () => {
-    expect(fontSize.base._).toBe("text-base");
-    expect(fontSize.base.__cssTemplate).toBe(
-      ".text-base { font-size: 1rem; line-height: 1.5rem; }",
-    );
+  it("generates textBase correctly", () => {
+    expect(textBase._).toBe("text-base");
+    expect(textBase.__cssTemplate).toBe(".text-base { font-size: 1rem; line-height: 1.5rem; }");
   });
 
-  it("generates text-sm correctly", () => {
-    expect(fontSize.sm._).toBe("text-sm");
-    expect(fontSize.sm.__cssTemplate).toBe(
-      ".text-sm { font-size: 0.875rem; line-height: 1.25rem; }",
-    );
+  it("generates textSm correctly", () => {
+    expect(textSm._).toBe("text-sm");
+    expect(textSm.__cssTemplate).toBe(".text-sm { font-size: 0.875rem; line-height: 1.25rem; }");
   });
 
-  it("generates text-xl correctly", () => {
-    expect(fontSize.xl._).toBe("text-xl");
-    expect(fontSize.xl.__cssTemplate).toBe(
-      ".text-xl { font-size: 1.25rem; line-height: 1.75rem; }",
-    );
+  it("generates textXl correctly", () => {
+    expect(textXl._).toBe("text-xl");
+    expect(textXl.__cssTemplate).toBe(".text-xl { font-size: 1.25rem; line-height: 1.75rem; }");
   });
 
-  it("generates text-5xl correctly (line-height: 1)", () => {
-    expect(fontSize["5xl"]._).toBe("text-5xl");
-    expect(fontSize["5xl"].__cssTemplate).toBe(".text-5xl { font-size: 3rem; line-height: 1; }");
+  it("generates text5xl correctly (line-height: 1)", () => {
+    expect(text5xl._).toBe("text-5xl");
+    expect(text5xl.__cssTemplate).toBe(".text-5xl { font-size: 3rem; line-height: 1; }");
   });
 
   it("supports arbitrary values via tagged template", () => {
-    const token = fontSize`20px`;
+    const token = text`20px`;
     expect(token._).toBe("text-20px");
     expect(token.__cssTemplate).toBe(".text-20px { font-size: 20px; }");
   });
@@ -59,19 +129,19 @@ describe("font weight utilities", () => {
     resetConfig();
   });
 
-  it("generates font-normal correctly", () => {
-    expect(fontWeight.normal._).toBe("font-normal");
-    expect(fontWeight.normal.__cssTemplate).toBe(".font-normal { font-weight: 400; }");
+  it("generates fontNormal correctly", () => {
+    expect(fontNormal._).toBe("font-normal");
+    expect(fontNormal.__cssTemplate).toBe(".font-normal { font-weight: 400; }");
   });
 
-  it("generates font-bold correctly", () => {
-    expect(fontWeight.bold._).toBe("font-bold");
-    expect(fontWeight.bold.__cssTemplate).toBe(".font-bold { font-weight: 700; }");
+  it("generates fontBold correctly", () => {
+    expect(fontBold._).toBe("font-bold");
+    expect(fontBold.__cssTemplate).toBe(".font-bold { font-weight: 700; }");
   });
 
-  it("generates font-semibold correctly", () => {
-    expect(fontWeight.semibold._).toBe("font-semibold");
-    expect(fontWeight.semibold.__cssTemplate).toBe(".font-semibold { font-weight: 600; }");
+  it("generates fontSemibold correctly", () => {
+    expect(fontSemibold._).toBe("font-semibold");
+    expect(fontSemibold.__cssTemplate).toBe(".font-semibold { font-weight: 600; }");
   });
 });
 
@@ -80,15 +150,15 @@ describe("font family utilities", () => {
     resetConfig();
   });
 
-  it("generates font-sans correctly", () => {
-    expect(fontFamily.sans._).toBe("font-sans");
-    expect(fontFamily.sans.__cssTemplate).toContain("font-family:");
-    expect(fontFamily.sans.__cssTemplate).toContain("ui-sans-serif");
+  it("generates fontSans correctly", () => {
+    expect(fontSans._).toBe("font-sans");
+    expect(fontSans.__cssTemplate).toContain("font-family:");
+    expect(fontSans.__cssTemplate).toContain("ui-sans-serif");
   });
 
-  it("generates font-mono correctly", () => {
-    expect(fontFamily.mono._).toBe("font-mono");
-    expect(fontFamily.mono.__cssTemplate).toContain("ui-monospace");
+  it("generates fontMono correctly", () => {
+    expect(fontMono._).toBe("font-mono");
+    expect(fontMono.__cssTemplate).toContain("ui-monospace");
   });
 });
 
@@ -98,13 +168,13 @@ describe("font style utilities", () => {
   });
 
   it("generates italic correctly", () => {
-    expect(fontStyle.italic._).toBe("italic");
-    expect(fontStyle.italic.__cssTemplate).toBe(".italic { font-style: italic; }");
+    expect(italic._).toBe("italic");
+    expect(italic.__cssTemplate).toBe(".italic { font-style: italic; }");
   });
 
-  it("generates not-italic correctly", () => {
-    expect(fontStyle.notItalic._).toBe("not-italic");
-    expect(fontStyle.notItalic.__cssTemplate).toBe(".not-italic { font-style: normal; }");
+  it("generates notItalic correctly", () => {
+    expect(notItalic._).toBe("not-italic");
+    expect(notItalic.__cssTemplate).toBe(".not-italic { font-style: normal; }");
   });
 });
 
@@ -113,23 +183,23 @@ describe("line height utilities", () => {
     resetConfig();
   });
 
-  it("generates leading-normal correctly", () => {
-    expect(lineHeight.normal._).toBe("leading-normal");
-    expect(lineHeight.normal.__cssTemplate).toBe(".leading-normal { line-height: 1.5; }");
+  it("generates leadingNormal correctly", () => {
+    expect(leadingNormal._).toBe("leading-normal");
+    expect(leadingNormal.__cssTemplate).toBe(".leading-normal { line-height: 1.5; }");
   });
 
-  it("generates leading-tight correctly", () => {
-    expect(lineHeight.tight._).toBe("leading-tight");
-    expect(lineHeight.tight.__cssTemplate).toBe(".leading-tight { line-height: 1.25; }");
+  it("generates leadingTight correctly", () => {
+    expect(leadingTight._).toBe("leading-tight");
+    expect(leadingTight.__cssTemplate).toBe(".leading-tight { line-height: 1.25; }");
   });
 
-  it("generates leading-6 correctly", () => {
-    expect(lineHeight["6"]._).toBe("leading-6");
-    expect(lineHeight["6"].__cssTemplate).toBe(".leading-6 { line-height: 1.5rem; }");
+  it("generates leading6 correctly", () => {
+    expect(leading6._).toBe("leading-6");
+    expect(leading6.__cssTemplate).toBe(".leading-6 { line-height: 1.5rem; }");
   });
 
   it("supports arbitrary values via tagged template", () => {
-    const token = lineHeight`1.8`;
+    const token = leading`1.8`;
     expect(token._).toBe("leading-1_8");
     expect(token.__cssTemplate).toBe(".leading-1_8 { line-height: 1.8; }");
   });
@@ -140,23 +210,23 @@ describe("letter spacing utilities", () => {
     resetConfig();
   });
 
-  it("generates tracking-normal correctly", () => {
-    expect(letterSpacing.normal._).toBe("tracking-normal");
-    expect(letterSpacing.normal.__cssTemplate).toBe(".tracking-normal { letter-spacing: 0em; }");
+  it("generates trackingNormal correctly", () => {
+    expect(trackingNormal._).toBe("tracking-normal");
+    expect(trackingNormal.__cssTemplate).toBe(".tracking-normal { letter-spacing: 0em; }");
   });
 
-  it("generates tracking-tight correctly", () => {
-    expect(letterSpacing.tight._).toBe("tracking-tight");
-    expect(letterSpacing.tight.__cssTemplate).toBe(".tracking-tight { letter-spacing: -0.025em; }");
+  it("generates trackingTight correctly", () => {
+    expect(trackingTight._).toBe("tracking-tight");
+    expect(trackingTight.__cssTemplate).toBe(".tracking-tight { letter-spacing: -0.025em; }");
   });
 
-  it("generates tracking-widest correctly", () => {
-    expect(letterSpacing.widest._).toBe("tracking-widest");
-    expect(letterSpacing.widest.__cssTemplate).toBe(".tracking-widest { letter-spacing: 0.1em; }");
+  it("generates trackingWidest correctly", () => {
+    expect(trackingWidest._).toBe("tracking-widest");
+    expect(trackingWidest.__cssTemplate).toBe(".tracking-widest { letter-spacing: 0.1em; }");
   });
 
   it("supports arbitrary values via tagged template", () => {
-    const token = letterSpacing`0.15em`;
+    const token = tracking`0.15em`;
     expect(token._).toBe("tracking-0_15em");
     expect(token.__cssTemplate).toBe(".tracking-0_15em { letter-spacing: 0.15em; }");
   });
@@ -167,19 +237,19 @@ describe("text align utilities", () => {
     resetConfig();
   });
 
-  it("generates text-left correctly", () => {
-    expect(textAlign.left._).toBe("text-left");
-    expect(textAlign.left.__cssTemplate).toBe(".text-left { text-align: left; }");
+  it("generates textLeft correctly", () => {
+    expect(textLeft._).toBe("text-left");
+    expect(textLeft.__cssTemplate).toBe(".text-left { text-align: left; }");
   });
 
-  it("generates text-center correctly", () => {
-    expect(textAlign.center._).toBe("text-center");
-    expect(textAlign.center.__cssTemplate).toBe(".text-center { text-align: center; }");
+  it("generates textCenter correctly", () => {
+    expect(textCenter._).toBe("text-center");
+    expect(textCenter.__cssTemplate).toBe(".text-center { text-align: center; }");
   });
 
-  it("generates text-justify correctly", () => {
-    expect(textAlign.justify._).toBe("text-justify");
-    expect(textAlign.justify.__cssTemplate).toBe(".text-justify { text-align: justify; }");
+  it("generates textJustify correctly", () => {
+    expect(textJustify._).toBe("text-justify");
+    expect(textJustify.__cssTemplate).toBe(".text-justify { text-align: justify; }");
   });
 });
 
@@ -189,24 +259,18 @@ describe("text decoration utilities", () => {
   });
 
   it("generates underline correctly", () => {
-    expect(textDecoration.underline._).toBe("underline");
-    expect(textDecoration.underline.__cssTemplate).toBe(
-      ".underline { text-decoration-line: underline; }",
-    );
+    expect(underline._).toBe("underline");
+    expect(underline.__cssTemplate).toBe(".underline { text-decoration-line: underline; }");
   });
 
-  it("generates no-underline correctly (camelCase access)", () => {
-    expect(textDecoration.noUnderline._).toBe("no-underline");
-    expect(textDecoration.noUnderline.__cssTemplate).toBe(
-      ".no-underline { text-decoration-line: none; }",
-    );
+  it("generates noUnderline correctly", () => {
+    expect(noUnderline._).toBe("no-underline");
+    expect(noUnderline.__cssTemplate).toBe(".no-underline { text-decoration-line: none; }");
   });
 
-  it("generates line-through correctly (camelCase access)", () => {
-    expect(textDecoration.lineThrough._).toBe("line-through");
-    expect(textDecoration.lineThrough.__cssTemplate).toBe(
-      ".line-through { text-decoration-line: line-through; }",
-    );
+  it("generates lineThrough correctly", () => {
+    expect(lineThrough._).toBe("line-through");
+    expect(lineThrough.__cssTemplate).toBe(".line-through { text-decoration-line: line-through; }");
   });
 });
 
@@ -216,21 +280,21 @@ describe("text transform utilities", () => {
   });
 
   it("generates uppercase correctly", () => {
-    expect(textTransform.uppercase._).toBe("uppercase");
-    expect(textTransform.uppercase.__cssTemplate).toBe(".uppercase { text-transform: uppercase; }");
+    expect(uppercase._).toBe("uppercase");
+    expect(uppercase.__cssTemplate).toBe(".uppercase { text-transform: uppercase; }");
   });
 
   it("generates lowercase correctly", () => {
-    expect(textTransform.lowercase._).toBe("lowercase");
+    expect(lowercase._).toBe("lowercase");
   });
 
   it("generates capitalize correctly", () => {
-    expect(textTransform.capitalize._).toBe("capitalize");
+    expect(capitalize._).toBe("capitalize");
   });
 
-  it("generates normal-case correctly (camelCase access)", () => {
-    expect(textTransform.normalCase._).toBe("normal-case");
-    expect(textTransform.normalCase.__cssTemplate).toBe(".normal-case { text-transform: none; }");
+  it("generates normalCase correctly", () => {
+    expect(normalCase._).toBe("normal-case");
+    expect(normalCase.__cssTemplate).toBe(".normal-case { text-transform: none; }");
   });
 });
 
@@ -239,23 +303,23 @@ describe("whitespace utilities", () => {
     resetConfig();
   });
 
-  it("generates whitespace-normal correctly", () => {
-    expect(whitespace.normal._).toBe("whitespace-normal");
-    expect(whitespace.normal.__cssTemplate).toBe(".whitespace-normal { white-space: normal; }");
+  it("generates whitespaceNormal correctly", () => {
+    expect(whitespaceNormal._).toBe("whitespace-normal");
+    expect(whitespaceNormal.__cssTemplate).toBe(".whitespace-normal { white-space: normal; }");
   });
 
-  it("generates whitespace-nowrap correctly", () => {
-    expect(whitespace.nowrap._).toBe("whitespace-nowrap");
-    expect(whitespace.nowrap.__cssTemplate).toBe(".whitespace-nowrap { white-space: nowrap; }");
+  it("generates whitespaceNowrap correctly", () => {
+    expect(whitespaceNowrap._).toBe("whitespace-nowrap");
+    expect(whitespaceNowrap.__cssTemplate).toBe(".whitespace-nowrap { white-space: nowrap; }");
   });
 
-  it("generates whitespace-pre correctly", () => {
-    expect(whitespace.pre._).toBe("whitespace-pre");
+  it("generates whitespacePre correctly", () => {
+    expect(whitespacePre._).toBe("whitespace-pre");
   });
 
-  it("generates whitespace-pre-line correctly (camelCase access)", () => {
-    expect(whitespace.preLine._).toBe("whitespace-preLine");
-    expect(whitespace.preLine.__cssTemplate).toBe(".whitespace-preLine { white-space: pre-line; }");
+  it("generates whitespacePreLine correctly", () => {
+    expect(whitespacePreLine._).toBe("whitespace-pre-line");
+    expect(whitespacePreLine.__cssTemplate).toBe(".whitespace-pre-line { white-space: pre-line; }");
   });
 });
 
@@ -264,18 +328,18 @@ describe("word break utilities", () => {
     resetConfig();
   });
 
-  it("generates break-normal correctly", () => {
-    expect(wordBreak.normal._).toBe("break-normal");
-    expect(wordBreak.normal.__cssTemplate).toBe(".break-normal { overflow-wrap: normal; }");
+  it("generates breakNormal correctly", () => {
+    expect(breakNormal._).toBe("break-normal");
+    expect(breakNormal.__cssTemplate).toBe(".break-normal { overflow-wrap: normal; }");
   });
 
-  it("generates break-words correctly", () => {
-    expect(wordBreak.words._).toBe("break-words");
-    expect(wordBreak.words.__cssTemplate).toBe(".break-words { overflow-wrap: break-word; }");
+  it("generates breakWords correctly", () => {
+    expect(breakWords._).toBe("break-words");
+    expect(breakWords.__cssTemplate).toBe(".break-words { overflow-wrap: break-word; }");
   });
 
-  it("generates break-all correctly", () => {
-    expect(wordBreak.all._).toBe("break-all");
+  it("generates breakAll correctly", () => {
+    expect(breakAll._).toBe("break-all");
   });
 });
 
@@ -292,35 +356,33 @@ describe("truncate utility", () => {
   });
 });
 
-describe("grouped exports", () => {
-  it("typography object contains all utilities", () => {
-    expect(typography.fontSize).toBe(fontSize);
-    expect(typography.fontWeight).toBe(fontWeight);
-    expect(typography.fontFamily).toBe(fontFamily);
-    expect(typography.fontStyle).toBe(fontStyle);
-    expect(typography.lineHeight).toBe(lineHeight);
-    expect(typography.letterSpacing).toBe(letterSpacing);
-    expect(typography.textAlign).toBe(textAlign);
-    expect(typography.textDecoration).toBe(textDecoration);
-    expect(typography.textTransform).toBe(textTransform);
-    expect(typography.whitespace).toBe(whitespace);
-    expect(typography.wordBreak).toBe(wordBreak);
-    expect(typography.truncate).toBe(truncate);
+describe("typography namespace", () => {
+  it("has all font size tokens", () => {
+    expect(typography.textBase).toBe(textBase);
+    expect(typography.textSm).toBe(textSm);
+    expect(typography.textXl).toBe(textXl);
+  });
+
+  it("has all font weight tokens", () => {
+    expect(typography.fontBold).toBe(fontBold);
+    expect(typography.fontNormal).toBe(fontNormal);
+  });
+
+  it("has tagged templates", () => {
+    expect(typography.text).toBe(text);
+    expect(typography.leading).toBe(leading);
+    expect(typography.tracking).toBe(tracking);
   });
 });
 
-describe("destructuring", () => {
-  it("supports destructuring from fontSize", () => {
-    const { base, sm, xl } = fontSize;
-    expect(base._).toBe("text-base");
-    expect(sm._).toBe("text-sm");
-    expect(xl._).toBe("text-xl");
+describe("token properties", () => {
+  it("has __kind property", () => {
+    expect(textBase.__kind).toBe("style");
+    expect(fontBold.__kind).toBe("style");
   });
 
-  it("supports destructuring from fontWeight", () => {
-    const { bold, normal, semibold } = fontWeight;
-    expect(bold._).toBe("font-bold");
-    expect(normal._).toBe("font-normal");
-    expect(semibold._).toBe("font-semibold");
+  it("has toString method", () => {
+    expect(textBase.toString()).toBe("text-base");
+    expect(fontBold.toString()).toBe("font-bold");
   });
 });

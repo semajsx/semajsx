@@ -44,6 +44,14 @@ export function valueToSuffix(value: string): string {
 }
 
 /**
+ * Escape special characters in class names for CSS selectors.
+ * In CSS, dots and other special characters need to be escaped.
+ */
+function escapeClassName(className: string): string {
+  return className.replace(/\./g, "\\.");
+}
+
+/**
  * Create a utility function for a single CSS property.
  *
  * @param property - The CSS property (e.g., "padding", "background-color")
@@ -67,11 +75,12 @@ export function createUtility(
     const prefix = cfg.prefix ?? "";
     const suffix = valueName ?? valueToSuffix(value);
     const className = `${prefix}${utilityName}-${suffix}`;
+    const escapedClassName = escapeClassName(className);
 
     return {
       __kind: "style",
       _: className,
-      __cssTemplate: `.${className} { ${property}: ${value}; }`,
+      __cssTemplate: `.${escapedClassName} { ${property}: ${value}; }`,
       toString() {
         return this._;
       },
@@ -127,13 +136,14 @@ export function createMultiUtility(
     const prefix = cfg.prefix ?? "";
     const suffix = valueName ?? valueToSuffix(value);
     const className = `${prefix}${utilityName}-${suffix}`;
+    const escapedClassName = escapeClassName(className);
 
     const cssProperties = properties.map((p) => `${p}: ${value};`).join(" ");
 
     return {
       __kind: "style",
       _: className,
-      __cssTemplate: `.${className} { ${cssProperties} }`,
+      __cssTemplate: `.${escapedClassName} { ${cssProperties} }`,
       toString() {
         return this._;
       },

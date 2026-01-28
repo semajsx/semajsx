@@ -3,12 +3,17 @@
  *
  * Usage:
  * ```ts
- * // Predefined values (via Proxy)
- * import { fontSize, fontWeight, lineHeight } from "@semajsx/tailwind";
- * <div class={[fontSize.base, fontWeight.bold, lineHeight.normal]}>
+ * // Merged naming - flat exports (recommended)
+ * import { textBase, textXl, fontBold, leadingNormal } from "@semajsx/tailwind";
+ * <div class={[textBase, fontBold, leadingNormal]}>
  *
- * // Arbitrary values (tagged template - same function!)
- * <div class={[fontSize`18px`, lineHeight`1.8`]}>
+ * // Namespace access
+ * import { typography } from "@semajsx/tailwind";
+ * <div class={[typography.textBase, typography.fontBold]}>
+ *
+ * // Arbitrary values (tagged template)
+ * import { text, leading } from "@semajsx/tailwind";
+ * <div class={[text`18px`, leading`1.8`]}>
  * ```
  */
 
@@ -16,8 +21,11 @@ import type { StyleToken, TaggedUtilityFn } from "./types";
 import { createUtility, createTaggedUtility } from "./core";
 import { getConfig } from "./config";
 
-/** Type for typography value records */
-export type TypographyValues = Record<string, StyleToken>;
+type UtilityFn = (value: string, valueName?: string) => StyleToken;
+
+// ============================================
+// Scale definitions
+// ============================================
 
 // Font size scale (with line-height)
 const fontSizeScale: Record<string, [string, string]> = {
@@ -87,46 +95,6 @@ const textAlignValues: Record<string, string> = {
   end: "end",
 };
 
-// Text decoration values
-const textDecorationValues: Record<string, string> = {
-  underline: "underline",
-  overline: "overline",
-  lineThrough: "line-through",
-  noUnderline: "none",
-};
-
-// Text transform values
-const textTransformValues: Record<string, string> = {
-  uppercase: "uppercase",
-  lowercase: "lowercase",
-  capitalize: "capitalize",
-  normalCase: "none",
-};
-
-// Whitespace values
-const whitespaceValues: Record<string, string> = {
-  normal: "normal",
-  nowrap: "nowrap",
-  pre: "pre",
-  preLine: "pre-line",
-  preWrap: "pre-wrap",
-  breakSpaces: "break-spaces",
-};
-
-// Word break values
-const wordBreakValues: Record<string, string> = {
-  normal: "normal",
-  words: "break-word",
-  all: "break-all",
-  keep: "keep-all",
-};
-
-// Font style values
-const fontStyleValues: Record<string, string> = {
-  italic: "italic",
-  notItalic: "normal",
-};
-
 // Font family (common stacks)
 const fontFamilyValues: Record<string, string> = {
   sans: 'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji"',
@@ -134,7 +102,10 @@ const fontFamilyValues: Record<string, string> = {
   mono: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace',
 };
 
-// Create utility functions
+// ============================================
+// Utility function creators
+// ============================================
+
 const fontWeightFn = createUtility("font-weight", "font");
 const lineHeightFn = createUtility("line-height", "leading");
 const letterSpacingFn = createUtility("letter-spacing", "tracking");
@@ -144,120 +115,22 @@ const wordBreakFn = createUtility("overflow-wrap", "break");
 const fontFamilyFn = createUtility("font-family", "font");
 const fontSizeFn = createUtility("font-size", "text");
 
-/**
- * Create a typography utility that works as both namespace and tagged template
- */
-function createTypographyUtility(
-  utilityFn: (value: string, valueName?: string) => StyleToken,
-  scale: Record<string, string>,
-): TaggedUtilityFn & TypographyValues {
-  const tokenCache = new Map<string, StyleToken>();
-  const taggedFn = createTaggedUtility(utilityFn);
+// ============================================
+// Token generators
+// ============================================
 
-  const handler: ProxyHandler<TaggedUtilityFn> = {
-    get(target, prop: string): StyleToken | undefined {
-      if (prop === "length" || prop === "name" || prop === "prototype") {
-        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
-      }
+function generateFontSizeTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
 
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
+  for (const [key, [size, lh]] of Object.entries(fontSizeScale)) {
+    // Convert keys: base -> Base, 2xl -> 2xl (keep number prefix)
+    const capKey = key.match(/^\d/) ? key : key.charAt(0).toUpperCase() + key.slice(1);
+    const tokenName = `text${capKey}`;
+    const className = `${prefix}text-${key}`;
 
-      if (prop in scale) {
-        const token = utilityFn(scale[prop]!, prop);
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in scale;
-    },
-
-    apply(target, thisArg, args) {
-      return Reflect.apply(target, thisArg, args);
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(scale);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in scale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  };
-
-  return new Proxy(taggedFn, handler) as TaggedUtilityFn & TypographyValues;
-}
-
-/**
- * Create a simple utility that only has predefined values (no arbitrary)
- */
-function createSimpleUtility(
-  utilityFn: (value: string, valueName?: string) => StyleToken,
-  scale: Record<string, string>,
-): TypographyValues {
-  const tokenCache = new Map<string, StyleToken>();
-
-  return new Proxy({} as TypographyValues, {
-    get(_target, prop: string): StyleToken | undefined {
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
-
-      if (prop in scale) {
-        const token = utilityFn(scale[prop]!, prop);
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in scale;
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(scale);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in scale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  });
-}
-
-/**
- * Create font size utility (special: includes line-height)
- */
-function createFontSizeUtility(): TaggedUtilityFn & TypographyValues {
-  const tokenCache = new Map<string, StyleToken>();
-
-  const createToken = (name: string): StyleToken => {
-    const cfg = getConfig();
-    const prefix = cfg.prefix ?? "";
-    const [size, lh] = fontSizeScale[name]!;
-    const className = `${prefix}text-${name}`;
-
-    return {
+    tokens[tokenName] = {
       __kind: "style",
       _: className,
       __cssTemplate: `.${className} { font-size: ${size}; line-height: ${lh}; }`,
@@ -265,242 +138,226 @@ function createFontSizeUtility(): TaggedUtilityFn & TypographyValues {
         return this._;
       },
     };
-  };
+  }
 
-  const taggedFn = createTaggedUtility(fontSizeFn);
-
-  const handler: ProxyHandler<TaggedUtilityFn> = {
-    get(target, prop: string): StyleToken | undefined {
-      if (prop === "length" || prop === "name" || prop === "prototype") {
-        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
-      }
-
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
-
-      if (prop in fontSizeScale) {
-        const token = createToken(prop);
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in fontSizeScale;
-    },
-
-    apply(target, thisArg, args) {
-      return Reflect.apply(target, thisArg, args);
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(fontSizeScale);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in fontSizeScale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  };
-
-  return new Proxy(taggedFn, handler) as TaggedUtilityFn & TypographyValues;
+  return tokens;
 }
 
-/**
- * Create text decoration utility (special class names)
- */
-function createTextDecorationUtility(): TypographyValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateFontWeightTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
 
-  // Map property names to Tailwind class names
-  const classNameMap: Record<string, string> = {
-    underline: "underline",
-    overline: "overline",
-    lineThrough: "line-through",
-    noUnderline: "no-underline",
-  };
+  for (const [key, value] of Object.entries(fontWeightScale)) {
+    const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+    const tokenName = `font${capKey}`;
+    tokens[tokenName] = fontWeightFn(value, key);
+  }
 
-  return new Proxy({} as TypographyValues, {
-    get(_target, prop: string): StyleToken | undefined {
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
-
-      if (prop in textDecorationValues) {
-        const cfg = getConfig();
-        const prefix = cfg.prefix ?? "";
-        const className = `${prefix}${classNameMap[prop] ?? prop}`;
-        const value = textDecorationValues[prop]!;
-
-        const token: StyleToken = {
-          __kind: "style",
-          _: className,
-          __cssTemplate: `.${className} { text-decoration-line: ${value}; }`,
-          toString() {
-            return this._;
-          },
-        };
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in textDecorationValues;
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(textDecorationValues);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in textDecorationValues) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  });
+  return tokens;
 }
 
-/**
- * Create text transform utility (special class names)
- */
-function createTextTransformUtility(): TypographyValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateLineHeightTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
 
-  const classNameMap: Record<string, string> = {
-    uppercase: "uppercase",
-    lowercase: "lowercase",
-    capitalize: "capitalize",
-    normalCase: "normal-case",
-  };
+  for (const [key, value] of Object.entries(lineHeightScale)) {
+    // Convert keys: none -> None, 3 -> 3
+    const capKey = key.match(/^\d/) ? key : key.charAt(0).toUpperCase() + key.slice(1);
+    const tokenName = `leading${capKey}`;
+    tokens[tokenName] = lineHeightFn(value, key);
+  }
 
-  return new Proxy({} as TypographyValues, {
-    get(_target, prop: string): StyleToken | undefined {
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
-
-      if (prop in textTransformValues) {
-        const cfg = getConfig();
-        const prefix = cfg.prefix ?? "";
-        const className = `${prefix}${classNameMap[prop] ?? prop}`;
-        const value = textTransformValues[prop]!;
-
-        const token: StyleToken = {
-          __kind: "style",
-          _: className,
-          __cssTemplate: `.${className} { text-transform: ${value}; }`,
-          toString() {
-            return this._;
-          },
-        };
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in textTransformValues;
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(textTransformValues);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in textTransformValues) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  });
+  return tokens;
 }
 
-/**
- * Create font style utility (special class names)
- */
-function createFontStyleUtility(): TypographyValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateLetterSpacingTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
 
-  const classNameMap: Record<string, string> = {
-    italic: "italic",
-    notItalic: "not-italic",
-  };
+  for (const [key, value] of Object.entries(letterSpacingScale)) {
+    const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+    const tokenName = `tracking${capKey}`;
+    tokens[tokenName] = letterSpacingFn(value, key);
+  }
 
-  return new Proxy({} as TypographyValues, {
-    get(_target, prop: string): StyleToken | undefined {
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
-
-      if (prop in fontStyleValues) {
-        const cfg = getConfig();
-        const prefix = cfg.prefix ?? "";
-        const className = `${prefix}${classNameMap[prop] ?? prop}`;
-        const value = fontStyleValues[prop]!;
-
-        const token: StyleToken = {
-          __kind: "style",
-          _: className,
-          __cssTemplate: `.${className} { font-style: ${value}; }`,
-          toString() {
-            return this._;
-          },
-        };
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in fontStyleValues;
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(fontStyleValues);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in fontStyleValues) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  });
+  return tokens;
 }
 
-/**
- * Create truncate utility (combines multiple properties)
- */
-function createTruncateUtility(): StyleToken {
+function generateTextAlignTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+
+  for (const [key, value] of Object.entries(textAlignValues)) {
+    const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+    const tokenName = `text${capKey}`;
+    tokens[tokenName] = textAlignFn(value, key);
+  }
+
+  return tokens;
+}
+
+function generateFontFamilyTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+
+  for (const [key, value] of Object.entries(fontFamilyValues)) {
+    const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+    const tokenName = `font${capKey}`;
+    tokens[tokenName] = fontFamilyFn(value, key);
+  }
+
+  return tokens;
+}
+
+function generateFontStyleTokens(): Record<string, StyleToken> {
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
+
+  return {
+    italic: {
+      __kind: "style",
+      _: `${prefix}italic`,
+      __cssTemplate: `.${prefix}italic { font-style: italic; }`,
+      toString() {
+        return this._;
+      },
+    },
+    notItalic: {
+      __kind: "style",
+      _: `${prefix}not-italic`,
+      __cssTemplate: `.${prefix}not-italic { font-style: normal; }`,
+      toString() {
+        return this._;
+      },
+    },
+  };
+}
+
+function generateTextDecorationTokens(): Record<string, StyleToken> {
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
+
+  return {
+    underline: {
+      __kind: "style",
+      _: `${prefix}underline`,
+      __cssTemplate: `.${prefix}underline { text-decoration-line: underline; }`,
+      toString() {
+        return this._;
+      },
+    },
+    overline: {
+      __kind: "style",
+      _: `${prefix}overline`,
+      __cssTemplate: `.${prefix}overline { text-decoration-line: overline; }`,
+      toString() {
+        return this._;
+      },
+    },
+    lineThrough: {
+      __kind: "style",
+      _: `${prefix}line-through`,
+      __cssTemplate: `.${prefix}line-through { text-decoration-line: line-through; }`,
+      toString() {
+        return this._;
+      },
+    },
+    noUnderline: {
+      __kind: "style",
+      _: `${prefix}no-underline`,
+      __cssTemplate: `.${prefix}no-underline { text-decoration-line: none; }`,
+      toString() {
+        return this._;
+      },
+    },
+  };
+}
+
+function generateTextTransformTokens(): Record<string, StyleToken> {
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
+
+  return {
+    uppercase: {
+      __kind: "style",
+      _: `${prefix}uppercase`,
+      __cssTemplate: `.${prefix}uppercase { text-transform: uppercase; }`,
+      toString() {
+        return this._;
+      },
+    },
+    lowercase: {
+      __kind: "style",
+      _: `${prefix}lowercase`,
+      __cssTemplate: `.${prefix}lowercase { text-transform: lowercase; }`,
+      toString() {
+        return this._;
+      },
+    },
+    capitalize: {
+      __kind: "style",
+      _: `${prefix}capitalize`,
+      __cssTemplate: `.${prefix}capitalize { text-transform: capitalize; }`,
+      toString() {
+        return this._;
+      },
+    },
+    normalCase: {
+      __kind: "style",
+      _: `${prefix}normal-case`,
+      __cssTemplate: `.${prefix}normal-case { text-transform: none; }`,
+      toString() {
+        return this._;
+      },
+    },
+  };
+}
+
+function generateWhitespaceTokens(): Record<string, StyleToken> {
+  const values: Record<string, string> = {
+    normal: "normal",
+    nowrap: "nowrap",
+    pre: "pre",
+    preLine: "pre-line",
+    preWrap: "pre-wrap",
+    breakSpaces: "break-spaces",
+  };
+
+  const classMap: Record<string, string> = {
+    normal: "normal",
+    nowrap: "nowrap",
+    pre: "pre",
+    preLine: "pre-line",
+    preWrap: "pre-wrap",
+    breakSpaces: "break-spaces",
+  };
+
+  const tokens: Record<string, StyleToken> = {};
+
+  for (const [key, value] of Object.entries(values)) {
+    const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+    const tokenName = `whitespace${capKey}`;
+    tokens[tokenName] = whitespaceFn(value, classMap[key]);
+  }
+
+  return tokens;
+}
+
+function generateWordBreakTokens(): Record<string, StyleToken> {
+  const values: Record<string, string> = {
+    normal: "normal",
+    words: "break-word",
+    all: "break-all",
+    keep: "keep-all",
+  };
+
+  const tokens: Record<string, StyleToken> = {};
+
+  for (const [key, value] of Object.entries(values)) {
+    const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+    const tokenName = `break${capKey}`;
+    tokens[tokenName] = wordBreakFn(value, key);
+  }
+
+  return tokens;
+}
+
+function generateTruncateToken(): StyleToken {
   const cfg = getConfig();
   const prefix = cfg.prefix ?? "";
   const className = `${prefix}truncate`;
@@ -515,155 +372,195 @@ function createTruncateUtility(): StyleToken {
   };
 }
 
-// Use a Proxy to make truncate lazy-loaded with current config
-const truncateProxy = new Proxy({} as StyleToken, {
-  get(_target, prop: string) {
-    const token = createTruncateUtility();
-    return (token as unknown as Record<string, unknown>)[prop];
-  },
-}) as StyleToken;
-
 // ============================================
-// Typography Utilities
+// Generate all tokens
 // ============================================
 
-/**
- * Font size utility
- * @example
- * fontSize.base, fontSize.xl, fontSize["2xl"] // predefined
- * fontSize`18px` // arbitrary
- */
-export const fontSize: TaggedUtilityFn & TypographyValues = createFontSizeUtility();
-
-/**
- * Font weight utility
- * @example
- * fontWeight.bold, fontWeight.semibold // predefined
- */
-export const fontWeight: TypographyValues = createSimpleUtility(fontWeightFn, fontWeightScale);
-
-/**
- * Font family utility
- * @example
- * fontFamily.sans, fontFamily.mono // predefined
- */
-export const fontFamily: TypographyValues = createSimpleUtility(fontFamilyFn, fontFamilyValues);
-
-/**
- * Font style utility
- * @example
- * fontStyle.italic, fontStyle.notItalic // predefined
- */
-export const fontStyle: TypographyValues = createFontStyleUtility();
-
-/**
- * Line height utility
- * @example
- * lineHeight.normal, lineHeight.tight // predefined
- * lineHeight`1.8` // arbitrary
- */
-export const lineHeight: TaggedUtilityFn & TypographyValues = createTypographyUtility(
-  lineHeightFn,
-  lineHeightScale,
-);
-
-/**
- * Letter spacing utility
- * @example
- * letterSpacing.wide, letterSpacing.tight // predefined
- * letterSpacing`0.1em` // arbitrary
- */
-export const letterSpacing: TaggedUtilityFn & TypographyValues = createTypographyUtility(
-  letterSpacingFn,
-  letterSpacingScale,
-);
-
-/**
- * Text align utility
- * @example
- * textAlign.center, textAlign.left // predefined
- */
-export const textAlign: TypographyValues = createSimpleUtility(textAlignFn, textAlignValues);
-
-/**
- * Text decoration utility
- * @example
- * textDecoration.underline, textDecoration.lineThrough // predefined
- */
-export const textDecoration: TypographyValues = createTextDecorationUtility();
-
-/**
- * Text transform utility
- * @example
- * textTransform.uppercase, textTransform.capitalize // predefined
- */
-export const textTransform: TypographyValues = createTextTransformUtility();
-
-/**
- * Whitespace utility
- * @example
- * whitespace.nowrap, whitespace.pre // predefined
- */
-export const whitespace: TypographyValues = createSimpleUtility(whitespaceFn, whitespaceValues);
-
-/**
- * Word break utility
- * @example
- * wordBreak.normal, wordBreak.all // predefined
- */
-export const wordBreak: TypographyValues = createSimpleUtility(wordBreakFn, wordBreakValues);
-
-/**
- * Truncate utility (combines overflow, text-overflow, white-space)
- * @example
- * truncate // single utility
- */
-export const truncate: StyleToken = truncateProxy;
+const fontSizeTokens = generateFontSizeTokens();
+const fontWeightTokens = generateFontWeightTokens();
+const lineHeightTokens = generateLineHeightTokens();
+const letterSpacingTokens = generateLetterSpacingTokens();
+const textAlignTokens = generateTextAlignTokens();
+const fontFamilyTokens = generateFontFamilyTokens();
+const fontStyleTokens = generateFontStyleTokens();
+const textDecorationTokens = generateTextDecorationTokens();
+const textTransformTokens = generateTextTransformTokens();
+const whitespaceTokens = generateWhitespaceTokens();
+const wordBreakTokens = generateWordBreakTokens();
 
 // ============================================
-// Grouped exports
+// Tagged template functions for arbitrary values
 // ============================================
 
-/** Grouped typography utilities */
-export interface TypographyGroup {
-  fontSize: TaggedUtilityFn & TypographyValues;
-  fontWeight: TypographyValues;
-  fontFamily: TypographyValues;
-  fontStyle: TypographyValues;
-  lineHeight: TaggedUtilityFn & TypographyValues;
-  letterSpacing: TaggedUtilityFn & TypographyValues;
-  textAlign: TypographyValues;
-  textDecoration: TypographyValues;
-  textTransform: TypographyValues;
-  whitespace: TypographyValues;
-  wordBreak: TypographyValues;
-  truncate: StyleToken;
-}
+/** Font size - arbitrary value: text`18px` */
+export const text: TaggedUtilityFn = createTaggedUtility(fontSizeFn);
 
-/** Grouped typography arbitrary functions */
-export interface TypographyArbGroup {
-  fontSize: TaggedUtilityFn;
-  lineHeight: TaggedUtilityFn;
-  letterSpacing: TaggedUtilityFn;
-}
+/** Line height - arbitrary value: leading`1.8` */
+export const leading: TaggedUtilityFn = createTaggedUtility(lineHeightFn);
 
-export const typography: TypographyGroup = {
-  fontSize,
-  fontWeight,
-  fontFamily,
-  fontStyle,
-  lineHeight,
-  letterSpacing,
-  textAlign,
-  textDecoration,
-  textTransform,
-  whitespace,
-  wordBreak,
+/** Letter spacing - arbitrary value: tracking`0.1em` */
+export const tracking: TaggedUtilityFn = createTaggedUtility(letterSpacingFn);
+
+// ============================================
+// Individual token exports (flat) - Font Size
+// ============================================
+
+export const {
+  textXs,
+  textSm,
+  textBase,
+  textLg,
+  textXl,
+  text2xl,
+  text3xl,
+  text4xl,
+  text5xl,
+  text6xl,
+  text7xl,
+  text8xl,
+  text9xl,
+} = fontSizeTokens;
+
+// ============================================
+// Individual token exports (flat) - Font Weight
+// ============================================
+
+export const {
+  fontThin,
+  fontExtralight,
+  fontLight,
+  fontNormal,
+  fontMedium,
+  fontSemibold,
+  fontBold,
+  fontExtrabold,
+  fontBlack,
+} = fontWeightTokens;
+
+// ============================================
+// Individual token exports (flat) - Line Height
+// ============================================
+
+export const {
+  leadingNone,
+  leadingTight,
+  leadingSnug,
+  leadingNormal,
+  leadingRelaxed,
+  leadingLoose,
+  leading3,
+  leading4,
+  leading5,
+  leading6,
+  leading7,
+  leading8,
+  leading9,
+  leading10,
+} = lineHeightTokens;
+
+// ============================================
+// Individual token exports (flat) - Letter Spacing
+// ============================================
+
+export const {
+  trackingTighter,
+  trackingTight,
+  trackingNormal,
+  trackingWide,
+  trackingWider,
+  trackingWidest,
+} = letterSpacingTokens;
+
+// ============================================
+// Individual token exports (flat) - Text Align
+// ============================================
+
+export const { textLeft, textCenter, textRight, textJustify, textStart, textEnd } = textAlignTokens;
+
+// ============================================
+// Individual token exports (flat) - Font Family
+// ============================================
+
+export const { fontSans, fontSerif, fontMono } = fontFamilyTokens;
+
+// ============================================
+// Individual token exports (flat) - Font Style
+// ============================================
+
+export const { italic, notItalic } = fontStyleTokens;
+
+// ============================================
+// Individual token exports (flat) - Text Decoration
+// ============================================
+
+export const { underline, overline, lineThrough, noUnderline } = textDecorationTokens;
+
+// ============================================
+// Individual token exports (flat) - Text Transform
+// ============================================
+
+export const { uppercase, lowercase, capitalize, normalCase } = textTransformTokens;
+
+// ============================================
+// Individual token exports (flat) - Whitespace
+// ============================================
+
+export const {
+  whitespaceNormal,
+  whitespaceNowrap,
+  whitespacePre,
+  whitespacePreLine,
+  whitespacePreWrap,
+  whitespaceBreakSpaces,
+} = whitespaceTokens;
+
+// ============================================
+// Individual token exports (flat) - Word Break
+// ============================================
+
+export const { breakNormal, breakWords, breakAll, breakKeep } = wordBreakTokens;
+
+// ============================================
+// Individual token exports (flat) - Truncate
+// ============================================
+
+export const truncate: StyleToken = generateTruncateToken();
+
+// ============================================
+// Namespace export (grouped)
+// ============================================
+
+/** All typography tokens in a namespace */
+export const typography = {
+  // Font size
+  ...fontSizeTokens,
+  // Font weight
+  ...fontWeightTokens,
+  // Line height
+  ...lineHeightTokens,
+  // Letter spacing
+  ...letterSpacingTokens,
+  // Text align
+  ...textAlignTokens,
+  // Font family
+  ...fontFamilyTokens,
+  // Font style
+  ...fontStyleTokens,
+  // Text decoration
+  ...textDecorationTokens,
+  // Text transform
+  ...textTransformTokens,
+  // Whitespace
+  ...whitespaceTokens,
+  // Word break
+  ...wordBreakTokens,
+  // Truncate
   truncate,
+  // Arbitrary (tagged templates)
+  text,
+  leading,
+  tracking,
 };
 
-export const typographyArb: TypographyArbGroup = {
-  fontSize,
-  lineHeight,
-  letterSpacing,
-};
+// Type for the typography namespace
+export type TypographyNamespace = typeof typography;

@@ -1,14 +1,19 @@
 /**
- * Effects utilities: border, rounded, shadow, opacity
+ * Effects utilities: border, rounded, shadow, opacity, cursor
  *
  * Usage:
  * ```ts
- * // Predefined values (via Proxy)
- * import { borderWidth, borderRadius, boxShadow, opacity } from "@semajsx/tailwind";
- * <div class={[borderWidth["2"], borderRadius.lg, boxShadow.md, opacity["50"]]}>
+ * // Flat exports (recommended)
+ * import { rounded, roundedLg, roundedFull, shadow, shadowLg, opacity50 } from "@semajsx/tailwind";
+ * <div class={cx(roundedLg, shadowLg, opacity50)}>
  *
- * // Arbitrary values (tagged template - same function!)
- * <div class={[borderWidth`3px`, borderRadius`10px`, opacity`0.75`]}>
+ * // Namespace access
+ * import { effects } from "@semajsx/tailwind";
+ * <div class={cx(effects.roundedLg, effects.shadowLg, effects.opacity50)}>
+ *
+ * // Arbitrary values (tagged template)
+ * import { rounded, shadow, opacity } from "@semajsx/tailwind";
+ * <div class={cx(rounded`10px`, shadow`0 0 10px black`, opacity`0.33`)}>
  * ```
  */
 
@@ -16,8 +21,9 @@ import type { StyleToken, TaggedUtilityFn } from "./types";
 import { createUtility, createTaggedUtility } from "./core";
 import { getConfig } from "./config";
 
-/** Type for effects value records */
-export type EffectsValues = Record<string, StyleToken>;
+// ============================================
+// Scale definitions
+// ============================================
 
 // Border width scale
 const borderWidthScale: Record<string, string> = {
@@ -79,16 +85,9 @@ const opacityScale: Record<string, string> = {
 };
 
 // Border style values
-const borderStyleValues: Record<string, string> = {
-  solid: "solid",
-  dashed: "dashed",
-  dotted: "dotted",
-  double: "double",
-  hidden: "hidden",
-  none: "none",
-};
+const borderStyleValues = ["solid", "dashed", "dotted", "double", "hidden", "none"] as const;
 
-// Cursor values (camelCase for readability)
+// Cursor values
 const cursorValues: Record<string, string> = {
   auto: "auto",
   default: "default",
@@ -128,7 +127,7 @@ const cursorValues: Record<string, string> = {
   zoomOut: "zoom-out",
 };
 
-// Cursor class name mapping
+// Cursor class name mapping (camelCase to kebab-case)
 const cursorClassMap: Record<string, string> = {
   notAllowed: "not-allowed",
   contextMenu: "context-menu",
@@ -154,545 +153,433 @@ const cursorClassMap: Record<string, string> = {
 };
 
 // Pointer events values
-const pointerEventsValues: Record<string, string> = {
-  none: "none",
-  auto: "auto",
-};
+const pointerEventsValues = ["none", "auto"] as const;
 
 // User select values
-const userSelectValues: Record<string, string> = {
-  none: "none",
-  text: "text",
-  all: "all",
-  auto: "auto",
-};
+const userSelectValues = ["none", "text", "all", "auto"] as const;
 
-// Create utility functions
+// ============================================
+// Utility function creators
+// ============================================
+
 const borderWidthFn = createUtility("border-width", "border");
 const borderRadiusFn = createUtility("border-radius", "rounded");
 const boxShadowFn = createUtility("box-shadow", "shadow");
 const opacityFn = createUtility("opacity", "opacity");
-const pointerEventsFn = createUtility("pointer-events", "pointer-events");
-const userSelectFn = createUtility("user-select", "select");
 
-/**
- * Create an effects utility that works as both namespace and tagged template
- */
-function createEffectsUtility(
-  utilityFn: (value: string, valueName?: string) => StyleToken,
-  scale: Record<string, string>,
-): TaggedUtilityFn & EffectsValues {
-  const tokenCache = new Map<string, StyleToken>();
-  const taggedFn = createTaggedUtility(utilityFn);
+// ============================================
+// Token generators
+// ============================================
 
-  const handler: ProxyHandler<TaggedUtilityFn> = {
-    get(target, prop: string): StyleToken | undefined {
-      if (prop === "length" || prop === "name" || prop === "prototype") {
-        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
-      }
+function generateBorderWidthTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
 
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
+  for (const [key, value] of Object.entries(borderWidthScale)) {
+    if (key === "DEFAULT") {
+      // border (default 1px)
+      tokens.border = {
+        __kind: "style",
+        _: `${prefix}border`,
+        __cssTemplate: `.${prefix}border { border-width: ${value}; }`,
+        toString() {
+          return this._;
+        },
+      };
+    } else {
+      // border0, border2, border4, border8
+      const tokenName = `border${key}`;
+      const className = `${prefix}border-${key}`;
+      tokens[tokenName] = {
+        __kind: "style",
+        _: className,
+        __cssTemplate: `.${className} { border-width: ${value}; }`,
+        toString() {
+          return this._;
+        },
+      };
+    }
+  }
 
-      if (prop in scale) {
-        const token = utilityFn(scale[prop]!, prop);
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in scale;
-    },
-
-    apply(target, thisArg, args) {
-      return Reflect.apply(target, thisArg, args);
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(scale);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in scale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  };
-
-  return new Proxy(taggedFn, handler) as TaggedUtilityFn & EffectsValues;
+  return tokens;
 }
 
-/**
- * Create a simple utility that only has predefined values (no arbitrary)
- */
-function createSimpleEffectsUtility(
-  utilityFn: (value: string, valueName?: string) => StyleToken,
-  scale: Record<string, string>,
-): EffectsValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateBorderRadiusTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
 
-  return new Proxy({} as EffectsValues, {
-    get(_target, prop: string): StyleToken | undefined {
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
+  for (const [key, value] of Object.entries(borderRadiusScale)) {
+    if (key === "DEFAULT") {
+      // rounded (default 0.25rem)
+      tokens.rounded = {
+        __kind: "style",
+        _: `${prefix}rounded`,
+        __cssTemplate: `.${prefix}rounded { border-radius: ${value}; }`,
+        toString() {
+          return this._;
+        },
+      };
+    } else {
+      // roundedNone, roundedSm, roundedLg, rounded2xl, roundedFull
+      const capKey = key.match(/^\d/) ? key : key.charAt(0).toUpperCase() + key.slice(1);
+      const tokenName = `rounded${capKey}`;
+      const className = `${prefix}rounded-${key}`;
+      tokens[tokenName] = {
+        __kind: "style",
+        _: className,
+        __cssTemplate: `.${className} { border-radius: ${value}; }`,
+        toString() {
+          return this._;
+        },
+      };
+    }
+  }
 
-      if (prop in scale) {
-        const token = utilityFn(scale[prop]!, prop);
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in scale;
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(scale);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in scale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  });
+  return tokens;
 }
 
-/**
- * Create border width utility (special: DEFAULT maps to base class)
- */
-function createBorderWidthUtility(): TaggedUtilityFn & EffectsValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateBoxShadowTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
 
-  const createToken = (name: string, value: string): StyleToken => {
-    const cfg = getConfig();
-    const prefix = cfg.prefix ?? "";
-    const className = name === "DEFAULT" ? `${prefix}border` : `${prefix}border-${name}`;
+  for (const [key, value] of Object.entries(boxShadowScale)) {
+    if (key === "DEFAULT") {
+      // shadow (default)
+      tokens.shadow = {
+        __kind: "style",
+        _: `${prefix}shadow`,
+        __cssTemplate: `.${prefix}shadow { box-shadow: ${value}; }`,
+        toString() {
+          return this._;
+        },
+      };
+    } else {
+      // shadowSm, shadowMd, shadowLg, shadow2xl, shadowInner, shadowNone
+      const capKey = key.match(/^\d/) ? key : key.charAt(0).toUpperCase() + key.slice(1);
+      const tokenName = `shadow${capKey}`;
+      const className = `${prefix}shadow-${key}`;
+      tokens[tokenName] = {
+        __kind: "style",
+        _: className,
+        __cssTemplate: `.${className} { box-shadow: ${value}; }`,
+        toString() {
+          return this._;
+        },
+      };
+    }
+  }
 
-    return {
+  return tokens;
+}
+
+function generateOpacityTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+
+  for (const [key, value] of Object.entries(opacityScale)) {
+    const tokenName = `opacity${key}`;
+    tokens[tokenName] = opacityFn(value, key);
+  }
+
+  return tokens;
+}
+
+function generateBorderStyleTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
+
+  for (const value of borderStyleValues) {
+    const capValue = value.charAt(0).toUpperCase() + value.slice(1);
+    const tokenName = `border${capValue}`;
+    const className = `${prefix}border-${value}`;
+    tokens[tokenName] = {
       __kind: "style",
       _: className,
-      __cssTemplate: `.${className} { border-width: ${value}; }`,
+      __cssTemplate: `.${className} { border-style: ${value}; }`,
       toString() {
         return this._;
       },
     };
-  };
+  }
 
-  const taggedFn = createTaggedUtility(borderWidthFn);
-
-  const handler: ProxyHandler<TaggedUtilityFn> = {
-    get(target, prop: string): StyleToken | undefined {
-      if (prop === "length" || prop === "name" || prop === "prototype") {
-        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
-      }
-
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
-
-      if (prop in borderWidthScale) {
-        const token = createToken(prop, borderWidthScale[prop]!);
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in borderWidthScale;
-    },
-
-    apply(target, thisArg, args) {
-      return Reflect.apply(target, thisArg, args);
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(borderWidthScale);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in borderWidthScale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  };
-
-  return new Proxy(taggedFn, handler) as TaggedUtilityFn & EffectsValues;
+  return tokens;
 }
 
-/**
- * Create border radius utility (special: DEFAULT maps to base class)
- */
-function createBorderRadiusUtility(): TaggedUtilityFn & EffectsValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateCursorTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
 
-  const createToken = (name: string, value: string): StyleToken => {
-    const cfg = getConfig();
-    const prefix = cfg.prefix ?? "";
-    const className = name === "DEFAULT" ? `${prefix}rounded` : `${prefix}rounded-${name}`;
-
-    return {
+  for (const [key, value] of Object.entries(cursorValues)) {
+    const capKey = key.charAt(0).toUpperCase() + key.slice(1);
+    const tokenName = `cursor${capKey}`;
+    const cssClassName = cursorClassMap[key] ?? key;
+    const className = `${prefix}cursor-${cssClassName}`;
+    tokens[tokenName] = {
       __kind: "style",
       _: className,
-      __cssTemplate: `.${className} { border-radius: ${value}; }`,
+      __cssTemplate: `.${className} { cursor: ${value}; }`,
       toString() {
         return this._;
       },
     };
-  };
+  }
 
-  const taggedFn = createTaggedUtility(borderRadiusFn);
-
-  const handler: ProxyHandler<TaggedUtilityFn> = {
-    get(target, prop: string): StyleToken | undefined {
-      if (prop === "length" || prop === "name" || prop === "prototype") {
-        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
-      }
-
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
-
-      if (prop in borderRadiusScale) {
-        const token = createToken(prop, borderRadiusScale[prop]!);
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in borderRadiusScale;
-    },
-
-    apply(target, thisArg, args) {
-      return Reflect.apply(target, thisArg, args);
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(borderRadiusScale);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in borderRadiusScale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  };
-
-  return new Proxy(taggedFn, handler) as TaggedUtilityFn & EffectsValues;
+  return tokens;
 }
 
-/**
- * Create box shadow utility (special: DEFAULT maps to base class)
- */
-function createBoxShadowUtility(): TaggedUtilityFn & EffectsValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generatePointerEventsTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
 
-  const createToken = (name: string, value: string): StyleToken => {
-    const cfg = getConfig();
-    const prefix = cfg.prefix ?? "";
-    const className = name === "DEFAULT" ? `${prefix}shadow` : `${prefix}shadow-${name}`;
-
-    return {
+  for (const value of pointerEventsValues) {
+    const capValue = value.charAt(0).toUpperCase() + value.slice(1);
+    const tokenName = `pointerEvents${capValue}`;
+    const className = `${prefix}pointer-events-${value}`;
+    tokens[tokenName] = {
       __kind: "style",
       _: className,
-      __cssTemplate: `.${className} { box-shadow: ${value}; }`,
+      __cssTemplate: `.${className} { pointer-events: ${value}; }`,
       toString() {
         return this._;
       },
     };
-  };
+  }
 
-  const taggedFn = createTaggedUtility(boxShadowFn);
-
-  const handler: ProxyHandler<TaggedUtilityFn> = {
-    get(target, prop: string): StyleToken | undefined {
-      if (prop === "length" || prop === "name" || prop === "prototype") {
-        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
-      }
-
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
-
-      if (prop in boxShadowScale) {
-        const token = createToken(prop, boxShadowScale[prop]!);
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in boxShadowScale;
-    },
-
-    apply(target, thisArg, args) {
-      return Reflect.apply(target, thisArg, args);
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(boxShadowScale);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in boxShadowScale) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  };
-
-  return new Proxy(taggedFn, handler) as TaggedUtilityFn & EffectsValues;
+  return tokens;
 }
 
-/**
- * Create border style utility (special class names)
- */
-function createBorderStyleUtility(): EffectsValues {
-  const tokenCache = new Map<string, StyleToken>();
+function generateUserSelectTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
 
-  return new Proxy({} as EffectsValues, {
-    get(_target, prop: string): StyleToken | undefined {
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
+  for (const value of userSelectValues) {
+    const capValue = value.charAt(0).toUpperCase() + value.slice(1);
+    const tokenName = `select${capValue}`;
+    const className = `${prefix}select-${value}`;
+    tokens[tokenName] = {
+      __kind: "style",
+      _: className,
+      __cssTemplate: `.${className} { user-select: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  }
 
-      if (prop in borderStyleValues) {
-        const cfg = getConfig();
-        const prefix = cfg.prefix ?? "";
-        const className = `${prefix}border-${prop}`;
-        const value = borderStyleValues[prop]!;
-
-        const token: StyleToken = {
-          __kind: "style",
-          _: className,
-          __cssTemplate: `.${className} { border-style: ${value}; }`,
-          toString() {
-            return this._;
-          },
-        };
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in borderStyleValues;
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(borderStyleValues);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in borderStyleValues) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  });
-}
-
-/**
- * Create cursor utility (with camelCase to kebab-case mapping)
- */
-function createCursorUtility(): EffectsValues {
-  const tokenCache = new Map<string, StyleToken>();
-
-  return new Proxy({} as EffectsValues, {
-    get(_target, prop: string): StyleToken | undefined {
-      if (tokenCache.has(prop)) {
-        return tokenCache.get(prop);
-      }
-
-      if (prop in cursorValues) {
-        const cfg = getConfig();
-        const prefix = cfg.prefix ?? "";
-        const cssClassName = cursorClassMap[prop] ?? prop;
-        const className = `${prefix}cursor-${cssClassName}`;
-        const value = cursorValues[prop]!;
-
-        const token: StyleToken = {
-          __kind: "style",
-          _: className,
-          __cssTemplate: `.${className} { cursor: ${value}; }`,
-          toString() {
-            return this._;
-          },
-        };
-        tokenCache.set(prop, token);
-        return token;
-      }
-
-      return undefined;
-    },
-
-    has(_target, prop: string): boolean {
-      return prop in cursorValues;
-    },
-
-    ownKeys(): string[] {
-      return Object.keys(cursorValues);
-    },
-
-    getOwnPropertyDescriptor(_target, prop: string) {
-      if (prop in cursorValues) {
-        return {
-          enumerable: true,
-          configurable: true,
-          get: () => this.get!(_target, prop, _target),
-        };
-      }
-      return undefined;
-    },
-  });
+  return tokens;
 }
 
 // ============================================
-// Effects Utilities
+// Generate all tokens
 // ============================================
 
-/**
- * Border width utility
- * @example
- * borderWidth["0"], borderWidth["2"], borderWidth.DEFAULT // predefined
- * borderWidth`3px` // arbitrary
- */
-export const borderWidth: TaggedUtilityFn & EffectsValues = createBorderWidthUtility();
-
-/**
- * Border radius utility
- * @example
- * borderRadius.none, borderRadius.lg, borderRadius.full // predefined
- * borderRadius`10px` // arbitrary
- */
-export const borderRadius: TaggedUtilityFn & EffectsValues = createBorderRadiusUtility();
-
-/**
- * Border style utility
- * @example
- * borderStyle.solid, borderStyle.dashed // predefined
- */
-export const borderStyle: EffectsValues = createBorderStyleUtility();
-
-/**
- * Box shadow utility
- * @example
- * boxShadow.sm, boxShadow.lg, boxShadow.none // predefined
- * boxShadow`0 0 10px rgba(0,0,0,0.5)` // arbitrary
- */
-export const boxShadow: TaggedUtilityFn & EffectsValues = createBoxShadowUtility();
-
-/**
- * Opacity utility
- * @example
- * opacity["50"], opacity["100"] // predefined
- * opacity`0.75` // arbitrary
- */
-export const opacity: TaggedUtilityFn & EffectsValues = createEffectsUtility(
-  opacityFn,
-  opacityScale,
-);
-
-/**
- * Cursor utility (use camelCase for readability)
- * @example
- * cursor.pointer, cursor.notAllowed, cursor.grab // predefined
- */
-export const cursor: EffectsValues = createCursorUtility();
-
-/**
- * Pointer events utility
- * @example
- * pointerEvents.none, pointerEvents.auto // predefined
- */
-export const pointerEvents: EffectsValues = createSimpleEffectsUtility(
-  pointerEventsFn,
-  pointerEventsValues,
-);
-
-/**
- * User select utility
- * @example
- * userSelect.none, userSelect.text, userSelect.all // predefined
- */
-export const userSelect: EffectsValues = createSimpleEffectsUtility(userSelectFn, userSelectValues);
+const borderWidthTokens = generateBorderWidthTokens();
+const borderRadiusTokens = generateBorderRadiusTokens();
+const boxShadowTokens = generateBoxShadowTokens();
+const opacityTokens = generateOpacityTokens();
+const borderStyleTokens = generateBorderStyleTokens();
+const cursorTokens = generateCursorTokens();
+const pointerEventsTokens = generatePointerEventsTokens();
+const userSelectTokens = generateUserSelectTokens();
 
 // ============================================
-// Grouped exports
+// Tagged template functions for arbitrary values
 // ============================================
 
-/** Grouped effects utilities */
-export interface EffectsGroup {
-  borderWidth: TaggedUtilityFn & EffectsValues;
-  borderRadius: TaggedUtilityFn & EffectsValues;
-  borderStyle: EffectsValues;
-  boxShadow: TaggedUtilityFn & EffectsValues;
-  opacity: TaggedUtilityFn & EffectsValues;
-  cursor: EffectsValues;
-  pointerEvents: EffectsValues;
-  userSelect: EffectsValues;
-}
+/** Border width - arbitrary value: borderW`3px` */
+export const borderW: TaggedUtilityFn = createTaggedUtility(borderWidthFn);
 
-export const effects: EffectsGroup = {
-  borderWidth,
-  borderRadius,
-  borderStyle,
-  boxShadow,
+/** Border radius - arbitrary value: rounded`10px` */
+export const rounded: TaggedUtilityFn = createTaggedUtility(borderRadiusFn);
+
+/** Box shadow - arbitrary value: shadow`0 0 10px black` */
+export const shadow: TaggedUtilityFn = createTaggedUtility(boxShadowFn);
+
+/** Opacity - arbitrary value: opacity`0.33` */
+export const opacity: TaggedUtilityFn = createTaggedUtility(opacityFn);
+
+// ============================================
+// Individual token exports (flat) - Border Width
+// ============================================
+
+export const { border, border0, border2, border4, border8 } = borderWidthTokens;
+
+// ============================================
+// Individual token exports (flat) - Border Radius
+// ============================================
+
+export const {
+  rounded: roundedBase, // Alias for the token (rounded is reserved for tagged template)
+  roundedNone,
+  roundedSm,
+  roundedMd,
+  roundedLg,
+  roundedXl,
+  rounded2xl,
+  rounded3xl,
+  roundedFull,
+} = borderRadiusTokens;
+
+// ============================================
+// Individual token exports (flat) - Box Shadow
+// ============================================
+
+export const {
+  shadow: shadowBase, // Alias for the token (shadow is reserved for tagged template)
+  shadowSm,
+  shadowMd,
+  shadowLg,
+  shadowXl,
+  shadow2xl,
+  shadowInner,
+  shadowNone,
+} = boxShadowTokens;
+
+// ============================================
+// Individual token exports (flat) - Opacity
+// ============================================
+
+export const {
+  opacity0,
+  opacity5,
+  opacity10,
+  opacity15,
+  opacity20,
+  opacity25,
+  opacity30,
+  opacity35,
+  opacity40,
+  opacity45,
+  opacity50,
+  opacity55,
+  opacity60,
+  opacity65,
+  opacity70,
+  opacity75,
+  opacity80,
+  opacity85,
+  opacity90,
+  opacity95,
+  opacity100,
+} = opacityTokens;
+
+// ============================================
+// Individual token exports (flat) - Border Style
+// ============================================
+
+export const { borderSolid, borderDashed, borderDotted, borderDouble, borderHidden, borderNone } =
+  borderStyleTokens;
+
+// ============================================
+// Individual token exports (flat) - Cursor
+// ============================================
+
+export const {
+  cursorAuto,
+  cursorDefault,
+  cursorPointer,
+  cursorWait,
+  cursorText,
+  cursorMove,
+  cursorHelp,
+  cursorNotAllowed,
+  cursorNone,
+  cursorContextMenu,
+  cursorProgress,
+  cursorCell,
+  cursorCrosshair,
+  cursorVerticalText,
+  cursorAlias,
+  cursorCopy,
+  cursorNoDrop,
+  cursorGrab,
+  cursorGrabbing,
+  cursorAllScroll,
+  cursorColResize,
+  cursorRowResize,
+  cursorNResize,
+  cursorEResize,
+  cursorSResize,
+  cursorWResize,
+  cursorNeResize,
+  cursorNwResize,
+  cursorSeResize,
+  cursorSwResize,
+  cursorEwResize,
+  cursorNsResize,
+  cursorNeswResize,
+  cursorNwseResize,
+  cursorZoomIn,
+  cursorZoomOut,
+} = cursorTokens;
+
+// ============================================
+// Individual token exports (flat) - Pointer Events
+// ============================================
+
+export const { pointerEventsNone, pointerEventsAuto } = pointerEventsTokens;
+
+// ============================================
+// Individual token exports (flat) - User Select
+// ============================================
+
+export const { selectNone, selectText, selectAll, selectAuto } = userSelectTokens;
+
+// ============================================
+// Namespace export (grouped)
+// ============================================
+
+/** All effects tokens in a namespace */
+export const effects = {
+  // Border width
+  ...borderWidthTokens,
+  // Border radius
+  ...borderRadiusTokens,
+  // Box shadow
+  ...boxShadowTokens,
+  // Opacity
+  ...opacityTokens,
+  // Border style
+  ...borderStyleTokens,
+  // Cursor
+  ...cursorTokens,
+  // Pointer events
+  ...pointerEventsTokens,
+  // User select
+  ...userSelectTokens,
+  // Arbitrary (tagged templates)
+  borderW,
+  rounded,
+  shadow,
   opacity,
-  cursor,
-  pointerEvents,
-  userSelect,
 };
+
+// Type for the effects namespace
+export type EffectsNamespace = typeof effects;
+
+// Legacy type exports for backwards compatibility
+export type EffectsValues = Record<string, StyleToken>;
+export type EffectsGroup = EffectsNamespace;
 
 // Legacy exports for backwards compatibility
 export const effectsArb = {
-  borderWidth,
-  borderRadius,
-  boxShadow,
+  borderW,
+  rounded,
+  shadow,
   opacity,
 };
+
+// Legacy proxies (for backwards compatibility only)
+export const borderWidth = borderWidthTokens;
+export const borderRadius = borderRadiusTokens;
+export const borderStyle = borderStyleTokens;
+export const boxShadow = boxShadowTokens;
+export const cursor = cursorTokens;
+export const pointerEvents = pointerEventsTokens;
+export const userSelect = userSelectTokens;
