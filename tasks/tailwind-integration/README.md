@@ -128,27 +128,29 @@ const { spacing } = createTailwind({ prefix: "my-" }); // my-p-4
 
 ### Recommendation
 
-**Primary**: Option B (Fixed Short Prefix `tw-`) as default
-**Secondary**: Option D (Configurable) for advanced users
+**Primary**: Option A (No prefix) as default
+**Secondary**: Option D (Configurable) for users who need isolation
 
 **Rationale**:
 
-1. **Deterministic by default**: No hashing, no runtime variance
-2. **Safe by default**: Prefix prevents accidental collisions
-3. **Readable**: `tw-p-4` is clear and debuggable
-4. **Opt-out available**: Advanced users can configure `prefix: ""`
+1. **Familiar**: `p-4` is what users expect from Tailwind-style utilities
+2. **Minimal**: No extra bytes in class names
+3. **Migration-friendly**: Easy to migrate from/to native Tailwind
+4. **Opt-in isolation**: Users who need namespace isolation can configure `prefix: "s-"` (SemaJSX)
+
+**Note**: We avoid `tw-` prefix as it implies Tailwind branding. If isolation is needed, use `s-` (SemaJSX) or custom prefix.
 
 ### Implementation Approach
 
 ```ts
 // packages/tailwind/src/config.ts
 export interface TailwindConfig {
-  /** Class name prefix. Default: "tw-". Use "" for no prefix. */
+  /** Class name prefix. Default: "" (no prefix). Use "s-" for SemaJSX namespace. */
   prefix?: string;
 }
 
 const defaultConfig: TailwindConfig = {
-  prefix: "tw-",
+  prefix: "", // No prefix by default - matches native Tailwind class names
 };
 
 // Global config (set once at app init)
@@ -214,38 +216,78 @@ function valueToSuffix(value: string): string {
 
 ### Generated Class Names (Examples)
 
-| Config          | Utility      | Generated Class | CSS                             |
-| --------------- | ------------ | --------------- | ------------------------------- |
-| `prefix: "tw-"` | `spacing.p4` | `tw-p-4`        | `.tw-p-4 { padding: 1rem; }`    |
-| `prefix: "tw-"` | `p\`10px\``  | `tw-p-10px`     | `.tw-p-10px { padding: 10px; }` |
-| `prefix: ""`    | `spacing.p4` | `p-4`           | `.p-4 { padding: 1rem; }`       |
-| `prefix: "my-"` | `spacing.p4` | `my-p-4`        | `.my-p-4 { padding: 1rem; }`    |
+| Config         | Utility      | Generated Class | CSS                            |
+| -------------- | ------------ | --------------- | ------------------------------ |
+| `prefix: ""`   | `spacing.p4` | `p-4`           | `.p-4 { padding: 1rem; }`      |
+| `prefix: ""`   | `p\`10px\``  | `p-10px`        | `.p-10px { padding: 10px; }`   |
+| `prefix: "s-"` | `spacing.p4` | `s-p-4`         | `.s-p-4 { padding: 1rem; }`    |
+| `prefix: "s-"` | `p\`10px\``  | `s-p-10px`      | `.s-p-10px { padding: 10px; }` |
+
+### Hash Strategy Analysis
+
+For arbitrary values with complex expressions (like `calc(100% - 40px)`), we need a hash. Here's the analysis:
+
+| Method              | Deterministic | SSR Safe | Use Case                                  |
+| ------------------- | ------------- | -------- | ----------------------------------------- |
+| `Date.now()`        | ❌            | ❌       | Never - different on each run             |
+| `nanoid`            | ❌            | ❌       | Runtime unique IDs only                   |
+| Content hash (djb2) | ✅            | ✅       | **Our choice** - same input = same output |
+
+**Decision**: Use **deterministic content-based hash** (djb2 algorithm already in `@semajsx/style`).
+
+```ts
+// Deterministic: same value always produces same hash
+hashString("calc(100% - 40px)"); // Always returns same hash, e.g., "a1b2c"
+
+// This ensures:
+// 1. SSR: Server and client generate identical class names
+// 2. Caching: Same CSS across builds
+// 3. Deduplication: Same arbitrary value = same class = deduplicated
+```
+
+**When hash is used**:
+
+- Simple values: `p\`4px\``→`p-4px` (no hash needed)
+- Complex values: `p\`calc(100% - 40px)\``→`p-a1b2c` (hash the expression)
 
 ### SSR Compatibility
 
-With deterministic class names:
+With deterministic class names (no prefix by default):
 
 ```tsx
 // Server renders:
-<div class="tw-p-4 tw-bg-blue-500">
+<div class="p-4 bg-blue-500">
 
 // Client hydrates with exact same classes:
-<div class="tw-p-4 tw-bg-blue-500">  // ✅ No mismatch
+<div class="p-4 bg-blue-500">  // ✅ No mismatch - identical!
 ```
 
 ### Migration Path from Native Tailwind
 
-For users migrating from native Tailwind:
+Since we use no prefix by default, migration is seamless:
+
+```tsx
+// Native Tailwind (before)
+<div className="p-4 bg-blue-500">
+
+// @semajsx/tailwind (after) - same class names!
+import { spacing, colors } from "@semajsx/tailwind";
+<div class={[spacing.p4, colors.bgBlue500]}>
+// Generates: class="p-4 bg-blue-500"
+
+// Mix with existing Tailwind classes
+<div class={[spacing.p4, "existing-tailwind-class"]}>
+```
+
+### When to Use Prefix
+
+Add prefix when you need namespace isolation:
 
 ```ts
-// Step 1: Use no prefix to match existing classes
-configureTailwind({ prefix: "" });
+// Use case: Building a library that might be used alongside native Tailwind
+configureTailwind({ prefix: "s-" });
 
-// Step 2: Gradually migrate, CSS works the same
-<div class={[spacing.p4, "existing-tailwind-class"]}>
-
-// Step 3: Optionally add prefix later for isolation
-configureTailwind({ prefix: "tw-" });
+// Result: s-p-4, s-bg-blue-500 (no collision with user's Tailwind)
 ```
 
 ---

@@ -116,28 +116,44 @@ const hash = hashString(name + Date.now().toString(36));
 | Hash prefix  | `p-x7f3a-4` | Unique          | Ugly, +6 chars |
 | Configurable | User choice | Flexible        | Complex API    |
 
-**Final Decision**: **Configurable with `tw-` default**
+**Final Decision**: **Configurable with no prefix as default**
 
 ```ts
-// Default: safe and readable
-configureTailwind({ prefix: "tw-" });
-// Result: tw-p-4, tw-bg-blue-500
-
-// For Tailwind compatibility
-configureTailwind({ prefix: "" });
+// Default: native Tailwind compatibility
+// No configuration needed
 // Result: p-4, bg-blue-500
 
-// Custom namespace
-configureTailwind({ prefix: "app-" });
-// Result: app-p-4, app-bg-blue-500
+// For namespace isolation (e.g., library authors)
+configureTailwind({ prefix: "s-" });
+// Result: s-p-4, s-bg-blue-500
 ```
 
 **Rationale**:
 
-1. Default is safe (won't conflict with native Tailwind)
-2. Power users can opt for no prefix
-3. Library authors can use custom prefix
-4. All options are deterministic (no runtime variance)
+1. **Familiar**: No prefix matches native Tailwind class names
+2. **Minimal**: No extra bytes in class names
+3. **Migration-friendly**: Seamless switch from/to native Tailwind
+4. **Opt-in isolation**: Use `s-` (SemaJSX) or custom prefix when needed
+5. Avoid `tw-` as it implies Tailwind branding
+
+### Hash Strategy for Arbitrary Values
+
+**Problem**: Arbitrary values like `p\`calc(100% - 40px)\`` need short, unique class names.
+
+**Options analyzed**:
+
+| Method              | Deterministic | SSR Safe |
+| ------------------- | ------------- | -------- |
+| `Date.now()`        | ❌            | ❌       |
+| `nanoid`            | ❌            | ❌       |
+| Content hash (djb2) | ✅            | ✅       |
+
+**Decision**: Use **deterministic content-based hash** (djb2).
+
+- Simple values: `p\`4px\``→`p-4px` (no hash)
+- Complex values: `p\`calc(100% - 40px)\``→`p-a1b2c` (hashed)
+
+This ensures SSR hydration works and CSS can be cached across builds.
 
 ---
 
