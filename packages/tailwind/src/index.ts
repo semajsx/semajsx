@@ -31,47 +31,28 @@ export {
 } from "./core";
 
 // Spacing utilities
-export type { SpacingValues, SpacingGroup, SpacingArbGroup } from "./spacing";
+export type { SpacingNamespace } from "./spacing";
 export {
-  // Predefined values
+  // Namespace with predefined values (spacing.p4, spacing.mx2, etc.)
+  spacing,
+  // Tagged templates for arbitrary values
   p,
-  px,
-  py,
-  pt,
-  pr,
-  pb,
-  pl,
+  pX,
+  pY,
+  pT,
+  pR,
+  pB,
+  pL,
   m,
-  mx,
-  my,
-  mt,
-  mr,
-  mb,
-  ml,
-  gap,
-  gapX,
-  gapY,
-  // Arbitrary value functions
-  pArb,
-  pxArb,
-  pyArb,
-  ptArb,
-  prArb,
-  pbArb,
-  plArb,
-  mArb,
-  mxArb,
-  myArb,
-  mtArb,
-  mrArb,
-  mbArb,
-  mlArb,
+  mX,
+  mY,
+  mT,
+  mR,
+  mB,
+  mL,
   gapArb,
   gapXArb,
   gapYArb,
-  // Grouped exports
-  spacing,
-  spacingArb,
 } from "./spacing";
 
 // Sizing utilities
