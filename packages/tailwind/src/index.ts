@@ -174,3 +174,53 @@ export {
   typography,
   typographyArb,
 } from "./typography";
+
+// Layout utilities
+export type { LayoutValues, LayoutGroup, LayoutArbGroup } from "./layout";
+export {
+  // Predefined values
+  position,
+  inset,
+  insetX,
+  insetY,
+  top,
+  right,
+  bottom,
+  left,
+  zIndex,
+  overflow,
+  overflowX,
+  overflowY,
+  visibility,
+  // Arbitrary value functions
+  topArb,
+  rightArb,
+  bottomArb,
+  leftArb,
+  zIndexArb,
+  // Grouped exports
+  layout,
+  layoutArb,
+} from "./layout";
+
+// Effects utilities
+export type { EffectsValues, EffectsGroup, EffectsArbGroup } from "./effects";
+export {
+  // Predefined values
+  borderWidth,
+  borderRadius,
+  borderStyle,
+  boxShadow,
+  opacity,
+  cursor,
+  pointerEvents,
+  userSelect,
+  // Arbitrary value functions
+  borderWidthArb,
+  borderRadiusArb,
+  boxShadowArb,
+  opacityArb,
+  // Grouped exports
+  effects,
+  effectsArb,
+} from "./effects";
