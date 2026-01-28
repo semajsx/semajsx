@@ -113,16 +113,25 @@ export function rule(
  * contain multiple selectors. Use it for injection only, not as a className.
  */
 export function rules(...tokens: StyleToken[]): StyleToken {
-  const combinedCSS = tokens.map((t) => t.__cssTemplate).join("\n");
+  const allBindingDefs: SignalBindingDef[] = [];
 
-  // Merge binding definitions with adjusted indices
-  const allBindingDefs = tokens.flatMap((t, tokenIndex) =>
-    (t.__bindingDefs ?? []).map((def) => ({
-      ...def,
-      // Adjust index to be unique across combined tokens
-      index: def.index + tokenIndex * 100,
-    })),
-  );
+  // Build combined CSS with adjusted placeholder indices
+  const combinedCSS = tokens
+    .map((t, tokenIndex) => {
+      let css = t.__cssTemplate;
+      const bindings = t.__bindingDefs ?? [];
+
+      // Adjust indices in both the CSS template and binding definitions
+      for (const def of bindings) {
+        const newIndex = def.index + tokenIndex * 100;
+        // Replace placeholder with adjusted index
+        css = css.replace(`{{${def.index}}}`, `{{${newIndex}}}`);
+        allBindingDefs.push({ ...def, index: newIndex });
+      }
+
+      return css;
+    })
+    .join("\n");
 
   const token: StyleToken = {
     __kind: "style",
