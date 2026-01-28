@@ -28,6 +28,9 @@ export class StyleRegistry {
   /** Active subscriptions (for cleanup) */
   private subscriptions = new Set<() => void>();
 
+  /** Track which signals have been subscribed to prevent duplicates */
+  private subscribedSignals = new WeakSet<ReadableSignal<unknown>>();
+
   /** Injection target */
   private target: Element | ShadowRoot;
 
@@ -73,7 +76,7 @@ export class StyleRegistry {
     if (token.__bindingDefs) {
       for (const def of token.__bindingDefs) {
         const varName = this.getSignalVarName(def.signal);
-        css = css.replace(`{{${def.index}}}`, `var(${varName})`);
+        css = css.replaceAll(`{{${def.index}}}`, `var(${varName})`);
         bindings.push({ signal: def.signal, varName });
       }
     }
@@ -96,14 +99,17 @@ export class StyleRegistry {
     // 3. Set up signal subscriptions on the anchor element
     if (this.anchorElement && bindings.length > 0) {
       for (const { signal, varName } of bindings) {
-        // Set initial value (signal value should include unit if needed)
+        // Always update the current value
         this.anchorElement.style.setProperty(varName, String(signal.value));
 
-        // Subscribe to changes
-        const unsub = signal.subscribe((newValue: unknown) => {
-          this.anchorElement?.style.setProperty(varName, String(newValue));
-        });
-        this.subscriptions.add(unsub);
+        // Only subscribe if not already subscribed (prevents duplicates)
+        if (!this.subscribedSignals.has(signal)) {
+          this.subscribedSignals.add(signal);
+          const unsub = signal.subscribe((newValue: unknown) => {
+            this.anchorElement?.style.setProperty(varName, String(newValue));
+          });
+          this.subscriptions.add(unsub);
+        }
       }
     }
 

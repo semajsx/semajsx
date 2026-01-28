@@ -141,6 +141,8 @@ export const StyleAnchor = defineComponent({
     const subscriptions = new Set<() => void>();
     const signalVars = new WeakMap<Signal<unknown>, string>();
     const injectedClasses = new Set<string>();
+    // Track which signals have been subscribed to prevent duplicates
+    const subscribedSignals = new WeakSet<Signal<unknown>>();
     // Store pending bindings to apply after mount
     const pendingBindings: Array<{ signal: Signal<unknown>; varName: string }> = [];
 
@@ -149,12 +151,17 @@ export const StyleAnchor = defineComponent({
       element: HTMLElement,
     ) => {
       for (const { signal, varName } of bindings) {
+        // Always update the current value
         element.style.setProperty(varName, String(signal.value));
 
-        const unsub = signal.subscribe((newValue: unknown) => {
-          element.style.setProperty(varName, String(newValue));
-        });
-        subscriptions.add(unsub);
+        // Only subscribe if not already subscribed (prevents duplicates)
+        if (!subscribedSignals.has(signal)) {
+          subscribedSignals.add(signal);
+          const unsub = signal.subscribe((newValue: unknown) => {
+            element.style.setProperty(varName, String(newValue));
+          });
+          subscriptions.add(unsub);
+        }
       }
     };
 
@@ -177,7 +184,7 @@ export const StyleAnchor = defineComponent({
               signalVars.set(def.signal, varName);
             }
             // Replace placeholder with var()
-            css = css.replace(`{{${def.index}}}`, `var(${varName})`);
+            css = css.replaceAll(`{{${def.index}}}`, `var(${varName})`);
             bindings.push({ signal: def.signal, varName });
           }
         }

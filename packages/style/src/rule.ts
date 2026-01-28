@@ -125,7 +125,7 @@ export function rules(...tokens: StyleToken[]): StyleToken {
       for (const def of bindings) {
         const newIndex = def.index + tokenIndex * 100;
         // Replace placeholder with adjusted index
-        css = css.replace(`{{${def.index}}}`, `{{${newIndex}}}`);
+        css = css.replaceAll(`{{${def.index}}}`, `{{${newIndex}}}`);
         allBindingDefs.push({ ...def, index: newIndex });
       }
 

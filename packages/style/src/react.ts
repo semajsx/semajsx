@@ -162,6 +162,8 @@ export interface StyleAnchorProps {
 export function StyleAnchor({ target, children }: StyleAnchorProps) {
   const elementRef = useRef<HTMLDivElement>(null);
   const subscriptionsRef = useRef<Set<() => void>>(new Set());
+  // Track which signals have been subscribed to prevent duplicates
+  const subscribedSignalsRef = useRef<WeakSet<Signal<unknown>>>(new WeakSet());
   // Store pending bindings to apply after mount
   const pendingBindingsRef = useRef<Array<{ signal: Signal<unknown>; varName: string }>>([]);
 
@@ -189,7 +191,7 @@ export function StyleAnchor({ target, children }: StyleAnchorProps) {
               signalVars.set(def.signal, varName);
             }
             // Replace placeholder with var()
-            css = css.replace(`{{${def.index}}}`, `var(${varName})`);
+            css = css.replaceAll(`{{${def.index}}}`, `var(${varName})`);
             bindings.push({ signal: def.signal, varName });
           }
         }
@@ -211,17 +213,23 @@ export function StyleAnchor({ target, children }: StyleAnchorProps) {
         }
 
         // 3. Set up signal subscriptions on the anchor element (or defer if not mounted)
+        // Only subscribe to signals we haven't subscribed to yet (prevents duplicates)
         const anchorElement = elementRef.current;
         if (bindings.length > 0) {
           if (anchorElement) {
             // Element is available, apply bindings now
             for (const { signal, varName } of bindings) {
+              // Always update the current value
               anchorElement.style.setProperty(varName, String(signal.value));
 
-              const unsub = signal.subscribe((newValue: unknown) => {
-                anchorElement.style.setProperty(varName, String(newValue));
-              });
-              subscriptionsRef.current.add(unsub);
+              // Only subscribe if not already subscribed
+              if (!subscribedSignalsRef.current.has(signal)) {
+                subscribedSignalsRef.current.add(signal);
+                const unsub = signal.subscribe((newValue: unknown) => {
+                  anchorElement.style.setProperty(varName, String(newValue));
+                });
+                subscriptionsRef.current.add(unsub);
+              }
             }
           } else {
             // Element not yet available, store for later
@@ -243,12 +251,17 @@ export function StyleAnchor({ target, children }: StyleAnchorProps) {
     const anchorElement = elementRef.current;
     if (anchorElement && pendingBindingsRef.current.length > 0) {
       for (const { signal, varName } of pendingBindingsRef.current) {
+        // Always update the current value
         anchorElement.style.setProperty(varName, String(signal.value));
 
-        const unsub = signal.subscribe((newValue: unknown) => {
-          anchorElement.style.setProperty(varName, String(newValue));
-        });
-        subscriptionsRef.current.add(unsub);
+        // Only subscribe if not already subscribed
+        if (!subscribedSignalsRef.current.has(signal)) {
+          subscribedSignalsRef.current.add(signal);
+          const unsub = signal.subscribe((newValue: unknown) => {
+            anchorElement.style.setProperty(varName, String(newValue));
+          });
+          subscriptionsRef.current.add(unsub);
+        }
       }
       pendingBindingsRef.current = [];
     }

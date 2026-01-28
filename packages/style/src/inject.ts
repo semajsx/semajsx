@@ -63,7 +63,7 @@ function injectToken(token: StyleToken, target: Element | ShadowRoot | Document)
     if (token.__bindingDefs) {
       for (const def of token.__bindingDefs) {
         // Use a default variable name for static injection
-        css = css.replace(`{{${def.index}}}`, `var(--style-${def.index})`);
+        css = css.replaceAll(`{{${def.index}}}`, `var(--style-${def.index})`);
       }
     }
 
