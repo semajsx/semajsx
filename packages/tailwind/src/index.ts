@@ -5,13 +5,13 @@
  *
  * @example
  * ```ts
- * // Predefined values
- * import { spacing, colors } from "@semajsx/tailwind";
- * <div class={[spacing.p4, colors.bgBlue500]}>
+ * // Predefined values via Proxy
+ * import { spacing, bg, w, fontSize } from "@semajsx/tailwind";
+ * <div class={[spacing.p4, bg.blue500, w.full, fontSize.lg]}>
  *
- * // Arbitrary values
- * import { p, bg } from "@semajsx/tailwind";
- * <div class={[p`10px`, bg`#ff5500`]}>
+ * // Arbitrary values via tagged template (same utilities!)
+ * import { p, bg, w, fontSize } from "@semajsx/tailwind";
+ * <div class={[p`10px`, bg`#ff5500`, w`300px`, fontSize`18px`]}>
  * ```
  */
 
@@ -35,7 +35,7 @@ export type { SpacingNamespace } from "./spacing";
 export {
   // Namespace with predefined values (spacing.p4, spacing.mx2, etc.)
   spacing,
-  // Tagged templates for arbitrary values
+  // Tagged templates for arbitrary values (also work as namespaces)
   p,
   px,
   py,
@@ -56,11 +56,11 @@ export {
 } from "./spacing";
 
 // Sizing utilities
-export type { SizingValues, SizingNamespace, SizingGroup, SizingArbGroup } from "./sizing";
+// Each utility works as both namespace and tagged template:
+// - w.full, w["4"] for predefined values
+// - w`300px` for arbitrary values
+export type { SizingValues, SizingNamespace, SizingGroup } from "./sizing";
 export {
-  // Namespace with predefined values (sizing.w4, sizing.hFull, etc.)
-  sizing,
-  // Tagged templates for arbitrary values
   w,
   minW,
   maxW,
@@ -68,32 +68,39 @@ export {
   minH,
   maxH,
   size,
-  // Legacy grouped exports
-  sizingArb,
+  // Grouped exports
+  sizing,
+  sizingArb, // Legacy alias for sizing
 } from "./sizing";
 
 // Color utilities
-export type { ColorValues, ColorsNamespace, ColorGroup, ColorArbGroup } from "./colors";
+// Each utility works as both namespace and tagged template:
+// - bg.blue500 for predefined values
+// - bg`#ff5500` for arbitrary values
+export type { ColorValues, ColorsNamespace, ColorGroup } from "./colors";
 export {
-  // Color utilities (both namespace and tagged template)
-  // Usage: bg.blue500 for predefined, bg`#ff5500` for arbitrary
   bg,
   text,
   border,
   // Grouped exports
   colors,
-  colorsArb,
+  colorsArb, // Legacy alias for colors
 } from "./colors";
 
 // Flexbox utilities
-export type { FlexValues, FlexboxGroup, FlexboxArbGroup } from "./flexbox";
+// display, flexDirection, flexWrap use camelCase:
+// - display.inlineFlex, flexDirection.rowReverse
+// flex, basis, order work as both namespace and tagged template:
+// - flex["1"], basis.auto, order.first
+// - flex`2 1 50%`, basis`200px`, order`99`
+export type { FlexValues, FlexboxGroup } from "./flexbox";
 export {
-  // Display
+  // Display (camelCase: inlineBlock, inlineFlex, inlineGrid)
   display,
-  // Flex direction & wrap
+  // Flex direction & wrap (camelCase: rowReverse, colReverse, wrapReverse)
   flexDirection,
   flexWrap,
-  // Flex shorthand
+  // Flex shorthand (namespace + tagged template)
   flex,
   grow,
   shrink,
@@ -110,21 +117,21 @@ export {
   placeContent,
   placeItems,
   placeSelf,
-  // Order
+  // Order (namespace + tagged template)
   order,
-  // Arbitrary value functions
-  flexArb,
-  basisArb,
-  orderArb,
   // Grouped exports
   flexbox,
-  flexboxArb,
+  flexboxArb, // Legacy alias
 } from "./flexbox";
 
 // Typography utilities
+// fontSize, lineHeight, letterSpacing work as both namespace and tagged template:
+// - fontSize.base, lineHeight.normal
+// - fontSize`18px`, lineHeight`1.8`
+// textDecoration, textTransform, fontStyle use camelCase:
+// - textDecoration.lineThrough, textTransform.normalCase, fontStyle.notItalic
 export type { TypographyValues, TypographyGroup, TypographyArbGroup } from "./typography";
 export {
-  // Predefined values
   fontSize,
   fontWeight,
   fontFamily,
@@ -137,19 +144,17 @@ export {
   whitespace,
   wordBreak,
   truncate,
-  // Arbitrary value functions
-  fontSizeArb,
-  lineHeightArb,
-  letterSpacingArb,
   // Grouped exports
   typography,
-  typographyArb,
+  typographyArb, // Legacy alias
 } from "./typography";
 
 // Layout utilities
-export type { LayoutValues, LayoutGroup, LayoutArbGroup } from "./layout";
+// top, right, bottom, left, zIndex, inset, insetX, insetY work as both namespace and tagged template:
+// - top["4"], zIndex["50"], inset.auto
+// - top`100px`, zIndex`999`, inset`50px`
+export type { LayoutValues, LayoutGroup } from "./layout";
 export {
-  // Predefined values
   position,
   inset,
   insetX,
@@ -163,21 +168,18 @@ export {
   overflowX,
   overflowY,
   visibility,
-  // Arbitrary value functions
-  topArb,
-  rightArb,
-  bottomArb,
-  leftArb,
-  zIndexArb,
   // Grouped exports
   layout,
-  layoutArb,
+  layoutArb, // Legacy alias
 } from "./layout";
 
 // Effects utilities
-export type { EffectsValues, EffectsGroup, EffectsArbGroup } from "./effects";
+// borderWidth, borderRadius, boxShadow, opacity work as both namespace and tagged template:
+// - borderRadius.lg, boxShadow.md, opacity["50"]
+// - borderRadius`10px`, boxShadow`0 0 10px black`, opacity`0.75`
+// cursor uses camelCase: cursor.notAllowed, cursor.zoomIn
+export type { EffectsValues, EffectsGroup } from "./effects";
 export {
-  // Predefined values
   borderWidth,
   borderRadius,
   borderStyle,
@@ -186,12 +188,7 @@ export {
   cursor,
   pointerEvents,
   userSelect,
-  // Arbitrary value functions
-  borderWidthArb,
-  borderRadiusArb,
-  boxShadowArb,
-  opacityArb,
   // Grouped exports
   effects,
-  effectsArb,
+  effectsArb, // Legacy alias
 } from "./effects";

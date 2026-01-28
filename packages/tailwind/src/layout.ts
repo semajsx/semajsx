@@ -1,5 +1,15 @@
 /**
  * Layout utilities: position, overflow, z-index, etc.
+ *
+ * Usage:
+ * ```ts
+ * // Predefined values (via Proxy)
+ * import { position, top, zIndex, overflow } from "@semajsx/tailwind";
+ * <div class={[position.absolute, top["4"], zIndex["10"], overflow.hidden]}>
+ *
+ * // Arbitrary values (tagged template - same function!)
+ * <div class={[top`100px`, zIndex`999`]}>
+ * ```
  */
 
 import type { StyleToken, TaggedUtilityFn } from "./types";
@@ -86,47 +96,173 @@ const overflowFn = createUtility("overflow", "overflow");
 const overflowXFn = createUtility("overflow-x", "overflow-x");
 const overflowYFn = createUtility("overflow-y", "overflow-y");
 
-// Helper to generate values for a utility
-function generateLayoutValues(
+/**
+ * Create a layout utility that works as both namespace and tagged template
+ */
+function createLayoutUtility(
+  utilityFn: (value: string, valueName?: string) => StyleToken,
+  scale: Record<string, string>,
+): TaggedUtilityFn & LayoutValues {
+  const tokenCache = new Map<string, StyleToken>();
+  const taggedFn = createTaggedUtility(utilityFn);
+
+  const handler: ProxyHandler<TaggedUtilityFn> = {
+    get(target, prop: string): StyleToken | undefined {
+      if (prop === "length" || prop === "name" || prop === "prototype") {
+        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
+      }
+
+      if (tokenCache.has(prop)) {
+        return tokenCache.get(prop);
+      }
+
+      if (prop in scale) {
+        const token = utilityFn(scale[prop]!, prop);
+        tokenCache.set(prop, token);
+        return token;
+      }
+
+      return undefined;
+    },
+
+    has(_target, prop: string): boolean {
+      return prop in scale;
+    },
+
+    apply(target, thisArg, args) {
+      return Reflect.apply(target, thisArg, args);
+    },
+
+    ownKeys(): string[] {
+      return Object.keys(scale);
+    },
+
+    getOwnPropertyDescriptor(_target, prop: string) {
+      if (prop in scale) {
+        return {
+          enumerable: true,
+          configurable: true,
+          get: () => this.get!(_target, prop, _target),
+        };
+      }
+      return undefined;
+    },
+  };
+
+  return new Proxy(taggedFn, handler) as TaggedUtilityFn & LayoutValues;
+}
+
+/**
+ * Create a simple utility that only has predefined values (no arbitrary)
+ */
+function createSimpleLayoutUtility(
   utilityFn: (value: string, valueName?: string) => StyleToken,
   scale: Record<string, string>,
 ): LayoutValues {
-  const result: LayoutValues = {};
-  for (const [name, value] of Object.entries(scale)) {
-    result[name] = utilityFn(value, name);
-  }
-  return result;
+  const tokenCache = new Map<string, StyleToken>();
+
+  return new Proxy({} as LayoutValues, {
+    get(_target, prop: string): StyleToken | undefined {
+      if (tokenCache.has(prop)) {
+        return tokenCache.get(prop);
+      }
+
+      if (prop in scale) {
+        const token = utilityFn(scale[prop]!, prop);
+        tokenCache.set(prop, token);
+        return token;
+      }
+
+      return undefined;
+    },
+
+    has(_target, prop: string): boolean {
+      return prop in scale;
+    },
+
+    ownKeys(): string[] {
+      return Object.keys(scale);
+    },
+
+    getOwnPropertyDescriptor(_target, prop: string) {
+      if (prop in scale) {
+        return {
+          enumerable: true,
+          configurable: true,
+          get: () => this.get!(_target, prop, _target),
+        };
+      }
+      return undefined;
+    },
+  });
 }
 
-// Special handler for position (no prefix in class name)
-function generatePositionValues(): LayoutValues {
-  const result: LayoutValues = {};
-  const cfg = getConfig();
-  const prefix = cfg.prefix ?? "";
+/**
+ * Create position utility (special class names without prefix)
+ */
+function createPositionUtility(): LayoutValues {
+  const tokenCache = new Map<string, StyleToken>();
 
-  for (const [name, value] of Object.entries(positionValues)) {
-    const className = `${prefix}${name}`;
-    result[name] = {
-      __kind: "style",
-      _: className,
-      __cssTemplate: `.${className} { position: ${value}; }`,
-      toString() {
-        return this._;
-      },
-    };
-  }
-  return result;
+  return new Proxy({} as LayoutValues, {
+    get(_target, prop: string): StyleToken | undefined {
+      if (tokenCache.has(prop)) {
+        return tokenCache.get(prop);
+      }
+
+      if (prop in positionValues) {
+        const cfg = getConfig();
+        const prefix = cfg.prefix ?? "";
+        const className = `${prefix}${prop}`;
+        const value = positionValues[prop]!;
+
+        const token: StyleToken = {
+          __kind: "style",
+          _: className,
+          __cssTemplate: `.${className} { position: ${value}; }`,
+          toString() {
+            return this._;
+          },
+        };
+        tokenCache.set(prop, token);
+        return token;
+      }
+
+      return undefined;
+    },
+
+    has(_target, prop: string): boolean {
+      return prop in positionValues;
+    },
+
+    ownKeys(): string[] {
+      return Object.keys(positionValues);
+    },
+
+    getOwnPropertyDescriptor(_target, prop: string) {
+      if (prop in positionValues) {
+        return {
+          enumerable: true,
+          configurable: true,
+          get: () => this.get!(_target, prop, _target),
+        };
+      }
+      return undefined;
+    },
+  });
 }
 
-// Special handler for inset (combines top, right, bottom, left)
-function generateInsetValues(): LayoutValues {
-  const result: LayoutValues = {};
-  const cfg = getConfig();
-  const prefix = cfg.prefix ?? "";
+/**
+ * Create inset utility (combines top, right, bottom, left)
+ */
+function createInsetUtility(): TaggedUtilityFn & LayoutValues {
+  const tokenCache = new Map<string, StyleToken>();
 
-  for (const [name, value] of Object.entries(insetScale)) {
+  const createToken = (name: string, value: string): StyleToken => {
+    const cfg = getConfig();
+    const prefix = cfg.prefix ?? "";
     const className = `${prefix}inset-${name}`;
-    result[name] = {
+
+    return {
       __kind: "style",
       _: className,
       __cssTemplate: `.${className} { inset: ${value}; }`,
@@ -134,19 +270,84 @@ function generateInsetValues(): LayoutValues {
         return this._;
       },
     };
-  }
-  return result;
+  };
+
+  const insetFn = (value: string, valueName?: string): StyleToken => {
+    const cfg = getConfig();
+    const prefix = cfg.prefix ?? "";
+    const name = valueName ?? value.replace(/[^a-z0-9]/gi, "_");
+    const className = `${prefix}inset-${name}`;
+
+    return {
+      __kind: "style",
+      _: className,
+      __cssTemplate: `.${className} { inset: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  };
+
+  const taggedFn = createTaggedUtility(insetFn);
+
+  const handler: ProxyHandler<TaggedUtilityFn> = {
+    get(target, prop: string): StyleToken | undefined {
+      if (prop === "length" || prop === "name" || prop === "prototype") {
+        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
+      }
+
+      if (tokenCache.has(prop)) {
+        return tokenCache.get(prop);
+      }
+
+      if (prop in insetScale) {
+        const token = createToken(prop, insetScale[prop]!);
+        tokenCache.set(prop, token);
+        return token;
+      }
+
+      return undefined;
+    },
+
+    has(_target, prop: string): boolean {
+      return prop in insetScale;
+    },
+
+    apply(target, thisArg, args) {
+      return Reflect.apply(target, thisArg, args);
+    },
+
+    ownKeys(): string[] {
+      return Object.keys(insetScale);
+    },
+
+    getOwnPropertyDescriptor(_target, prop: string) {
+      if (prop in insetScale) {
+        return {
+          enumerable: true,
+          configurable: true,
+          get: () => this.get!(_target, prop, _target),
+        };
+      }
+      return undefined;
+    },
+  };
+
+  return new Proxy(taggedFn, handler) as TaggedUtilityFn & LayoutValues;
 }
 
-// Special handler for inset-x (combines left and right)
-function generateInsetXValues(): LayoutValues {
-  const result: LayoutValues = {};
-  const cfg = getConfig();
-  const prefix = cfg.prefix ?? "";
+/**
+ * Create insetX utility (combines left and right)
+ */
+function createInsetXUtility(): TaggedUtilityFn & LayoutValues {
+  const tokenCache = new Map<string, StyleToken>();
 
-  for (const [name, value] of Object.entries(insetScale)) {
+  const createToken = (name: string, value: string): StyleToken => {
+    const cfg = getConfig();
+    const prefix = cfg.prefix ?? "";
     const className = `${prefix}inset-x-${name}`;
-    result[name] = {
+
+    return {
       __kind: "style",
       _: className,
       __cssTemplate: `.${className} { left: ${value}; right: ${value}; }`,
@@ -154,19 +355,84 @@ function generateInsetXValues(): LayoutValues {
         return this._;
       },
     };
-  }
-  return result;
+  };
+
+  const insetXFn = (value: string, valueName?: string): StyleToken => {
+    const cfg = getConfig();
+    const prefix = cfg.prefix ?? "";
+    const name = valueName ?? value.replace(/[^a-z0-9]/gi, "_");
+    const className = `${prefix}inset-x-${name}`;
+
+    return {
+      __kind: "style",
+      _: className,
+      __cssTemplate: `.${className} { left: ${value}; right: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  };
+
+  const taggedFn = createTaggedUtility(insetXFn);
+
+  const handler: ProxyHandler<TaggedUtilityFn> = {
+    get(target, prop: string): StyleToken | undefined {
+      if (prop === "length" || prop === "name" || prop === "prototype") {
+        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
+      }
+
+      if (tokenCache.has(prop)) {
+        return tokenCache.get(prop);
+      }
+
+      if (prop in insetScale) {
+        const token = createToken(prop, insetScale[prop]!);
+        tokenCache.set(prop, token);
+        return token;
+      }
+
+      return undefined;
+    },
+
+    has(_target, prop: string): boolean {
+      return prop in insetScale;
+    },
+
+    apply(target, thisArg, args) {
+      return Reflect.apply(target, thisArg, args);
+    },
+
+    ownKeys(): string[] {
+      return Object.keys(insetScale);
+    },
+
+    getOwnPropertyDescriptor(_target, prop: string) {
+      if (prop in insetScale) {
+        return {
+          enumerable: true,
+          configurable: true,
+          get: () => this.get!(_target, prop, _target),
+        };
+      }
+      return undefined;
+    },
+  };
+
+  return new Proxy(taggedFn, handler) as TaggedUtilityFn & LayoutValues;
 }
 
-// Special handler for inset-y (combines top and bottom)
-function generateInsetYValues(): LayoutValues {
-  const result: LayoutValues = {};
-  const cfg = getConfig();
-  const prefix = cfg.prefix ?? "";
+/**
+ * Create insetY utility (combines top and bottom)
+ */
+function createInsetYUtility(): TaggedUtilityFn & LayoutValues {
+  const tokenCache = new Map<string, StyleToken>();
 
-  for (const [name, value] of Object.entries(insetScale)) {
+  const createToken = (name: string, value: string): StyleToken => {
+    const cfg = getConfig();
+    const prefix = cfg.prefix ?? "";
     const className = `${prefix}inset-y-${name}`;
-    result[name] = {
+
+    return {
       __kind: "style",
       _: className,
       __cssTemplate: `.${className} { top: ${value}; bottom: ${value}; }`,
@@ -174,99 +440,274 @@ function generateInsetYValues(): LayoutValues {
         return this._;
       },
     };
-  }
-  return result;
-}
+  };
 
-// Special handler for visibility
-function generateVisibilityValues(): LayoutValues {
-  const result: LayoutValues = {};
-  const cfg = getConfig();
-  const prefix = cfg.prefix ?? "";
+  const insetYFn = (value: string, valueName?: string): StyleToken => {
+    const cfg = getConfig();
+    const prefix = cfg.prefix ?? "";
+    const name = valueName ?? value.replace(/[^a-z0-9]/gi, "_");
+    const className = `${prefix}inset-y-${name}`;
 
-  for (const [name, value] of Object.entries(visibilityValues)) {
-    const className = `${prefix}${name}`;
-    result[name] = {
+    return {
       __kind: "style",
       _: className,
-      __cssTemplate: `.${className} { visibility: ${value}; }`,
+      __cssTemplate: `.${className} { top: ${value}; bottom: ${value}; }`,
       toString() {
         return this._;
       },
     };
-  }
-  return result;
+  };
+
+  const taggedFn = createTaggedUtility(insetYFn);
+
+  const handler: ProxyHandler<TaggedUtilityFn> = {
+    get(target, prop: string): StyleToken | undefined {
+      if (prop === "length" || prop === "name" || prop === "prototype") {
+        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
+      }
+
+      if (tokenCache.has(prop)) {
+        return tokenCache.get(prop);
+      }
+
+      if (prop in insetScale) {
+        const token = createToken(prop, insetScale[prop]!);
+        tokenCache.set(prop, token);
+        return token;
+      }
+
+      return undefined;
+    },
+
+    has(_target, prop: string): boolean {
+      return prop in insetScale;
+    },
+
+    apply(target, thisArg, args) {
+      return Reflect.apply(target, thisArg, args);
+    },
+
+    ownKeys(): string[] {
+      return Object.keys(insetScale);
+    },
+
+    getOwnPropertyDescriptor(_target, prop: string) {
+      if (prop in insetScale) {
+        return {
+          enumerable: true,
+          configurable: true,
+          get: () => this.get!(_target, prop, _target),
+        };
+      }
+      return undefined;
+    },
+  };
+
+  return new Proxy(taggedFn, handler) as TaggedUtilityFn & LayoutValues;
 }
 
-// Predefined layout values
-export const position: LayoutValues = generatePositionValues();
-export const inset: LayoutValues = generateInsetValues();
-export const insetX: LayoutValues = generateInsetXValues();
-export const insetY: LayoutValues = generateInsetYValues();
-export const top: LayoutValues = generateLayoutValues(topFn, insetScale);
-export const right: LayoutValues = generateLayoutValues(rightFn, insetScale);
-export const bottom: LayoutValues = generateLayoutValues(bottomFn, insetScale);
-export const left: LayoutValues = generateLayoutValues(leftFn, insetScale);
-export const zIndex: LayoutValues = generateLayoutValues(zIndexFn, zIndexScale);
-export const overflow: LayoutValues = generateLayoutValues(overflowFn, overflowValues);
-export const overflowX: LayoutValues = generateLayoutValues(overflowXFn, overflowValues);
-export const overflowY: LayoutValues = generateLayoutValues(overflowYFn, overflowValues);
-export const visibility: LayoutValues = generateVisibilityValues();
+/**
+ * Create visibility utility (special class names)
+ */
+function createVisibilityUtility(): LayoutValues {
+  const tokenCache = new Map<string, StyleToken>();
 
-// Tagged template functions for arbitrary values
-export const topArb: TaggedUtilityFn = createTaggedUtility(topFn);
-export const rightArb: TaggedUtilityFn = createTaggedUtility(rightFn);
-export const bottomArb: TaggedUtilityFn = createTaggedUtility(bottomFn);
-export const leftArb: TaggedUtilityFn = createTaggedUtility(leftFn);
-export const zIndexArb: TaggedUtilityFn = createTaggedUtility(zIndexFn);
+  return new Proxy({} as LayoutValues, {
+    get(_target, prop: string): StyleToken | undefined {
+      if (tokenCache.has(prop)) {
+        return tokenCache.get(prop);
+      }
 
-/** Grouped layout predefined values */
+      if (prop in visibilityValues) {
+        const cfg = getConfig();
+        const prefix = cfg.prefix ?? "";
+        const className = `${prefix}${prop}`;
+        const value = visibilityValues[prop]!;
+
+        const token: StyleToken = {
+          __kind: "style",
+          _: className,
+          __cssTemplate: `.${className} { visibility: ${value}; }`,
+          toString() {
+            return this._;
+          },
+        };
+        tokenCache.set(prop, token);
+        return token;
+      }
+
+      return undefined;
+    },
+
+    has(_target, prop: string): boolean {
+      return prop in visibilityValues;
+    },
+
+    ownKeys(): string[] {
+      return Object.keys(visibilityValues);
+    },
+
+    getOwnPropertyDescriptor(_target, prop: string) {
+      if (prop in visibilityValues) {
+        return {
+          enumerable: true,
+          configurable: true,
+          get: () => this.get!(_target, prop, _target),
+        };
+      }
+      return undefined;
+    },
+  });
+}
+
+// ============================================
+// Layout Utilities
+// ============================================
+
+/**
+ * Position utility
+ * @example
+ * position.absolute, position.relative, position.fixed // predefined
+ */
+export const position: LayoutValues = createPositionUtility();
+
+/**
+ * Inset utility (all directions)
+ * @example
+ * inset["0"], inset["4"], inset.auto // predefined
+ * inset`100px` // arbitrary
+ */
+export const inset: TaggedUtilityFn & LayoutValues = createInsetUtility();
+
+/**
+ * Inset X utility (left and right)
+ * @example
+ * insetX["0"], insetX["4"] // predefined
+ * insetX`100px` // arbitrary
+ */
+export const insetX: TaggedUtilityFn & LayoutValues = createInsetXUtility();
+
+/**
+ * Inset Y utility (top and bottom)
+ * @example
+ * insetY["0"], insetY["4"] // predefined
+ * insetY`100px` // arbitrary
+ */
+export const insetY: TaggedUtilityFn & LayoutValues = createInsetYUtility();
+
+/**
+ * Top utility
+ * @example
+ * top["0"], top["4"], top.auto // predefined
+ * top`100px` // arbitrary
+ */
+export const top: TaggedUtilityFn & LayoutValues = createLayoutUtility(topFn, insetScale);
+
+/**
+ * Right utility
+ * @example
+ * right["0"], right["4"], right.auto // predefined
+ * right`100px` // arbitrary
+ */
+export const right: TaggedUtilityFn & LayoutValues = createLayoutUtility(rightFn, insetScale);
+
+/**
+ * Bottom utility
+ * @example
+ * bottom["0"], bottom["4"], bottom.auto // predefined
+ * bottom`100px` // arbitrary
+ */
+export const bottom: TaggedUtilityFn & LayoutValues = createLayoutUtility(bottomFn, insetScale);
+
+/**
+ * Left utility
+ * @example
+ * left["0"], left["4"], left.auto // predefined
+ * left`100px` // arbitrary
+ */
+export const left: TaggedUtilityFn & LayoutValues = createLayoutUtility(leftFn, insetScale);
+
+/**
+ * Z-index utility
+ * @example
+ * zIndex["10"], zIndex["50"], zIndex.auto // predefined
+ * zIndex`999` // arbitrary
+ */
+export const zIndex: TaggedUtilityFn & LayoutValues = createLayoutUtility(zIndexFn, zIndexScale);
+
+/**
+ * Overflow utility
+ * @example
+ * overflow.hidden, overflow.auto, overflow.scroll // predefined
+ */
+export const overflow: LayoutValues = createSimpleLayoutUtility(overflowFn, overflowValues);
+
+/**
+ * Overflow X utility
+ * @example
+ * overflowX.hidden, overflowX.auto // predefined
+ */
+export const overflowX: LayoutValues = createSimpleLayoutUtility(overflowXFn, overflowValues);
+
+/**
+ * Overflow Y utility
+ * @example
+ * overflowY.hidden, overflowY.auto // predefined
+ */
+export const overflowY: LayoutValues = createSimpleLayoutUtility(overflowYFn, overflowValues);
+
+/**
+ * Visibility utility
+ * @example
+ * visibility.visible, visibility.invisible // predefined
+ */
+export const visibility: LayoutValues = createVisibilityUtility();
+
+// ============================================
+// Grouped exports
+// ============================================
+
+/** Grouped layout utilities */
 export interface LayoutGroup {
   position: LayoutValues;
-  inset: LayoutValues;
-  insetX: LayoutValues;
-  insetY: LayoutValues;
-  top: LayoutValues;
-  right: LayoutValues;
-  bottom: LayoutValues;
-  left: LayoutValues;
-  zIndex: LayoutValues;
+  inset: TaggedUtilityFn & LayoutValues;
+  insetX: TaggedUtilityFn & LayoutValues;
+  insetY: TaggedUtilityFn & LayoutValues;
+  top: TaggedUtilityFn & LayoutValues;
+  right: TaggedUtilityFn & LayoutValues;
+  bottom: TaggedUtilityFn & LayoutValues;
+  left: TaggedUtilityFn & LayoutValues;
+  zIndex: TaggedUtilityFn & LayoutValues;
   overflow: LayoutValues;
   overflowX: LayoutValues;
   overflowY: LayoutValues;
   visibility: LayoutValues;
 }
 
-/** Grouped layout arbitrary functions */
-export interface LayoutArbGroup {
-  top: TaggedUtilityFn;
-  right: TaggedUtilityFn;
-  bottom: TaggedUtilityFn;
-  left: TaggedUtilityFn;
-  zIndex: TaggedUtilityFn;
-}
-
-// Grouped exports for convenient destructuring
 export const layout: LayoutGroup = {
-  position: position,
-  inset: inset,
-  insetX: insetX,
-  insetY: insetY,
-  top: top,
-  right: right,
-  bottom: bottom,
-  left: left,
-  zIndex: zIndex,
-  overflow: overflow,
-  overflowX: overflowX,
-  overflowY: overflowY,
-  visibility: visibility,
+  position,
+  inset,
+  insetX,
+  insetY,
+  top,
+  right,
+  bottom,
+  left,
+  zIndex,
+  overflow,
+  overflowX,
+  overflowY,
+  visibility,
 };
 
-export const layoutArb: LayoutArbGroup = {
-  top: topArb,
-  right: rightArb,
-  bottom: bottomArb,
-  left: leftArb,
-  zIndex: zIndexArb,
+// Legacy exports for backwards compatibility
+export const layoutArb = {
+  top,
+  right,
+  bottom,
+  left,
+  zIndex,
+  inset,
+  insetX,
+  insetY,
 };

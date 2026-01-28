@@ -14,8 +14,6 @@ import {
   overflowX,
   overflowY,
   visibility,
-  topArb,
-  zIndexArb,
   layout,
 } from "./layout";
 
@@ -25,21 +23,21 @@ describe("position utilities", () => {
   });
 
   it("generates relative correctly", () => {
-    expect(position["relative"]._).toBe("relative");
-    expect(position["relative"].__cssTemplate).toBe(".relative { position: relative; }");
+    expect(position.relative._).toBe("relative");
+    expect(position.relative.__cssTemplate).toBe(".relative { position: relative; }");
   });
 
   it("generates absolute correctly", () => {
-    expect(position["absolute"]._).toBe("absolute");
-    expect(position["absolute"].__cssTemplate).toBe(".absolute { position: absolute; }");
+    expect(position.absolute._).toBe("absolute");
+    expect(position.absolute.__cssTemplate).toBe(".absolute { position: absolute; }");
   });
 
   it("generates fixed correctly", () => {
-    expect(position["fixed"]._).toBe("fixed");
+    expect(position.fixed._).toBe("fixed");
   });
 
   it("generates sticky correctly", () => {
-    expect(position["sticky"]._).toBe("sticky");
+    expect(position.sticky._).toBe("sticky");
   });
 });
 
@@ -67,6 +65,24 @@ describe("inset utilities", () => {
     expect(insetY["4"]._).toBe("inset-y-4");
     expect(insetY["4"].__cssTemplate).toBe(".inset-y-4 { top: 1rem; bottom: 1rem; }");
   });
+
+  it("supports arbitrary values via tagged template", () => {
+    const token = inset`100px`;
+    expect(token._).toBe("inset-100px");
+    expect(token.__cssTemplate).toBe(".inset-100px { inset: 100px; }");
+  });
+
+  it("supports arbitrary values on insetX via tagged template", () => {
+    const token = insetX`50px`;
+    expect(token._).toBe("inset-x-50px");
+    expect(token.__cssTemplate).toBe(".inset-x-50px { left: 50px; right: 50px; }");
+  });
+
+  it("supports arbitrary values on insetY via tagged template", () => {
+    const token = insetY`50px`;
+    expect(token._).toBe("inset-y-50px");
+    expect(token.__cssTemplate).toBe(".inset-y-50px { top: 50px; bottom: 50px; }");
+  });
 });
 
 describe("top/right/bottom/left utilities", () => {
@@ -85,8 +101,8 @@ describe("top/right/bottom/left utilities", () => {
   });
 
   it("generates bottom-auto correctly", () => {
-    expect(bottom["auto"]._).toBe("bottom-auto");
-    expect(bottom["auto"].__cssTemplate).toBe(".bottom-auto { bottom: auto; }");
+    expect(bottom.auto._).toBe("bottom-auto");
+    expect(bottom.auto.__cssTemplate).toBe(".bottom-auto { bottom: auto; }");
   });
 
   it("generates left-1/2 correctly", () => {
@@ -94,10 +110,17 @@ describe("top/right/bottom/left utilities", () => {
     expect(left["1/2"].__cssTemplate).toBe(".left-1/2 { left: 50%; }");
   });
 
-  it("supports arbitrary values", () => {
-    const token = topArb`100px`;
+  it("supports arbitrary values via tagged template", () => {
+    const token = top`100px`;
     expect(token._).toBe("top-100px");
     expect(token.__cssTemplate).toBe(".top-100px { top: 100px; }");
+  });
+
+  it("supports arbitrary values on right via tagged template", () => {
+    const token = right`20%`;
+    // % is a special character, so it gets hashed
+    expect(token._).toMatch(/^right-[a-z0-9]{5}$/);
+    expect(token.__cssTemplate).toContain("right: 20%");
   });
 });
 
@@ -117,12 +140,12 @@ describe("z-index utilities", () => {
   });
 
   it("generates z-auto correctly", () => {
-    expect(zIndex["auto"]._).toBe("z-auto");
-    expect(zIndex["auto"].__cssTemplate).toBe(".z-auto { z-index: auto; }");
+    expect(zIndex.auto._).toBe("z-auto");
+    expect(zIndex.auto.__cssTemplate).toBe(".z-auto { z-index: auto; }");
   });
 
-  it("supports arbitrary values", () => {
-    const token = zIndexArb`999`;
+  it("supports arbitrary values via tagged template", () => {
+    const token = zIndex`999`;
     expect(token._).toBe("z-999");
     expect(token.__cssTemplate).toBe(".z-999 { z-index: 999; }");
   });
@@ -134,22 +157,22 @@ describe("overflow utilities", () => {
   });
 
   it("generates overflow-hidden correctly", () => {
-    expect(overflow["hidden"]._).toBe("overflow-hidden");
-    expect(overflow["hidden"].__cssTemplate).toBe(".overflow-hidden { overflow: hidden; }");
+    expect(overflow.hidden._).toBe("overflow-hidden");
+    expect(overflow.hidden.__cssTemplate).toBe(".overflow-hidden { overflow: hidden; }");
   });
 
   it("generates overflow-auto correctly", () => {
-    expect(overflow["auto"]._).toBe("overflow-auto");
+    expect(overflow.auto._).toBe("overflow-auto");
   });
 
   it("generates overflow-x-auto correctly", () => {
-    expect(overflowX["auto"]._).toBe("overflow-x-auto");
-    expect(overflowX["auto"].__cssTemplate).toBe(".overflow-x-auto { overflow-x: auto; }");
+    expect(overflowX.auto._).toBe("overflow-x-auto");
+    expect(overflowX.auto.__cssTemplate).toBe(".overflow-x-auto { overflow-x: auto; }");
   });
 
   it("generates overflow-y-scroll correctly", () => {
-    expect(overflowY["scroll"]._).toBe("overflow-y-scroll");
-    expect(overflowY["scroll"].__cssTemplate).toBe(".overflow-y-scroll { overflow-y: scroll; }");
+    expect(overflowY.scroll._).toBe("overflow-y-scroll");
+    expect(overflowY.scroll.__cssTemplate).toBe(".overflow-y-scroll { overflow-y: scroll; }");
   });
 });
 
@@ -159,17 +182,17 @@ describe("visibility utilities", () => {
   });
 
   it("generates visible correctly", () => {
-    expect(visibility["visible"]._).toBe("visible");
-    expect(visibility["visible"].__cssTemplate).toBe(".visible { visibility: visible; }");
+    expect(visibility.visible._).toBe("visible");
+    expect(visibility.visible.__cssTemplate).toBe(".visible { visibility: visible; }");
   });
 
   it("generates invisible correctly", () => {
-    expect(visibility["invisible"]._).toBe("invisible");
-    expect(visibility["invisible"].__cssTemplate).toBe(".invisible { visibility: hidden; }");
+    expect(visibility.invisible._).toBe("invisible");
+    expect(visibility.invisible.__cssTemplate).toBe(".invisible { visibility: hidden; }");
   });
 
   it("generates collapse correctly", () => {
-    expect(visibility["collapse"]._).toBe("collapse");
+    expect(visibility.collapse._).toBe("collapse");
   });
 });
 
@@ -177,9 +200,32 @@ describe("grouped exports", () => {
   it("layout object contains all utilities", () => {
     expect(layout.position).toBe(position);
     expect(layout.inset).toBe(inset);
+    expect(layout.insetX).toBe(insetX);
+    expect(layout.insetY).toBe(insetY);
     expect(layout.top).toBe(top);
+    expect(layout.right).toBe(right);
+    expect(layout.bottom).toBe(bottom);
+    expect(layout.left).toBe(left);
     expect(layout.zIndex).toBe(zIndex);
     expect(layout.overflow).toBe(overflow);
+    expect(layout.overflowX).toBe(overflowX);
+    expect(layout.overflowY).toBe(overflowY);
     expect(layout.visibility).toBe(visibility);
+  });
+});
+
+describe("destructuring", () => {
+  it("supports destructuring from position", () => {
+    const { absolute, relative, fixed } = position;
+    expect(absolute._).toBe("absolute");
+    expect(relative._).toBe("relative");
+    expect(fixed._).toBe("fixed");
+  });
+
+  it("supports destructuring from overflow", () => {
+    const { hidden, auto, scroll } = overflow;
+    expect(hidden._).toBe("overflow-hidden");
+    expect(auto._).toBe("overflow-auto");
+    expect(scroll._).toBe("overflow-scroll");
   });
 });

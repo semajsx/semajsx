@@ -9,9 +9,6 @@ import {
   cursor,
   pointerEvents,
   userSelect,
-  borderWidthArb,
-  borderRadiusArb,
-  opacityArb,
   effects,
 } from "./effects";
 
@@ -21,8 +18,8 @@ describe("border width utilities", () => {
   });
 
   it("generates border (default) correctly", () => {
-    expect(borderWidth["DEFAULT"]._).toBe("border");
-    expect(borderWidth["DEFAULT"].__cssTemplate).toBe(".border { border-width: 1px; }");
+    expect(borderWidth.DEFAULT._).toBe("border");
+    expect(borderWidth.DEFAULT.__cssTemplate).toBe(".border { border-width: 1px; }");
   });
 
   it("generates border-0 correctly", () => {
@@ -35,8 +32,8 @@ describe("border width utilities", () => {
     expect(borderWidth["2"].__cssTemplate).toBe(".border-2 { border-width: 2px; }");
   });
 
-  it("supports arbitrary values", () => {
-    const token = borderWidthArb`3px`;
+  it("supports arbitrary values via tagged template", () => {
+    const token = borderWidth`3px`;
     expect(token._).toBe("border-3px");
     expect(token.__cssTemplate).toBe(".border-3px { border-width: 3px; }");
   });
@@ -48,27 +45,27 @@ describe("border radius utilities", () => {
   });
 
   it("generates rounded (default) correctly", () => {
-    expect(borderRadius["DEFAULT"]._).toBe("rounded");
-    expect(borderRadius["DEFAULT"].__cssTemplate).toBe(".rounded { border-radius: 0.25rem; }");
+    expect(borderRadius.DEFAULT._).toBe("rounded");
+    expect(borderRadius.DEFAULT.__cssTemplate).toBe(".rounded { border-radius: 0.25rem; }");
   });
 
   it("generates rounded-none correctly", () => {
-    expect(borderRadius["none"]._).toBe("rounded-none");
-    expect(borderRadius["none"].__cssTemplate).toBe(".rounded-none { border-radius: 0px; }");
+    expect(borderRadius.none._).toBe("rounded-none");
+    expect(borderRadius.none.__cssTemplate).toBe(".rounded-none { border-radius: 0px; }");
   });
 
   it("generates rounded-lg correctly", () => {
-    expect(borderRadius["lg"]._).toBe("rounded-lg");
-    expect(borderRadius["lg"].__cssTemplate).toBe(".rounded-lg { border-radius: 0.5rem; }");
+    expect(borderRadius.lg._).toBe("rounded-lg");
+    expect(borderRadius.lg.__cssTemplate).toBe(".rounded-lg { border-radius: 0.5rem; }");
   });
 
   it("generates rounded-full correctly", () => {
-    expect(borderRadius["full"]._).toBe("rounded-full");
-    expect(borderRadius["full"].__cssTemplate).toBe(".rounded-full { border-radius: 9999px; }");
+    expect(borderRadius.full._).toBe("rounded-full");
+    expect(borderRadius.full.__cssTemplate).toBe(".rounded-full { border-radius: 9999px; }");
   });
 
-  it("supports arbitrary values", () => {
-    const token = borderRadiusArb`10px`;
+  it("supports arbitrary values via tagged template", () => {
+    const token = borderRadius`10px`;
     expect(token._).toBe("rounded-10px");
     expect(token.__cssTemplate).toBe(".rounded-10px { border-radius: 10px; }");
   });
@@ -80,18 +77,18 @@ describe("border style utilities", () => {
   });
 
   it("generates border-solid correctly", () => {
-    expect(borderStyle["solid"]._).toBe("border-solid");
-    expect(borderStyle["solid"].__cssTemplate).toBe(".border-solid { border-style: solid; }");
+    expect(borderStyle.solid._).toBe("border-solid");
+    expect(borderStyle.solid.__cssTemplate).toBe(".border-solid { border-style: solid; }");
   });
 
   it("generates border-dashed correctly", () => {
-    expect(borderStyle["dashed"]._).toBe("border-dashed");
-    expect(borderStyle["dashed"].__cssTemplate).toBe(".border-dashed { border-style: dashed; }");
+    expect(borderStyle.dashed._).toBe("border-dashed");
+    expect(borderStyle.dashed.__cssTemplate).toBe(".border-dashed { border-style: dashed; }");
   });
 
   it("generates border-none correctly", () => {
-    expect(borderStyle["none"]._).toBe("border-none");
-    expect(borderStyle["none"].__cssTemplate).toBe(".border-none { border-style: none; }");
+    expect(borderStyle.none._).toBe("border-none");
+    expect(borderStyle.none.__cssTemplate).toBe(".border-none { border-style: none; }");
   });
 });
 
@@ -101,27 +98,32 @@ describe("box shadow utilities", () => {
   });
 
   it("generates shadow (default) correctly", () => {
-    expect(boxShadow["DEFAULT"]._).toBe("shadow");
-    expect(boxShadow["DEFAULT"].__cssTemplate).toContain("box-shadow:");
+    expect(boxShadow.DEFAULT._).toBe("shadow");
+    expect(boxShadow.DEFAULT.__cssTemplate).toContain("box-shadow:");
   });
 
   it("generates shadow-sm correctly", () => {
-    expect(boxShadow["sm"]._).toBe("shadow-sm");
-    expect(boxShadow["sm"].__cssTemplate).toContain("box-shadow:");
+    expect(boxShadow.sm._).toBe("shadow-sm");
+    expect(boxShadow.sm.__cssTemplate).toContain("box-shadow:");
   });
 
   it("generates shadow-lg correctly", () => {
-    expect(boxShadow["lg"]._).toBe("shadow-lg");
+    expect(boxShadow.lg._).toBe("shadow-lg");
   });
 
   it("generates shadow-none correctly", () => {
-    expect(boxShadow["none"]._).toBe("shadow-none");
-    expect(boxShadow["none"].__cssTemplate).toBe(".shadow-none { box-shadow: 0 0 #0000; }");
+    expect(boxShadow.none._).toBe("shadow-none");
+    expect(boxShadow.none.__cssTemplate).toBe(".shadow-none { box-shadow: 0 0 #0000; }");
   });
 
   it("generates shadow-inner correctly", () => {
-    expect(boxShadow["inner"]._).toBe("shadow-inner");
-    expect(boxShadow["inner"].__cssTemplate).toContain("inset");
+    expect(boxShadow.inner._).toBe("shadow-inner");
+    expect(boxShadow.inner.__cssTemplate).toContain("inset");
+  });
+
+  it("supports arbitrary values via tagged template", () => {
+    const token = boxShadow`0 0 10px black`;
+    expect(token.__cssTemplate).toContain("box-shadow: 0 0 10px black");
   });
 });
 
@@ -145,8 +147,8 @@ describe("opacity utilities", () => {
     expect(opacity["100"].__cssTemplate).toBe(".opacity-100 { opacity: 1; }");
   });
 
-  it("supports arbitrary values", () => {
-    const token = opacityArb`0.33`;
+  it("supports arbitrary values via tagged template", () => {
+    const token = opacity`0.33`;
     expect(token._).toBe("opacity-0_33");
     expect(token.__cssTemplate).toBe(".opacity-0_33 { opacity: 0.33; }");
   });
@@ -158,19 +160,22 @@ describe("cursor utilities", () => {
   });
 
   it("generates cursor-pointer correctly", () => {
-    expect(cursor["pointer"]._).toBe("cursor-pointer");
-    expect(cursor["pointer"].__cssTemplate).toBe(".cursor-pointer { cursor: pointer; }");
+    expect(cursor.pointer._).toBe("cursor-pointer");
+    expect(cursor.pointer.__cssTemplate).toBe(".cursor-pointer { cursor: pointer; }");
   });
 
-  it("generates cursor-not-allowed correctly", () => {
-    expect(cursor["not-allowed"]._).toBe("cursor-not-allowed");
-    expect(cursor["not-allowed"].__cssTemplate).toBe(
-      ".cursor-not-allowed { cursor: not-allowed; }",
-    );
+  it("generates cursor-not-allowed correctly (camelCase access)", () => {
+    expect(cursor.notAllowed._).toBe("cursor-not-allowed");
+    expect(cursor.notAllowed.__cssTemplate).toBe(".cursor-not-allowed { cursor: not-allowed; }");
   });
 
   it("generates cursor-grab correctly", () => {
-    expect(cursor["grab"]._).toBe("cursor-grab");
+    expect(cursor.grab._).toBe("cursor-grab");
+  });
+
+  it("generates cursor-zoom-in correctly (camelCase access)", () => {
+    expect(cursor.zoomIn._).toBe("cursor-zoom-in");
+    expect(cursor.zoomIn.__cssTemplate).toBe(".cursor-zoom-in { cursor: zoom-in; }");
   });
 });
 
@@ -180,14 +185,12 @@ describe("pointer events utilities", () => {
   });
 
   it("generates pointer-events-none correctly", () => {
-    expect(pointerEvents["none"]._).toBe("pointer-events-none");
-    expect(pointerEvents["none"].__cssTemplate).toBe(
-      ".pointer-events-none { pointer-events: none; }",
-    );
+    expect(pointerEvents.none._).toBe("pointer-events-none");
+    expect(pointerEvents.none.__cssTemplate).toBe(".pointer-events-none { pointer-events: none; }");
   });
 
   it("generates pointer-events-auto correctly", () => {
-    expect(pointerEvents["auto"]._).toBe("pointer-events-auto");
+    expect(pointerEvents.auto._).toBe("pointer-events-auto");
   });
 });
 
@@ -197,16 +200,16 @@ describe("user select utilities", () => {
   });
 
   it("generates select-none correctly", () => {
-    expect(userSelect["none"]._).toBe("select-none");
-    expect(userSelect["none"].__cssTemplate).toBe(".select-none { user-select: none; }");
+    expect(userSelect.none._).toBe("select-none");
+    expect(userSelect.none.__cssTemplate).toBe(".select-none { user-select: none; }");
   });
 
   it("generates select-text correctly", () => {
-    expect(userSelect["text"]._).toBe("select-text");
+    expect(userSelect.text._).toBe("select-text");
   });
 
   it("generates select-all correctly", () => {
-    expect(userSelect["all"]._).toBe("select-all");
+    expect(userSelect.all._).toBe("select-all");
   });
 });
 
@@ -214,8 +217,27 @@ describe("grouped exports", () => {
   it("effects object contains all utilities", () => {
     expect(effects.borderWidth).toBe(borderWidth);
     expect(effects.borderRadius).toBe(borderRadius);
+    expect(effects.borderStyle).toBe(borderStyle);
     expect(effects.boxShadow).toBe(boxShadow);
     expect(effects.opacity).toBe(opacity);
     expect(effects.cursor).toBe(cursor);
+    expect(effects.pointerEvents).toBe(pointerEvents);
+    expect(effects.userSelect).toBe(userSelect);
+  });
+});
+
+describe("destructuring", () => {
+  it("supports destructuring from borderRadius", () => {
+    const { none, lg, full } = borderRadius;
+    expect(none._).toBe("rounded-none");
+    expect(lg._).toBe("rounded-lg");
+    expect(full._).toBe("rounded-full");
+  });
+
+  it("supports destructuring from cursor", () => {
+    const { pointer, grab, notAllowed } = cursor;
+    expect(pointer._).toBe("cursor-pointer");
+    expect(grab._).toBe("cursor-grab");
+    expect(notAllowed._).toBe("cursor-not-allowed");
   });
 });

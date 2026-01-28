@@ -1,5 +1,15 @@
 /**
  * Effects utilities: border, rounded, shadow, opacity
+ *
+ * Usage:
+ * ```ts
+ * // Predefined values (via Proxy)
+ * import { borderWidth, borderRadius, boxShadow, opacity } from "@semajsx/tailwind";
+ * <div class={[borderWidth["2"], borderRadius.lg, boxShadow.md, opacity["50"]]}>
+ *
+ * // Arbitrary values (tagged template - same function!)
+ * <div class={[borderWidth`3px`, borderRadius`10px`, opacity`0.75`]}>
+ * ```
  */
 
 import type { StyleToken, TaggedUtilityFn } from "./types";
@@ -12,7 +22,7 @@ export type EffectsValues = Record<string, StyleToken>;
 // Border width scale
 const borderWidthScale: Record<string, string> = {
   "0": "0px",
-  "": "1px",
+  DEFAULT: "1px",
   "2": "2px",
   "4": "4px",
   "8": "8px",
@@ -22,7 +32,7 @@ const borderWidthScale: Record<string, string> = {
 const borderRadiusScale: Record<string, string> = {
   none: "0px",
   sm: "0.125rem",
-  "": "0.25rem",
+  DEFAULT: "0.25rem",
   md: "0.375rem",
   lg: "0.5rem",
   xl: "0.75rem",
@@ -34,7 +44,7 @@ const borderRadiusScale: Record<string, string> = {
 // Box shadow scale
 const boxShadowScale: Record<string, string> = {
   sm: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-  "": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+  DEFAULT: "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
   md: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
   lg: "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
   xl: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
@@ -78,7 +88,7 @@ const borderStyleValues: Record<string, string> = {
   none: "none",
 };
 
-// Cursor values
+// Cursor values (camelCase for readability)
 const cursorValues: Record<string, string> = {
   auto: "auto",
   default: "default",
@@ -87,35 +97,60 @@ const cursorValues: Record<string, string> = {
   text: "text",
   move: "move",
   help: "help",
-  "not-allowed": "not-allowed",
+  notAllowed: "not-allowed",
   none: "none",
-  "context-menu": "context-menu",
+  contextMenu: "context-menu",
   progress: "progress",
   cell: "cell",
   crosshair: "crosshair",
-  "vertical-text": "vertical-text",
+  verticalText: "vertical-text",
   alias: "alias",
   copy: "copy",
-  "no-drop": "no-drop",
+  noDrop: "no-drop",
   grab: "grab",
   grabbing: "grabbing",
-  "all-scroll": "all-scroll",
-  "col-resize": "col-resize",
-  "row-resize": "row-resize",
-  "n-resize": "n-resize",
-  "e-resize": "e-resize",
-  "s-resize": "s-resize",
-  "w-resize": "w-resize",
-  "ne-resize": "ne-resize",
-  "nw-resize": "nw-resize",
-  "se-resize": "se-resize",
-  "sw-resize": "sw-resize",
-  "ew-resize": "ew-resize",
-  "ns-resize": "ns-resize",
-  "nesw-resize": "nesw-resize",
-  "nwse-resize": "nwse-resize",
-  "zoom-in": "zoom-in",
-  "zoom-out": "zoom-out",
+  allScroll: "all-scroll",
+  colResize: "col-resize",
+  rowResize: "row-resize",
+  nResize: "n-resize",
+  eResize: "e-resize",
+  sResize: "s-resize",
+  wResize: "w-resize",
+  neResize: "ne-resize",
+  nwResize: "nw-resize",
+  seResize: "se-resize",
+  swResize: "sw-resize",
+  ewResize: "ew-resize",
+  nsResize: "ns-resize",
+  neswResize: "nesw-resize",
+  nwseResize: "nwse-resize",
+  zoomIn: "zoom-in",
+  zoomOut: "zoom-out",
+};
+
+// Cursor class name mapping
+const cursorClassMap: Record<string, string> = {
+  notAllowed: "not-allowed",
+  contextMenu: "context-menu",
+  verticalText: "vertical-text",
+  noDrop: "no-drop",
+  allScroll: "all-scroll",
+  colResize: "col-resize",
+  rowResize: "row-resize",
+  nResize: "n-resize",
+  eResize: "e-resize",
+  sResize: "s-resize",
+  wResize: "w-resize",
+  neResize: "ne-resize",
+  nwResize: "nw-resize",
+  seResize: "se-resize",
+  swResize: "sw-resize",
+  ewResize: "ew-resize",
+  nsResize: "ns-resize",
+  neswResize: "nesw-resize",
+  nwseResize: "nwse-resize",
+  zoomIn: "zoom-in",
+  zoomOut: "zoom-out",
 };
 
 // Pointer events values
@@ -133,32 +168,126 @@ const userSelectValues: Record<string, string> = {
 };
 
 // Create utility functions
+const borderWidthFn = createUtility("border-width", "border");
+const borderRadiusFn = createUtility("border-radius", "rounded");
+const boxShadowFn = createUtility("box-shadow", "shadow");
 const opacityFn = createUtility("opacity", "opacity");
-const cursorFn = createUtility("cursor", "cursor");
 const pointerEventsFn = createUtility("pointer-events", "pointer-events");
 const userSelectFn = createUtility("user-select", "select");
 
-// Helper to generate values for a utility
-function generateEffectsValues(
+/**
+ * Create an effects utility that works as both namespace and tagged template
+ */
+function createEffectsUtility(
+  utilityFn: (value: string, valueName?: string) => StyleToken,
+  scale: Record<string, string>,
+): TaggedUtilityFn & EffectsValues {
+  const tokenCache = new Map<string, StyleToken>();
+  const taggedFn = createTaggedUtility(utilityFn);
+
+  const handler: ProxyHandler<TaggedUtilityFn> = {
+    get(target, prop: string): StyleToken | undefined {
+      if (prop === "length" || prop === "name" || prop === "prototype") {
+        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
+      }
+
+      if (tokenCache.has(prop)) {
+        return tokenCache.get(prop);
+      }
+
+      if (prop in scale) {
+        const token = utilityFn(scale[prop]!, prop);
+        tokenCache.set(prop, token);
+        return token;
+      }
+
+      return undefined;
+    },
+
+    has(_target, prop: string): boolean {
+      return prop in scale;
+    },
+
+    apply(target, thisArg, args) {
+      return Reflect.apply(target, thisArg, args);
+    },
+
+    ownKeys(): string[] {
+      return Object.keys(scale);
+    },
+
+    getOwnPropertyDescriptor(_target, prop: string) {
+      if (prop in scale) {
+        return {
+          enumerable: true,
+          configurable: true,
+          get: () => this.get!(_target, prop, _target),
+        };
+      }
+      return undefined;
+    },
+  };
+
+  return new Proxy(taggedFn, handler) as TaggedUtilityFn & EffectsValues;
+}
+
+/**
+ * Create a simple utility that only has predefined values (no arbitrary)
+ */
+function createSimpleEffectsUtility(
   utilityFn: (value: string, valueName?: string) => StyleToken,
   scale: Record<string, string>,
 ): EffectsValues {
-  const result: EffectsValues = {};
-  for (const [name, value] of Object.entries(scale)) {
-    result[name] = utilityFn(value, name);
-  }
-  return result;
+  const tokenCache = new Map<string, StyleToken>();
+
+  return new Proxy({} as EffectsValues, {
+    get(_target, prop: string): StyleToken | undefined {
+      if (tokenCache.has(prop)) {
+        return tokenCache.get(prop);
+      }
+
+      if (prop in scale) {
+        const token = utilityFn(scale[prop]!, prop);
+        tokenCache.set(prop, token);
+        return token;
+      }
+
+      return undefined;
+    },
+
+    has(_target, prop: string): boolean {
+      return prop in scale;
+    },
+
+    ownKeys(): string[] {
+      return Object.keys(scale);
+    },
+
+    getOwnPropertyDescriptor(_target, prop: string) {
+      if (prop in scale) {
+        return {
+          enumerable: true,
+          configurable: true,
+          get: () => this.get!(_target, prop, _target),
+        };
+      }
+      return undefined;
+    },
+  });
 }
 
-// Special handler for border width
-function generateBorderWidthValues(): EffectsValues {
-  const result: EffectsValues = {};
-  const cfg = getConfig();
-  const prefix = cfg.prefix ?? "";
+/**
+ * Create border width utility (special: DEFAULT maps to base class)
+ */
+function createBorderWidthUtility(): TaggedUtilityFn & EffectsValues {
+  const tokenCache = new Map<string, StyleToken>();
 
-  for (const [name, value] of Object.entries(borderWidthScale)) {
-    const className = name === "" ? `${prefix}border` : `${prefix}border-${name}`;
-    result[name === "" ? "DEFAULT" : name] = {
+  const createToken = (name: string, value: string): StyleToken => {
+    const cfg = getConfig();
+    const prefix = cfg.prefix ?? "";
+    const className = name === "DEFAULT" ? `${prefix}border` : `${prefix}border-${name}`;
+
+    return {
       __kind: "style",
       _: className,
       __cssTemplate: `.${className} { border-width: ${value}; }`,
@@ -166,19 +295,68 @@ function generateBorderWidthValues(): EffectsValues {
         return this._;
       },
     };
-  }
-  return result;
+  };
+
+  const taggedFn = createTaggedUtility(borderWidthFn);
+
+  const handler: ProxyHandler<TaggedUtilityFn> = {
+    get(target, prop: string): StyleToken | undefined {
+      if (prop === "length" || prop === "name" || prop === "prototype") {
+        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
+      }
+
+      if (tokenCache.has(prop)) {
+        return tokenCache.get(prop);
+      }
+
+      if (prop in borderWidthScale) {
+        const token = createToken(prop, borderWidthScale[prop]!);
+        tokenCache.set(prop, token);
+        return token;
+      }
+
+      return undefined;
+    },
+
+    has(_target, prop: string): boolean {
+      return prop in borderWidthScale;
+    },
+
+    apply(target, thisArg, args) {
+      return Reflect.apply(target, thisArg, args);
+    },
+
+    ownKeys(): string[] {
+      return Object.keys(borderWidthScale);
+    },
+
+    getOwnPropertyDescriptor(_target, prop: string) {
+      if (prop in borderWidthScale) {
+        return {
+          enumerable: true,
+          configurable: true,
+          get: () => this.get!(_target, prop, _target),
+        };
+      }
+      return undefined;
+    },
+  };
+
+  return new Proxy(taggedFn, handler) as TaggedUtilityFn & EffectsValues;
 }
 
-// Special handler for border radius
-function generateBorderRadiusValues(): EffectsValues {
-  const result: EffectsValues = {};
-  const cfg = getConfig();
-  const prefix = cfg.prefix ?? "";
+/**
+ * Create border radius utility (special: DEFAULT maps to base class)
+ */
+function createBorderRadiusUtility(): TaggedUtilityFn & EffectsValues {
+  const tokenCache = new Map<string, StyleToken>();
 
-  for (const [name, value] of Object.entries(borderRadiusScale)) {
-    const className = name === "" ? `${prefix}rounded` : `${prefix}rounded-${name}`;
-    result[name === "" ? "DEFAULT" : name] = {
+  const createToken = (name: string, value: string): StyleToken => {
+    const cfg = getConfig();
+    const prefix = cfg.prefix ?? "";
+    const className = name === "DEFAULT" ? `${prefix}rounded` : `${prefix}rounded-${name}`;
+
+    return {
       __kind: "style",
       _: className,
       __cssTemplate: `.${className} { border-radius: ${value}; }`,
@@ -186,19 +364,68 @@ function generateBorderRadiusValues(): EffectsValues {
         return this._;
       },
     };
-  }
-  return result;
+  };
+
+  const taggedFn = createTaggedUtility(borderRadiusFn);
+
+  const handler: ProxyHandler<TaggedUtilityFn> = {
+    get(target, prop: string): StyleToken | undefined {
+      if (prop === "length" || prop === "name" || prop === "prototype") {
+        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
+      }
+
+      if (tokenCache.has(prop)) {
+        return tokenCache.get(prop);
+      }
+
+      if (prop in borderRadiusScale) {
+        const token = createToken(prop, borderRadiusScale[prop]!);
+        tokenCache.set(prop, token);
+        return token;
+      }
+
+      return undefined;
+    },
+
+    has(_target, prop: string): boolean {
+      return prop in borderRadiusScale;
+    },
+
+    apply(target, thisArg, args) {
+      return Reflect.apply(target, thisArg, args);
+    },
+
+    ownKeys(): string[] {
+      return Object.keys(borderRadiusScale);
+    },
+
+    getOwnPropertyDescriptor(_target, prop: string) {
+      if (prop in borderRadiusScale) {
+        return {
+          enumerable: true,
+          configurable: true,
+          get: () => this.get!(_target, prop, _target),
+        };
+      }
+      return undefined;
+    },
+  };
+
+  return new Proxy(taggedFn, handler) as TaggedUtilityFn & EffectsValues;
 }
 
-// Special handler for box shadow
-function generateBoxShadowValues(): EffectsValues {
-  const result: EffectsValues = {};
-  const cfg = getConfig();
-  const prefix = cfg.prefix ?? "";
+/**
+ * Create box shadow utility (special: DEFAULT maps to base class)
+ */
+function createBoxShadowUtility(): TaggedUtilityFn & EffectsValues {
+  const tokenCache = new Map<string, StyleToken>();
 
-  for (const [name, value] of Object.entries(boxShadowScale)) {
-    const className = name === "" ? `${prefix}shadow` : `${prefix}shadow-${name}`;
-    result[name === "" ? "DEFAULT" : name] = {
+  const createToken = (name: string, value: string): StyleToken => {
+    const cfg = getConfig();
+    const prefix = cfg.prefix ?? "";
+    const className = name === "DEFAULT" ? `${prefix}shadow` : `${prefix}shadow-${name}`;
+
+    return {
       __kind: "style",
       _: className,
       __cssTemplate: `.${className} { box-shadow: ${value}; }`,
@@ -206,87 +433,266 @@ function generateBoxShadowValues(): EffectsValues {
         return this._;
       },
     };
-  }
-  return result;
+  };
+
+  const taggedFn = createTaggedUtility(boxShadowFn);
+
+  const handler: ProxyHandler<TaggedUtilityFn> = {
+    get(target, prop: string): StyleToken | undefined {
+      if (prop === "length" || prop === "name" || prop === "prototype") {
+        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
+      }
+
+      if (tokenCache.has(prop)) {
+        return tokenCache.get(prop);
+      }
+
+      if (prop in boxShadowScale) {
+        const token = createToken(prop, boxShadowScale[prop]!);
+        tokenCache.set(prop, token);
+        return token;
+      }
+
+      return undefined;
+    },
+
+    has(_target, prop: string): boolean {
+      return prop in boxShadowScale;
+    },
+
+    apply(target, thisArg, args) {
+      return Reflect.apply(target, thisArg, args);
+    },
+
+    ownKeys(): string[] {
+      return Object.keys(boxShadowScale);
+    },
+
+    getOwnPropertyDescriptor(_target, prop: string) {
+      if (prop in boxShadowScale) {
+        return {
+          enumerable: true,
+          configurable: true,
+          get: () => this.get!(_target, prop, _target),
+        };
+      }
+      return undefined;
+    },
+  };
+
+  return new Proxy(taggedFn, handler) as TaggedUtilityFn & EffectsValues;
 }
 
-// Special handler for border style
-function generateBorderStyleValues(): EffectsValues {
-  const result: EffectsValues = {};
-  const cfg = getConfig();
-  const prefix = cfg.prefix ?? "";
+/**
+ * Create border style utility (special class names)
+ */
+function createBorderStyleUtility(): EffectsValues {
+  const tokenCache = new Map<string, StyleToken>();
 
-  for (const [name, value] of Object.entries(borderStyleValues)) {
-    const className = `${prefix}border-${name}`;
-    result[name] = {
-      __kind: "style",
-      _: className,
-      __cssTemplate: `.${className} { border-style: ${value}; }`,
-      toString() {
-        return this._;
-      },
-    };
-  }
-  return result;
+  return new Proxy({} as EffectsValues, {
+    get(_target, prop: string): StyleToken | undefined {
+      if (tokenCache.has(prop)) {
+        return tokenCache.get(prop);
+      }
+
+      if (prop in borderStyleValues) {
+        const cfg = getConfig();
+        const prefix = cfg.prefix ?? "";
+        const className = `${prefix}border-${prop}`;
+        const value = borderStyleValues[prop]!;
+
+        const token: StyleToken = {
+          __kind: "style",
+          _: className,
+          __cssTemplate: `.${className} { border-style: ${value}; }`,
+          toString() {
+            return this._;
+          },
+        };
+        tokenCache.set(prop, token);
+        return token;
+      }
+
+      return undefined;
+    },
+
+    has(_target, prop: string): boolean {
+      return prop in borderStyleValues;
+    },
+
+    ownKeys(): string[] {
+      return Object.keys(borderStyleValues);
+    },
+
+    getOwnPropertyDescriptor(_target, prop: string) {
+      if (prop in borderStyleValues) {
+        return {
+          enumerable: true,
+          configurable: true,
+          get: () => this.get!(_target, prop, _target),
+        };
+      }
+      return undefined;
+    },
+  });
 }
 
-// Predefined effects values
-export const borderWidth: EffectsValues = generateBorderWidthValues();
-export const borderRadius: EffectsValues = generateBorderRadiusValues();
-export const borderStyle: EffectsValues = generateBorderStyleValues();
-export const boxShadow: EffectsValues = generateBoxShadowValues();
-export const opacity: EffectsValues = generateEffectsValues(opacityFn, opacityScale);
-export const cursor: EffectsValues = generateEffectsValues(cursorFn, cursorValues);
-export const pointerEvents: EffectsValues = generateEffectsValues(
+/**
+ * Create cursor utility (with camelCase to kebab-case mapping)
+ */
+function createCursorUtility(): EffectsValues {
+  const tokenCache = new Map<string, StyleToken>();
+
+  return new Proxy({} as EffectsValues, {
+    get(_target, prop: string): StyleToken | undefined {
+      if (tokenCache.has(prop)) {
+        return tokenCache.get(prop);
+      }
+
+      if (prop in cursorValues) {
+        const cfg = getConfig();
+        const prefix = cfg.prefix ?? "";
+        const cssClassName = cursorClassMap[prop] ?? prop;
+        const className = `${prefix}cursor-${cssClassName}`;
+        const value = cursorValues[prop]!;
+
+        const token: StyleToken = {
+          __kind: "style",
+          _: className,
+          __cssTemplate: `.${className} { cursor: ${value}; }`,
+          toString() {
+            return this._;
+          },
+        };
+        tokenCache.set(prop, token);
+        return token;
+      }
+
+      return undefined;
+    },
+
+    has(_target, prop: string): boolean {
+      return prop in cursorValues;
+    },
+
+    ownKeys(): string[] {
+      return Object.keys(cursorValues);
+    },
+
+    getOwnPropertyDescriptor(_target, prop: string) {
+      if (prop in cursorValues) {
+        return {
+          enumerable: true,
+          configurable: true,
+          get: () => this.get!(_target, prop, _target),
+        };
+      }
+      return undefined;
+    },
+  });
+}
+
+// ============================================
+// Effects Utilities
+// ============================================
+
+/**
+ * Border width utility
+ * @example
+ * borderWidth["0"], borderWidth["2"], borderWidth.DEFAULT // predefined
+ * borderWidth`3px` // arbitrary
+ */
+export const borderWidth: TaggedUtilityFn & EffectsValues = createBorderWidthUtility();
+
+/**
+ * Border radius utility
+ * @example
+ * borderRadius.none, borderRadius.lg, borderRadius.full // predefined
+ * borderRadius`10px` // arbitrary
+ */
+export const borderRadius: TaggedUtilityFn & EffectsValues = createBorderRadiusUtility();
+
+/**
+ * Border style utility
+ * @example
+ * borderStyle.solid, borderStyle.dashed // predefined
+ */
+export const borderStyle: EffectsValues = createBorderStyleUtility();
+
+/**
+ * Box shadow utility
+ * @example
+ * boxShadow.sm, boxShadow.lg, boxShadow.none // predefined
+ * boxShadow`0 0 10px rgba(0,0,0,0.5)` // arbitrary
+ */
+export const boxShadow: TaggedUtilityFn & EffectsValues = createBoxShadowUtility();
+
+/**
+ * Opacity utility
+ * @example
+ * opacity["50"], opacity["100"] // predefined
+ * opacity`0.75` // arbitrary
+ */
+export const opacity: TaggedUtilityFn & EffectsValues = createEffectsUtility(
+  opacityFn,
+  opacityScale,
+);
+
+/**
+ * Cursor utility (use camelCase for readability)
+ * @example
+ * cursor.pointer, cursor.notAllowed, cursor.grab // predefined
+ */
+export const cursor: EffectsValues = createCursorUtility();
+
+/**
+ * Pointer events utility
+ * @example
+ * pointerEvents.none, pointerEvents.auto // predefined
+ */
+export const pointerEvents: EffectsValues = createSimpleEffectsUtility(
   pointerEventsFn,
   pointerEventsValues,
 );
-export const userSelect: EffectsValues = generateEffectsValues(userSelectFn, userSelectValues);
 
-// Tagged template functions for arbitrary values
-const borderWidthFn = createUtility("border-width", "border");
-const borderRadiusFn = createUtility("border-radius", "rounded");
-const boxShadowFn = createUtility("box-shadow", "shadow");
-export const borderWidthArb: TaggedUtilityFn = createTaggedUtility(borderWidthFn);
-export const borderRadiusArb: TaggedUtilityFn = createTaggedUtility(borderRadiusFn);
-export const boxShadowArb: TaggedUtilityFn = createTaggedUtility(boxShadowFn);
-export const opacityArb: TaggedUtilityFn = createTaggedUtility(opacityFn);
+/**
+ * User select utility
+ * @example
+ * userSelect.none, userSelect.text, userSelect.all // predefined
+ */
+export const userSelect: EffectsValues = createSimpleEffectsUtility(userSelectFn, userSelectValues);
 
-/** Grouped effects predefined values */
+// ============================================
+// Grouped exports
+// ============================================
+
+/** Grouped effects utilities */
 export interface EffectsGroup {
-  borderWidth: EffectsValues;
-  borderRadius: EffectsValues;
+  borderWidth: TaggedUtilityFn & EffectsValues;
+  borderRadius: TaggedUtilityFn & EffectsValues;
   borderStyle: EffectsValues;
-  boxShadow: EffectsValues;
-  opacity: EffectsValues;
+  boxShadow: TaggedUtilityFn & EffectsValues;
+  opacity: TaggedUtilityFn & EffectsValues;
   cursor: EffectsValues;
   pointerEvents: EffectsValues;
   userSelect: EffectsValues;
 }
 
-/** Grouped effects arbitrary functions */
-export interface EffectsArbGroup {
-  borderWidth: TaggedUtilityFn;
-  borderRadius: TaggedUtilityFn;
-  boxShadow: TaggedUtilityFn;
-  opacity: TaggedUtilityFn;
-}
-
-// Grouped exports for convenient destructuring
 export const effects: EffectsGroup = {
-  borderWidth: borderWidth,
-  borderRadius: borderRadius,
-  borderStyle: borderStyle,
-  boxShadow: boxShadow,
-  opacity: opacity,
-  cursor: cursor,
-  pointerEvents: pointerEvents,
-  userSelect: userSelect,
+  borderWidth,
+  borderRadius,
+  borderStyle,
+  boxShadow,
+  opacity,
+  cursor,
+  pointerEvents,
+  userSelect,
 };
 
-export const effectsArb: EffectsArbGroup = {
-  borderWidth: borderWidthArb,
-  borderRadius: borderRadiusArb,
-  boxShadow: boxShadowArb,
-  opacity: opacityArb,
+// Legacy exports for backwards compatibility
+export const effectsArb = {
+  borderWidth,
+  borderRadius,
+  boxShadow,
+  opacity,
 };
