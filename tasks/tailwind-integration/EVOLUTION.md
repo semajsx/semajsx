@@ -76,6 +76,69 @@ These primitives are sufficient to build Tailwind utilities on top.
 3. **Naming Convention**: Match Tailwind exactly vs. optimize for JS
    - Decision: Camel case for JS (e.g., `bgBlue500` not `bg-blue-500`)
 
+### Critical Issue: Non-Deterministic Class Names
+
+**Discovery**: The current `classes()` in `@semajsx/style` uses `Date.now()`:
+
+```ts
+// packages/style/src/classes.ts line 28
+const hash = hashString(name + Date.now().toString(36));
+```
+
+**Impact**:
+
+- SSR hydration mismatch (server/client generate different names)
+- Cannot cache CSS across builds
+- Unpredictable class names for debugging
+
+**Decision**: Tailwind package will NOT use `classes()`. Instead, use deterministic naming.
+
+### Class Name Prefix Strategy (Deep Analysis)
+
+**Why consider a prefix at all?**
+
+1. **Collision avoidance**: User might have existing `.p-4` class
+2. **Coexistence**: Might use alongside native Tailwind
+3. **Debugging**: Know where a class comes from
+
+**Why NOT use a prefix?**
+
+1. **Familiarity**: `p-4` is what Tailwind users expect
+2. **Size**: Every byte counts (especially with many utilities)
+3. **Migration**: Easier to migrate from/to native Tailwind
+
+**Analyzed Options**:
+
+| Option       | Example     | Pros            | Cons           |
+| ------------ | ----------- | --------------- | -------------- |
+| No prefix    | `p-4`       | Familiar, short | Collision risk |
+| Fixed `tw-`  | `tw-p-4`    | Safe, readable  | +3 chars       |
+| Hash prefix  | `p-x7f3a-4` | Unique          | Ugly, +6 chars |
+| Configurable | User choice | Flexible        | Complex API    |
+
+**Final Decision**: **Configurable with `tw-` default**
+
+```ts
+// Default: safe and readable
+configureTailwind({ prefix: "tw-" });
+// Result: tw-p-4, tw-bg-blue-500
+
+// For Tailwind compatibility
+configureTailwind({ prefix: "" });
+// Result: p-4, bg-blue-500
+
+// Custom namespace
+configureTailwind({ prefix: "app-" });
+// Result: app-p-4, app-bg-blue-500
+```
+
+**Rationale**:
+
+1. Default is safe (won't conflict with native Tailwind)
+2. Power users can opt for no prefix
+3. Library authors can use custom prefix
+4. All options are deterministic (no runtime variance)
+
 ---
 
 ## Design (2026-01-28)

@@ -17,6 +17,239 @@ This document outlines the implementation plan for Tailwind CSS integration with
 
 ---
 
+## Critical Design Decision: Class Name Strategy
+
+### Problem Statement
+
+The current `classes()` implementation uses `Date.now()` for hashing:
+
+```ts
+// packages/style/src/classes.ts line 28
+const hash = hashString(name + Date.now().toString(36));
+```
+
+This creates **non-deterministic** class names, which is problematic for:
+
+1. **SSR Hydration**: Server and client generate different class names → hydration mismatch
+2. **Caching**: Each build produces different CSS → cannot cache effectively
+3. **Debugging**: Class names are unpredictable across sessions
+
+### Design Options Analysis
+
+#### Option A: No Prefix (Native Tailwind Style)
+
+```ts
+// Generated class names match Tailwind exactly
+p - 4; // padding: 1rem
+bg - blue - 500; // background: #3b82f6
+```
+
+**Pros**:
+
+- Familiar to Tailwind users
+- Minimal class name length
+- Easy to debug (recognizable names)
+- Can potentially share CSS with native Tailwind projects
+
+**Cons**:
+
+- Risk of collision with user-defined `.p-4` class
+- Risk of collision if user also uses real Tailwind
+- No namespace isolation
+
+**Use case**: Projects that want drop-in Tailwind replacement
+
+#### Option B: Fixed Short Prefix (e.g., `tw-`)
+
+```ts
+// All classes have tw- prefix
+tw - p - 4; // padding: 1rem
+tw - bg - blue - 500; // background: #3b82f6
+```
+
+**Pros**:
+
+- Clear namespace isolation
+- Predictable, deterministic
+- Still readable and debuggable
+- Can coexist with native Tailwind
+
+**Cons**:
+
+- Slightly longer class names (+3 chars)
+- Different from native Tailwind syntax
+
+**Use case**: Projects that want isolation but readable names
+
+#### Option C: Hash Prefix (Current RFC Approach)
+
+```ts
+// Classes have hashed prefix
+p - x7f3a - 4; // padding: 1rem
+bg - x7f3a - blue - 500; // background: #3b82f6
+```
+
+**Pros**:
+
+- Guaranteed unique (if hash is deterministic)
+- Follows existing `@semajsx/style` pattern
+
+**Cons**:
+
+- Longer class names (+6 chars)
+- Harder to debug (hash is meaningless)
+- Looks ugly in DevTools
+- Hash must be deterministic (current impl is NOT)
+
+**Use case**: Projects prioritizing uniqueness over readability
+
+#### Option D: Configurable Prefix
+
+```ts
+// User chooses prefix (or none)
+const { spacing } = createTailwind({ prefix: "" }); // p-4
+const { spacing } = createTailwind({ prefix: "tw-" }); // tw-p-4
+const { spacing } = createTailwind({ prefix: "my-" }); // my-p-4
+```
+
+**Pros**:
+
+- Maximum flexibility
+- User decides based on their needs
+- Can match any existing convention
+
+**Cons**:
+
+- More complex API
+- Need to pass config everywhere or use context
+- Potential for inconsistency if misconfigured
+
+**Use case**: Library authors, design systems
+
+### Recommendation
+
+**Primary**: Option B (Fixed Short Prefix `tw-`) as default
+**Secondary**: Option D (Configurable) for advanced users
+
+**Rationale**:
+
+1. **Deterministic by default**: No hashing, no runtime variance
+2. **Safe by default**: Prefix prevents accidental collisions
+3. **Readable**: `tw-p-4` is clear and debuggable
+4. **Opt-out available**: Advanced users can configure `prefix: ""`
+
+### Implementation Approach
+
+```ts
+// packages/tailwind/src/config.ts
+export interface TailwindConfig {
+  /** Class name prefix. Default: "tw-". Use "" for no prefix. */
+  prefix?: string;
+}
+
+const defaultConfig: TailwindConfig = {
+  prefix: "tw-",
+};
+
+// Global config (set once at app init)
+let globalConfig = defaultConfig;
+
+export function configureTailwind(config: Partial<TailwindConfig>) {
+  globalConfig = { ...defaultConfig, ...config };
+}
+
+export function getConfig(): TailwindConfig {
+  return globalConfig;
+}
+
+// Alternative: Factory pattern for isolation
+export function createTailwind(config: Partial<TailwindConfig> = {}) {
+  const mergedConfig = { ...defaultConfig, ...config };
+  // Return utilities bound to this config
+  return {
+    spacing: createSpacing(mergedConfig),
+    colors: createColors(mergedConfig),
+    // ...
+  };
+}
+```
+
+### Class Name Generation (Deterministic)
+
+```ts
+// packages/tailwind/src/core.ts
+export function createUtility(
+  property: string,
+  utilityName: string, // e.g., "p", "bg"
+  config: TailwindConfig,
+) {
+  const prefix = config.prefix ?? "tw-";
+
+  return (value: string, valueName?: string): StyleToken => {
+    // Use valueName if provided (for predefined), otherwise derive from value
+    const suffix = valueName ?? valueToSuffix(value);
+    const className = `${prefix}${utilityName}-${suffix}`;
+
+    return {
+      __kind: "style",
+      _: className,
+      __cssTemplate: `.${className} { ${property}: ${value}; }`,
+      toString() {
+        return this._;
+      },
+    };
+  };
+}
+
+// Deterministic suffix generation
+function valueToSuffix(value: string): string {
+  // For simple values, use as-is (sanitized)
+  if (/^[\w.-]+$/.test(value)) {
+    return value.replace(/\./g, "_").replace(/-/g, "_");
+  }
+  // For complex values (calc, rgb, etc.), use deterministic hash
+  return hashString(value).slice(0, 6);
+}
+```
+
+### Generated Class Names (Examples)
+
+| Config          | Utility      | Generated Class | CSS                             |
+| --------------- | ------------ | --------------- | ------------------------------- |
+| `prefix: "tw-"` | `spacing.p4` | `tw-p-4`        | `.tw-p-4 { padding: 1rem; }`    |
+| `prefix: "tw-"` | `p\`10px\``  | `tw-p-10px`     | `.tw-p-10px { padding: 10px; }` |
+| `prefix: ""`    | `spacing.p4` | `p-4`           | `.p-4 { padding: 1rem; }`       |
+| `prefix: "my-"` | `spacing.p4` | `my-p-4`        | `.my-p-4 { padding: 1rem; }`    |
+
+### SSR Compatibility
+
+With deterministic class names:
+
+```tsx
+// Server renders:
+<div class="tw-p-4 tw-bg-blue-500">
+
+// Client hydrates with exact same classes:
+<div class="tw-p-4 tw-bg-blue-500">  // ✅ No mismatch
+```
+
+### Migration Path from Native Tailwind
+
+For users migrating from native Tailwind:
+
+```ts
+// Step 1: Use no prefix to match existing classes
+configureTailwind({ prefix: "" });
+
+// Step 2: Gradually migrate, CSS works the same
+<div class={[spacing.p4, "existing-tailwind-class"]}>
+
+// Step 3: Optionally add prefix later for isolation
+configureTailwind({ prefix: "tw-" });
+```
+
+---
+
 ## Architecture
 
 ### Package Structure
