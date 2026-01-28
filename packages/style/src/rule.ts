@@ -85,7 +85,9 @@ export function rule(
       const index = bindingDefs.length;
       const unit = extractUnit(nextString);
       bindingDefs.push({ signal: value, index, unit });
-      cssTemplate += `{{${index}}}` + nextString;
+      // Remove unit from nextString since it will be included in the CSS variable value
+      const nextStringWithoutUnit = unit ? nextString.slice(unit.length) : nextString;
+      cssTemplate += `{{${index}}}` + nextStringWithoutUnit;
     } else {
       // Static value: interpolate directly
       cssTemplate += String(value) + nextString;

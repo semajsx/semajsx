@@ -45,7 +45,9 @@ describe("rule", () => {
     expect(token.__bindingDefs).toHaveLength(1);
     expect(token.__bindingDefs![0].signal).toBe(height);
     expect(token.__bindingDefs![0].unit).toBe("px");
-    expect(token.__cssTemplate).toContain("{{0}}px");
+    // Unit is stored in bindingDefs, not in cssTemplate (to avoid invalid "var(--x)px" syntax)
+    expect(token.__cssTemplate).toContain("{{0}}");
+    expect(token.__cssTemplate).not.toContain("{{0}}px");
   });
 
   it("should handle multiple signal interpolations", () => {
@@ -58,8 +60,11 @@ describe("rule", () => {
     expect(token.__bindingDefs).toHaveLength(2);
     expect(token.__bindingDefs![0].unit).toBe("px");
     expect(token.__bindingDefs![1].unit).toBe("em");
-    expect(token.__cssTemplate).toContain("{{0}}px");
-    expect(token.__cssTemplate).toContain("{{1}}em");
+    // Units are stored in bindingDefs, not in cssTemplate
+    expect(token.__cssTemplate).toContain("{{0}}");
+    expect(token.__cssTemplate).toContain("{{1}}");
+    expect(token.__cssTemplate).not.toContain("{{0}}px");
+    expect(token.__cssTemplate).not.toContain("{{1}}em");
   });
 
   it("should handle static value interpolation", () => {
