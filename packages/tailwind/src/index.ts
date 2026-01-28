@@ -97,3 +97,19 @@ export {
   sizing,
   sizingArb,
 } from "./sizing";
+
+// Color utilities
+export type { ColorValues, ColorGroup, ColorArbGroup } from "./colors";
+export {
+  // Predefined values
+  bg,
+  text,
+  border,
+  // Arbitrary value functions
+  bgArb,
+  textArb,
+  borderArb,
+  // Grouped exports
+  colors,
+  colorsArb,
+} from "./colors";
