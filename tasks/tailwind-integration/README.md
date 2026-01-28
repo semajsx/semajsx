@@ -185,7 +185,7 @@ export function createUtility(
   utilityName: string, // e.g., "p", "bg"
   config: TailwindConfig,
 ) {
-  const prefix = config.prefix ?? "tw-";
+  const prefix = config.prefix ?? ""; // Default: no prefix
 
   return (value: string, valueName?: string): StyleToken => {
     // Use valueName if provided (for predefined), otherwise derive from value
@@ -676,13 +676,13 @@ Per RFC Section 10.2, Tailwind utilities use **object exports** for ergonomics. 
 
 ### Class Name Conflicts
 
-To avoid conflicts with user-defined classes, Tailwind utilities use hashed prefixes from `classes()`:
+Since we use no prefix by default (native Tailwind-style class names), potential conflicts are handled by:
 
-```ts
-const c = classes(["p", "m", "w", "h", ...]);
-// c.p.toString() -> "p-x7f3a"
-// Final className: "p-x7f3a-1rem"
-```
+1. **User awareness**: Users know `p-4` might conflict with their own CSS
+2. **Optional prefix**: Use `configureTailwind({ prefix: "s-" })` if isolation needed
+3. **Scoped CSS**: In component libraries, use CSS Modules or Shadow DOM alongside
+
+**Note**: We intentionally do NOT use `classes()` from `@semajsx/style` because it generates non-deterministic hashes (uses `Date.now()`). Instead, we use deterministic class names like `p-4`, `bg-blue-500`.
 
 ---
 
@@ -694,16 +694,22 @@ const c = classes(["p", "m", "w", "h", ...]);
 4. **Type tests** for TypeScript inference
 
 ```ts
-// Example test
+// Example test (with default prefix: "")
 it("generates correct padding class", () => {
-  expect(spacing.p4._).toBe("p-x7f3a-1rem");
-  expect(spacing.p4.__cssTemplate).toBe(".p-x7f3a-1rem { padding: 1rem; }");
+  expect(spacing.p4._).toBe("p-4");
+  expect(spacing.p4.__cssTemplate).toBe(".p-4 { padding: 1rem; }");
 });
 
 it("arbitrary values work", () => {
   const token = p`4px`;
-  expect(token._).toBe("p-x7f3a-4px");
-  expect(token.__cssTemplate).toBe(".p-x7f3a-4px { padding: 4px; }");
+  expect(token._).toBe("p-4px");
+  expect(token.__cssTemplate).toBe(".p-4px { padding: 4px; }");
+});
+
+// With custom prefix
+it("supports custom prefix", () => {
+  configureTailwind({ prefix: "s-" });
+  expect(spacing.p4._).toBe("s-p-4");
 });
 ```
 
