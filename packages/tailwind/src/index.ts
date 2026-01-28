@@ -73,3 +73,27 @@ export {
   spacing,
   spacingArb,
 } from "./spacing";
+
+// Sizing utilities
+export type { SizingValues, SizingGroup, SizingArbGroup } from "./sizing";
+export {
+  // Predefined values
+  w,
+  minW,
+  maxW,
+  h,
+  minH,
+  maxH,
+  size,
+  // Arbitrary value functions
+  wArb,
+  minWArb,
+  maxWArb,
+  hArb,
+  minHArb,
+  maxHArb,
+  sizeArb,
+  // Grouped exports
+  sizing,
+  sizingArb,
+} from "./sizing";
