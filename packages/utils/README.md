@@ -5,7 +5,7 @@ Shared utility functions and type helpers for SemaJSX packages.
 ## Installation
 
 ```bash
-pnpm add @semajsx/utils
+bun add @semajsx/utils
 ```
 
 ## Usage

@@ -5,7 +5,7 @@ Fine-grained reactive signal system for SemaJSX. Provides reactive primitives fo
 ## Installation
 
 ```bash
-pnpm add @semajsx/signal
+bun add @semajsx/signal
 ```
 
 ## Features

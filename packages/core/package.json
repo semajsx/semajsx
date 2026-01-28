@@ -44,8 +44,8 @@
   },
   "devDependencies": {
     "@semajsx/configs": "workspace:*",
-    "tsdown": "^0.16.8",
+    "tsdown": "^0.20.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.18"
   }
 }

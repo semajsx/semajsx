@@ -34,13 +34,13 @@
     "@semajsx/dom": "workspace:*",
     "@semajsx/logger": "workspace:*",
     "@semajsx/signal": "workspace:*",
-    "glob": "^11.0.0",
-    "lightningcss": "^1.30.2",
-    "minimatch": "^10.0.0"
+    "glob": "^13.0.0",
+    "lightningcss": "^1.31.1",
+    "minimatch": "^10.1.1"
   },
   "devDependencies": {
     "@semajsx/configs": "workspace:*",
-    "tsdown": "^0.16.8",
+    "tsdown": "^0.20.1",
     "typescript": "^5.9.3"
   },
   "peerDependencies": {

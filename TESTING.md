@@ -299,7 +299,7 @@ For CI environments, ensure Playwright browsers are installed:
 
 ```bash
 # Install Playwright browsers with dependencies
-npx playwright install --with-deps chromium
+bun playwright install --with-deps chromium
 ```
 
 Run tests in headless mode (default):
