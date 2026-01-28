@@ -91,7 +91,7 @@ bun run typecheck
 
 We use:
 
-- **Prettier** with oxc plugin for formatting
+- **oxfmt** for formatting (30x faster than Prettier)
 - **oxlint** for linting
 - **TypeScript** for type safety
 - **Conventional Commits** for commit messages

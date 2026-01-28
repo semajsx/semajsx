@@ -88,9 +88,13 @@ semajsx/
 │   ├── terminal/             # @semajsx/terminal - Terminal rendering
 │   │   ├── src/
 │   │   └── examples/
-│   ├── server/               # @semajsx/ssr - SSR and Island architecture
+│   ├── ssr/                  # @semajsx/ssr - SSR and Island architecture
 │   │   ├── src/
 │   │   └── examples/
+│   ├── ssg/                  # @semajsx/ssg - Static site generation
+│   │   └── src/
+│   ├── style/                # @semajsx/style - Modular styling system
+│   │   └── src/
 │   ├── logger/               # @semajsx/logger - Logging utilities
 │   │   ├── src/
 │   │   └── examples/
@@ -130,10 +134,18 @@ semajsx/
    - SSR and Island architecture
    - Vite-powered routing and building
 
-6. **Logger** (`packages/logger/`)
+6. **Static Site Generation** (`packages/ssg/`)
+   - Static site generation with collections
+   - MDX support
+
+7. **Style** (`packages/style/`)
+   - Modular styling system
+   - Tree-shakeable CSS with native syntax
+
+8. **Logger** (`packages/logger/`)
    - Logging utilities
 
-7. **Utils** (`packages/utils/`)
+9. **Utils** (`packages/utils/`)
    - Shared utilities
 
 ## Development Commands
@@ -193,7 +205,8 @@ bun run typecheck
 Examples are located in their respective packages:
 
 - **DOM examples**: `packages/dom/examples/`
-- **Server examples**: `packages/ssr/examples/`
+- **SSR examples**: `packages/ssr/examples/`
+- **SSG examples**: `packages/ssg/examples/`
 - **Terminal examples**: `packages/terminal/examples/`
 - **Logger examples**: `packages/logger/examples/`
 
@@ -417,6 +430,17 @@ The project uses **Vitest** with a dual testing strategy:
 
 - **Node Environment**: Signal system, core runtime, utils (fast)
 - **Browser Mode + Playwright**: DOM rendering with real browser APIs
+
+### Playwright Browser Installation
+
+To run browser-based tests, install Playwright browsers:
+
+```bash
+# Install Playwright browsers (use bun, not npx)
+bun playwright install --with-deps chromium
+```
+
+**Note**: Always use `bun playwright install` instead of `npx playwright install`.
 
 ### Test File Organization
 

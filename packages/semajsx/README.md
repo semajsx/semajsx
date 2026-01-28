@@ -2,17 +2,17 @@
 
 A signal-based reactive JSX runtime for building modern web applications.
 
-This is the main package that contains all SemaJSX features. In the future, this will become an umbrella package that re-exports all sub-packages.
+This is the main umbrella package that re-exports all SemaJSX sub-packages.
 
-## Current Status
-
-This package currently contains the entire SemaJSX codebase. It will be gradually split into smaller packages:
+## Included Packages
 
 - `@semajsx/signal` - Signal reactivity system
 - `@semajsx/core` - Runtime core (VNode, helpers)
 - `@semajsx/dom` - DOM rendering
 - `@semajsx/terminal` - Terminal rendering
 - `@semajsx/ssr` - SSR and Island architecture
+- `@semajsx/ssg` - Static site generation
+- `@semajsx/style` - Modular styling system
 - `@semajsx/logger` - Logging utilities
 - `@semajsx/utils` - Shared utilities
 
@@ -20,16 +20,16 @@ This package currently contains the entire SemaJSX codebase. It will be graduall
 
 ```bash
 # Build
-pnpm build
+bun run build
 
 # Watch mode
-pnpm dev
+bun run dev
 
 # Run tests
-pnpm test
+bun run test
 
 # Type checking
-pnpm typecheck
+bun run typecheck
 ```
 
 ## Examples

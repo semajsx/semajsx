@@ -5,7 +5,7 @@ Core runtime for SemaJSX - VNode system, JSX transformation, and rendering primi
 ## Installation
 
 ```bash
-pnpm add @semajsx/core
+bun add @semajsx/core
 ```
 
 ## Features

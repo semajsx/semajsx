@@ -6,8 +6,14 @@
 import { Fragment, jsx, jsxs } from "@semajsx/core";
 import type { ComponentAPI, JSXNode, Ref, VNode, WithKey, WithSignals } from "@semajsx/core";
 import type { Signal } from "@semajsx/signal";
+import type { StyleToken } from "@semajsx/style";
 
 export { jsx, jsxs, Fragment };
+
+/**
+ * Class value type - supports strings, StyleTokens, arrays, and conditionals
+ */
+export type ClassValue = string | StyleToken | ClassValue[] | false | null | undefined;
 
 /**
  * HTML attribute types (base definitions without Signal support)
@@ -18,8 +24,8 @@ interface BaseHTMLAttributes<T = Element> {
 
   // Standard attributes
   id?: string;
-  className?: string;
-  class?: string;
+  className?: ClassValue;
+  class?: ClassValue;
   style?: string | Record<string, string | number>;
   title?: string;
   lang?: string;

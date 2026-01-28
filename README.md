@@ -14,10 +14,13 @@ A lightweight, signal-based reactive JSX runtime for building modern web applica
 ## Installation
 
 ```bash
-npm install semajsx
-# or
+# Using Bun (recommended)
 bun add semajsx
-# or
+
+# Using npm
+npm install semajsx
+
+# Using pnpm
 pnpm add semajsx
 ```
 

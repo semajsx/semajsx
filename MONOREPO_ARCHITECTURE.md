@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the monorepo structure for SemaJSX, a signal-based reactive JSX runtime. The project uses a monorepo architecture powered by PNPM workspaces for efficient build orchestration.
+This document describes the monorepo structure for SemaJSX, a signal-based reactive JSX runtime. The project uses a monorepo architecture powered by Bun workspaces for efficient build orchestration.
 
 ## Directory Structure
 
@@ -79,7 +79,7 @@ semajsx/
 │   │   ├── examples/                # Terminal-specific examples
 │   │   └── tsconfig.json
 │   │
-│   ├── server/                      # SSR and Island architecture
+│   ├── ssr/                         # SSR and Island architecture
 │   │   ├── package.json             # name: "@semajsx/ssr"
 │   │   ├── src/
 │   │   │   ├── island.ts
@@ -89,8 +89,21 @@ semajsx/
 │   │   │   ├── vite-builder.ts
 │   │   │   ├── vite-router.ts
 │   │   │   └── index.ts
-│   │   ├── tests/                   # Unit tests for server
+│   │   ├── tests/                   # Unit tests for SSR
 │   │   ├── examples/                # SSR examples
+│   │   └── tsconfig.json
+│   │
+│   ├── ssg/                         # Static site generation
+│   │   ├── package.json             # name: "@semajsx/ssg"
+│   │   ├── src/
+│   │   │   └── index.ts
+│   │   ├── examples/                # SSG examples
+│   │   └── tsconfig.json
+│   │
+│   ├── style/                       # Modular styling system
+│   │   ├── package.json             # name: "@semajsx/style"
+│   │   ├── src/
+│   │   │   └── index.ts
 │   │   └── tsconfig.json
 │   │
 │   ├── logger/                      # Logging utility
@@ -125,12 +138,9 @@ semajsx/
 ├── scripts/                         # Build and utility scripts
 │
 ├── package.json                     # Root package.json with workspaces
-├── pnpm-workspace.yaml                       # PNPM workspaces configuration
-├── pnpm-workspace.yaml              # PNPM workspace configuration
 ├── tsconfig.json                    # Root TypeScript config
-├── .prettierrc                      # Prettier configuration
-├── .prettierignore                  # Prettier ignore patterns
 ├── oxlint.json                      # OxLint configuration
+├── oxfmt.json                       # OxFmt configuration
 ├── .lintstagedrc.json              # Lint-staged configuration
 ├── commitlint.config.js            # Commitlint configuration
 └── README.md                        # Root README
@@ -159,6 +169,12 @@ semajsx (main package)
 │   ├── @semajsx/core
 │   ├── @semajsx/signal
 │   ├── @semajsx/dom
+│   └── @semajsx/utils
+├── @semajsx/ssg
+│   ├── @semajsx/core
+│   └── @semajsx/utils
+├── @semajsx/style
+│   ├── @semajsx/signal
 │   └── @semajsx/utils
 └── @semajsx/logger
     └── @semajsx/utils
@@ -211,6 +227,20 @@ Internal:
 - **Dependencies**: `@semajsx/core`, `@semajsx/signal`, `@semajsx/dom`, `@semajsx/utils`, `vite`
 - **Type**: Published package
 
+#### `@semajsx/ssg`
+
+- **Description**: Static site generation with collections and MDX support
+- **Exports**: `defineCollection`, `getCollection`, MDX utilities
+- **Dependencies**: `@semajsx/core`, `@semajsx/utils`
+- **Type**: Published package
+
+#### `@semajsx/style`
+
+- **Description**: Modular styling system with tree-shakeable CSS
+- **Exports**: `css`, `styled`, style utilities
+- **Dependencies**: `@semajsx/signal`, `@semajsx/utils`
+- **Type**: Published package
+
 #### `@semajsx/logger`
 
 - **Description**: Logging utility for terminal and server
@@ -237,10 +267,9 @@ Internal:
 ### Phase 1: Foundation (Current)
 
 1. **Setup root monorepo configuration**
-   - Create `pnpm-workspace.yaml`
-   - Create `pnpm-workspace.yaml`
+   - Configure Bun workspaces in `package.json`
    - Update root `package.json` with workspace configuration
-   - Move lint/prettier configs to root
+   - Move lint configs to root
 
 2. **Create `packages/configs`**
    - Create shared TypeScript configurations
@@ -305,25 +334,26 @@ Each package will be extracted one by one:
 
 ### Build System
 
-- **PNPM workspaces**: Orchestrates builds across packages
+- **Bun workspaces**: Orchestrates builds across packages
 - **tsdown**: TypeScript compilation for library packages
 - **Vite**: Build tool for examples and apps
 
 ### Package Manager
 
-- **Choice**: PNPM (recommended) or Bun workspaces
+- **Bun**: Fast package manager with native workspace support
 - **Reason**: Efficient disk usage, fast installs, workspace support
 
 ### Testing
 
 - **Vitest**: Test runner for all packages
+- **Playwright**: Browser-based testing for DOM package
 - **Coverage**: Each package has its own coverage
 - **Integration tests**: In main `semajsx` package
 
 ### Linting & Formatting
 
 - **oxlint**: Fast Rust-based linter (root level)
-- **Prettier**: Code formatting (root level)
+- **oxfmt**: Fast Rust-based formatter (root level, 30x faster than Prettier)
 - **lint-staged**: Pre-commit hooks (root level)
 
 ## Scripts Organization
@@ -333,14 +363,16 @@ Each package will be extracted one by one:
 ```json
 {
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
-    "test": "turbo test",
-    "lint": "oxlint packages apps",
-    "lint:fix": "oxlint --fix packages apps",
-    "format": "prettier --write .",
-    "typecheck": "turbo typecheck",
-    "clean": "turbo clean && rm -rf node_modules"
+    "build": "bun run --filter '*' build",
+    "dev": "bun run --filter '*' dev",
+    "test": "vitest",
+    "test:unit": "vitest --config vitest.unit.config.ts",
+    "typecheck": "tsgo --build --pretty",
+    "typecheck:tsc": "bun run --filter '*' typecheck",
+    "lint": "oxlint packages",
+    "lint:fix": "oxlint --fix packages",
+    "format": "oxfmt",
+    "clean": "bun run --filter '*' clean && rm -rf node_modules"
   }
 }
 ```
@@ -366,7 +398,7 @@ Each package has:
 1. **Clear Separation**: Each package has a single responsibility
 2. **Independent Versioning**: Packages can be versioned independently
 3. **Better Tree-Shaking**: Users can import only what they need
-4. **Faster Builds**: PNPM workspaces caches and parallelizes builds
+4. **Faster Builds**: Bun workspaces caches and parallelizes builds
 5. **Easier Testing**: Each package has focused tests
 6. **Better DX**: Clear boundaries and dependencies
 
@@ -382,6 +414,8 @@ All packages except `@semajsx/configs` will be published to npm:
 - `@semajsx/dom` - Can be used standalone
 - `@semajsx/terminal` - Can be used standalone
 - `@semajsx/ssr` - Requires dom package
+- `@semajsx/ssg` - Static site generation
+- `@semajsx/style` - Can be used standalone
 - `@semajsx/logger` - Can be used standalone
 - `@semajsx/utils` - Can be used standalone
 
