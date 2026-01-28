@@ -154,12 +154,46 @@ uniqueClasses(["root"]); // "root-x7f3a" (unique each time)
 
 #### Recommendation
 
-**Option A (single function with options)** is preferred because:
+**Option C (Factory function pattern)** is now preferred:
 
-1. Single API to learn
-2. Options are explicit about intent
-3. TypeScript can enforce valid combinations
-4. Easier to add new options in future
+```ts
+// Default classes() - deterministic hash (has value)
+const c = classes(["root", "icon"]);
+// c.root.toString() -> "root-a1b2c" (deterministic, NOT Date.now())
+
+// Factory function - custom config
+const myClasses = createClasses({
+  hash: false, // no hash
+  prefix: "btn-", // add prefix
+});
+const c = myClasses(["root"]);
+// c.root.toString() -> "btn-root"
+
+// Or with deterministic namespace
+const buttonClasses = createClasses({
+  hash: "deterministic",
+  namespace: "Button",
+});
+const c = buttonClasses(["root"]);
+// c.root.toString() -> "Button-root-a1b2c"
+```
+
+**Why factory function is better than single function + options:**
+
+1. **Default has value**: `classes()` with hash justifies its existence (otherwise just use string)
+2. **Configure once**: No need to pass options every call
+3. **Consistent pattern**: Same as `createTailwind({ prefix: "s-" })`
+4. **Simpler types**: No complex overloads or union types
+5. **Scoped configs**: Different parts of app can have different configs
+
+**Comparison:**
+
+| Aspect          | Single fn + Options        | Factory Function          |
+| --------------- | -------------------------- | ------------------------- |
+| Default useful? | ❌ No hash = why use it?   | ✅ Hash = valuable        |
+| Repetitive?     | ❌ Pass options every call | ✅ Configure once         |
+| Pattern         | Unique                     | ✅ Same as createTailwind |
+| Types           | Complex overloads          | Simple                    |
 
 #### Migration Path
 
