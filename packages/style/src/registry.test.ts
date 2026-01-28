@@ -53,8 +53,9 @@ describe("StyleRegistry", () => {
 
   it("should handle signal bindings with anchor element", async () => {
     const c = classes(["box"]);
-    const height = signal(100);
-    const token = rule`${c.box} { height: ${height}px; }`;
+    // Signal value includes the unit
+    const height = signal("100px");
+    const token = rule`${c.box} { height: ${height}; }`;
 
     const registry = new StyleRegistry({ target: container });
     registry.setAnchorElement(container);
@@ -64,7 +65,7 @@ describe("StyleRegistry", () => {
     expect(container.style.cssText).toContain("100px");
 
     // Update signal
-    height.value = 200;
+    height.value = "200px";
     await new Promise((r) => queueMicrotask(r));
 
     // Should update CSS variable
@@ -75,8 +76,8 @@ describe("StyleRegistry", () => {
 
   it("should cleanup subscriptions on dispose", async () => {
     const c = classes(["box"]);
-    const height = signal(100);
-    const token = rule`${c.box} { height: ${height}px; }`;
+    const height = signal("100px");
+    const token = rule`${c.box} { height: ${height}; }`;
 
     const registry = new StyleRegistry({ target: container });
     registry.setAnchorElement(container);
@@ -86,7 +87,7 @@ describe("StyleRegistry", () => {
 
     // After dispose, signal updates should not affect the element
     const currentStyle = container.style.cssText;
-    height.value = 300;
+    height.value = "300px";
     await new Promise((r) => queueMicrotask(r));
 
     expect(container.style.cssText).toBe(currentStyle);

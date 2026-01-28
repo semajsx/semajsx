@@ -36,35 +36,39 @@ describe("rule", () => {
 
   it("should handle signal interpolation", () => {
     const c = classes(["box"]);
-    const height = signal(100);
+    // Signal value should include unit - no automatic unit extraction
+    const height = signal("100px");
 
-    const token = rule`${c.box} { height: ${height}px; }`;
+    const token = rule`${c.box} { height: ${height}; }`;
 
     expect(token.__kind).toBe("style");
     expect(token.__bindingDefs).toBeDefined();
     expect(token.__bindingDefs).toHaveLength(1);
     expect(token.__bindingDefs![0].signal).toBe(height);
-    expect(token.__bindingDefs![0].unit).toBe("px");
-    // Unit is stored in bindingDefs, not in cssTemplate (to avoid invalid "var(--x)px" syntax)
     expect(token.__cssTemplate).toContain("{{0}}");
-    expect(token.__cssTemplate).not.toContain("{{0}}px");
   });
 
   it("should handle multiple signal interpolations", () => {
     const c = classes(["box"]);
-    const height = signal(100);
-    const width = signal(200);
+    // Signal values should include units
+    const height = signal("100px");
+    const width = signal("200em");
 
-    const token = rule`${c.box} { height: ${height}px; width: ${width}em; }`;
+    const token = rule`${c.box} { height: ${height}; width: ${width}; }`;
 
     expect(token.__bindingDefs).toHaveLength(2);
-    expect(token.__bindingDefs![0].unit).toBe("px");
-    expect(token.__bindingDefs![1].unit).toBe("em");
-    // Units are stored in bindingDefs, not in cssTemplate
     expect(token.__cssTemplate).toContain("{{0}}");
     expect(token.__cssTemplate).toContain("{{1}}");
-    expect(token.__cssTemplate).not.toContain("{{0}}px");
-    expect(token.__cssTemplate).not.toContain("{{1}}em");
+  });
+
+  it("should handle signal without unit (e.g. opacity)", () => {
+    const c = classes(["box"]);
+    const opacity = signal(0.5);
+
+    const token = rule`${c.box} { opacity: ${opacity}; }`;
+
+    expect(token.__bindingDefs).toHaveLength(1);
+    expect(token.__bindingDefs![0].signal).toBe(opacity);
   });
 
   it("should handle static value interpolation", () => {
@@ -103,11 +107,11 @@ describe("rules", () => {
 
   it("should merge binding definitions", () => {
     const c = classes(["box"]);
-    const height = signal(100);
+    const height = signal("100px");
     const opacity = signal(0.5);
 
     const combined = rules(
-      rule`${c.box} { height: ${height}px; }`,
+      rule`${c.box} { height: ${height}; }`,
       rule`${c.box}:hover { opacity: ${opacity}; }`,
     );
 

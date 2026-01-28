@@ -188,9 +188,10 @@ describe("Vue Integration", () => {
     const TestComponent = defineComponent({
       setup() {
         const cx = useStyle();
-        const height = useSignal(100);
+        // Signal value includes the unit
+        const height = useSignal("100px");
 
-        const boxToken = rule`${c.box} { height: ${height}px; }`;
+        const boxToken = rule`${c.box} { height: ${height}; }`;
 
         return () =>
           h(
@@ -199,7 +200,7 @@ describe("Vue Integration", () => {
               class: cx(boxToken),
               "data-testid": "reactive-box",
               onClick: () => {
-                height.value = 200;
+                height.value = "200px";
               },
             },
             "Reactive",
@@ -253,8 +254,8 @@ describe("Vue Integration", () => {
     const { StyleAnchor, useStyle } = styleVue!;
 
     const c = classes(["cleanup"]);
-    const height = signal(100);
-    const boxToken = rule`${c.cleanup} { height: ${height}px; }`;
+    const height = signal("100px");
+    const boxToken = rule`${c.cleanup} { height: ${height}; }`;
 
     const TestComponent = defineComponent({
       setup() {
@@ -277,7 +278,7 @@ describe("Vue Integration", () => {
     app.unmount();
     app = null;
 
-    height.value = 300;
+    height.value = "300px";
     await nextTick();
 
     expect(true).toBe(true);

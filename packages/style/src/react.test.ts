@@ -152,9 +152,10 @@ describe("React Integration", () => {
 
     function TestComponent() {
       const cx = useStyle();
-      const height = useSignal(100);
+      // Signal value includes the unit
+      const height = useSignal("100px");
 
-      const boxToken = rule`${c.box} { height: ${height}px; }`;
+      const boxToken = rule`${c.box} { height: ${height}; }`;
 
       return createElement(
         "div",
@@ -162,7 +163,7 @@ describe("React Integration", () => {
           className: cx(boxToken),
           "data-testid": "reactive-box",
           onClick: () => {
-            height.value = 200;
+            height.value = "200px";
           },
         },
         "Reactive",
@@ -205,8 +206,8 @@ describe("React Integration", () => {
     const { StyleAnchor, useStyle } = styleReact!;
 
     const c = classes(["cleanup"]);
-    const height = signal(100);
-    const boxToken = rule`${c.cleanup} { height: ${height}px; }`;
+    const height = signal("100px");
+    const boxToken = rule`${c.cleanup} { height: ${height}; }`;
 
     function TestComponent() {
       const cx = useStyle();
@@ -219,7 +220,7 @@ describe("React Integration", () => {
     root!.unmount();
     root = null;
 
-    height.value = 300;
+    height.value = "300px";
     await new Promise((r) => setTimeout(r, 10));
 
     expect(true).toBe(true);

@@ -68,21 +68,13 @@ export class StyleRegistry {
   processToken(token: StyleToken): string {
     // 1. Generate final CSS with var() references
     let css = token.__cssTemplate;
-    const bindings: Array<{
-      signal: ReadableSignal<unknown>;
-      varName: string;
-      unit: string;
-    }> = [];
+    const bindings: Array<{ signal: ReadableSignal<unknown>; varName: string }> = [];
 
     if (token.__bindingDefs) {
       for (const def of token.__bindingDefs) {
         const varName = this.getSignalVarName(def.signal);
         css = css.replace(`{{${def.index}}}`, `var(${varName})`);
-        bindings.push({
-          signal: def.signal,
-          varName,
-          unit: def.unit,
-        });
+        bindings.push({ signal: def.signal, varName });
       }
     }
 
@@ -103,15 +95,13 @@ export class StyleRegistry {
 
     // 3. Set up signal subscriptions on the anchor element
     if (this.anchorElement && bindings.length > 0) {
-      for (const { signal, varName, unit } of bindings) {
-        // Set initial value
-        const value = unit ? `${signal.value}${unit}` : String(signal.value);
-        this.anchorElement.style.setProperty(varName, value);
+      for (const { signal, varName } of bindings) {
+        // Set initial value (signal value should include unit if needed)
+        this.anchorElement.style.setProperty(varName, String(signal.value));
 
         // Subscribe to changes
         const unsub = signal.subscribe((newValue: unknown) => {
-          const v = unit ? `${newValue}${unit}` : String(newValue);
-          this.anchorElement?.style.setProperty(varName, v);
+          this.anchorElement?.style.setProperty(varName, String(newValue));
         });
         this.subscriptions.add(unsub);
       }

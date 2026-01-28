@@ -163,9 +163,7 @@ export function StyleAnchor({ target, children }: StyleAnchorProps) {
   const elementRef = useRef<HTMLDivElement>(null);
   const subscriptionsRef = useRef<Set<() => void>>(new Set());
   // Store pending bindings to apply after mount
-  const pendingBindingsRef = useRef<
-    Array<{ signal: Signal<unknown>; varName: string; unit: string }>
-  >([]);
+  const pendingBindingsRef = useRef<Array<{ signal: Signal<unknown>; varName: string }>>([]);
 
   // Create registry once per anchor instance
   const registryRef = useRef<StyleAnchorRegistry | null>(null);
@@ -180,11 +178,7 @@ export function StyleAnchor({ target, children }: StyleAnchorProps) {
       processToken(token: StyleToken): string {
         // 1. Generate final CSS by replacing placeholders with var names
         let css = token.__cssTemplate;
-        const bindings: Array<{
-          signal: Signal<unknown>;
-          varName: string;
-          unit: string;
-        }> = [];
+        const bindings: Array<{ signal: Signal<unknown>; varName: string }> = [];
 
         if (token.__bindingDefs) {
           for (const def of token.__bindingDefs) {
@@ -196,7 +190,7 @@ export function StyleAnchor({ target, children }: StyleAnchorProps) {
             }
             // Replace placeholder with var()
             css = css.replace(`{{${def.index}}}`, `var(${varName})`);
-            bindings.push({ signal: def.signal, varName, unit: def.unit });
+            bindings.push({ signal: def.signal, varName });
           }
         }
 
@@ -221,13 +215,11 @@ export function StyleAnchor({ target, children }: StyleAnchorProps) {
         if (bindings.length > 0) {
           if (anchorElement) {
             // Element is available, apply bindings now
-            for (const { signal, varName, unit } of bindings) {
-              const value = unit ? `${signal.value}${unit}` : String(signal.value);
-              anchorElement.style.setProperty(varName, value);
+            for (const { signal, varName } of bindings) {
+              anchorElement.style.setProperty(varName, String(signal.value));
 
               const unsub = signal.subscribe((newValue: unknown) => {
-                const v = unit ? `${newValue}${unit}` : String(newValue);
-                anchorElement.style.setProperty(varName, v);
+                anchorElement.style.setProperty(varName, String(newValue));
               });
               subscriptionsRef.current.add(unsub);
             }
@@ -250,13 +242,11 @@ export function StyleAnchor({ target, children }: StyleAnchorProps) {
   useEffect(() => {
     const anchorElement = elementRef.current;
     if (anchorElement && pendingBindingsRef.current.length > 0) {
-      for (const { signal, varName, unit } of pendingBindingsRef.current) {
-        const value = unit ? `${signal.value}${unit}` : String(signal.value);
-        anchorElement.style.setProperty(varName, value);
+      for (const { signal, varName } of pendingBindingsRef.current) {
+        anchorElement.style.setProperty(varName, String(signal.value));
 
         const unsub = signal.subscribe((newValue: unknown) => {
-          const v = unit ? `${newValue}${unit}` : String(newValue);
-          anchorElement.style.setProperty(varName, v);
+          anchorElement.style.setProperty(varName, String(newValue));
         });
         subscriptionsRef.current.add(unsub);
       }

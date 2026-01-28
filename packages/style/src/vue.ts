@@ -142,23 +142,17 @@ export const StyleAnchor = defineComponent({
     const signalVars = new WeakMap<Signal<unknown>, string>();
     const injectedClasses = new Set<string>();
     // Store pending bindings to apply after mount
-    const pendingBindings: Array<{
-      signal: Signal<unknown>;
-      varName: string;
-      unit: string;
-    }> = [];
+    const pendingBindings: Array<{ signal: Signal<unknown>; varName: string }> = [];
 
     const applyBindings = (
-      bindings: Array<{ signal: Signal<unknown>; varName: string; unit: string }>,
+      bindings: Array<{ signal: Signal<unknown>; varName: string }>,
       element: HTMLElement,
     ) => {
-      for (const { signal, varName, unit } of bindings) {
-        const value = unit ? `${signal.value}${unit}` : String(signal.value);
-        element.style.setProperty(varName, value);
+      for (const { signal, varName } of bindings) {
+        element.style.setProperty(varName, String(signal.value));
 
         const unsub = signal.subscribe((newValue: unknown) => {
-          const v = unit ? `${newValue}${unit}` : String(newValue);
-          element.style.setProperty(varName, v);
+          element.style.setProperty(varName, String(newValue));
         });
         subscriptions.add(unsub);
       }
@@ -172,11 +166,7 @@ export const StyleAnchor = defineComponent({
       processToken(token: StyleToken): string {
         // 1. Generate final CSS by replacing placeholders with var names
         let css = token.__cssTemplate;
-        const bindings: Array<{
-          signal: Signal<unknown>;
-          varName: string;
-          unit: string;
-        }> = [];
+        const bindings: Array<{ signal: Signal<unknown>; varName: string }> = [];
 
         if (token.__bindingDefs) {
           for (const def of token.__bindingDefs) {
@@ -188,7 +178,7 @@ export const StyleAnchor = defineComponent({
             }
             // Replace placeholder with var()
             css = css.replace(`{{${def.index}}}`, `var(${varName})`);
-            bindings.push({ signal: def.signal, varName, unit: def.unit });
+            bindings.push({ signal: def.signal, varName });
           }
         }
 

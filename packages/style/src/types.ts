@@ -30,8 +30,6 @@ export interface SignalBindingDef {
   signal: ReadableSignal<unknown>;
   /** Position in template (for placeholder replacement) */
   index: number;
-  /** Suffix like "px", "em", etc. */
-  unit: string;
 }
 
 /**

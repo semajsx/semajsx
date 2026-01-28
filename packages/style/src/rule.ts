@@ -30,19 +30,6 @@ function extractClassName(css: string): string | undefined {
 }
 
 /**
- * Extract unit suffix from the string following a signal interpolation
- *
- * @example
- * "px;" -> "px"
- * "em }" -> "em"
- * "; font-size" -> ""
- */
-function extractUnit(str: string): string {
-  const match = str.match(/^(px|em|rem|%|vh|vw|vmin|vmax|ch|ex|s|ms|deg|rad)?/);
-  return match?.[1] ?? "";
-}
-
-/**
  * Create a StyleToken from a tagged template containing selector + CSS block
  *
  * @example
@@ -82,12 +69,10 @@ export function rule(
       cssTemplate += "." + value.toString() + nextString;
     } else if (isSignal(value)) {
       // Signal: use placeholder {{index}}, variable name assigned by anchor later
+      // No unit extraction - signal value should include unit if needed (e.g., "100px")
       const index = bindingDefs.length;
-      const unit = extractUnit(nextString);
-      bindingDefs.push({ signal: value, index, unit });
-      // Remove unit from nextString since it will be included in the CSS variable value
-      const nextStringWithoutUnit = unit ? nextString.slice(unit.length) : nextString;
-      cssTemplate += `{{${index}}}` + nextStringWithoutUnit;
+      bindingDefs.push({ signal: value, index });
+      cssTemplate += `{{${index}}}` + nextString;
     } else {
       // Static value: interpolate directly
       cssTemplate += String(value) + nextString;
