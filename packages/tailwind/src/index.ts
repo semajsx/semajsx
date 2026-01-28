@@ -149,3 +149,28 @@ export {
   flexbox,
   flexboxArb,
 } from "./flexbox";
+
+// Typography utilities
+export type { TypographyValues, TypographyGroup, TypographyArbGroup } from "./typography";
+export {
+  // Predefined values
+  fontSize,
+  fontWeight,
+  fontFamily,
+  fontStyle,
+  lineHeight,
+  letterSpacing,
+  textAlign,
+  textDecoration,
+  textTransform,
+  whitespace,
+  wordBreak,
+  truncate,
+  // Arbitrary value functions
+  fontSizeArb,
+  lineHeightArb,
+  letterSpacingArb,
+  // Grouped exports
+  typography,
+  typographyArb,
+} from "./typography";
