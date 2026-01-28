@@ -29,3 +29,47 @@ export {
   createTaggedUtility,
   createMultiUtility,
 } from "./core";
+
+// Spacing utilities
+export type { SpacingValues, SpacingGroup, SpacingArbGroup } from "./spacing";
+export {
+  // Predefined values
+  p,
+  px,
+  py,
+  pt,
+  pr,
+  pb,
+  pl,
+  m,
+  mx,
+  my,
+  mt,
+  mr,
+  mb,
+  ml,
+  gap,
+  gapX,
+  gapY,
+  // Arbitrary value functions
+  pArb,
+  pxArb,
+  pyArb,
+  ptArb,
+  prArb,
+  pbArb,
+  plArb,
+  mArb,
+  mxArb,
+  myArb,
+  mtArb,
+  mrArb,
+  mbArb,
+  mlArb,
+  gapArb,
+  gapXArb,
+  gapYArb,
+  // Grouped exports
+  spacing,
+  spacingArb,
+} from "./spacing";
