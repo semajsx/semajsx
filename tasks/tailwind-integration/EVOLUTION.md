@@ -54,31 +54,9 @@ The RFC (006-style-system.md Section 10) provides a detailed specification:
    - Simpler and more efficient
    - Enabled by deterministic className generation
 
-### Current Implementation Status
+### Critical Discovery: Non-Deterministic Class Names
 
-The `@semajsx/style` package provides:
-
-- `classes()` - Generate hashed class name references
-- `rule()` - Create StyleToken from tagged template
-- `inject()` - Inject CSS into DOM
-- `StyleRegistry` - Manage style injection
-
-These primitives are sufficient to build Tailwind utilities on top.
-
-### Design Considerations
-
-1. **Package Structure**: Separate package vs. subpath export
-   - Decision: New package `@semajsx/tailwind` for cleaner dependencies
-
-2. **Value Generation**: Runtime vs. build-time
-   - Decision: Hardcode Tailwind default scale values for zero runtime cost
-
-3. **Naming Convention**: Match Tailwind exactly vs. optimize for JS
-   - Decision: Camel case for JS (e.g., `bgBlue500` not `bg-blue-500`)
-
-### Critical Issue: Non-Deterministic Class Names
-
-**Discovery**: The current `classes()` in `@semajsx/style` uses `Date.now()`:
+**Problem**: The `classes()` in `@semajsx/style` uses `Date.now()`:
 
 ```ts
 // packages/style/src/classes.ts line 28
@@ -93,188 +71,221 @@ const hash = hashString(name + Date.now().toString(36));
 
 **Decision**: Tailwind package will NOT use `classes()`. Instead, use deterministic naming.
 
-### Proposal: Improve `classes()` API in @semajsx/style
+---
 
-The discovery of `Date.now()` in `classes()` suggests a broader API redesign is needed. Here's a proposal:
+## Design Evolution
 
-#### Current Problem
+### Phase 1: Initial Proxy-Based Design (Abandoned)
 
-```ts
-// Current: always hashes with Date.now() (non-deterministic)
-const c = classes(["root", "icon"]);
-// c.root.toString() -> "root-x7f3a" (different each time!)
-```
-
-#### Proposed Solution: Flexible Options
+The original design mimicked Tailwind's string-based API:
 
 ```ts
-interface ClassesOptions {
-  /** Add prefix to all class names */
-  prefix?: string;
-  /** Hash strategy: false (default), "deterministic", or "unique" */
-  hash?: false | "deterministic" | "unique";
-  /** Namespace for deterministic hash (e.g., component name) */
-  namespace?: string;
-}
+// Original design - using Proxy for dynamic access
+spacing.p["4"]; // → "p-4"
+sizing.w["1/2"]; // → "w-1/2"
+layout.zIndex["50"]; // → "z-50"
 ```
 
-#### Usage Examples
+**Problems discovered**:
+
+1. Awkward bracket notation (`["4"]`, `["1/2"]`)
+2. String literals lose type safety benefits
+3. Proxy overhead for simple value access
+4. Not tree-shakeable (entire proxy object imported)
+
+### Phase 2: Merged Naming Design (Final)
+
+Key insight: **"Think in JS, not CSS"** (学我者生，似我者死)
+
+Don't mechanically convert CSS patterns to JavaScript. Design for JavaScript's strengths:
 
 ```ts
-// 1. Default: no hash (new behavior, breaking change)
-const c = classes(["root", "icon"]);
-// c.root.toString() -> "root"
-// c.icon.toString() -> "icon"
-
-// 2. With prefix (common for component libraries)
-const c = classes(["root", "icon"], { prefix: "btn-" });
-// c.root.toString() -> "btn-root"
-// c.icon.toString() -> "btn-icon"
-
-// 3. Deterministic hash (for guaranteed uniqueness, SSR-safe)
-const c = classes(["root", "icon"], { hash: "deterministic", namespace: "Button" });
-// c.root.toString() -> "Button-root-a1b2c" (same every time)
-// c.icon.toString() -> "Button-icon-d3e4f" (same every time)
-
-// 4. Unique hash (for runtime isolation, NOT SSR-safe)
-const c = classes(["root", "icon"], { hash: "unique" });
-// c.root.toString() -> "root-x7f3a" (different each time)
-// Used for: dynamically created components that need isolation
+// Final design - flat exports with merged naming
+p4; // not p["4"]
+wFull; // not w["full"] or w["100%"]
+wHalf; // not w["1/2"]
+z50; // not zIndex["50"]
 ```
 
-#### Alternative: Separate Functions
+**Why this works better**:
+
+1. Natural JavaScript identifiers
+2. Full tree-shaking support
+3. IDE autocomplete shows all options
+4. No runtime Proxy overhead
+5. Semantic names for fractions (`wHalf` not `w["1/2"]`)
+
+---
+
+## Implementation Log
+
+### 2026-01-28: Initial Planning
+
+- Created task workspace
+- Documented implementation plan
+- Identified 8 implementation phases
+
+### 2026-01-28: Core & Spacing (Phases 1-2)
+
+- Implemented `createUtility` and `createTaggedUtility`
+- Implemented spacing module with Proxy-based API
+- First test suite passing
+
+### 2026-01-28: Sizing & Colors (Phases 3-4)
+
+- Implemented sizing with fractions
+- Implemented color utilities
+- Discovered issues with bracket notation
+
+### 2026-01-28: Typography & Flexbox (Phases 5-6)
+
+- Implemented typography utilities
+- Implemented flexbox utilities
+- Growing dissatisfaction with Proxy API
+
+### 2026-01-28: API Redesign Decision
+
+**Trigger**: User feedback on API ergonomics
+
+**Key insight**: The Proxy-based API was mimicking CSS too closely:
+
+- `p["4"]` looks like array access, not styling
+- `w["1/2"]` requires string literals everywhere
+- `zIndex["50"]` is verbose and awkward
+
+**Decision**: Complete API redesign with merged naming
+
+### 2026-01-28: Merged Naming Implementation
+
+Redesigned all modules:
+
+| Module     | Old API                       | New API         |
+| ---------- | ----------------------------- | --------------- |
+| Spacing    | `spacing.p["4"]`              | `p4`            |
+| Sizing     | `sizing.w["1/2"]`             | `wHalf`         |
+| Typography | `typography.fontSize["base"]` | `textBase`      |
+| Layout     | `layout.zIndex["50"]`         | `z50`           |
+| Effects    | `effects.opacity["50"]`       | `opacity50`     |
+| Flexbox    | `flex.justify.center`         | `justifyCenter` |
+
+### 2026-01-28: cx() Helper Added
+
+Essential for composing utilities:
 
 ```ts
-// Option B: Different functions for different use cases
-classes(["root", "icon"]); // "root", "icon"
-prefixedClasses("btn-", ["root"]); // "btn-root"
-hashedClasses(["root"], "Button"); // "Button-root-a1b2c" (deterministic)
-uniqueClasses(["root"]); // "root-x7f3a" (unique each time)
+import { cx, p4, wFull, roundedLg } from "@semajsx/tailwind";
+<div class={cx(p4, wFull, roundedLg)}>
 ```
 
-#### Recommendation
+### 2026-01-28: Final Testing
 
-**Option C (Factory function pattern)** is now preferred:
+- All 287 tests passing
+- All modules redesigned
+- Documentation updated
+
+---
+
+## Learnings
+
+### 1. Don't Mechanically Convert Patterns
+
+**学我者生，似我者死** (Those who learn from me live; those who copy me die)
+
+Tailwind's string-based API works for HTML templates. JavaScript has different strengths:
+
+- Static analysis (tree-shaking)
+- Type inference (autocomplete)
+- First-class values (composition)
+
+The right approach: **Design for JavaScript, not CSS-in-JS**.
+
+### 2. Flat Exports Beat Proxies
+
+Proxy-based APIs seem elegant but have hidden costs:
+
+- No tree-shaking (entire object imported)
+- Runtime overhead
+- Debugging difficulty
+- TypeScript complexity
+
+Flat exports are simpler and more efficient:
 
 ```ts
-// Default classes() - deterministic hash (has value)
-const c = classes(["root", "icon"]);
-// c.root.toString() -> "root-a1b2c" (deterministic, NOT Date.now())
-
-// Factory function - custom config
-const myClasses = createClasses({
-  hash: false, // no hash
-  prefix: "btn-", // add prefix
-});
-const c = myClasses(["root"]);
-// c.root.toString() -> "btn-root"
-
-// Or with deterministic namespace
-const buttonClasses = createClasses({
-  hash: "deterministic",
-  namespace: "Button",
-});
-const c = buttonClasses(["root"]);
-// c.root.toString() -> "Button-root-a1b2c"
+// Import only what you use
+import { p4, wFull } from "@semajsx/tailwind";
 ```
 
-**Why factory function is better than single function + options:**
+### 3. Semantic Names for Non-Numeric Values
 
-1. **Default has value**: `classes()` with hash justifies its existence (otherwise just use string)
-2. **Configure once**: No need to pass options every call
-3. **Consistent pattern**: Same as `createTailwind({ prefix: "s-" })`
-4. **Simpler types**: No complex overloads or union types
-5. **Scoped configs**: Different parts of app can have different configs
+Fractions and percentages need semantic names:
 
-**Comparison:**
+| CSS Value | Bad JS Name   | Good JS Name |
+| --------- | ------------- | ------------ |
+| `50%`     | `w["50%"]`    | `wHalf`      |
+| `33.333%` | `w["1/3"]`    | `wThird`     |
+| `100%`    | `w["full"]`   | `wFull`      |
+| `100vh`   | `h["screen"]` | `hScreen`    |
 
-| Aspect          | Single fn + Options        | Factory Function          |
-| --------------- | -------------------------- | ------------------------- |
-| Default useful? | ❌ No hash = why use it?   | ✅ Hash = valuable        |
-| Repetitive?     | ❌ Pass options every call | ✅ Configure once         |
-| Pattern         | Unique                     | ✅ Same as createTailwind |
-| Types           | Complex overloads          | Simple                    |
+### 4. cx() is Essential
 
-#### Migration Path
+Without `cx()`, composing utilities is awkward:
 
 ```ts
-// Before (current behavior)
-classes(["root"]); // "root-x7f3a" (random hash)
+// Without cx() - array join or template
+<div class={[p4._, wFull._, roundedLg._].join(" ")}>
 
-// After (new default)
-classes(["root"]); // "root" (no hash)
-
-// To get old behavior (if needed)
-classes(["root"], { hash: "unique" }); // "root-x7f3a" (random)
-
-// Better alternative (deterministic)
-classes(["root"], { hash: "deterministic", namespace: "MyComponent" });
+// With cx() - clean and type-safe
+<div class={cx(p4, wFull, roundedLg)}>
 ```
 
-#### Implementation Note
+The helper also handles:
 
-This is a **breaking change** for `@semajsx/style`. Options:
+- Conditional classes (`isActive && bgBlue500`)
+- Nested arrays (`[base, colors]`)
+- Falsy values (filtered out)
 
-1. Major version bump (v1.0.0 → v2.0.0)
-2. New function name (`classNames()`) and deprecate `classes()`
-3. Feature flag for migration period
+### 5. Namespace vs Flat: Both Have Value
 
-**Scope**: This proposal is for `@semajsx/style`. The `@semajsx/tailwind` package will NOT use `classes()` at all - it generates class names directly (like `p-4`).
-
-### Class Name Prefix Strategy (Deep Analysis)
-
-**Why consider a prefix at all?**
-
-1. **Collision avoidance**: User might have existing `.p-4` class
-2. **Coexistence**: Might use alongside native Tailwind
-3. **Debugging**: Know where a class comes from
-
-**Why NOT use a prefix?**
-
-1. **Familiarity**: `p-4` is what Tailwind users expect
-2. **Size**: Every byte counts (especially with many utilities)
-3. **Migration**: Easier to migrate from/to native Tailwind
-
-**Analyzed Options**:
-
-| Option       | Example     | Pros            | Cons           |
-| ------------ | ----------- | --------------- | -------------- |
-| No prefix    | `p-4`       | Familiar, short | Collision risk |
-| Fixed `tw-`  | `tw-p-4`    | Safe, readable  | +3 chars       |
-| Hash prefix  | `p-x7f3a-4` | Unique          | Ugly, +6 chars |
-| Configurable | User choice | Flexible        | Complex API    |
-
-**Final Decision**: **Configurable with no prefix as default**
+**Flat exports** for common usage:
 
 ```ts
-// Default: native Tailwind compatibility
-// No configuration needed
-// Result: p-4, bg-blue-500
-
-// For namespace isolation (e.g., library authors)
-configureTailwind({ prefix: "s-" });
-// Result: s-p-4, s-bg-blue-500
+import { p4, wFull, textBase } from "@semajsx/tailwind";
 ```
 
-**Rationale**:
+**Namespaces** for organization:
 
-1. **Familiar**: No prefix matches native Tailwind class names
-2. **Minimal**: No extra bytes in class names
-3. **Migration-friendly**: Seamless switch from/to native Tailwind
-4. **Opt-in isolation**: Use `s-` (SemaJSX) or custom prefix when needed
-5. Avoid `tw-` as it implies Tailwind branding
+```ts
+import { spacing, sizing, typography } from "@semajsx/tailwind";
+spacing.p4;
+sizing.wFull;
+```
 
-### Hash Strategy for Arbitrary Values
+Both patterns supported - user chooses based on preference.
 
-**Problem**: Arbitrary values like `p\`calc(100% - 40px)\`` need short, unique class names.
+### 6. Decimal Handling Matters
 
-**Requirements**:
+Scale values like `0.5`, `1.5` need consistent handling:
 
-1. Deterministic (SSR compatible)
-2. Fast (runtime performance)
-3. Short output (class name length)
+- Token name: `p0_5`, `m1_5` (underscore for decimal)
+- Class name: `p-0.5`, `m-1.5` (Tailwind-compatible)
+- CSS selector: `.p-0\.5` (escaped dot)
 
-**Options analyzed**:
+### 7. Test Everything
+
+287 tests catch:
+
+- Class name generation
+- CSS template correctness
+- Namespace completeness
+- Edge cases (arbitrary values, escaping)
+
+---
+
+## Technical Decisions
+
+### Why djb2 Hash?
+
+For arbitrary values with complex expressions:
 
 | Method   | Deterministic | SSR Safe | Performance  |
 | -------- | ------------- | -------- | ------------ |
@@ -283,83 +294,38 @@ configureTailwind({ prefix: "s-" });
 | SHA/MD5  | ✅            | ✅       | ❌ Slow      |
 | **djb2** | ✅            | ✅       | ✅✅ Fastest |
 
-**Decision**: Use **djb2** (bit shifts + XOR only, ~0.001ms per hash).
+djb2: Only bit shifts and XOR, ~0.001ms per hash.
 
-**Performance strategy**:
+### Why No Prefix by Default?
 
-1. **Avoid hash for simple values** (90% of cases): `4px` → `4px` directly
-2. **Use djb2 for complex values** (10% of cases): `calc(...)` → `a1b2c`
-3. **Optional cache** for heavy arbitrary value usage
+Class names match native Tailwind for:
 
-**Real impact**: Hash is ~100x faster than DOM injection, not a bottleneck.
+- Familiarity (`p-4` is expected)
+- Migration (drop-in replacement)
+- Debugging (DevTools shows familiar names)
 
----
+Optional prefix (`s-`) for namespace isolation.
 
-## Design (2026-01-28)
-
-### Core API
+### Why Tagged Templates for Arbitrary Values?
 
 ```ts
-// Predefined values via object export
-import { spacing, colors } from "@semajsx/tailwind";
-
-<div class={[spacing.p4, colors.bgBlue500]}>
-
-// Arbitrary values via tagged template
-import { p, bg } from "@semajsx/tailwind";
-
-<div class={[p`10px`, bg`#ff5500`]}>
+p`10px`; // vs p("10px") or p.arb("10px")
 ```
 
-### Implementation Strategy
+Tagged templates are:
 
-See README.md for detailed implementation phases:
-
-1. Core Infrastructure
-2. Spacing Utilities
-3. Sizing Utilities
-4. Color Utilities
-5. Flexbox Utilities
-6. Typography Utilities
-7. Additional Utilities
-8. Integration & Index
-
-### File Structure
-
-```
-packages/tailwind/
-├── src/
-│   ├── index.ts           # Re-exports
-│   ├── core.ts            # createUtility, valueToSuffix
-│   ├── spacing.ts         # p, m, gap
-│   ├── sizing.ts          # w, h
-│   ├── colors.ts          # bg, text, border colors
-│   ├── flex.ts            # flexbox utilities
-│   ├── typography.ts      # font utilities
-│   ├── display.ts         # display utilities
-│   ├── position.ts        # position utilities
-│   ├── border.ts          # border utilities
-│   └── effects.ts         # opacity, shadow
-├── package.json
-└── tsconfig.json
-```
+- Visually distinct (arbitrary vs predefined)
+- Concise (no parentheses or method calls)
+- Type-safe (returns StyleToken)
 
 ---
 
-## Implementation Log
+## Future Considerations
 
-### 2026-01-28: Planning Complete
-
-- Created task workspace
-- Documented implementation plan in README.md
-- Identified 8 implementation phases
-- Ready for Phase 1: Core Infrastructure
-
----
-
-## Learnings
-
-(To be filled after implementation)
+1. **Responsive variants**: `md:`, `lg:` support
+2. **State variants**: `hover:`, `focus:` support
+3. **Custom themes**: User-defined scales
+4. **Build-time extraction**: Static CSS generation
 
 ---
 

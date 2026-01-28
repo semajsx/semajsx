@@ -1,751 +1,322 @@
-# Tailwind Integration Implementation Plan
+# Tailwind Integration Implementation
 
 **Task**: Implement `@semajsx/tailwind` package
 **RFC Reference**: [RFC 006-style-system.md](../../docs/rfcs/006-style-system.md) Section 10
-**Status**: Planning
+**Status**: Implemented
 
 ---
 
 ## Overview
 
-This document outlines the implementation plan for Tailwind CSS integration with `@semajsx/style`. The goal is to provide type-safe utility classes that:
+`@semajsx/tailwind` provides type-safe Tailwind-style utility classes with:
 
-1. Are tree-shakeable at the module level
-2. Support predefined Tailwind scale values
-3. Support arbitrary values with tagged template syntax
-4. Generate deterministic class names for deduplication
+1. **Flat exports** for optimal tree-shaking
+2. **Merged naming** pattern (e.g., `p4`, `wFull`, `textBase`)
+3. **Tagged templates** for arbitrary values
+4. **Namespace grouping** for organization
+5. **`cx()` helper** for composing class names
 
 ---
 
-## Critical Design Decision: Class Name Strategy
+## Design Philosophy: "Think in JS, Not CSS"
 
-### Problem Statement
+The key insight driving this API design is: **Don't mechanically convert CSS patterns to JavaScript**.
 
-The current `classes()` implementation uses `Date.now()` for hashing:
+Tailwind's string-based API (`class="p-4 w-full"`) works well for templates, but JavaScript has different strengths:
 
-```ts
-// packages/style/src/classes.ts line 28
-const hash = hashString(name + Date.now().toString(36));
-```
+- **Static analysis** - Unused exports can be tree-shaken
+- **Type safety** - IDE autocomplete and error checking
+- **Composition** - Functions and objects for organization
 
-This creates **non-deterministic** class names, which is problematic for:
+Instead of mimicking Tailwind's string syntax with bracket notation (`p["4"]`, `w["1/2"]`), we use **merged naming** that feels natural in JavaScript.
 
-1. **SSR Hydration**: Server and client generate different class names → hydration mismatch
-2. **Caching**: Each build produces different CSS → cannot cache effectively
-3. **Debugging**: Class names are unpredictable across sessions
+---
 
-### Design Options Analysis
+## API Design
 
-#### Option A: No Prefix (Native Tailwind Style)
+### Core Pattern: Flat Exports with Merged Naming
 
 ```ts
-// Generated class names match Tailwind exactly
-p - 4; // padding: 1rem
-bg - blue - 500; // background: #3b82f6
+// Spacing: prefix + value
+import { p4, m2, gap4 } from "@semajsx/tailwind";
+
+// Sizing: prefix + semantic name
+import { w4, wFull, wHalf, hScreen } from "@semajsx/tailwind";
+
+// Typography: prefix + size/weight
+import { textBase, text5xl, fontBold } from "@semajsx/tailwind";
+
+// Layout: prefix + value/semantic
+import { top4, topHalf, z50, absolute } from "@semajsx/tailwind";
+
+// Effects: prefix + variant
+import { roundedLg, opacity50, shadowLg } from "@semajsx/tailwind";
+
+// Flexbox: combined names
+import { flex, flexCol, justifyCenter, itemsCenter } from "@semajsx/tailwind";
 ```
 
-**Pros**:
+### The `cx()` Helper
 
-- Familiar to Tailwind users
-- Minimal class name length
-- Easy to debug (recognizable names)
-- Can potentially share CSS with native Tailwind projects
-
-**Cons**:
-
-- Risk of collision with user-defined `.p-4` class
-- Risk of collision if user also uses real Tailwind
-- No namespace isolation
-
-**Use case**: Projects that want drop-in Tailwind replacement
-
-#### Option B: Fixed Short Prefix (e.g., `tw-`)
-
-```ts
-// All classes have tw- prefix
-tw - p - 4; // padding: 1rem
-tw - bg - blue - 500; // background: #3b82f6
-```
-
-**Pros**:
-
-- Clear namespace isolation
-- Predictable, deterministic
-- Still readable and debuggable
-- Can coexist with native Tailwind
-
-**Cons**:
-
-- Slightly longer class names (+3 chars)
-- Different from native Tailwind syntax
-
-**Use case**: Projects that want isolation but readable names
-
-#### Option C: Hash Prefix (Current RFC Approach)
-
-```ts
-// Classes have hashed prefix
-p - x7f3a - 4; // padding: 1rem
-bg - x7f3a - blue - 500; // background: #3b82f6
-```
-
-**Pros**:
-
-- Guaranteed unique (if hash is deterministic)
-- Follows existing `@semajsx/style` pattern
-
-**Cons**:
-
-- Longer class names (+6 chars)
-- Harder to debug (hash is meaningless)
-- Looks ugly in DevTools
-- Hash must be deterministic (current impl is NOT)
-
-**Use case**: Projects prioritizing uniqueness over readability
-
-#### Option D: Configurable Prefix
-
-```ts
-// User chooses prefix (or none)
-const { spacing } = createTailwind({ prefix: "" }); // p-4
-const { spacing } = createTailwind({ prefix: "tw-" }); // tw-p-4
-const { spacing } = createTailwind({ prefix: "my-" }); // my-p-4
-```
-
-**Pros**:
-
-- Maximum flexibility
-- User decides based on their needs
-- Can match any existing convention
-
-**Cons**:
-
-- More complex API
-- Need to pass config everywhere or use context
-- Potential for inconsistency if misconfigured
-
-**Use case**: Library authors, design systems
-
-### Recommendation
-
-**Primary**: Option A (No prefix) as default
-**Secondary**: Option D (Configurable) for users who need isolation
-
-**Rationale**:
-
-1. **Familiar**: `p-4` is what users expect from Tailwind-style utilities
-2. **Minimal**: No extra bytes in class names
-3. **Migration-friendly**: Easy to migrate from/to native Tailwind
-4. **Opt-in isolation**: Users who need namespace isolation can configure `prefix: "s-"` (SemaJSX)
-
-**Note**: We avoid `tw-` prefix as it implies Tailwind branding. If isolation is needed, use `s-` (SemaJSX) or custom prefix.
-
-### Implementation Approach
-
-```ts
-// packages/tailwind/src/config.ts
-export interface TailwindConfig {
-  /** Class name prefix. Default: "" (no prefix). Use "s-" for SemaJSX namespace. */
-  prefix?: string;
-}
-
-const defaultConfig: TailwindConfig = {
-  prefix: "", // No prefix by default - matches native Tailwind class names
-};
-
-// Global config (set once at app init)
-let globalConfig = defaultConfig;
-
-export function configureTailwind(config: Partial<TailwindConfig>) {
-  globalConfig = { ...defaultConfig, ...config };
-}
-
-export function getConfig(): TailwindConfig {
-  return globalConfig;
-}
-
-// Alternative: Factory pattern for isolation
-export function createTailwind(config: Partial<TailwindConfig> = {}) {
-  const mergedConfig = { ...defaultConfig, ...config };
-  // Return utilities bound to this config
-  return {
-    spacing: createSpacing(mergedConfig),
-    colors: createColors(mergedConfig),
-    // ...
-  };
-}
-```
-
-### Class Name Generation (Deterministic)
-
-```ts
-// packages/tailwind/src/core.ts
-export function createUtility(
-  property: string,
-  utilityName: string, // e.g., "p", "bg"
-  config: TailwindConfig,
-) {
-  const prefix = config.prefix ?? ""; // Default: no prefix
-
-  return (value: string, valueName?: string): StyleToken => {
-    // Use valueName if provided (for predefined), otherwise derive from value
-    const suffix = valueName ?? valueToSuffix(value);
-    const className = `${prefix}${utilityName}-${suffix}`;
-
-    return {
-      __kind: "style",
-      _: className,
-      __cssTemplate: `.${className} { ${property}: ${value}; }`,
-      toString() {
-        return this._;
-      },
-    };
-  };
-}
-
-// Deterministic suffix generation
-function valueToSuffix(value: string): string {
-  // For simple values, use as-is (sanitized)
-  if (/^[\w.-]+$/.test(value)) {
-    return value.replace(/\./g, "_").replace(/-/g, "_");
-  }
-  // For complex values (calc, rgb, etc.), use deterministic hash
-  return hashString(value).slice(0, 6);
-}
-```
-
-### Generated Class Names (Examples)
-
-| Config         | Utility      | Generated Class | CSS                            |
-| -------------- | ------------ | --------------- | ------------------------------ |
-| `prefix: ""`   | `spacing.p4` | `p-4`           | `.p-4 { padding: 1rem; }`      |
-| `prefix: ""`   | `p\`10px\``  | `p-10px`        | `.p-10px { padding: 10px; }`   |
-| `prefix: "s-"` | `spacing.p4` | `s-p-4`         | `.s-p-4 { padding: 1rem; }`    |
-| `prefix: "s-"` | `p\`10px\``  | `s-p-10px`      | `.s-p-10px { padding: 10px; }` |
-
-### Hash Strategy Analysis
-
-For arbitrary values with complex expressions (like `calc(100% - 40px)`), we need a hash. Here's the analysis:
-
-| Method       | Deterministic | SSR Safe | Performance  | Use Case                      |
-| ------------ | ------------- | -------- | ------------ | ----------------------------- |
-| `Date.now()` | ❌            | ❌       | ✅ Fast      | Never - non-deterministic     |
-| `nanoid`     | ❌            | ❌       | ⚠️ Random    | Runtime unique IDs only       |
-| SHA/MD5      | ✅            | ✅       | ❌ Slow      | Crypto only, overkill for CSS |
-| MurmurHash   | ✅            | ✅       | ✅ Fast      | Good distribution             |
-| **djb2**     | ✅            | ✅       | ✅✅ Fastest | **Our choice**                |
-
-**Decision**: Use **djb2** (already in `@semajsx/style`).
-
-**Why djb2 is optimal for runtime**:
-
-```ts
-// djb2: Only bit shifts and XOR - CPU loves this
-function hashString(str: string): string {
-  let hash = 5381;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
-  }
-  return Math.abs(hash).toString(36).slice(-5);
-}
-
-// Benchmark (typical):
-// djb2:      ~0.001ms per hash
-// MurmurHash: ~0.005ms per hash
-// MD5:       ~0.05ms per hash
-```
-
-### Performance Optimization Strategy
-
-**1. Avoid hash when possible** (most common case):
-
-```ts
-function valueToSuffix(value: string): string {
-  // Fast path: simple values don't need hash
-  // Regex test is O(n) but very fast for short strings
-  if (/^[\w.-]+$/.test(value)) {
-    return value.replace(/\./g, "_"); // "4px" → "4px", "0.5rem" → "0_5rem"
-  }
-  // Slow path: only for complex values
-  return hashString(value).slice(0, 5); // "calc(100% - 40px)" → "a1b2c"
-}
-```
-
-**2. Cache complex hashes** (optional, for heavy usage):
-
-```ts
-// WeakMap won't work for strings, use Map with size limit
-const hashCache = new Map<string, string>();
-const MAX_CACHE_SIZE = 1000;
-
-function cachedHash(value: string): string {
-  let result = hashCache.get(value);
-  if (result) return result;
-
-  result = hashString(value).slice(0, 5);
-
-  // LRU-style eviction
-  if (hashCache.size >= MAX_CACHE_SIZE) {
-    const firstKey = hashCache.keys().next().value;
-    hashCache.delete(firstKey);
-  }
-  hashCache.set(value, result);
-
-  return result;
-}
-```
-
-**3. Real-world performance analysis**:
-
-| Operation             | Time      | Frequency      | Impact     |
-| --------------------- | --------- | -------------- | ---------- |
-| Simple suffix (`4px`) | ~0.0001ms | 90% of calls   | Negligible |
-| Hash (`calc(...)`)    | ~0.001ms  | 10% of calls   | Negligible |
-| DOM injection         | ~0.1ms    | Once per class | Main cost  |
-
-**Conclusion**: Hash performance is not a bottleneck. DOM injection is 100x slower than hashing.
-
-**When hash is used**:
-
-- Simple values: `p\`4px\``→`p-4px` (no hash, direct)
-- Complex values: `p\`calc(100% - 40px)\``→`p-a1b2c` (hash, still fast)
-
-### SSR Compatibility
-
-With deterministic class names (no prefix by default):
+Essential for composing multiple utilities:
 
 ```tsx
-// Server renders:
-<div class="p-4 bg-blue-500">
+import { cx, p4, wFull, roundedLg, bgBlue500 } from "@semajsx/tailwind";
 
-// Client hydrates with exact same classes:
-<div class="p-4 bg-blue-500">  // ✅ No mismatch - identical!
+<div class={cx(p4, wFull, roundedLg, bgBlue500)}>
+// Output: "p-4 w-full rounded-lg bg-blue-500"
+
+// Conditional classes
+<div class={cx(p4, isActive && bgBlue500, isLarge && text5xl)}>
+
+// Nested arrays work too
+const base = [p4, m4];
+const colors = [bgBlue500, textWhite];
+<div class={cx(base, colors)}>
 ```
 
-### Migration Path from Native Tailwind
+### Arbitrary Values via Tagged Templates
 
-Since we use no prefix by default, migration is seamless:
-
-```tsx
-// Native Tailwind (before)
-<div className="p-4 bg-blue-500">
-
-// @semajsx/tailwind (after) - same class names!
-import { spacing, colors } from "@semajsx/tailwind";
-<div class={[spacing.p4, colors.bgBlue500]}>
-// Generates: class="p-4 bg-blue-500"
-
-// Mix with existing Tailwind classes
-<div class={[spacing.p4, "existing-tailwind-class"]}>
-```
-
-### When to Use Prefix
-
-Add prefix when you need namespace isolation:
+For values not in the predefined scale:
 
 ```ts
-// Use case: Building a library that might be used alongside native Tailwind
-configureTailwind({ prefix: "s-" });
+import { p, w, rounded, opacity } from "@semajsx/tailwind";
 
-// Result: s-p-4, s-bg-blue-500 (no collision with user's Tailwind)
+// Custom padding
+p`10px`; // → "p-10px"
+p`2.5rem`; // → "p-2_5rem"
+
+// Custom width
+w`300px`; // → "w-300px"
+w`calc(100% - 40px)`; // → "w-[hash]"
+
+// Custom border radius
+rounded`10px`; // → "rounded-10px"
+
+// Custom opacity
+opacity`0.33`; // → "opacity-0_33"
+```
+
+### Namespace Grouping (Optional)
+
+For organized imports:
+
+```ts
+import { spacing, sizing, typography, layout, effects, flexbox } from "@semajsx/tailwind";
+
+// Access via namespace
+spacing.p4;
+sizing.wFull;
+typography.textBase;
+layout.z50;
+effects.roundedLg;
+flexbox.justifyCenter;
 ```
 
 ---
 
-## Architecture
+## Naming Convention
 
-### Package Structure
+See [NAMING_CONVENTION.md](./NAMING_CONVENTION.md) for complete details.
+
+### Summary
+
+| Category   | Pattern              | Examples                             |
+| ---------- | -------------------- | ------------------------------------ |
+| Spacing    | `{prefix}{scale}`    | `p4`, `m2`, `gap8`, `px4`, `my2`     |
+| Sizing     | `{prefix}{semantic}` | `w4`, `wFull`, `wHalf`, `hScreen`    |
+| Typography | `{prefix}{variant}`  | `textBase`, `text5xl`, `fontBold`    |
+| Layout     | `{prefix}{value}`    | `top4`, `topHalf`, `z50`, `absolute` |
+| Effects    | `{prefix}{variant}`  | `roundedLg`, `opacity50`, `shadowLg` |
+| Flexbox    | `{combined}`         | `flex`, `flexCol`, `justifyCenter`   |
+
+### Key Rules
+
+1. **Numbers as suffix**: `p4`, `m2`, `w64` (not `p["4"]`)
+2. **Semantic names**: `wFull`, `hScreen`, `topHalf` (not `w["100%"]`)
+3. **Capitalize variants**: `textLg`, `fontBold`, `roundedFull`
+4. **Decimals use underscore**: `p0_5`, `m1_5` (for `0.5`, `1.5`)
+5. **Combined tokens**: `justifyCenter`, `itemsStart` (not `justify.center`)
+
+---
+
+## Package Structure
 
 ```
 packages/tailwind/
 ├── src/
-│   ├── index.ts           # Re-export all utilities
-│   ├── core.ts            # Core utility creation functions
+│   ├── index.ts           # Re-exports all utilities
+│   ├── core.ts            # createUtility, createTaggedUtility
+│   ├── config.ts          # Configuration (prefix support)
+│   ├── types.ts           # StyleToken, TaggedUtilityFn
+│   ├── helpers.ts         # cx(), extractCss()
 │   ├── spacing.ts         # p, m, gap utilities
-│   ├── sizing.ts          # w, h, min-w, max-w, min-h, max-h
-│   ├── colors.ts          # bg, text, border color utilities
-│   ├── flex.ts            # flex, justify, items, gap
-│   ├── typography.ts      # font, text-size, leading, tracking
-│   ├── display.ts         # display, visibility
-│   ├── position.ts        # position, top, right, bottom, left
-│   ├── border.ts          # border, rounded
-│   └── effects.ts         # opacity, shadow
+│   ├── sizing.ts          # w, h, minW, maxW, minH, maxH
+│   ├── colors.ts          # bg, text, border colors
+│   ├── typography.ts      # text size, font weight, etc.
+│   ├── layout.ts          # position, inset, z-index, overflow
+│   ├── effects.ts         # border, rounded, shadow, opacity, cursor
+│   └── flexbox.ts         # display, flex, justify, items, etc.
 ├── package.json
 ├── tsconfig.json
 └── vitest.config.ts
 ```
 
-### Core Design: Template-First Approach
-
-The key insight from the RFC is the **template-first approach**: define the utility template once, then generate all values from it. See the "Class Name Generation (Deterministic)" section above for the complete `createUtility` implementation.
-
 ---
 
-## Implementation Phases
+## Implementation Details
 
-### Phase 1: Core Infrastructure
+### StyleToken Interface
 
-**Goal**: Set up package structure and core utility creation functions
-
-**Tasks**:
-
-1. Create `packages/tailwind/` directory structure
-2. Set up `package.json` with workspace dependencies
-3. Implement `core.ts` with:
-   - `createUtility(property, utilityName, config)` - single property utility generator
-   - `valueToSuffix(value)` - deterministic suffix generation
-   - `hashString(value)` - djb2 hash for complex values
-
-**Deliverables**:
-
-- `packages/tailwind/src/core.ts`
-- `packages/tailwind/src/core.test.ts`
-- `packages/tailwind/package.json`
-- `packages/tailwind/tsconfig.json`
-
-**Estimated Complexity**: Low
-
----
-
-### Phase 2: Spacing Utilities
-
-**Goal**: Implement padding and margin utilities as the first complete module
-
-**Tasks**:
-
-1. Define class names: `p`, `px`, `py`, `pt`, `pr`, `pb`, `pl`, `m`, `mx`, `my`, `mt`, `mr`, `mb`, `ml`
-2. Create utility templates using `createUtility`
-3. Generate predefined values from Tailwind spacing scale:
-   - 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 72, 80, 96
-4. Export tagged template functions for arbitrary values (`p`, `m`, etc.)
-
-**API Design**:
+Every utility generates a `StyleToken`:
 
 ```ts
-// Predefined values
-import { spacing } from "@semajsx/tailwind";
-spacing.p4; // padding: 1rem
-spacing.mx2; // margin-left: 0.5rem; margin-right: 0.5rem
-
-// Arbitrary values
-import { p, m } from "@semajsx/tailwind";
-p`4px`; // padding: 4px
-m`calc(100% - 40px)`; // margin: calc(100% - 40px)
-```
-
-**Deliverables**:
-
-- `packages/tailwind/src/spacing.ts`
-- `packages/tailwind/src/spacing.test.ts`
-
-**Estimated Complexity**: Medium
-
----
-
-### Phase 3: Sizing Utilities
-
-**Goal**: Implement width and height utilities
-
-**Tasks**:
-
-1. Define class names: `w`, `min-w`, `max-w`, `h`, `min-h`, `max-h`
-2. Create utility templates
-3. Generate predefined values:
-   - Numeric scale: 0-96 (same as spacing)
-   - Fractional: 1/2, 1/3, 2/3, 1/4, 3/4, 1/5, 2/5, etc.
-   - Keywords: full, screen, min, max, fit, auto
-
-**API Design**:
-
-```ts
-import { sizing, w, h } from "@semajsx/tailwind";
-sizing.w64; // width: 16rem
-sizing.hFull; // height: 100%
-w`calc(50% - 20px)`;
-h`100vh`;
-```
-
-**Deliverables**:
-
-- `packages/tailwind/src/sizing.ts`
-- `packages/tailwind/src/sizing.test.ts`
-
-**Estimated Complexity**: Medium
-
----
-
-### Phase 4: Color Utilities
-
-**Goal**: Implement background, text, and border color utilities
-
-**Tasks**:
-
-1. Define class names: `bg`, `text`, `border`
-2. Create utility templates
-3. Generate predefined values from Tailwind color palette:
-   - slate, gray, zinc, neutral, stone
-   - red, orange, amber, yellow, lime, green, emerald, teal, cyan, sky, blue, indigo, violet, purple, fuchsia, pink, rose
-   - Each with shades: 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950
-4. Add special colors: transparent, current, inherit, black, white
-
-**API Design**:
-
-```ts
-import { colors, bg, text } from "@semajsx/tailwind";
-colors.bgBlue500; // background: #3b82f6
-colors.textWhite; // color: white
-bg`#ff5500`;
-text`rgb(100, 200, 50)`;
-```
-
-**Deliverables**:
-
-- `packages/tailwind/src/colors.ts`
-- `packages/tailwind/src/colors.test.ts`
-
-**Estimated Complexity**: High (many color values)
-
----
-
-### Phase 5: Flexbox Utilities
-
-**Goal**: Implement flex layout utilities
-
-**Tasks**:
-
-1. Define class names: `flex`, `flex-row`, `flex-col`, `justify`, `items`, `gap`, `grow`, `shrink`
-2. Create utility templates
-3. Generate predefined values:
-   - Direction: row, row-reverse, col, col-reverse
-   - Wrap: wrap, wrap-reverse, nowrap
-   - Justify: start, end, center, between, around, evenly
-   - Items: start, end, center, baseline, stretch
-
-**API Design**:
-
-```ts
-import { flex } from "@semajsx/tailwind";
-flex.row; // flex-direction: row
-flex.col; // flex-direction: column
-flex.justifyCenter; // justify-content: center
-flex.itemsCenter; // align-items: center
-flex.gap4; // gap: 1rem
-```
-
-**Deliverables**:
-
-- `packages/tailwind/src/flex.ts`
-- `packages/tailwind/src/flex.test.ts`
-
-**Estimated Complexity**: Medium
-
----
-
-### Phase 6: Typography Utilities
-
-**Goal**: Implement font and text utilities
-
-**Tasks**:
-
-1. Define class names: `font`, `text`, `leading`, `tracking`
-2. Create utility templates
-3. Generate predefined values:
-   - Font weight: thin, extralight, light, normal, medium, semibold, bold, extrabold, black
-   - Font size: xs, sm, base, lg, xl, 2xl, 3xl, 4xl, 5xl, 6xl, 7xl, 8xl, 9xl
-   - Line height: none, tight, snug, normal, relaxed, loose
-   - Letter spacing: tighter, tight, normal, wide, wider, widest
-
-**API Design**:
-
-```ts
-import { typography } from "@semajsx/tailwind";
-typography.fontBold; // font-weight: 700
-typography.textLg; // font-size: 1.125rem; line-height: 1.75rem
-typography.leadingNone; // line-height: 1
-```
-
-**Deliverables**:
-
-- `packages/tailwind/src/typography.ts`
-- `packages/tailwind/src/typography.test.ts`
-
-**Estimated Complexity**: Medium
-
----
-
-### Phase 7: Additional Utilities
-
-**Goal**: Implement remaining utility categories
-
-**Tasks**:
-
-1. **Display**: block, inline, inline-block, flex, grid, hidden
-2. **Position**: static, relative, absolute, fixed, sticky, top, right, bottom, left, inset
-3. **Border**: border widths, rounded corners
-4. **Effects**: opacity, shadow
-
-**Deliverables**:
-
-- `packages/tailwind/src/display.ts`
-- `packages/tailwind/src/position.ts`
-- `packages/tailwind/src/border.ts`
-- `packages/tailwind/src/effects.ts`
-
-**Estimated Complexity**: Medium
-
----
-
-### Phase 8: Integration & Index
-
-**Goal**: Create unified exports and ensure everything works together
-
-**Tasks**:
-
-1. Create `index.ts` with all exports
-2. Add comprehensive tests for integration
-3. Update documentation
-
-**API Design**:
-
-```ts
-// Named imports by category
-import { spacing, sizing, colors, flex, typography } from "@semajsx/tailwind";
-
-// Direct arbitrary value imports
-import { p, m, w, h, bg, text } from "@semajsx/tailwind";
-
-// Or use namespace
-import * as tw from "@semajsx/tailwind";
-tw.spacing.p4;
-tw.p`10px`;
-```
-
-**Deliverables**:
-
-- `packages/tailwind/src/index.ts`
-- `packages/tailwind/README.md`
-- Integration tests
-
-**Estimated Complexity**: Low
-
----
-
-## Technical Details
-
-### valueToSuffix Implementation
-
-```ts
-/**
- * Convert value to deterministic suffix for className
- */
-function valueToSuffix(value: string): string {
-  // Simple values: sanitize and use directly
-  // "0.25rem" -> "0_25rem"
-  // "1rem" -> "1rem"
-  if (/^[\w.]+$/.test(value)) {
-    return value.replace(/\./g, "_");
-  }
-  // Complex values (calc, etc.): use short hash
-  // "calc(100% - 40px)" -> "a1b2c3"
-  return hashString(value).slice(0, 6);
+interface StyleToken {
+  __kind: "style";
+  _: string; // Class name (e.g., "p-4")
+  __cssTemplate: string; // CSS rule (e.g., ".p-4 { padding: 1rem; }")
+  toString(): string; // Returns class name
 }
 ```
 
-### Tree-Shaking Notes
-
-Per RFC Section 10.2, Tailwind utilities use **object exports** for ergonomics. This is acceptable because:
-
-1. Module-level tree-shaking still works (unused category files eliminated)
-2. Utilities are small (~50 bytes each)
-3. Users typically use many values from each category
-4. DOM injection is selective (only used rules injected)
-
-### Class Name Conflicts
-
-Since we use no prefix by default (native Tailwind-style class names), potential conflicts are handled by:
-
-1. **User awareness**: Users know `p-4` might conflict with their own CSS
-2. **Optional prefix**: Use `configureTailwind({ prefix: "s-" })` if isolation needed
-3. **Scoped CSS**: In component libraries, use CSS Modules or Shadow DOM alongside
-
-**Note**: We intentionally do NOT use `classes()` from `@semajsx/style` because it generates non-deterministic hashes (uses `Date.now()`). Instead, we use deterministic class names like `p-4`, `bg-blue-500`.
-
----
-
-## Testing Strategy
-
-1. **Unit tests** for each utility module
-2. **Integration tests** for combined usage
-3. **Snapshot tests** for generated CSS
-4. **Type tests** for TypeScript inference
+### Token Generation Pattern
 
 ```ts
-// Example test (with default prefix: "")
-it("generates correct padding class", () => {
-  expect(spacing.p4._).toBe("p-4");
-  expect(spacing.p4.__cssTemplate).toBe(".p-4 { padding: 1rem; }");
-});
+// Token generator function
+function generatePaddingTokens(): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
 
-it("arbitrary values work", () => {
-  const token = p`4px`;
-  expect(token._).toBe("p-4px");
-  expect(token.__cssTemplate).toBe(".p-4px { padding: 4px; }");
-});
+  for (const [key, value] of Object.entries(spacingScale)) {
+    const tokenName = `p${key.replace(".", "_")}`;  // p4, p0_5
+    const className = `p-${key}`;                    // p-4, p-0.5
 
-// With custom prefix
-it("supports custom prefix", () => {
-  configureTailwind({ prefix: "s-" });
-  expect(spacing.p4._).toBe("s-p-4");
-});
+    tokens[tokenName] = {
+      __kind: "style",
+      _: className,
+      __cssTemplate: `.${escapeClassName(className)} { padding: ${value}; }`,
+      toString() { return this._; },
+    };
+  }
+
+  return tokens;
+}
+
+// Export flat tokens
+export const { p0, p0_5, p1, p2, p4, ... } = generatePaddingTokens();
+```
+
+### Tagged Template for Arbitrary Values
+
+```ts
+export const p: TaggedUtilityFn = createTaggedUtility(paddingFn);
+
+// Usage: p`10px` → StyleToken with class "p-10px"
 ```
 
 ---
 
-## Open Questions
+## Test Coverage
 
-1. **Responsive variants**: Should we support `md:`, `lg:` prefixes?
-   - Deferred to future phase
+287 tests across 9 test files:
 
-2. **State variants**: Should we support `hover:`, `focus:` prefixes?
-   - Deferred to future phase
-
-3. **Custom theme values**: How to allow users to extend/customize the scale?
-   - Can use code generation from tailwind.config.js
-
-4. **Negative values**: Support for `-m-4` etc.?
-   - Include in implementation
-
----
-
-## Dependencies
-
-- `@semajsx/style` - Core style system
-- No external Tailwind dependencies (values are generated/hardcoded)
+- `core.test.ts` - Core utility functions
+- `spacing.test.ts` - Padding, margin, gap
+- `sizing.test.ts` - Width, height, min/max
+- `typography.test.ts` - Font size, weight, line height
+- `layout.test.ts` - Position, inset, z-index
+- `effects.test.ts` - Border, rounded, shadow, opacity
+- `flexbox.test.ts` - Display, flex, justify, align
+- `colors.test.ts` - Background, text, border colors
+- `helpers.test.ts` - cx(), extractCss()
 
 ---
 
-## Timeline Estimate
+## Configuration
 
-| Phase | Description          | Complexity |
-| ----- | -------------------- | ---------- |
-| 1     | Core Infrastructure  | Low        |
-| 2     | Spacing Utilities    | Medium     |
-| 3     | Sizing Utilities     | Medium     |
-| 4     | Color Utilities      | High       |
-| 5     | Flexbox Utilities    | Medium     |
-| 6     | Typography Utilities | Medium     |
-| 7     | Additional Utilities | Medium     |
-| 8     | Integration & Index  | Low        |
+### Custom Prefix
+
+```ts
+import { configureTailwind } from "@semajsx/tailwind";
+
+// Add prefix to all class names
+configureTailwind({ prefix: "s-" });
+
+// Now: p4._ → "s-p-4" instead of "p-4"
+```
+
+### Deterministic Class Names
+
+All class names are deterministic:
+
+- Same input always produces same output
+- SSR hydration works correctly
+- Can cache CSS across builds
 
 ---
 
-## Success Criteria
+## Migration from Native Tailwind
 
-- [ ] All utility modules implemented with predefined values
-- [ ] Arbitrary value support via tagged templates
-- [ ] Type-safe with IDE autocomplete
-- [ ] JSDoc comments showing CSS values
-- [ ] Deterministic class names for deduplication
-- [ ] Tree-shakeable at module level
-- [ ] Comprehensive test coverage
-- [ ] Documentation and examples
+Since class names match native Tailwind (no prefix by default):
+
+```tsx
+// Native Tailwind (before)
+<div className="p-4 bg-blue-500 rounded-lg">
+
+// @semajsx/tailwind (after)
+import { cx, p4, bgBlue500, roundedLg } from "@semajsx/tailwind";
+<div class={cx(p4, bgBlue500, roundedLg)}>
+// Generates: class="p-4 bg-blue-500 rounded-lg" (identical!)
+```
+
+---
+
+## Why This Design?
+
+### vs. Bracket Notation (`p["4"]`)
+
+```ts
+// ❌ Bracket notation
+p["4"]; // Awkward, looks like array access
+w["1/2"]; // String literals everywhere
+zIndex["50"]; // Verbose
+
+// ✅ Merged naming
+p4; // Clean, familiar
+wHalf; // Semantic, readable
+z50; // Concise
+```
+
+### vs. Proxy-Based API (`spacing.p.4`)
+
+```ts
+// ❌ Proxy chains
+spacing.p.4              // Non-standard property access
+sizing.w.full            // Looks like property, is actually method
+layout.zIndex["50"]      // Mixed patterns
+
+// ✅ Flat exports
+p4          // Just a value
+wFull       // Just a value
+z50         // Just a value
+```
+
+### Benefits
+
+1. **Tree-shaking**: Only imported tokens are bundled
+2. **Type safety**: IDE autocomplete shows all options
+3. **Familiar**: `p4` is natural in JavaScript
+4. **Composable**: Works with `cx()` and spread
+5. **Debuggable**: Class names match what's in DevTools
+
+---
+
+## Success Criteria (All Met)
+
+- [x] All utility modules implemented with predefined values
+- [x] Arbitrary value support via tagged templates
+- [x] Type-safe with IDE autocomplete
+- [x] Deterministic class names for deduplication
+- [x] Tree-shakeable at module level
+- [x] Comprehensive test coverage (287 tests)
+- [x] cx() helper for composition
+- [x] Namespace grouping option
