@@ -37,28 +37,30 @@ export {
   spacing,
   // Tagged templates for arbitrary values
   p,
-  pX,
-  pY,
-  pT,
-  pR,
-  pB,
-  pL,
+  px,
+  py,
+  pt,
+  pr,
+  pb,
+  pl,
   m,
-  mX,
-  mY,
-  mT,
-  mR,
-  mB,
-  mL,
-  gapArb,
-  gapXArb,
-  gapYArb,
+  mx,
+  my,
+  mt,
+  mr,
+  mb,
+  ml,
+  gap,
+  gapX,
+  gapY,
 } from "./spacing";
 
 // Sizing utilities
-export type { SizingValues, SizingGroup, SizingArbGroup } from "./sizing";
+export type { SizingValues, SizingNamespace, SizingGroup, SizingArbGroup } from "./sizing";
 export {
-  // Predefined values
+  // Namespace with predefined values (sizing.w4, sizing.hFull, etc.)
+  sizing,
+  // Tagged templates for arbitrary values
   w,
   minW,
   maxW,
@@ -66,30 +68,18 @@ export {
   minH,
   maxH,
   size,
-  // Arbitrary value functions
-  wArb,
-  minWArb,
-  maxWArb,
-  hArb,
-  minHArb,
-  maxHArb,
-  sizeArb,
-  // Grouped exports
-  sizing,
+  // Legacy grouped exports
   sizingArb,
 } from "./sizing";
 
 // Color utilities
-export type { ColorValues, ColorGroup, ColorArbGroup } from "./colors";
+export type { ColorValues, ColorsNamespace, ColorGroup, ColorArbGroup } from "./colors";
 export {
-  // Predefined values
+  // Color utilities (both namespace and tagged template)
+  // Usage: bg.blue500 for predefined, bg`#ff5500` for arbitrary
   bg,
   text,
   border,
-  // Arbitrary value functions
-  bgArb,
-  textArb,
-  borderArb,
   // Grouped exports
   colors,
   colorsArb,

@@ -11,8 +11,8 @@
  * const { p4, mx2, gap4 } = spacing;
  *
  * // Arbitrary values (tagged template)
- * import { p, m } from "@semajsx/tailwind";
- * <div class={[p`10px`, m`calc(100% - 40px)`]}>
+ * import { p, px, m, mx } from "@semajsx/tailwind";
+ * <div class={[p`10px`, px`20px`, m`calc(100% - 40px)`]}>
  * ```
  */
 
@@ -203,37 +203,37 @@ export const spacing: SpacingNamespace = new Proxy({} as SpacingNamespace, {
 
 /** Padding - arbitrary value: p\`10px\` */
 export const p: TaggedUtilityFn = createTaggedUtility(utilityCreators.p);
-/** Padding X - arbitrary value: pX\`10px\` */
-export const pX: TaggedUtilityFn = createTaggedUtility(utilityCreators.px);
-/** Padding Y - arbitrary value: pY\`10px\` */
-export const pY: TaggedUtilityFn = createTaggedUtility(utilityCreators.py);
-/** Padding Top - arbitrary value: pT\`10px\` */
-export const pT: TaggedUtilityFn = createTaggedUtility(utilityCreators.pt);
-/** Padding Right - arbitrary value: pR\`10px\` */
-export const pR: TaggedUtilityFn = createTaggedUtility(utilityCreators.pr);
-/** Padding Bottom - arbitrary value: pB\`10px\` */
-export const pB: TaggedUtilityFn = createTaggedUtility(utilityCreators.pb);
-/** Padding Left - arbitrary value: pL\`10px\` */
-export const pL: TaggedUtilityFn = createTaggedUtility(utilityCreators.pl);
+/** Padding X - arbitrary value: px\`10px\` */
+export const px: TaggedUtilityFn = createTaggedUtility(utilityCreators.px);
+/** Padding Y - arbitrary value: py\`10px\` */
+export const py: TaggedUtilityFn = createTaggedUtility(utilityCreators.py);
+/** Padding Top - arbitrary value: pt\`10px\` */
+export const pt: TaggedUtilityFn = createTaggedUtility(utilityCreators.pt);
+/** Padding Right - arbitrary value: pr\`10px\` */
+export const pr: TaggedUtilityFn = createTaggedUtility(utilityCreators.pr);
+/** Padding Bottom - arbitrary value: pb\`10px\` */
+export const pb: TaggedUtilityFn = createTaggedUtility(utilityCreators.pb);
+/** Padding Left - arbitrary value: pl\`10px\` */
+export const pl: TaggedUtilityFn = createTaggedUtility(utilityCreators.pl);
 
 /** Margin - arbitrary value: m\`10px\` */
 export const m: TaggedUtilityFn = createTaggedUtility(utilityCreators.m);
-/** Margin X - arbitrary value: mX\`10px\` */
-export const mX: TaggedUtilityFn = createTaggedUtility(utilityCreators.mx);
-/** Margin Y - arbitrary value: mY\`10px\` */
-export const mY: TaggedUtilityFn = createTaggedUtility(utilityCreators.my);
-/** Margin Top - arbitrary value: mT\`10px\` */
-export const mT: TaggedUtilityFn = createTaggedUtility(utilityCreators.mt);
-/** Margin Right - arbitrary value: mR\`10px\` */
-export const mR: TaggedUtilityFn = createTaggedUtility(utilityCreators.mr);
-/** Margin Bottom - arbitrary value: mB\`10px\` */
-export const mB: TaggedUtilityFn = createTaggedUtility(utilityCreators.mb);
-/** Margin Left - arbitrary value: mL\`10px\` */
-export const mL: TaggedUtilityFn = createTaggedUtility(utilityCreators.ml);
+/** Margin X - arbitrary value: mx\`10px\` */
+export const mx: TaggedUtilityFn = createTaggedUtility(utilityCreators.mx);
+/** Margin Y - arbitrary value: my\`10px\` */
+export const my: TaggedUtilityFn = createTaggedUtility(utilityCreators.my);
+/** Margin Top - arbitrary value: mt\`10px\` */
+export const mt: TaggedUtilityFn = createTaggedUtility(utilityCreators.mt);
+/** Margin Right - arbitrary value: mr\`10px\` */
+export const mr: TaggedUtilityFn = createTaggedUtility(utilityCreators.mr);
+/** Margin Bottom - arbitrary value: mb\`10px\` */
+export const mb: TaggedUtilityFn = createTaggedUtility(utilityCreators.mb);
+/** Margin Left - arbitrary value: ml\`10px\` */
+export const ml: TaggedUtilityFn = createTaggedUtility(utilityCreators.ml);
 
-/** Gap - arbitrary value: gapArb\`10px\` */
-export const gapArb: TaggedUtilityFn = createTaggedUtility(utilityCreators.gap);
-/** Gap X - arbitrary value: gapXArb\`10px\` */
-export const gapXArb: TaggedUtilityFn = createTaggedUtility(utilityCreators.gapX);
-/** Gap Y - arbitrary value: gapYArb\`10px\` */
-export const gapYArb: TaggedUtilityFn = createTaggedUtility(utilityCreators.gapY);
+/** Gap - arbitrary value: gap\`10px\` */
+export const gap: TaggedUtilityFn = createTaggedUtility(utilityCreators.gap);
+/** Gap X - arbitrary value: gapX\`10px\` */
+export const gapX: TaggedUtilityFn = createTaggedUtility(utilityCreators.gapX);
+/** Gap Y - arbitrary value: gapY\`10px\` */
+export const gapY: TaggedUtilityFn = createTaggedUtility(utilityCreators.gapY);

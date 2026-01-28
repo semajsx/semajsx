@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { resetConfig, configureTailwind } from "./config";
-import { spacing, p, m, pX, mX, gapArb } from "./spacing";
+import { spacing, p, m, px, mx, gap } from "./spacing";
 
 describe("spacing namespace - padding", () => {
   beforeEach(() => {
@@ -111,20 +111,20 @@ describe("arbitrary values - tagged templates", () => {
     expect(token.__cssTemplate).toBe(".m-auto { margin: auto; }");
   });
 
-  it("pX`20px` generates correct token", () => {
-    const token = pX`20px`;
+  it("px`20px` generates correct token", () => {
+    const token = px`20px`;
     expect(token._).toBe("px-20px");
     expect(token.__cssTemplate).toBe(".px-20px { padding-left: 20px; padding-right: 20px; }");
   });
 
-  it("mX`1rem` generates correct token", () => {
-    const token = mX`1rem`;
+  it("mx`1rem` generates correct token", () => {
+    const token = mx`1rem`;
     expect(token._).toBe("mx-1rem");
     expect(token.__cssTemplate).toBe(".mx-1rem { margin-left: 1rem; margin-right: 1rem; }");
   });
 
-  it("gapArb`20px` generates correct token", () => {
-    const token = gapArb`20px`;
+  it("gap`20px` generates correct token", () => {
+    const token = gap`20px`;
     expect(token._).toBe("gap-20px");
     expect(token.__cssTemplate).toBe(".gap-20px { gap: 20px; }");
   });

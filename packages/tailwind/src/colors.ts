@@ -1,5 +1,18 @@
 /**
  * Color utilities: background, text, border colors
+ *
+ * Usage:
+ * ```ts
+ * // Predefined values (via Proxy)
+ * import { bg, text, border } from "@semajsx/tailwind";
+ * <div class={[bg.blue500, text.white, border.gray200]}>
+ *
+ * // Destructuring works
+ * const { blue500, red600 } = bg;
+ *
+ * // Arbitrary values (tagged template - same function!)
+ * <div class={[bg`#ff5500`, text`currentColor`]}>
+ * ```
  */
 
 import type { StyleToken, TaggedUtilityFn } from "./types";
@@ -312,43 +325,184 @@ const bgFn = createUtility("background-color", "bg");
 const textFn = createUtility("color", "text");
 const borderFn = createUtility("border-color", "border");
 
-// Helper to generate color values for a utility
-function generateColorValues(
-  utilityFn: (value: string, valueName?: string) => StyleToken,
-): ColorValues {
-  const result: ColorValues = {};
-
-  // Add special colors
-  for (const [name, value] of Object.entries(specialColors)) {
-    result[name] = utilityFn(value, name);
+// Get color value by key (e.g., "white", "blue500", "gray-200")
+function getColorValue(colorKey: string): string | undefined {
+  // Check special colors first (lowercase)
+  const lowerKey = colorKey.toLowerCase();
+  if (lowerKey in specialColors) {
+    return specialColors[lowerKey];
   }
 
-  // Add palette colors
-  for (const [colorName, shades] of Object.entries(colorPalette)) {
-    for (const [shade, value] of Object.entries(shades)) {
-      const name = `${colorName}-${shade}`;
-      result[name] = utilityFn(value, name);
+  // Try to parse as colorName + shade (e.g., "blue500" or "blue-500")
+  // Pattern: letters followed by numbers, or letters-numbers
+  const match = colorKey.match(/^([a-zA-Z]+)-?(\d+)$/);
+  if (match) {
+    const [, colorName, shade] = match;
+    const palette = colorPalette[colorName!.toLowerCase()];
+    if (palette && shade! in palette) {
+      return palette[shade!];
     }
   }
 
-  return result;
+  return undefined;
 }
 
-// Predefined color values
-export const bg: ColorValues = generateColorValues(bgFn);
-export const text: ColorValues = generateColorValues(textFn);
-export const border: ColorValues = generateColorValues(borderFn);
+// Get all color keys for enumeration
+function getAllColorKeys(): string[] {
+  const keys: string[] = Object.keys(specialColors);
+  for (const [colorName, shades] of Object.entries(colorPalette)) {
+    for (const shade of Object.keys(shades)) {
+      // Use format "colorName + shade" (e.g., "blue500")
+      keys.push(`${colorName}${shade}`);
+    }
+  }
+  return keys;
+}
 
-// Tagged template functions for arbitrary values
-export const bgArb: TaggedUtilityFn = createTaggedUtility(bgFn);
-export const textArb: TaggedUtilityFn = createTaggedUtility(textFn);
-export const borderArb: TaggedUtilityFn = createTaggedUtility(borderFn);
+// Parse property name (e.g., "blue500", "white", "gray200")
+function parseColorProp(prop: string): string | null {
+  if (getColorValue(prop) !== undefined) {
+    return prop;
+  }
+  return null;
+}
+
+/**
+ * Create a color utility that works as both:
+ * - Proxy namespace for predefined values: bg.blue500
+ * - Tagged template function for arbitrary values: bg`#ff5500`
+ */
+function createColorUtility(
+  utilityFn: (value: string, valueName?: string) => StyleToken,
+  classPrefix: string,
+): TaggedUtilityFn & ColorValues {
+  // Cache for generated tokens
+  const tokenCache = new Map<string, StyleToken>();
+
+  // Create the tagged template function
+  const taggedFn = createTaggedUtility(utilityFn);
+
+  // Create proxy handler for property access
+  const handler: ProxyHandler<TaggedUtilityFn> = {
+    get(target, prop: string): StyleToken | undefined {
+      // Handle function properties
+      if (prop === "length" || prop === "name" || prop === "prototype") {
+        return (target as unknown as Record<string, unknown>)[prop] as StyleToken | undefined;
+      }
+
+      // Check cache first
+      if (tokenCache.has(prop)) {
+        return tokenCache.get(prop);
+      }
+
+      // Try to resolve as color
+      const cssValue = getColorValue(prop);
+      if (cssValue) {
+        // Convert prop to Tailwind-style class name
+        // "blue500" -> "blue-500", "white" -> "white"
+        const className = prop.match(/^([a-zA-Z]+)(\d+)$/)
+          ? prop.replace(/([a-zA-Z]+)(\d+)/, "$1-$2").toLowerCase()
+          : prop.toLowerCase();
+
+        const token = utilityFn(cssValue, className);
+        tokenCache.set(prop, token);
+        return token;
+      }
+
+      return undefined;
+    },
+
+    has(_target, prop: string): boolean {
+      return parseColorProp(prop) !== null;
+    },
+
+    apply(target, thisArg, args) {
+      // Handle tagged template call
+      return Reflect.apply(target, thisArg, args);
+    },
+
+    ownKeys(): string[] {
+      return getAllColorKeys();
+    },
+
+    getOwnPropertyDescriptor(_target, prop: string) {
+      if (parseColorProp(prop)) {
+        return {
+          enumerable: true,
+          configurable: true,
+          get: () => this.get!(_target, prop, _target),
+        };
+      }
+      return undefined;
+    },
+  };
+
+  return new Proxy(taggedFn, handler) as TaggedUtilityFn & ColorValues;
+}
+
+// ============================================
+// Color Utilities (both namespace and tagged template)
+// ============================================
+
+/**
+ * Background color utility
+ *
+ * @example
+ * ```ts
+ * // Predefined values
+ * bg.blue500    // background-color: #3b82f6
+ * bg.white      // background-color: #fff
+ *
+ * // Arbitrary values
+ * bg`#ff5500`   // background-color: #ff5500
+ * ```
+ */
+export const bg: TaggedUtilityFn & ColorValues = createColorUtility(bgFn, "bg");
+
+/**
+ * Text color utility
+ *
+ * @example
+ * ```ts
+ * // Predefined values
+ * text.gray700  // color: #374151
+ * text.white    // color: #fff
+ *
+ * // Arbitrary values
+ * text`#333`    // color: #333
+ * ```
+ */
+export const text: TaggedUtilityFn & ColorValues = createColorUtility(textFn, "text");
+
+/**
+ * Border color utility
+ *
+ * @example
+ * ```ts
+ * // Predefined values
+ * border.gray200  // border-color: #e5e7eb
+ * border.red500   // border-color: #ef4444
+ *
+ * // Arbitrary values
+ * border`rgba(0,0,0,0.1)`  // border-color: rgba(0,0,0,0.1)
+ * ```
+ */
+export const border: TaggedUtilityFn & ColorValues = createColorUtility(borderFn, "border");
+
+// ============================================
+// Grouped exports for convenient destructuring
+// ============================================
+
+/** Colors namespace type */
+export interface ColorsNamespace {
+  [key: string]: StyleToken;
+}
 
 /** Grouped color predefined values */
 export interface ColorGroup {
-  bg: ColorValues;
-  text: ColorValues;
-  border: ColorValues;
+  bg: TaggedUtilityFn & ColorValues;
+  text: TaggedUtilityFn & ColorValues;
+  border: TaggedUtilityFn & ColorValues;
 }
 
 /** Grouped color arbitrary functions */
@@ -358,15 +512,15 @@ export interface ColorArbGroup {
   border: TaggedUtilityFn;
 }
 
-// Grouped exports for convenient destructuring
+// Grouped exports
 export const colors: ColorGroup = {
-  bg: bg,
-  text: text,
-  border: border,
+  bg,
+  text,
+  border,
 };
 
 export const colorsArb: ColorArbGroup = {
-  bg: bgArb,
-  text: textArb,
-  border: borderArb,
+  bg,
+  text,
+  border,
 };

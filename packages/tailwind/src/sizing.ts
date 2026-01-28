@@ -1,5 +1,19 @@
 /**
  * Sizing utilities: width, height, min/max width/height
+ *
+ * Usage:
+ * ```ts
+ * // Predefined values (camelCase via Proxy)
+ * import { sizing } from "@semajsx/tailwind";
+ * <div class={[sizing.w4, sizing.hFull, sizing.maxWLg]}>
+ *
+ * // Destructuring works
+ * const { w4, hFull, maxWLg } = sizing;
+ *
+ * // Arbitrary values (tagged template)
+ * import { w, h, maxW } from "@semajsx/tailwind";
+ * <div class={[w`300px`, h`calc(100vh - 64px)`]}>
+ * ```
  */
 
 import type { StyleToken, TaggedUtilityFn } from "./types";
@@ -143,9 +157,237 @@ const heightFn = createUtility("height", "h");
 const minHeightFn = createUtility("min-height", "min-h");
 const maxHeightFn = createUtility("max-height", "max-h");
 
-const sizeFn = createUtility("width", "size");
+const sizeFnBase = createUtility("width", "size");
 
-// Helper to generate predefined values for a utility
+// Size utility (sets both width and height)
+const sizeUtilityFn = (value: string, valueName?: string): StyleToken => {
+  const token = sizeFnBase(value, valueName);
+  return {
+    ...token,
+    __cssTemplate: `.${token._} { width: ${value}; height: ${value}; }`,
+  };
+};
+
+// Utility definitions for the namespace
+interface SizingUtility {
+  fn: (value: string, valueName?: string) => StyleToken;
+  scale: Record<string, string>;
+  classPrefix: string;
+}
+
+const utilityDefs: Record<string, SizingUtility> = {
+  w: { fn: widthFn, scale: sizingScale, classPrefix: "w" },
+  h: { fn: heightFn, scale: heightScale, classPrefix: "h" },
+  minW: { fn: minWidthFn, scale: minMaxWidthScale, classPrefix: "minW" },
+  maxW: { fn: maxWidthFn, scale: minMaxWidthScale, classPrefix: "maxW" },
+  minH: { fn: minHeightFn, scale: minMaxHeightScale, classPrefix: "minH" },
+  maxH: { fn: maxHeightFn, scale: minMaxHeightScale, classPrefix: "maxH" },
+  size: { fn: sizeUtilityFn, scale: sizingScale, classPrefix: "size" },
+};
+
+// Convert scale key to valid JS property name
+// "1/2" -> "1_2", "0.5" -> "0_5", "screen-sm" -> "screenSm"
+function scaleKeyToPropertyKey(scaleKey: string): string {
+  return scaleKey
+    .replace(/\//g, "_") // 1/2 -> 1_2
+    .replace(/\./g, "_") // 0.5 -> 0_5
+    .replace(/-([a-z0-9])/g, (_, c) => c.toUpperCase()); // screen-sm -> screenSm
+}
+
+// Convert property key back to scale key
+// "1_2" -> "1/2" (for fractions), "0_5" -> "0.5", "screenSm" -> "screen-sm"
+function propertyKeyToScaleKey(propKey: string): string {
+  // Check if it's a fraction pattern (number_number)
+  if (/^\d+_\d+$/.test(propKey)) {
+    return propKey.replace(/_/g, "/");
+  }
+  // Check if it's a decimal pattern (number_number)
+  if (/^\d+_\d+$/.test(propKey)) {
+    return propKey.replace(/_/g, ".");
+  }
+  // Handle decimal like "0_5" -> "0.5"
+  if (/^0_\d+$/.test(propKey) || /^\d+_5$/.test(propKey)) {
+    return propKey.replace(/_/g, ".");
+  }
+  // Handle camelCase -> kebab-case (screenSm -> screen-sm)
+  return propKey.replace(/([A-Z])/g, (_, c) => `-${c.toLowerCase()}`);
+}
+
+// Parse property name to extract utility prefix and scale key
+// "w4" -> { prefix: "w", scaleKey: "4" }
+// "wFull" -> { prefix: "w", scaleKey: "full" }
+// "maxWLg" -> { prefix: "maxW", scaleKey: "lg" }
+// "w1_2" -> { prefix: "w", scaleKey: "1/2" }
+function parseSizingProp(prop: string): { prefix: string; scaleKey: string } | null {
+  // Try each prefix from longest to shortest
+  const prefixes = ["minW", "maxW", "minH", "maxH", "size", "w", "h"];
+
+  for (const prefix of prefixes) {
+    if (prop.startsWith(prefix)) {
+      const rest = prop.slice(prefix.length);
+      if (!rest) continue;
+
+      const def = utilityDefs[prefix];
+      if (!def) continue;
+
+      // Convert first char to lowercase for matching
+      const normalizedRest = rest[0]!.toLowerCase() + rest.slice(1);
+      const scaleKey = propertyKeyToScaleKey(normalizedRest);
+
+      // Check if the scale key exists
+      if (scaleKey in def.scale) {
+        return { prefix, scaleKey };
+      }
+
+      // Also try the original rest (for numeric keys like "4")
+      if (normalizedRest in def.scale) {
+        return { prefix, scaleKey: normalizedRest };
+      }
+    }
+  }
+  return null;
+}
+
+// Cache for generated tokens
+const tokenCache = new Map<string, StyleToken>();
+
+/** Sizing namespace type */
+export interface SizingNamespace {
+  [key: string]: StyleToken;
+}
+
+/**
+ * Sizing namespace with all predefined values (via Proxy)
+ *
+ * @example
+ * ```ts
+ * import { sizing } from "@semajsx/tailwind";
+ *
+ * // Direct access
+ * sizing.w4     // width: 1rem
+ * sizing.hFull  // height: 100%
+ * sizing.maxWLg // max-width: 32rem
+ * sizing.w1_2   // width: 50% (fraction 1/2)
+ *
+ * // Destructuring works
+ * const { w4, hFull, maxWLg } = sizing;
+ * ```
+ */
+export const sizing: SizingNamespace = new Proxy({} as SizingNamespace, {
+  get(_target, prop: string): StyleToken | undefined {
+    // Check cache first
+    if (tokenCache.has(prop)) {
+      return tokenCache.get(prop);
+    }
+
+    // Parse the property name
+    const parsed = parseSizingProp(prop);
+    if (!parsed) {
+      return undefined;
+    }
+
+    const { prefix, scaleKey } = parsed;
+    const def = utilityDefs[prefix];
+    if (!def) return undefined;
+
+    const cssValue = def.scale[scaleKey];
+    if (!cssValue) {
+      return undefined;
+    }
+
+    // Generate and cache the token
+    const token = def.fn(cssValue, scaleKey);
+    tokenCache.set(prop, token);
+    return token;
+  },
+
+  has(_target, prop: string): boolean {
+    return parseSizingProp(prop) !== null;
+  },
+
+  ownKeys(): string[] {
+    // Generate all possible keys for enumeration (needed for Object.keys, spreading)
+    const keys: string[] = [];
+
+    for (const [prefix, def] of Object.entries(utilityDefs)) {
+      for (const scaleKey of Object.keys(def.scale)) {
+        const propKey = scaleKeyToPropertyKey(scaleKey);
+        // Capitalize first letter of propKey if prefix ends with lowercase
+        const capitalizedPropKey = propKey[0]!.toUpperCase() + propKey.slice(1);
+        keys.push(`${prefix}${capitalizedPropKey}`);
+      }
+    }
+    return keys;
+  },
+
+  getOwnPropertyDescriptor(_target, prop: string) {
+    if (parseSizingProp(prop)) {
+      return {
+        enumerable: true,
+        configurable: true,
+        value: this.get!(_target, prop, _target),
+      };
+    }
+    return undefined;
+  },
+});
+
+// ============================================
+// Tagged Template Functions (Arbitrary Values)
+// ============================================
+
+/** Width - arbitrary value: w\`300px\` */
+export const w: TaggedUtilityFn = createTaggedUtility(widthFn);
+/** Min Width - arbitrary value: minW\`300px\` */
+export const minW: TaggedUtilityFn = createTaggedUtility(minWidthFn);
+/** Max Width - arbitrary value: maxW\`800px\` */
+export const maxW: TaggedUtilityFn = createTaggedUtility(maxWidthFn);
+
+/** Height - arbitrary value: h\`100vh\` */
+export const h: TaggedUtilityFn = createTaggedUtility(heightFn);
+/** Min Height - arbitrary value: minH\`100px\` */
+export const minH: TaggedUtilityFn = createTaggedUtility(minHeightFn);
+/** Max Height - arbitrary value: maxH\`500px\` */
+export const maxH: TaggedUtilityFn = createTaggedUtility(maxHeightFn);
+
+/** Size (width & height) - arbitrary value: size\`48px\` */
+export const size: TaggedUtilityFn = (
+  strings: TemplateStringsArray,
+  ...values: unknown[]
+): StyleToken => {
+  let result = strings[0] ?? "";
+  for (let i = 0; i < values.length; i++) {
+    result += String(values[i]) + (strings[i + 1] ?? "");
+  }
+  return sizeUtilityFn(result);
+};
+
+// Legacy exports for backwards compatibility (grouped objects)
+// These are deprecated - use `sizing` namespace instead
+
+/** @deprecated Use `sizing` namespace instead */
+export interface SizingGroup {
+  w: SizingValues;
+  minW: SizingValues;
+  maxW: SizingValues;
+  h: SizingValues;
+  minH: SizingValues;
+  maxH: SizingValues;
+  size: SizingValues;
+}
+
+/** @deprecated Use tagged template functions instead */
+export interface SizingArbGroup {
+  w: TaggedUtilityFn;
+  minW: TaggedUtilityFn;
+  maxW: TaggedUtilityFn;
+  h: TaggedUtilityFn;
+  minH: TaggedUtilityFn;
+  maxH: TaggedUtilityFn;
+  size: TaggedUtilityFn;
+}
+
+// Helper to generate predefined values for a utility (for legacy support)
 function generateSizingValues(
   utilityFn: (value: string, valueName?: string) => StyleToken,
   scale: Record<string, string>,
@@ -157,70 +399,27 @@ function generateSizingValues(
   return result;
 }
 
-// Predefined sizing values
-export const w: SizingValues = generateSizingValues(widthFn, sizingScale);
-export const minW: SizingValues = generateSizingValues(minWidthFn, minMaxWidthScale);
-export const maxW: SizingValues = generateSizingValues(maxWidthFn, minMaxWidthScale);
+// Legacy grouped exports (for backwards compatibility only)
+const legacyW: SizingValues = generateSizingValues(widthFn, sizingScale);
+const legacyMinW: SizingValues = generateSizingValues(minWidthFn, minMaxWidthScale);
+const legacyMaxW: SizingValues = generateSizingValues(maxWidthFn, minMaxWidthScale);
+const legacyH: SizingValues = generateSizingValues(heightFn, heightScale);
+const legacyMinH: SizingValues = generateSizingValues(minHeightFn, minMaxHeightScale);
+const legacyMaxH: SizingValues = generateSizingValues(maxHeightFn, minMaxHeightScale);
+const legacySize: SizingValues = generateSizingValues(sizeUtilityFn, sizingScale);
 
-export const h: SizingValues = generateSizingValues(heightFn, heightScale);
-export const minH: SizingValues = generateSizingValues(minHeightFn, minMaxHeightScale);
-export const maxH: SizingValues = generateSizingValues(maxHeightFn, minMaxHeightScale);
-
-// Size utility (sets both width and height)
-// Note: We need to create a custom utility for this
-const sizeUtilityFn = (value: string, valueName?: string): StyleToken => {
-  const token = sizeFn(value, valueName);
-  return {
-    ...token,
-    __cssTemplate: `.${token._} { width: ${value}; height: ${value}; }`,
-  };
-};
-export const size: SizingValues = generateSizingValues(sizeUtilityFn, sizingScale);
-
-// Tagged template functions for arbitrary values
-export const wArb: TaggedUtilityFn = createTaggedUtility(widthFn);
-export const minWArb: TaggedUtilityFn = createTaggedUtility(minWidthFn);
-export const maxWArb: TaggedUtilityFn = createTaggedUtility(maxWidthFn);
-
-export const hArb: TaggedUtilityFn = createTaggedUtility(heightFn);
-export const minHArb: TaggedUtilityFn = createTaggedUtility(minHeightFn);
-export const maxHArb: TaggedUtilityFn = createTaggedUtility(maxHeightFn);
-
-export const sizeArb: TaggedUtilityFn = (
-  strings: TemplateStringsArray,
-  ...values: unknown[]
-): StyleToken => {
-  let result = strings[0] ?? "";
-  for (let i = 0; i < values.length; i++) {
-    result += String(values[i]) + (strings[i + 1] ?? "");
-  }
-  return sizeUtilityFn(result);
+/** @deprecated Use `sizing` namespace instead */
+export const sizingGroup: SizingGroup = {
+  w: legacyW,
+  minW: legacyMinW,
+  maxW: legacyMaxW,
+  h: legacyH,
+  minH: legacyMinH,
+  maxH: legacyMaxH,
+  size: legacySize,
 };
 
-/** Grouped sizing predefined values */
-export interface SizingGroup {
-  w: SizingValues;
-  minW: SizingValues;
-  maxW: SizingValues;
-  h: SizingValues;
-  minH: SizingValues;
-  maxH: SizingValues;
-  size: SizingValues;
-}
-
-/** Grouped sizing arbitrary functions */
-export interface SizingArbGroup {
-  w: TaggedUtilityFn;
-  minW: TaggedUtilityFn;
-  maxW: TaggedUtilityFn;
-  h: TaggedUtilityFn;
-  minH: TaggedUtilityFn;
-  maxH: TaggedUtilityFn;
-  size: TaggedUtilityFn;
-}
-
-// Grouped exports for convenient destructuring
-export const sizing: SizingGroup = {
+export const sizingArb: SizingArbGroup = {
   w: w,
   minW: minW,
   maxW: maxW,
@@ -228,14 +427,4 @@ export const sizing: SizingGroup = {
   minH: minH,
   maxH: maxH,
   size: size,
-};
-
-export const sizingArb: SizingArbGroup = {
-  w: wArb,
-  minW: minWArb,
-  maxW: maxWArb,
-  h: hArb,
-  minH: minHArb,
-  maxH: maxHArb,
-  size: sizeArb,
 };
