@@ -377,21 +377,7 @@ packages/tailwind/
 
 ### Core Design: Template-First Approach
 
-The key insight from the RFC is the **template-first approach**: define the utility template once, then generate all values from it.
-
-```ts
-// core.ts
-export function createUtility(property: string, classPrefix: string) {
-  return (value: string): StyleToken => ({
-    __kind: "style",
-    _: `${classPrefix}-${valueToSuffix(value)}`,
-    __cssTemplate: `.${classPrefix}-${valueToSuffix(value)} { ${property}: ${value}; }`,
-    toString() {
-      return this._;
-    },
-  });
-}
-```
+The key insight from the RFC is the **template-first approach**: define the utility template once, then generate all values from it. See the "Class Name Generation (Deterministic)" section above for the complete `createUtility` implementation.
 
 ---
 
@@ -406,9 +392,9 @@ export function createUtility(property: string, classPrefix: string) {
 1. Create `packages/tailwind/` directory structure
 2. Set up `package.json` with workspace dependencies
 3. Implement `core.ts` with:
-   - `createUtility(property, classPrefix)` - single property utility
+   - `createUtility(property, utilityName, config)` - single property utility generator
    - `valueToSuffix(value)` - deterministic suffix generation
-   - `hashString(value)` - for complex values
+   - `hashString(value)` - djb2 hash for complex values
 
 **Deliverables**:
 
