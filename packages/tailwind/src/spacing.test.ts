@@ -6,7 +6,6 @@ import {
   p4,
   p8,
   ppx,
-  p0_5,
   px4,
   py4,
   pt4,
@@ -57,9 +56,10 @@ describe("flat exports - padding", () => {
     expect(ppx.__cssTemplate).toBe(".p-px { padding: 1px; }");
   });
 
-  it("p0_5 generates correct token (decimal)", () => {
-    expect(p0_5._).toBe("p-0.5");
-    expect(p0_5.__cssTemplate).toBe(".p-0\\.5 { padding: 0.125rem; }");
+  it("p`0.5` generates correct token for decimal (via tagged template)", () => {
+    const token = p`0.5`;
+    expect(token._).toBe("p-0_5");
+    expect(token.__cssTemplate).toContain("padding: 0.5");
   });
 
   it("px4 generates correct token", () => {
@@ -199,17 +199,15 @@ describe("arbitrary values - tagged templates", () => {
 });
 
 describe("spacing scale coverage", () => {
-  it("includes all standard Tailwind spacing values", () => {
+  it("includes all standard Tailwind spacing values (no decimals - use tagged template for those)", () => {
+    // Note: Decimal values (0.5, 1.5, 2.5, 3.5) are not exported as flat tokens
+    // Use tagged template instead: p`0.5`, m`1.5`, etc.
     const expectedKeys = [
       "p0",
       "ppx",
-      "p0_5",
       "p1",
-      "p1_5",
       "p2",
-      "p2_5",
       "p3",
-      "p3_5",
       "p4",
       "p5",
       "p6",

@@ -142,10 +142,10 @@ function generateInsetTokens(
 ): Record<string, StyleToken> {
   const tokens: Record<string, StyleToken> = {};
 
-  // Number tokens: inset0, inset4, etc.
+  // Number tokens: inset0, inset4, etc. (skip decimals - use tagged template for those)
   for (const [key, value] of Object.entries(insetScale)) {
-    const tokenKey = key.replace(".", "_");
-    const tokenName = `${prefix}${tokenKey}`;
+    if (key.includes(".")) continue;
+    const tokenName = `${prefix}${key}`;
     tokens[tokenName] = utilityFn(value, key);
   }
 
@@ -303,13 +303,9 @@ export const { static: positionStatic, fixed, absolute, relative, sticky } = pos
 export const {
   top0,
   toppx,
-  top0_5,
   top1,
-  top1_5,
   top2,
-  top2_5,
   top3,
-  top3_5,
   top4,
   top5,
   top6,
@@ -352,13 +348,9 @@ export const {
 export const {
   right0,
   rightpx,
-  right0_5,
   right1,
-  right1_5,
   right2,
-  right2_5,
   right3,
-  right3_5,
   right4,
   right5,
   right6,
@@ -401,13 +393,9 @@ export const {
 export const {
   bottom0,
   bottompx,
-  bottom0_5,
   bottom1,
-  bottom1_5,
   bottom2,
-  bottom2_5,
   bottom3,
-  bottom3_5,
   bottom4,
   bottom5,
   bottom6,
@@ -450,13 +438,9 @@ export const {
 export const {
   left0,
   leftpx,
-  left0_5,
   left1,
-  left1_5,
   left2,
-  left2_5,
   left3,
-  left3_5,
   left4,
   left5,
   left6,
@@ -499,13 +483,9 @@ export const {
 export const {
   inset0,
   insetpx,
-  inset0_5,
   inset1,
-  inset1_5,
   inset2,
-  inset2_5,
   inset3,
-  inset3_5,
   inset4,
   inset5,
   inset6,
@@ -548,13 +528,9 @@ export const {
 export const {
   insetX0,
   insetXpx,
-  insetX0_5,
   insetX1,
-  insetX1_5,
   insetX2,
-  insetX2_5,
   insetX3,
-  insetX3_5,
   insetX4,
   insetX5,
   insetX6,
@@ -597,13 +573,9 @@ export const {
 export const {
   insetY0,
   insetYpx,
-  insetY0_5,
   insetY1,
-  insetY1_5,
   insetY2,
-  insetY2_5,
   insetY3,
-  insetY3_5,
   insetY4,
   insetY5,
   insetY6,

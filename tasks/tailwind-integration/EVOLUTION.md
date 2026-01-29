@@ -262,13 +262,17 @@ sizing.wFull;
 
 Both patterns supported - user chooses based on preference.
 
-### 6. Decimal Handling Matters
+### 6. Decimals via Tagged Templates
 
-Scale values like `0.5`, `1.5` need consistent handling:
+Decimal scale values (0.5, 1.5, 2.5, 3.5) are rarely used and look awkward as flat exports (`p0_5`). Better approach:
 
-- Token name: `p0_5`, `m1_5` (underscore for decimal)
-- Class name: `p-0.5`, `m-1.5` (Tailwind-compatible)
-- CSS selector: `.p-0\.5` (escaped dot)
+```ts
+// Use tagged template for decimal values
+p`0.5`; // → padding: 0.5
+m`1.5`; // → margin: 1.5
+
+// Clean and readable - no awkward underscore naming
+```
 
 ### 7. Test Everything
 

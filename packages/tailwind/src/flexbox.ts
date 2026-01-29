@@ -258,10 +258,10 @@ function generateGrowShrinkTokens(): Record<string, StyleToken> {
 function generateBasisTokens(): Record<string, StyleToken> {
   const tokens: Record<string, StyleToken> = {};
 
-  // Number tokens: basis0, basis4, etc.
+  // Number tokens: basis0, basis4, etc. (skip decimals - use tagged template for those)
   for (const [key, value] of Object.entries(basisScale)) {
-    const tokenKey = key.replace(".", "_");
-    const tokenName = `basis${tokenKey}`;
+    if (key.includes(".")) continue;
+    const tokenName = `basis${key}`;
     tokens[tokenName] = flexBasisFn(value, key);
   }
 
@@ -620,13 +620,9 @@ export const { grow, grow0, shrink, shrink0 } = growShrinkTokens;
 export const {
   basis0,
   basispx,
-  basis0_5,
   basis1,
-  basis1_5,
   basis2,
-  basis2_5,
   basis3,
-  basis3_5,
   basis4,
   basis5,
   basis6,

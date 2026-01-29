@@ -38,18 +38,20 @@ w64; // width: 16rem (w + 64)
 z50; // z-index: 50 (z + 50)
 ```
 
-### 2. Use Underscore for Decimals
+### 2. Use Tagged Templates for Decimals
 
-Replace decimal points with underscores in token names:
+Decimal scale values (0.5, 1.5, 2.5, 3.5) are not exported as flat tokens. Use tagged templates instead:
 
 ```ts
-// Pattern: {prefix}{integer}_{decimal}
-p0_5; // padding: 0.125rem (0.5 scale)
-m1_5; // margin: 0.375rem (1.5 scale)
-gap2_5; // gap: 0.625rem (2.5 scale)
+// Use tagged template for decimal values
+p`0.5`; // → padding: 0.5
+m`1.5`; // → margin: 1.5
+gap`2.5`; // → gap: 2.5
 
-// Class name keeps the decimal
-p0_5._; // → "p-0.5"
+// Why no flat exports for decimals?
+// - Decimal tokens like p0_5 look awkward
+// - These values are rarely used
+// - Tagged templates are clearer: p`0.5` is more readable than p0_5
 ```
 
 ### 3. Capitalize Semantic Values

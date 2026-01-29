@@ -14,10 +14,6 @@ import {
   w48,
   w64,
   w96,
-  w0_5,
-  w1_5,
-  w2_5,
-  w3_5,
   wpx,
   // Width - fractions
   wHalf,
@@ -120,13 +116,12 @@ describe("width utility", () => {
     expect(w96.__cssTemplate).toBe(".w-96 { width: 24rem; }");
   });
 
-  it("generates width tokens for decimal scale", () => {
-    expect(w0_5._).toBe("w-0.5");
-    expect(w0_5.__cssTemplate).toBe(".w-0\\.5 { width: 0.125rem; }");
-
-    expect(w1_5._).toBe("w-1.5");
-    expect(w2_5._).toBe("w-2.5");
-    expect(w3_5._).toBe("w-3.5");
+  it("generates width tokens for decimal scale via tagged template", () => {
+    // Decimal values are not exported as flat tokens
+    // Use tagged template instead: w`0.5`, w`1.5`, etc.
+    const w0_5 = w`0.5`;
+    expect(w0_5._).toBe("w-0_5");
+    expect(w0_5.__cssTemplate).toContain("width: 0.5");
   });
 
   it("generates width token for px", () => {

@@ -135,7 +135,7 @@ See [NAMING_CONVENTION.md](./NAMING_CONVENTION.md) for complete details.
 1. **Numbers as suffix**: `p4`, `m2`, `w64` (not `p["4"]`)
 2. **Semantic names**: `wFull`, `hScreen`, `topHalf` (not `w["100%"]`)
 3. **Capitalize variants**: `textLg`, `fontBold`, `roundedFull`
-4. **Decimals use underscore**: `p0_5`, `m1_5` (for `0.5`, `1.5`)
+4. **Decimals via tagged template**: `p`0.5``, `m`1.5`` (not flat exports)
 5. **Combined tokens**: `justifyCenter`, `itemsStart` (not `justify.center`)
 
 ---
