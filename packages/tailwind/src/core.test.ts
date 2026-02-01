@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   hashString,
   valueToSuffix,
@@ -67,6 +67,10 @@ describe("createUtility", () => {
     resetConfig();
   });
 
+  afterEach(() => {
+    resetConfig();
+  });
+
   it("creates a StyleToken with correct class name", () => {
     const padding = createUtility("padding", "p");
     const token = padding("1rem", "4");
@@ -130,6 +134,10 @@ describe("createTaggedUtility", () => {
     resetConfig();
   });
 
+  afterEach(() => {
+    resetConfig();
+  });
+
   it("creates StyleToken from tagged template", () => {
     const padding = createUtility("padding", "p");
     const p = createTaggedUtility(padding);
@@ -163,6 +171,10 @@ describe("createTaggedUtility", () => {
 
 describe("createMultiUtility", () => {
   beforeEach(() => {
+    resetConfig();
+  });
+
+  afterEach(() => {
     resetConfig();
   });
 

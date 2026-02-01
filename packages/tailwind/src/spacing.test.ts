@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { resetConfig, configureTailwind } from "./config";
 import {
   // Flat exports - padding
@@ -244,6 +244,10 @@ describe("spacing scale coverage", () => {
 
 describe("prefix configuration", () => {
   beforeEach(() => {
+    resetConfig();
+  });
+
+  afterEach(() => {
     resetConfig();
   });
 
