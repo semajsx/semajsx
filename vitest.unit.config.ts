@@ -7,8 +7,8 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     projects: [
+      "packages/core",
       "packages/signal",
-      "packages/style",
       "packages/terminal",
       "packages/ssr",
       "packages/ssg",
