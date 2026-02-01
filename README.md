@@ -355,7 +355,7 @@ bun run example:dev
 - [x] Core signal system
 - [x] JSX runtime
 - [x] Basic rendering
-- [ ] List rendering with keyed reconciliation
+- [x] List rendering with keyed reconciliation
 - [ ] Portal support
 - [ ] SSR (Server-Side Rendering)
 - [ ] Suspense and async components
