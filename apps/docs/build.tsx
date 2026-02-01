@@ -3,6 +3,50 @@
 import { createSSG, defineCollection, fileSource, z } from "@semajsx/ssg";
 import { resource } from "@semajsx/ssr";
 import type { VNode } from "@semajsx/core";
+import {
+  cx,
+  flex,
+  gap4,
+  justifyCenter,
+  mt4,
+  mt8,
+  py16,
+  textCenter,
+  textXl,
+  text2xl,
+  text3xl,
+  text4xl,
+  textLg,
+  textSm,
+  fontBold,
+  fontSemibold,
+  fontMedium,
+  textColor,
+  p6,
+  roundedLg,
+  roundedMd,
+  roundedFull,
+  bg,
+  mb1,
+  mb2,
+  mb4,
+  mb8,
+  pb4,
+  grid,
+  gap8,
+  extractCss,
+  noUnderline,
+  block,
+  inline,
+  inlineBlock,
+  px3,
+  px6,
+  py1,
+  py3,
+  border,
+  border2,
+  uppercase,
+} from "@semajsx/tailwind";
 
 // Import components
 import { Layout, DocTemplate, Callout, CodeBlock } from "./components";
@@ -47,43 +91,118 @@ const guides = defineCollection({
   }),
 });
 
+// Tokens for all page components
+const allPageTokens = [
+  // HomePage
+  py16,
+  textCenter,
+  textXl,
+  text2xl,
+  text3xl,
+  text4xl,
+  textLg,
+  textSm,
+  fontBold,
+  fontSemibold,
+  fontMedium,
+  textColor.gray500,
+  textColor.blue500,
+  textColor.white,
+  mb1,
+  mb2,
+  mb4,
+  mb8,
+  pb4,
+  mt4,
+  mt8,
+  flex,
+  gap4,
+  justifyCenter,
+  grid,
+  gap8,
+  p6,
+  roundedLg,
+  roundedMd,
+  roundedFull,
+  bg.gray100,
+  bg.blue500,
+  noUnderline,
+  inline,
+  inlineBlock,
+  block,
+  px3,
+  px6,
+  py1,
+  py3,
+  border,
+  border2,
+  uppercase,
+];
+export const homePageCss = extractCss(...allPageTokens);
+
 // Components
 const HomePage = (): VNode => (
   <Layout>
     <Style href="./styles.css" />
-    <div class="home">
-      <header class="hero">
-        <h1>SemaJSX</h1>
-        <p class="tagline">
+    <div class="home-container">
+      <header class={cx(py16, textCenter)}>
+        <h1 class="hero-title">SemaJSX</h1>
+        <p class={cx(textXl, textColor.gray500, mb8)}>
           A lightweight, signal-based reactive JSX runtime for building modern web applications
         </p>
-        <div class="actions">
-          <a href="/docs/getting-started" class="btn btn-primary">
+        <div class={cx(flex, gap4, justifyCenter, mt8)}>
+          <a
+            href="/docs/getting-started"
+            class={cx(
+              inlineBlock,
+              px6,
+              py3,
+              roundedMd,
+              bg.blue500,
+              textColor.white,
+              fontSemibold,
+              noUnderline,
+              "btn-hover-primary",
+            )}
+          >
             Get Started
           </a>
-          <a href="/guides" class="btn btn-secondary">
+          <a
+            href="/guides"
+            class={cx(
+              inlineBlock,
+              px6,
+              py3,
+              roundedMd,
+              border2,
+              textColor.blue500,
+              fontSemibold,
+              noUnderline,
+              "btn-hover-secondary",
+            )}
+          >
             View Guides
           </a>
         </div>
       </header>
 
-      <section class="features">
-        <div class="feature">
-          <h2>🚀 Fine-Grained Reactivity</h2>
+      <section class={cx(grid, gap8, mt8, "features-grid")}>
+        <div class={cx(p6, roundedLg, bg.gray100)}>
+          <h2 class={cx(text2xl, fontBold, mb2)}>🚀 Fine-Grained Reactivity</h2>
           <p>
             Signals automatically track dependencies and update only what changed - no virtual DOM
             needed.
           </p>
         </div>
-        <div class="feature">
-          <h2>📦 Modular Architecture</h2>
+        <div class={cx(p6, roundedLg, bg.gray100)}>
+          <h2 class={cx(text2xl, fontBold, mb2)}>📦 Modular Architecture</h2>
           <p>
             Choose what you need: DOM rendering, Terminal UI, SSR, or SSG - all with the same
             reactive core.
           </p>
         </div>
-        <div class="feature">
-          <h2>🎯 Type-Safe</h2>
+        <div class={cx(p6, roundedLg, bg.gray100)}>
+          <h2 class={cx(text2xl, fontBold, mb2)}>🎯 Type-Safe</h2>
           <p>Full TypeScript support with comprehensive type inference and IDE autocompletion.</p>
         </div>
       </section>
@@ -116,17 +235,19 @@ const DocsIndex = ({
   return (
     <Layout>
       <Style href="./styles.css" />
-      <div class="docs-index">
-        <h1>Documentation</h1>
+      <div class="index-container">
+        <h1 class={cx(text3xl, fontBold, mb8)}>Documentation</h1>
         {Object.entries(byCategory).map(([category, items]) => (
           <section key={category}>
-            <h2>{category}</h2>
-            <ul class="doc-list">
+            <h2 class={cx(textXl, fontBold, textColor.blue500, mt8, mb4)}>{category}</h2>
+            <ul class={cx(grid, gap4, "list-none")}>
               {items.map((doc) => (
-                <li key={doc.slug}>
-                  <a href={`/docs/${doc.slug}`}>
-                    <h3>{doc.data.title}</h3>
-                    {doc.data.description && <p>{doc.data.description}</p>}
+                <li key={doc.slug} class={cx(border, roundedMd, "list-item-hover")}>
+                  <a href={`/docs/${doc.slug}`} class={cx(block, p6, noUnderline, "inherit-color")}>
+                    <h3 class={cx(textLg, fontMedium, mb1)}>{doc.data.title}</h3>
+                    {doc.data.description && (
+                      <p class={cx(textSm, textColor.gray500)}>{doc.data.description}</p>
+                    )}
                   </a>
                 </li>
               ))}
@@ -147,9 +268,13 @@ const DocPage = ({
 }): VNode => (
   <Layout>
     <Style href="./styles.css" />
-    <article class="doc-page">
-      <h1>{doc.data.title}</h1>
-      {doc.data.description && <p class="description">{doc.data.description}</p>}
+    <article class="page-container">
+      <h1 class={cx(text3xl, fontBold, mb2)}>{doc.data.title}</h1>
+      {doc.data.description && (
+        <p class={cx(textXl, textColor.gray500, mb8, pb4, "border-bottom")}>
+          {doc.data.description}
+        </p>
+      )}
       <div class="content">{content}</div>
     </article>
   </Layout>
@@ -180,17 +305,27 @@ const GuidesIndex = ({
   return (
     <Layout>
       <Style href="./styles.css" />
-      <div class="guides-index">
-        <h1>Guides</h1>
+      <div class="index-container">
+        <h1 class={cx(text3xl, fontBold, mb8)}>Guides</h1>
         {Object.entries(byDifficulty).map(([difficulty, items]) => (
           <section key={difficulty}>
-            <h2>{difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</h2>
-            <ul class="guide-list">
+            <h2 class={cx(textXl, fontBold, textColor.blue500, mt8, mb4)}>
+              {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+            </h2>
+            <ul class={cx(grid, gap4, "list-none")}>
               {items.map((guide) => (
-                <li key={guide.slug} class={`difficulty-${difficulty}`}>
-                  <a href={`/guides/${guide.slug}`}>
-                    <h3>{guide.data.title}</h3>
-                    {guide.data.description && <p>{guide.data.description}</p>}
+                <li
+                  key={guide.slug}
+                  class={cx(border, roundedMd, `difficulty-${difficulty}`, "list-item-hover")}
+                >
+                  <a
+                    href={`/guides/${guide.slug}`}
+                    class={cx(block, p6, noUnderline, "inherit-color")}
+                  >
+                    <h3 class={cx(textLg, fontMedium, mb1)}>{guide.data.title}</h3>
+                    {guide.data.description && (
+                      <p class={cx(textSm, textColor.gray500)}>{guide.data.description}</p>
+                    )}
                   </a>
                 </li>
               ))}
@@ -211,12 +346,28 @@ const GuidePage = ({
 }): VNode => (
   <Layout>
     <Style href="./styles.css" />
-    <article class="guide-page">
-      <div class={`difficulty-badge difficulty-${guide.data.difficulty}`}>
+    <article class="page-container">
+      <div
+        class={cx(
+          inlineBlock,
+          px3,
+          py1,
+          roundedFull,
+          textSm,
+          fontSemibold,
+          uppercase,
+          mb4,
+          `difficulty-${guide.data.difficulty}`,
+        )}
+      >
         {guide.data.difficulty}
       </div>
-      <h1>{guide.data.title}</h1>
-      {guide.data.description && <p class="description">{guide.data.description}</p>}
+      <h1 class={cx(text3xl, fontBold, mb2)}>{guide.data.title}</h1>
+      {guide.data.description && (
+        <p class={cx(textXl, textColor.gray500, mb8, pb4, "border-bottom")}>
+          {guide.data.description}
+        </p>
+      )}
       <div class="content">{content}</div>
     </article>
   </Layout>

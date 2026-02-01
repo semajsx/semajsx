@@ -27,6 +27,7 @@
         "@semajsx/signal": "workspace:*",
         "@semajsx/ssg": "workspace:*",
         "@semajsx/ssr": "workspace:*",
+        "@semajsx/tailwind": "workspace:*",
         "zod": "^4.3.6",
       },
       "devDependencies": {
