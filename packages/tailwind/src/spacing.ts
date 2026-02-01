@@ -90,10 +90,8 @@ function generateSpacingTokens(prefix: string, utilityFn: UtilityFn): Record<str
   const tokens: Record<string, StyleToken> = {};
 
   for (const [key, value] of Object.entries(spacingScale)) {
-    // Skip decimal values - use tagged template for these: p`0.5`
-    if (key.includes(".")) continue;
-
-    const tokenName = `${prefix}${key}`;
+    // Convert decimal keys: "0.5" -> "0_5" for valid JS identifiers
+    const tokenName = `${prefix}${key.replace(".", "_")}`;
     tokens[tokenName] = utilityFn(value, key);
   }
 
@@ -121,6 +119,17 @@ const mtTokens = generateSpacingTokens("mt", utilityCreators.mt);
 const mrTokens = generateSpacingTokens("mr", utilityCreators.mr);
 const mbTokens = generateSpacingTokens("mb", utilityCreators.mb);
 const mlTokens = generateSpacingTokens("ml", utilityCreators.ml);
+
+// Margin auto tokens
+const marginAutoTokens = {
+  mAuto: utilityCreators.m("auto", "auto"),
+  mxAuto: utilityCreators.mx("auto", "auto"),
+  myAuto: utilityCreators.my("auto", "auto"),
+  mtAuto: utilityCreators.mt("auto", "auto"),
+  mrAuto: utilityCreators.mr("auto", "auto"),
+  mbAuto: utilityCreators.mb("auto", "auto"),
+  mlAuto: utilityCreators.ml("auto", "auto"),
+};
 
 // Gap tokens
 const gapTokens = generateSpacingTokens("gap", utilityCreators.gap);
@@ -175,9 +184,13 @@ export const gapY: TaggedUtilityFn = createTaggedUtility(utilityCreators.gapY);
 export const {
   p0,
   ppx,
+  p0_5,
   p1,
+  p1_5,
   p2,
+  p2_5,
   p3,
+  p3_5,
   p4,
   p5,
   p6,
@@ -209,9 +222,13 @@ export const {
 export const {
   px0,
   pxpx,
+  px0_5,
   px1,
+  px1_5,
   px2,
+  px2_5,
   px3,
+  px3_5,
   px4,
   px5,
   px6,
@@ -243,9 +260,13 @@ export const {
 export const {
   py0,
   pypx,
+  py0_5,
   py1,
+  py1_5,
   py2,
+  py2_5,
   py3,
+  py3_5,
   py4,
   py5,
   py6,
@@ -277,9 +298,13 @@ export const {
 export const {
   pt0,
   ptpx,
+  pt0_5,
   pt1,
+  pt1_5,
   pt2,
+  pt2_5,
   pt3,
+  pt3_5,
   pt4,
   pt5,
   pt6,
@@ -311,9 +336,13 @@ export const {
 export const {
   pr0,
   prpx,
+  pr0_5,
   pr1,
+  pr1_5,
   pr2,
+  pr2_5,
   pr3,
+  pr3_5,
   pr4,
   pr5,
   pr6,
@@ -345,9 +374,13 @@ export const {
 export const {
   pb0,
   pbpx,
+  pb0_5,
   pb1,
+  pb1_5,
   pb2,
+  pb2_5,
   pb3,
+  pb3_5,
   pb4,
   pb5,
   pb6,
@@ -379,9 +412,13 @@ export const {
 export const {
   pl0,
   plpx,
+  pl0_5,
   pl1,
+  pl1_5,
   pl2,
+  pl2_5,
   pl3,
+  pl3_5,
   pl4,
   pl5,
   pl6,
@@ -417,9 +454,13 @@ export const {
 export const {
   m0,
   mpx,
+  m0_5,
   m1,
+  m1_5,
   m2,
+  m2_5,
   m3,
+  m3_5,
   m4,
   m5,
   m6,
@@ -451,9 +492,13 @@ export const {
 export const {
   mx0,
   mxpx,
+  mx0_5,
   mx1,
+  mx1_5,
   mx2,
+  mx2_5,
   mx3,
+  mx3_5,
   mx4,
   mx5,
   mx6,
@@ -485,9 +530,13 @@ export const {
 export const {
   my0,
   mypx,
+  my0_5,
   my1,
+  my1_5,
   my2,
+  my2_5,
   my3,
+  my3_5,
   my4,
   my5,
   my6,
@@ -519,9 +568,13 @@ export const {
 export const {
   mt0,
   mtpx,
+  mt0_5,
   mt1,
+  mt1_5,
   mt2,
+  mt2_5,
   mt3,
+  mt3_5,
   mt4,
   mt5,
   mt6,
@@ -553,9 +606,13 @@ export const {
 export const {
   mr0,
   mrpx,
+  mr0_5,
   mr1,
+  mr1_5,
   mr2,
+  mr2_5,
   mr3,
+  mr3_5,
   mr4,
   mr5,
   mr6,
@@ -587,9 +644,13 @@ export const {
 export const {
   mb0,
   mbpx,
+  mb0_5,
   mb1,
+  mb1_5,
   mb2,
+  mb2_5,
   mb3,
+  mb3_5,
   mb4,
   mb5,
   mb6,
@@ -621,9 +682,13 @@ export const {
 export const {
   ml0,
   mlpx,
+  ml0_5,
   ml1,
+  ml1_5,
   ml2,
+  ml2_5,
   ml3,
+  ml3_5,
   ml4,
   ml5,
   ml6,
@@ -652,6 +717,9 @@ export const {
   ml96,
 } = mlTokens;
 
+// Margin auto exports
+export const { mAuto, mxAuto, myAuto, mtAuto, mrAuto, mbAuto, mlAuto } = marginAutoTokens;
+
 // ============================================
 // Individual token exports (flat) - Gap
 // ============================================
@@ -659,9 +727,13 @@ export const {
 export const {
   gap0,
   gappx,
+  gap0_5,
   gap1,
+  gap1_5,
   gap2,
+  gap2_5,
   gap3,
+  gap3_5,
   gap4,
   gap5,
   gap6,
@@ -693,9 +765,13 @@ export const {
 export const {
   gapX0,
   gapXpx,
+  gapX0_5,
   gapX1,
+  gapX1_5,
   gapX2,
+  gapX2_5,
   gapX3,
+  gapX3_5,
   gapX4,
   gapX5,
   gapX6,
@@ -727,9 +803,13 @@ export const {
 export const {
   gapY0,
   gapYpx,
+  gapY0_5,
   gapY1,
+  gapY1_5,
   gapY2,
+  gapY2_5,
   gapY3,
+  gapY3_5,
   gapY4,
   gapY5,
   gapY6,
@@ -780,6 +860,8 @@ export const spacing = {
   ...mrTokens,
   ...mbTokens,
   ...mlTokens,
+  // Margin auto
+  ...marginAutoTokens,
   // Gap
   ...gapTokens,
   ...gapXTokens,

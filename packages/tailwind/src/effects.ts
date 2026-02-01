@@ -163,6 +163,10 @@ const userSelectValues = ["none", "text", "all", "auto"] as const;
 // ============================================
 
 const borderWidthFn = createUtility("border-width", "border");
+const borderTopWidthFn = createUtility("border-top-width", "border-t");
+const borderRightWidthFn = createUtility("border-right-width", "border-r");
+const borderBottomWidthFn = createUtility("border-bottom-width", "border-b");
+const borderLeftWidthFn = createUtility("border-left-width", "border-l");
 const borderRadiusFn = createUtility("border-radius", "rounded");
 const boxShadowFn = createUtility("box-shadow", "shadow");
 const opacityFn = createUtility("opacity", "opacity");
@@ -195,6 +199,45 @@ function generateBorderWidthTokens(): Record<string, StyleToken> {
         __kind: "style",
         _: className,
         __cssTemplate: `.${className} { border-width: ${value}; }`,
+        toString() {
+          return this._;
+        },
+      };
+    }
+  }
+
+  return tokens;
+}
+
+function generateSideBorderTokens(
+  side: "t" | "r" | "b" | "l",
+  property: string,
+  utilityFn: (value: string, valueName?: string) => StyleToken,
+): Record<string, StyleToken> {
+  const tokens: Record<string, StyleToken> = {};
+  const cfg = getConfig();
+  const prefix = cfg.prefix ?? "";
+  const sideName = { t: "Top", r: "Right", b: "Bottom", l: "Left" }[side];
+
+  for (const [key, value] of Object.entries(borderWidthScale)) {
+    if (key === "DEFAULT") {
+      // borderT, borderR, borderB, borderL (default 1px)
+      tokens[`border${sideName}`] = {
+        __kind: "style",
+        _: `${prefix}border-${side}`,
+        __cssTemplate: `.${prefix}border-${side} { ${property}: ${value}; }`,
+        toString() {
+          return this._;
+        },
+      };
+    } else {
+      // borderT0, borderT2, borderR4, borderB8, etc.
+      const tokenName = `border${sideName}${key}`;
+      const className = `${prefix}border-${side}-${key}`;
+      tokens[tokenName] = {
+        __kind: "style",
+        _: className,
+        __cssTemplate: `.${className} { ${property}: ${value}; }`,
         toString() {
           return this._;
         },
@@ -380,6 +423,14 @@ function generateUserSelectTokens(): Record<string, StyleToken> {
 // ============================================
 
 const borderWidthTokens = generateBorderWidthTokens();
+const borderTopTokens = generateSideBorderTokens("t", "border-top-width", borderTopWidthFn);
+const borderRightTokens = generateSideBorderTokens("r", "border-right-width", borderRightWidthFn);
+const borderBottomTokens = generateSideBorderTokens(
+  "b",
+  "border-bottom-width",
+  borderBottomWidthFn,
+);
+const borderLeftTokens = generateSideBorderTokens("l", "border-left-width", borderLeftWidthFn);
 const borderRadiusTokens = generateBorderRadiusTokens();
 const boxShadowTokens = generateBoxShadowTokens();
 const opacityTokens = generateOpacityTokens();
@@ -409,6 +460,45 @@ export const opacity: TaggedUtilityFn = createTaggedUtility(opacityFn);
 // ============================================
 
 export const { border, border0, border2, border4, border8 } = borderWidthTokens;
+
+// Border Top
+export const { borderTop, borderTop0, borderTop2, borderTop4, borderTop8 } = borderTopTokens;
+
+// Border Right
+export const { borderRight, borderRight0, borderRight2, borderRight4, borderRight8 } =
+  borderRightTokens;
+
+// Border Bottom
+export const { borderBottom, borderBottom0, borderBottom2, borderBottom4, borderBottom8 } =
+  borderBottomTokens;
+
+// Border Left
+export const { borderLeft, borderLeft0, borderLeft2, borderLeft4, borderLeft8 } = borderLeftTokens;
+
+// Short aliases (Tailwind naming: border-t, border-b, etc.)
+export const borderT = borderTop;
+export const borderT0 = borderTop0;
+export const borderT2 = borderTop2;
+export const borderT4 = borderTop4;
+export const borderT8 = borderTop8;
+
+export const borderR = borderRight;
+export const borderR0 = borderRight0;
+export const borderR2 = borderRight2;
+export const borderR4 = borderRight4;
+export const borderR8 = borderRight8;
+
+export const borderB = borderBottom;
+export const borderB0 = borderBottom0;
+export const borderB2 = borderBottom2;
+export const borderB4 = borderBottom4;
+export const borderB8 = borderBottom8;
+
+export const borderL = borderLeft;
+export const borderL0 = borderLeft0;
+export const borderL2 = borderLeft2;
+export const borderL4 = borderLeft4;
+export const borderL8 = borderLeft8;
 
 // ============================================
 // Individual token exports (flat) - Border Radius
@@ -539,6 +629,32 @@ export const { selectNone, selectText, selectAll, selectAuto } = userSelectToken
 export const effects = {
   // Border width
   ...borderWidthTokens,
+  // Border side widths
+  ...borderTopTokens,
+  ...borderRightTokens,
+  ...borderBottomTokens,
+  ...borderLeftTokens,
+  // Short aliases
+  borderT,
+  borderT0,
+  borderT2,
+  borderT4,
+  borderT8,
+  borderR,
+  borderR0,
+  borderR2,
+  borderR4,
+  borderR8,
+  borderB,
+  borderB0,
+  borderB2,
+  borderB4,
+  borderB8,
+  borderL,
+  borderL0,
+  borderL2,
+  borderL4,
+  borderL8,
   // Border radius
   ...borderRadiusTokens,
   // Box shadow

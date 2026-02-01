@@ -151,10 +151,9 @@ function generateSpacingTokens(prefix: string, utilityFn: UtilityFn): Record<str
   const tokens: Record<string, StyleToken> = {};
 
   for (const [key, value] of Object.entries(spacingScale)) {
-    // Skip decimal values - use tagged template for these: w`0.5`
-    if (key.includes(".")) continue;
-
-    const tokenName = `${prefix}${key}`;
+    // Replace decimal point with underscore for valid JS identifiers: 0.5 -> 0_5
+    const safeKey = key.replace(".", "_");
+    const tokenName = `${prefix}${safeKey}`;
     tokens[tokenName] = utilityFn(value, key);
   }
 
@@ -330,9 +329,13 @@ export const size: TaggedUtilityFn = ((
 export const {
   w0,
   wpx,
+  w0_5,
   w1,
+  w1_5,
   w2,
+  w2_5,
   w3,
+  w3_5,
   w4,
   w5,
   w6,
@@ -385,9 +388,13 @@ export const {
 export const {
   h0,
   hpx,
+  h0_5,
   h1,
+  h1_5,
   h2,
+  h2_5,
   h3,
+  h3_5,
   h4,
   h5,
   h6,
@@ -440,9 +447,13 @@ export const {
 export const {
   size0,
   sizepx,
+  size0_5,
   size1,
+  size1_5,
   size2,
+  size2_5,
   size3,
+  size3_5,
   size4,
   size5,
   size6,
