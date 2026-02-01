@@ -194,6 +194,19 @@
         "vue",
       ],
     },
+    "packages/tailwind": {
+      "name": "@semajsx/tailwind",
+      "version": "0.1.0",
+      "dependencies": {
+        "@semajsx/style": "workspace:*",
+      },
+      "devDependencies": {
+        "@semajsx/configs": "workspace:*",
+        "tsdown": "^0.20.1",
+        "typescript": "^5.9.3",
+        "vitest": "^4.0.18",
+      },
+    },
     "packages/terminal": {
       "name": "@semajsx/terminal",
       "version": "0.1.0",
@@ -470,6 +483,8 @@
     "@semajsx/ssr": ["@semajsx/ssr@workspace:packages/ssr"],
 
     "@semajsx/style": ["@semajsx/style@workspace:packages/style"],
+
+    "@semajsx/tailwind": ["@semajsx/tailwind@workspace:packages/tailwind"],
 
     "@semajsx/terminal": ["@semajsx/terminal@workspace:packages/terminal"],
 
