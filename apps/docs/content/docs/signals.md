@@ -49,7 +49,7 @@ For objects and arrays, you must replace the entire value to trigger updates. Mu
 Signals automatically subscribe when used in JSX:
 
 ```tsx
-/** @jsxImportSource @semajsx/dom */
+/** @jsxImportSource semajsx/dom */
 
 import { signal } from "semajsx/signal";
 

@@ -52,16 +52,7 @@
     "test:coverage": "vitest run --coverage --config vitest.unit.config.ts",
     "test:terminal": "vitest run tests/terminal --config vitest.unit.config.ts",
     "clean": "rm -rf dist",
-    "prepublishOnly": "bun run build",
-    "example:dev": "cd examples/vite-counter && vite",
-    "example:build": "cd examples/vite-counter && bun run build",
-    "example:bun": "bun --conditions=development --port=0 examples/bun-server/server.tsx",
-    "example:perf": "bun --conditions=development --port=0 examples/performance-test/server.tsx",
-    "example:ssr": "bun --conditions=development examples/ssr-islands/server.tsx",
-    "example:terminal": "bun --conditions=development examples/terminal-counter/simple.tsx",
-    "example:terminal-print": "bun --conditions=development examples/terminal-print/simple-print.tsx",
-    "example:logger": "bun --conditions=development examples/logger/basic.tsx",
-    "example:logger:showcase": "bun --conditions=development examples/logger/showcase.tsx"
+    "prepublishOnly": "bun run build"
   },
   "dependencies": {
     "ansi-escapes": "^7.2.0",

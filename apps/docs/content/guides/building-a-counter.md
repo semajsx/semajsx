@@ -37,7 +37,7 @@ bun add semajsx
 Create a file called `counter.tsx`:
 
 ```tsx
-/** @jsxImportSource @semajsx/dom */
+/** @jsxImportSource semajsx/dom */
 
 import { signal } from "semajsx/signal";
 import { render } from "semajsx/dom";

@@ -1,39 +1,66 @@
 # semajsx
 
-A signal-based reactive JSX runtime for building modern web applications.
+A lightweight, signal-based reactive JSX runtime for building modern web applications.
 
-This is the main umbrella package that re-exports all SemaJSX sub-packages.
+## Install
 
-## Included Packages
+```bash
+bun add semajsx
+```
 
-- `@semajsx/signal` - Signal reactivity system
-- `@semajsx/core` - Runtime core (VNode, helpers)
-- `@semajsx/dom` - DOM rendering
-- `@semajsx/terminal` - Terminal rendering
-- `@semajsx/ssr` - SSR and Island architecture
-- `@semajsx/ssg` - Static site generation
-- `@semajsx/style` - Modular styling system
-- `@semajsx/logger` - Logging utilities
-- `@semajsx/utils` - Shared utilities
+## Quick Start
+
+```tsx
+/** @jsxImportSource semajsx/dom */
+import { signal } from "semajsx";
+import { render } from "semajsx/dom";
+
+const count = signal(0);
+
+function Counter() {
+  return <button onClick={() => count.set(count.get() + 1)}>Count: {count}</button>;
+}
+
+render(<Counter />, document.getElementById("app")!);
+```
+
+## Subpath Exports
+
+| Import Path        | Description                      |
+| ------------------ | -------------------------------- |
+| `semajsx`          | Signal reactivity + core runtime |
+| `semajsx/dom`      | DOM rendering                    |
+| `semajsx/signal`   | Signal system                    |
+| `semajsx/terminal` | Terminal rendering               |
+
+### JSX Configuration
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "semajsx/dom"
+  }
+}
+```
+
+For terminal apps, use `"jsxImportSource": "semajsx/terminal"`.
+
+### Terminal (optional)
+
+Terminal rendering requires `yoga-layout-prebuilt`:
+
+```bash
+bun add yoga-layout-prebuilt
+```
 
 ## Development
 
 ```bash
-# Build
 bun run build
-
-# Watch mode
 bun run dev
-
-# Run tests
 bun run test
-
-# Type checking
 bun run typecheck
 ```
-
-## Examples
-
-Examples are located in the `examples/` directory.
 
 See the [main README](../../README.md) for more information.
