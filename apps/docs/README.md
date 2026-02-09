@@ -1,6 +1,6 @@
 # SemaJSX Documentation Site
 
-Official documentation site for SemaJSX, built with `@semajsx/ssg`.
+Official documentation site for SemaJSX, built with `semajsx/ssg`.
 
 ## Structure
 

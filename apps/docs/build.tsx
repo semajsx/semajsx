@@ -1,8 +1,8 @@
-/** @jsxImportSource @semajsx/dom */
+/** @jsxImportSource semajsx/dom */
 
-import { createSSG, defineCollection, fileSource, z } from "@semajsx/ssg";
-import { resource } from "@semajsx/ssr";
-import type { VNode } from "@semajsx/core";
+import { createSSG, defineCollection, fileSource, z } from "semajsx/ssg";
+import { resource } from "semajsx/ssr";
+import type { VNode } from "semajsx";
 import {
   cx,
   flex,
@@ -46,7 +46,7 @@ import {
   border,
   border2,
   uppercase,
-} from "@semajsx/tailwind";
+} from "semajsx/tailwind";
 
 // Import components
 import { Layout, DocTemplate, Callout, CodeBlock } from "./components";

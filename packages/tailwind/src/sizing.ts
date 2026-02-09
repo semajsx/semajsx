@@ -326,220 +326,230 @@ export const size: TaggedUtilityFn = ((
 // ============================================
 
 // Width
-export const {
-  w0,
-  wpx,
-  w0_5,
-  w1,
-  w1_5,
-  w2,
-  w2_5,
-  w3,
-  w3_5,
-  w4,
-  w5,
-  w6,
-  w7,
-  w8,
-  w9,
-  w10,
-  w11,
-  w12,
-  w14,
-  w16,
-  w20,
-  w24,
-  w28,
-  w32,
-  w36,
-  w40,
-  w44,
-  w48,
-  w52,
-  w56,
-  w60,
-  w64,
-  w72,
-  w80,
-  w96,
-  wHalf,
-  wThird,
-  wTwoThirds,
-  wQuarter,
-  wThreeQuarters,
-  wFifth,
-  wTwoFifths,
-  wThreeFifths,
-  wFourFifths,
-  wSixth,
-  wFiveSixths,
-  wAuto,
-  wFull,
-  wScreen,
-  wSvw,
-  wLvw,
-  wDvw,
-  wMin,
-  wMax,
-  wFit,
-} = widthTokens;
+export const w0: StyleToken = widthTokens.w0;
+export const wpx: StyleToken = widthTokens.wpx;
+export const w0_5: StyleToken = widthTokens.w0_5;
+export const w1: StyleToken = widthTokens.w1;
+export const w1_5: StyleToken = widthTokens.w1_5;
+export const w2: StyleToken = widthTokens.w2;
+export const w2_5: StyleToken = widthTokens.w2_5;
+export const w3: StyleToken = widthTokens.w3;
+export const w3_5: StyleToken = widthTokens.w3_5;
+export const w4: StyleToken = widthTokens.w4;
+export const w5: StyleToken = widthTokens.w5;
+export const w6: StyleToken = widthTokens.w6;
+export const w7: StyleToken = widthTokens.w7;
+export const w8: StyleToken = widthTokens.w8;
+export const w9: StyleToken = widthTokens.w9;
+export const w10: StyleToken = widthTokens.w10;
+export const w11: StyleToken = widthTokens.w11;
+export const w12: StyleToken = widthTokens.w12;
+export const w14: StyleToken = widthTokens.w14;
+export const w16: StyleToken = widthTokens.w16;
+export const w20: StyleToken = widthTokens.w20;
+export const w24: StyleToken = widthTokens.w24;
+export const w28: StyleToken = widthTokens.w28;
+export const w32: StyleToken = widthTokens.w32;
+export const w36: StyleToken = widthTokens.w36;
+export const w40: StyleToken = widthTokens.w40;
+export const w44: StyleToken = widthTokens.w44;
+export const w48: StyleToken = widthTokens.w48;
+export const w52: StyleToken = widthTokens.w52;
+export const w56: StyleToken = widthTokens.w56;
+export const w60: StyleToken = widthTokens.w60;
+export const w64: StyleToken = widthTokens.w64;
+export const w72: StyleToken = widthTokens.w72;
+export const w80: StyleToken = widthTokens.w80;
+export const w96: StyleToken = widthTokens.w96;
+export const wHalf: StyleToken = widthTokens.wHalf;
+export const wThird: StyleToken = widthTokens.wThird;
+export const wTwoThirds: StyleToken = widthTokens.wTwoThirds;
+export const wQuarter: StyleToken = widthTokens.wQuarter;
+export const wThreeQuarters: StyleToken = widthTokens.wThreeQuarters;
+export const wFifth: StyleToken = widthTokens.wFifth;
+export const wTwoFifths: StyleToken = widthTokens.wTwoFifths;
+export const wThreeFifths: StyleToken = widthTokens.wThreeFifths;
+export const wFourFifths: StyleToken = widthTokens.wFourFifths;
+export const wSixth: StyleToken = widthTokens.wSixth;
+export const wFiveSixths: StyleToken = widthTokens.wFiveSixths;
+export const wAuto: StyleToken = widthTokens.wAuto;
+export const wFull: StyleToken = widthTokens.wFull;
+export const wScreen: StyleToken = widthTokens.wScreen;
+export const wSvw: StyleToken = widthTokens.wSvw;
+export const wLvw: StyleToken = widthTokens.wLvw;
+export const wDvw: StyleToken = widthTokens.wDvw;
+export const wMin: StyleToken = widthTokens.wMin;
+export const wMax: StyleToken = widthTokens.wMax;
+export const wFit: StyleToken = widthTokens.wFit;
 
 // Height
-export const {
-  h0,
-  hpx,
-  h0_5,
-  h1,
-  h1_5,
-  h2,
-  h2_5,
-  h3,
-  h3_5,
-  h4,
-  h5,
-  h6,
-  h7,
-  h8,
-  h9,
-  h10,
-  h11,
-  h12,
-  h14,
-  h16,
-  h20,
-  h24,
-  h28,
-  h32,
-  h36,
-  h40,
-  h44,
-  h48,
-  h52,
-  h56,
-  h60,
-  h64,
-  h72,
-  h80,
-  h96,
-  hHalf,
-  hThird,
-  hTwoThirds,
-  hQuarter,
-  hThreeQuarters,
-  hFifth,
-  hTwoFifths,
-  hThreeFifths,
-  hFourFifths,
-  hSixth,
-  hFiveSixths,
-  hAuto,
-  hFull,
-  hScreen,
-  hSvh,
-  hLvh,
-  hDvh,
-  hMin,
-  hMax,
-  hFit,
-} = heightTokens;
+export const h0: StyleToken = heightTokens.h0;
+export const hpx: StyleToken = heightTokens.hpx;
+export const h0_5: StyleToken = heightTokens.h0_5;
+export const h1: StyleToken = heightTokens.h1;
+export const h1_5: StyleToken = heightTokens.h1_5;
+export const h2: StyleToken = heightTokens.h2;
+export const h2_5: StyleToken = heightTokens.h2_5;
+export const h3: StyleToken = heightTokens.h3;
+export const h3_5: StyleToken = heightTokens.h3_5;
+export const h4: StyleToken = heightTokens.h4;
+export const h5: StyleToken = heightTokens.h5;
+export const h6: StyleToken = heightTokens.h6;
+export const h7: StyleToken = heightTokens.h7;
+export const h8: StyleToken = heightTokens.h8;
+export const h9: StyleToken = heightTokens.h9;
+export const h10: StyleToken = heightTokens.h10;
+export const h11: StyleToken = heightTokens.h11;
+export const h12: StyleToken = heightTokens.h12;
+export const h14: StyleToken = heightTokens.h14;
+export const h16: StyleToken = heightTokens.h16;
+export const h20: StyleToken = heightTokens.h20;
+export const h24: StyleToken = heightTokens.h24;
+export const h28: StyleToken = heightTokens.h28;
+export const h32: StyleToken = heightTokens.h32;
+export const h36: StyleToken = heightTokens.h36;
+export const h40: StyleToken = heightTokens.h40;
+export const h44: StyleToken = heightTokens.h44;
+export const h48: StyleToken = heightTokens.h48;
+export const h52: StyleToken = heightTokens.h52;
+export const h56: StyleToken = heightTokens.h56;
+export const h60: StyleToken = heightTokens.h60;
+export const h64: StyleToken = heightTokens.h64;
+export const h72: StyleToken = heightTokens.h72;
+export const h80: StyleToken = heightTokens.h80;
+export const h96: StyleToken = heightTokens.h96;
+export const hHalf: StyleToken = heightTokens.hHalf;
+export const hThird: StyleToken = heightTokens.hThird;
+export const hTwoThirds: StyleToken = heightTokens.hTwoThirds;
+export const hQuarter: StyleToken = heightTokens.hQuarter;
+export const hThreeQuarters: StyleToken = heightTokens.hThreeQuarters;
+export const hFifth: StyleToken = heightTokens.hFifth;
+export const hTwoFifths: StyleToken = heightTokens.hTwoFifths;
+export const hThreeFifths: StyleToken = heightTokens.hThreeFifths;
+export const hFourFifths: StyleToken = heightTokens.hFourFifths;
+export const hSixth: StyleToken = heightTokens.hSixth;
+export const hFiveSixths: StyleToken = heightTokens.hFiveSixths;
+export const hAuto: StyleToken = heightTokens.hAuto;
+export const hFull: StyleToken = heightTokens.hFull;
+export const hScreen: StyleToken = heightTokens.hScreen;
+export const hSvh: StyleToken = heightTokens.hSvh;
+export const hLvh: StyleToken = heightTokens.hLvh;
+export const hDvh: StyleToken = heightTokens.hDvh;
+export const hMin: StyleToken = heightTokens.hMin;
+export const hMax: StyleToken = heightTokens.hMax;
+export const hFit: StyleToken = heightTokens.hFit;
 
 // Size
-export const {
-  size0,
-  sizepx,
-  size0_5,
-  size1,
-  size1_5,
-  size2,
-  size2_5,
-  size3,
-  size3_5,
-  size4,
-  size5,
-  size6,
-  size7,
-  size8,
-  size9,
-  size10,
-  size11,
-  size12,
-  size14,
-  size16,
-  size20,
-  size24,
-  size28,
-  size32,
-  size36,
-  size40,
-  size44,
-  size48,
-  size52,
-  size56,
-  size60,
-  size64,
-  size72,
-  size80,
-  size96,
-  sizeHalf,
-  sizeThird,
-  sizeTwoThirds,
-  sizeQuarter,
-  sizeThreeQuarters,
-  sizeFifth,
-  sizeTwoFifths,
-  sizeThreeFifths,
-  sizeFourFifths,
-  sizeSixth,
-  sizeFiveSixths,
-  sizeAuto,
-  sizeFull,
-  sizeScreen,
-  sizeSvw,
-  sizeLvw,
-  sizeDvw,
-  sizeMin,
-  sizeMax,
-  sizeFit,
-} = sizeTokens;
+export const size0: StyleToken = sizeTokens.size0;
+export const sizepx: StyleToken = sizeTokens.sizepx;
+export const size0_5: StyleToken = sizeTokens.size0_5;
+export const size1: StyleToken = sizeTokens.size1;
+export const size1_5: StyleToken = sizeTokens.size1_5;
+export const size2: StyleToken = sizeTokens.size2;
+export const size2_5: StyleToken = sizeTokens.size2_5;
+export const size3: StyleToken = sizeTokens.size3;
+export const size3_5: StyleToken = sizeTokens.size3_5;
+export const size4: StyleToken = sizeTokens.size4;
+export const size5: StyleToken = sizeTokens.size5;
+export const size6: StyleToken = sizeTokens.size6;
+export const size7: StyleToken = sizeTokens.size7;
+export const size8: StyleToken = sizeTokens.size8;
+export const size9: StyleToken = sizeTokens.size9;
+export const size10: StyleToken = sizeTokens.size10;
+export const size11: StyleToken = sizeTokens.size11;
+export const size12: StyleToken = sizeTokens.size12;
+export const size14: StyleToken = sizeTokens.size14;
+export const size16: StyleToken = sizeTokens.size16;
+export const size20: StyleToken = sizeTokens.size20;
+export const size24: StyleToken = sizeTokens.size24;
+export const size28: StyleToken = sizeTokens.size28;
+export const size32: StyleToken = sizeTokens.size32;
+export const size36: StyleToken = sizeTokens.size36;
+export const size40: StyleToken = sizeTokens.size40;
+export const size44: StyleToken = sizeTokens.size44;
+export const size48: StyleToken = sizeTokens.size48;
+export const size52: StyleToken = sizeTokens.size52;
+export const size56: StyleToken = sizeTokens.size56;
+export const size60: StyleToken = sizeTokens.size60;
+export const size64: StyleToken = sizeTokens.size64;
+export const size72: StyleToken = sizeTokens.size72;
+export const size80: StyleToken = sizeTokens.size80;
+export const size96: StyleToken = sizeTokens.size96;
+export const sizeHalf: StyleToken = sizeTokens.sizeHalf;
+export const sizeThird: StyleToken = sizeTokens.sizeThird;
+export const sizeTwoThirds: StyleToken = sizeTokens.sizeTwoThirds;
+export const sizeQuarter: StyleToken = sizeTokens.sizeQuarter;
+export const sizeThreeQuarters: StyleToken = sizeTokens.sizeThreeQuarters;
+export const sizeFifth: StyleToken = sizeTokens.sizeFifth;
+export const sizeTwoFifths: StyleToken = sizeTokens.sizeTwoFifths;
+export const sizeThreeFifths: StyleToken = sizeTokens.sizeThreeFifths;
+export const sizeFourFifths: StyleToken = sizeTokens.sizeFourFifths;
+export const sizeSixth: StyleToken = sizeTokens.sizeSixth;
+export const sizeFiveSixths: StyleToken = sizeTokens.sizeFiveSixths;
+export const sizeAuto: StyleToken = sizeTokens.sizeAuto;
+export const sizeFull: StyleToken = sizeTokens.sizeFull;
+export const sizeScreen: StyleToken = sizeTokens.sizeScreen;
+export const sizeSvw: StyleToken = sizeTokens.sizeSvw;
+export const sizeLvw: StyleToken = sizeTokens.sizeLvw;
+export const sizeDvw: StyleToken = sizeTokens.sizeDvw;
+export const sizeMin: StyleToken = sizeTokens.sizeMin;
+export const sizeMax: StyleToken = sizeTokens.sizeMax;
+export const sizeFit: StyleToken = sizeTokens.sizeFit;
 
 // Min-width
-export const { minW0, minWFull, minWMin, minWMax, minWFit } = minWidthTokens;
+export const minW0: StyleToken = minWidthTokens.minW0;
+export const minWFull: StyleToken = minWidthTokens.minWFull;
+export const minWMin: StyleToken = minWidthTokens.minWMin;
+export const minWMax: StyleToken = minWidthTokens.minWMax;
+export const minWFit: StyleToken = minWidthTokens.minWFit;
 
 // Max-width
-export const {
-  maxW0,
-  maxWFull,
-  maxWMin,
-  maxWMax,
-  maxWFit,
-  maxWXs,
-  maxWSm,
-  maxWMd,
-  maxWLg,
-  maxWXl,
-  maxW2xl,
-  maxW3xl,
-  maxW4xl,
-  maxW5xl,
-  maxW6xl,
-  maxW7xl,
-  maxWProse,
-} = maxWidthTokens;
+export const maxW0: StyleToken = maxWidthTokens.maxW0;
+export const maxWFull: StyleToken = maxWidthTokens.maxWFull;
+export const maxWMin: StyleToken = maxWidthTokens.maxWMin;
+export const maxWMax: StyleToken = maxWidthTokens.maxWMax;
+export const maxWFit: StyleToken = maxWidthTokens.maxWFit;
+export const maxWXs: StyleToken = maxWidthTokens.maxWXs;
+export const maxWSm: StyleToken = maxWidthTokens.maxWSm;
+export const maxWMd: StyleToken = maxWidthTokens.maxWMd;
+export const maxWLg: StyleToken = maxWidthTokens.maxWLg;
+export const maxWXl: StyleToken = maxWidthTokens.maxWXl;
+export const maxW2xl: StyleToken = maxWidthTokens.maxW2xl;
+export const maxW3xl: StyleToken = maxWidthTokens.maxW3xl;
+export const maxW4xl: StyleToken = maxWidthTokens.maxW4xl;
+export const maxW5xl: StyleToken = maxWidthTokens.maxW5xl;
+export const maxW6xl: StyleToken = maxWidthTokens.maxW6xl;
+export const maxW7xl: StyleToken = maxWidthTokens.maxW7xl;
+export const maxWProse: StyleToken = maxWidthTokens.maxWProse;
 
 // Min-height
-export const { minH0, minHFull, minHScreen, minHSvh, minHLvh, minHDvh, minHMin, minHMax, minHFit } =
-  minHeightTokens;
+export const minH0: StyleToken = minHeightTokens.minH0;
+export const minHFull: StyleToken = minHeightTokens.minHFull;
+export const minHScreen: StyleToken = minHeightTokens.minHScreen;
+export const minHSvh: StyleToken = minHeightTokens.minHSvh;
+export const minHLvh: StyleToken = minHeightTokens.minHLvh;
+export const minHDvh: StyleToken = minHeightTokens.minHDvh;
+export const minHMin: StyleToken = minHeightTokens.minHMin;
+export const minHMax: StyleToken = minHeightTokens.minHMax;
+export const minHFit: StyleToken = minHeightTokens.minHFit;
 
 // Max-height
-export const { maxH0, maxHFull, maxHScreen, maxHSvh, maxHLvh, maxHDvh, maxHMin, maxHMax, maxHFit } =
-  maxHeightTokens;
+export const maxH0: StyleToken = maxHeightTokens.maxH0;
+export const maxHFull: StyleToken = maxHeightTokens.maxHFull;
+export const maxHScreen: StyleToken = maxHeightTokens.maxHScreen;
+export const maxHSvh: StyleToken = maxHeightTokens.maxHSvh;
+export const maxHLvh: StyleToken = maxHeightTokens.maxHLvh;
+export const maxHDvh: StyleToken = maxHeightTokens.maxHDvh;
+export const maxHMin: StyleToken = maxHeightTokens.maxHMin;
+export const maxHMax: StyleToken = maxHeightTokens.maxHMax;
+export const maxHFit: StyleToken = maxHeightTokens.maxHFit;
 
 // ============================================
 // Namespace export (grouped)
 // ============================================
 
 /** All sizing tokens in a namespace */
-export const sizing = {
+export const sizing: Record<string, StyleToken | TaggedUtilityFn> = {
   // Width
   ...widthTokens,
   // Height

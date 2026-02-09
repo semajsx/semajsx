@@ -1,6 +1,6 @@
-/** @jsxImportSource @semajsx/dom */
+/** @jsxImportSource semajsx/dom */
 
-import type { VNode } from "@semajsx/core";
+import type { VNode } from "semajsx";
 import {
   cx,
   flex,
@@ -22,7 +22,7 @@ import {
   bg,
   textColor,
   extractCss,
-} from "@semajsx/tailwind";
+} from "semajsx/tailwind";
 
 // Collect all tokens used in this file for CSS extraction
 const usedTokens = [

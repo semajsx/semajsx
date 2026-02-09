@@ -37,6 +37,7 @@ import {
   useEffect,
   createElement,
   type ReactNode,
+  type ReactElement,
 } from "react";
 import { signal as createSignal, type Signal } from "@semajsx/signal";
 import { isStyleToken, injectStyles, uniqueId, type StyleToken } from "./index";
@@ -86,7 +87,7 @@ type CxArg = StyleToken | string | false | null | undefined;
  * }
  * ```
  */
-export function useStyle() {
+export function useStyle(): (...args: CxArg[]) => string {
   const registry = useContext(StyleAnchorContext);
 
   const cx = useCallback(
@@ -159,7 +160,7 @@ export interface StyleAnchorProps {
  * }
  * ```
  */
-export function StyleAnchor({ target, children }: StyleAnchorProps) {
+export function StyleAnchor({ target, children }: StyleAnchorProps): ReactElement {
   const elementRef = useRef<HTMLDivElement>(null);
   const subscriptionsRef = useRef<Set<() => void>>(new Set());
   // Track which signals have been subscribed to prevent duplicates

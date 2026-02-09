@@ -11,13 +11,7 @@
     "serve": "bun run --bun vite preview --outDir dist"
   },
   "dependencies": {
-    "@semajsx/core": "workspace:*",
-    "@semajsx/dom": "workspace:*",
-    "@semajsx/signal": "workspace:*",
-    "@semajsx/ssg": "workspace:*",
-    "@semajsx/ssr": "workspace:*",
-    "@semajsx/tailwind": "workspace:*",
-    "zod": "^4.3.6"
+    "semajsx": "workspace:*"
   },
   "devDependencies": {
     "@semajsx/configs": "workspace:*",

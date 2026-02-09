@@ -10,6 +10,13 @@ export default defineConfig({
     "src/terminal/index.ts",
     "src/terminal/jsx-runtime.ts",
     "src/terminal/jsx-dev-runtime.ts",
+    "src/ssr/index.ts",
+    "src/ssr/client.ts",
+    "src/ssg/index.ts",
+    "src/tailwind/index.ts",
+    "src/style/index.ts",
+    "src/style/react.ts",
+    "src/style/vue.ts",
   ],
   format: ["esm"],
   dts: true,
@@ -17,7 +24,7 @@ export default defineConfig({
   sourcemap: true,
   splitting: true,
   external: [
-    // Terminal third-party deps (not bundled)
+    // Terminal
     "yoga-layout-prebuilt",
     "chalk",
     "ansi-escapes",
@@ -25,6 +32,20 @@ export default defineConfig({
     "slice-ansi",
     "string-width",
     "cli-boxes",
+    // SSR
+    "glob",
+    "lightningcss",
+    "minimatch",
+    // SSG
+    "@mdx-js/mdx",
+    "gray-matter",
+    "zod",
+    // SSR/SSG optional
+    "vite",
+    // Style framework integrations
+    "react",
+    "react-dom",
+    "vue",
   ],
   exports: {
     devExports: true,
