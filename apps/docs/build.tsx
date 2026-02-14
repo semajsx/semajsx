@@ -1,5 +1,6 @@
 /** @jsxImportSource semajsx/dom */
 
+import remarkGfm from "remark-gfm";
 import { createSSG, defineCollection, fileSource, z } from "semajsx/ssg";
 import { resource } from "semajsx/ssr";
 import type { VNode } from "semajsx";
@@ -525,6 +526,7 @@ const ssg = createSSG({
   document: DocTemplate,
   // MDX configuration with custom components
   mdx: {
+    remarkPlugins: [remarkGfm],
     components: {
       Callout,
       CodeBlock,

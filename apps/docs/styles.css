@@ -264,6 +264,50 @@ body {
 }
 
 /* ============================================
+ * Tables - Apple clean data style
+ * ============================================ */
+
+.content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+}
+
+.content thead {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.content th {
+  font-weight: 600;
+  color: #1d1d1f;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.08);
+}
+
+.content td {
+  padding: 0.75rem 1rem;
+  color: #1d1d1f;
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.04);
+}
+
+.content tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.content tbody tr:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* ============================================
  * Code Blocks - Apple dark terminal style
  * ============================================ */
 
@@ -429,6 +473,19 @@ body {
   .content ul,
   .content ol {
     margin-left: 1.25rem;
+  }
+
+  /* --- Tables --- */
+  .content table {
+    font-size: 0.8125rem;
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .content th,
+  .content td {
+    padding: 0.625rem 0.75rem;
   }
 
   /* --- Code blocks --- */
