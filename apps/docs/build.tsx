@@ -50,6 +50,7 @@ import {
 
 // Import components
 import { Layout, DocTemplate, Callout, CodeBlock } from "./components";
+import { NotFound } from "./components/NotFound";
 
 // Get the directory where this script is located
 const rootDir = import.meta.dir;
@@ -448,6 +449,11 @@ const ssg = createSSG({
           }),
         );
       },
+    },
+    {
+      path: "/404",
+      component: NotFound as (props: Record<string, unknown>) => VNode,
+      props: { title: "404 - Page Not Found | SemaJSX Documentation" },
     },
   ],
 });
