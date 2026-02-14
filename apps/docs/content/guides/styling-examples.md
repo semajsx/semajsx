@@ -1,23 +1,23 @@
 ---
 title: Style System Examples
-description: Real-world examples using @semajsx/style and @semajsx/tailwind
+description: Real-world examples using semajsx/style and semajsx/tailwind
 order: 2
 difficulty: intermediate
 ---
 
 # Style System Examples
 
-Complete, runnable examples for common UI patterns. Each example shows when to use `@semajsx/style`, `@semajsx/tailwind`, or both.
+Complete, runnable examples for common UI patterns. Each example shows when to use `semajsx/style`, `semajsx/tailwind`, or both.
 
 ## Choosing Your Approach
 
-| Scenario                                   | Use               | Why                  |
-| ------------------------------------------ | ----------------- | -------------------- |
-| Quick layouts, spacing, typography         | @semajsx/tailwind | Faster, less code    |
-| Custom design system, unique styles        | @semajsx/style    | Full CSS control     |
-| Reactive styles (values change at runtime) | @semajsx/style    | Signal integration   |
-| Pseudo-classes, animations, media queries  | @semajsx/style    | Native CSS selectors |
-| Mix of utility + custom                    | Both              | Best of both worlds  |
+| Scenario                                   | Use              | Why                  |
+| ------------------------------------------ | ---------------- | -------------------- |
+| Quick layouts, spacing, typography         | semajsx/tailwind | Faster, less code    |
+| Custom design system, unique styles        | semajsx/style    | Full CSS control     |
+| Reactive styles (values change at runtime) | semajsx/style    | Signal integration   |
+| Pseudo-classes, animations, media queries  | semajsx/style    | Native CSS selectors |
+| Mix of utility + custom                    | Both             | Best of both worlds  |
 
 ---
 
@@ -25,7 +25,7 @@ Complete, runnable examples for common UI patterns. Each example shows when to u
 
 A complete button with variants, sizes, and states.
 
-### Using @semajsx/tailwind
+### Using semajsx/tailwind
 
 Best for rapid prototyping or when Tailwind covers your needs:
 
@@ -50,7 +50,7 @@ import {
   opacity50,
   cursorPointer,
   cursorNotAllowed,
-} from "@semajsx/tailwind";
+} from "semajsx/tailwind";
 
 type ButtonProps = {
   variant?: "primary" | "secondary" | "danger";
@@ -91,13 +91,13 @@ function Button({ variant = "primary", size = "md", disabled, children }: Button
 }
 ```
 
-### Using @semajsx/style
+### Using semajsx/style
 
 Better when you need hover states, focus rings, or custom animations:
 
 ```ts
 // button.style.ts
-import { classes, rule, rules } from "@semajsx/style";
+import { classes, rule, rules } from "semajsx/style";
 
 const c = classes(["root", "primary", "secondary", "danger", "sm", "md", "lg"]);
 
@@ -130,7 +130,7 @@ export const lg = rule`${c.lg} { padding: 12px 24px; font-size: 18px; }`;
 
 ```tsx
 // Button.tsx
-import { useStyle } from "@semajsx/style/react";
+import { useStyle } from "semajsx/style/react";
 import * as button from "./button.style";
 
 function Button({ variant = "primary", size = "md", disabled, children }) {
@@ -154,11 +154,11 @@ A flexible card with header, body, and footer sections.
 
 ### Combined Approach (Recommended)
 
-Use @semajsx/tailwind for layout, @semajsx/style for the shadow and border:
+Use semajsx/tailwind for layout, semajsx/style for the shadow and border:
 
 ```ts
 // card.style.ts
-import { classes, rule } from "@semajsx/style";
+import { classes, rule } from "semajsx/style";
 
 const c = classes(["card"]);
 
@@ -179,7 +179,7 @@ export const cardHover = rule`${c.card}:hover {
 
 ```tsx
 // Card.tsx
-import { useStyle } from "@semajsx/style/react";
+import { useStyle } from "semajsx/style/react";
 import {
   cx as tw,
   p4,
@@ -189,7 +189,7 @@ import {
   textXl,
   fontBold,
   textGray600,
-} from "@semajsx/tailwind";
+} from "semajsx/tailwind";
 import * as card from "./card.style";
 
 function Card({ title, children, footer }) {
@@ -217,7 +217,7 @@ A navbar that collapses to a hamburger menu on mobile.
 
 ```ts
 // navbar.style.ts
-import { classes, rule, rules } from "@semajsx/style";
+import { classes, rule, rules } from "semajsx/style";
 
 const c = classes(["nav", "brand", "links", "link", "hamburger", "mobileMenu"]);
 
@@ -285,7 +285,7 @@ export const mobileMenuOpen = rule`${c.mobileMenu}.open {
 ```tsx
 // Navbar.tsx
 import { useState } from "react";
-import { useStyle } from "@semajsx/style/react";
+import { useStyle } from "semajsx/style/react";
 import * as nav from "./navbar.style";
 
 function Navbar({ links }) {
@@ -335,7 +335,7 @@ Input fields with error states and validation feedback.
 
 ```ts
 // form.style.ts
-import { classes, rule, rules } from "@semajsx/style";
+import { classes, rule, rules } from "semajsx/style";
 
 const c = classes(["field", "label", "input", "error", "hint"]);
 
@@ -380,7 +380,7 @@ export const hint = rule`${c.hint} {
 
 ```tsx
 // FormField.tsx
-import { useStyle } from "@semajsx/style/react";
+import { useStyle } from "semajsx/style/react";
 import * as form from "./form.style";
 
 function FormField({ label, error, hint, ...inputProps }) {
@@ -433,8 +433,8 @@ Dynamic theme switching using signals.
 
 ```ts
 // theme.style.ts
-import { classes, rule } from "@semajsx/style";
-import { signal } from "@semajsx/signal";
+import { classes, rule } from "semajsx/style";
+import { signal } from "semajsx/signal";
 
 // Theme signal
 export const isDark = signal(false);
@@ -462,7 +462,7 @@ export const container = rule`${c.container} {
 
 ```tsx
 // App.tsx
-import { StyleAnchor, useStyle } from "@semajsx/style/react";
+import { StyleAnchor, useStyle } from "semajsx/style/react";
 import * as theme from "./theme.style";
 
 function App() {
@@ -491,7 +491,7 @@ A modal with backdrop, animation, and focus trap.
 
 ```ts
 // modal.style.ts
-import { classes, rule, rules } from "@semajsx/style";
+import { classes, rule, rules } from "semajsx/style";
 
 const c = classes(["backdrop", "dialog", "header", "body", "footer", "close"]);
 
@@ -564,7 +564,7 @@ export const closeHover = rule`${c.close}:hover {
 ```tsx
 // Modal.tsx
 import { useEffect, useRef } from "react";
-import { useStyle } from "@semajsx/style/react";
+import { useStyle } from "semajsx/style/react";
 import * as modal from "./modal.style";
 
 function Modal({ isOpen, onClose, title, children, footer }) {
@@ -618,7 +618,7 @@ Complete example with Vue 3 Composition API.
 ```vue
 <script setup lang="ts">
 import { ref } from "vue";
-import { StyleAnchor, useStyle } from "@semajsx/style/vue";
+import { StyleAnchor, useStyle } from "semajsx/style/vue";
 import * as button from "./button.style";
 import * as card from "./card.style";
 
@@ -645,7 +645,7 @@ Extract CSS for server-side rendering.
 
 ```tsx
 // server.ts
-import { preload, extractCss } from "@semajsx/style";
+import { preload, extractCss } from "semajsx/style";
 import * as button from "./button.style";
 import * as card from "./card.style";
 import * as modal from "./modal.style";

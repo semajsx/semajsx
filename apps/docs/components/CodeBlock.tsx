@@ -1,6 +1,6 @@
-/** @jsxImportSource @semajsx/dom */
+/** @jsxImportSource semajsx/dom */
 
-import type { VNode } from "@semajsx/core";
+import type { VNode } from "semajsx";
 
 interface CodeBlockProps {
   children: string;

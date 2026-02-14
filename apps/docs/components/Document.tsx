@@ -1,7 +1,7 @@
-/** @jsxImportSource @semajsx/dom */
+/** @jsxImportSource semajsx/dom */
 
-import type { DocumentProps } from "@semajsx/ssg";
-import type { VNode } from "@semajsx/core";
+import type { DocumentProps } from "semajsx/ssg";
+import type { VNode } from "semajsx";
 
 /**
  * Custom document template for the documentation site

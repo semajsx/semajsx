@@ -586,207 +586,224 @@ export const flexArb: TaggedUtilityFn = createTaggedUtility(flexShorthandFn);
 // Individual token exports (flat) - Display
 // ============================================
 
-export const { block, inlineBlock, inline, flex, inlineFlex, grid, inlineGrid, contents, hidden } =
-  displayTokens;
+export const block: StyleToken = displayTokens.block;
+export const inlineBlock: StyleToken = displayTokens.inlineBlock;
+export const inline: StyleToken = displayTokens.inline;
+export const flex: StyleToken = displayTokens.flex;
+export const inlineFlex: StyleToken = displayTokens.inlineFlex;
+export const grid: StyleToken = displayTokens.grid;
+export const inlineGrid: StyleToken = displayTokens.inlineGrid;
+export const contents: StyleToken = displayTokens.contents;
+export const hidden: StyleToken = displayTokens.hidden;
 
 // ============================================
 // Individual token exports (flat) - Flex Direction
 // ============================================
 
-export const { flexRow, flexRowReverse, flexCol, flexColReverse } = flexDirectionTokens;
+export const flexRow: StyleToken = flexDirectionTokens.flexRow;
+export const flexRowReverse: StyleToken = flexDirectionTokens.flexRowReverse;
+export const flexCol: StyleToken = flexDirectionTokens.flexCol;
+export const flexColReverse: StyleToken = flexDirectionTokens.flexColReverse;
 
 // ============================================
 // Individual token exports (flat) - Flex Wrap
 // ============================================
 
-export const { flexWrap, flexWrapReverse, flexNowrap } = flexWrapTokens;
+export const flexWrap: StyleToken = flexWrapTokens.flexWrap;
+export const flexWrapReverse: StyleToken = flexWrapTokens.flexWrapReverse;
+export const flexNowrap: StyleToken = flexWrapTokens.flexNowrap;
 
 // ============================================
 // Individual token exports (flat) - Flex Shorthand
 // ============================================
 
-export const { flex1, flexAuto, flexInitial, flexNone } = flexShorthandTokens;
+export const flex1: StyleToken = flexShorthandTokens.flex1;
+export const flexAuto: StyleToken = flexShorthandTokens.flexAuto;
+export const flexInitial: StyleToken = flexShorthandTokens.flexInitial;
+export const flexNone: StyleToken = flexShorthandTokens.flexNone;
 
 // ============================================
 // Individual token exports (flat) - Grow/Shrink
 // ============================================
 
-export const { grow, grow0, shrink, shrink0 } = growShrinkTokens;
+export const grow: StyleToken = growShrinkTokens.grow;
+export const grow0: StyleToken = growShrinkTokens.grow0;
+export const shrink: StyleToken = growShrinkTokens.shrink;
+export const shrink0: StyleToken = growShrinkTokens.shrink0;
 
 // ============================================
 // Individual token exports (flat) - Basis
 // ============================================
 
-export const {
-  basis0,
-  basis0_5,
-  basispx,
-  basis1,
-  basis1_5,
-  basis2,
-  basis2_5,
-  basis3,
-  basis3_5,
-  basis4,
-  basis5,
-  basis6,
-  basis7,
-  basis8,
-  basis9,
-  basis10,
-  basis11,
-  basis12,
-  basis14,
-  basis16,
-  basis20,
-  basis24,
-  basis28,
-  basis32,
-  basis36,
-  basis40,
-  basis44,
-  basis48,
-  basis52,
-  basis56,
-  basis60,
-  basis64,
-  basis72,
-  basis80,
-  basis96,
-  basisAuto,
-  basisFull,
-  basisHalf,
-  basisThird,
-  basisTwoThirds,
-  basisQuarter,
-  basisThreeQuarters,
-} = basisTokens;
+export const basis0: StyleToken = basisTokens.basis0;
+export const basis0_5: StyleToken = basisTokens.basis0_5;
+export const basispx: StyleToken = basisTokens.basispx;
+export const basis1: StyleToken = basisTokens.basis1;
+export const basis1_5: StyleToken = basisTokens.basis1_5;
+export const basis2: StyleToken = basisTokens.basis2;
+export const basis2_5: StyleToken = basisTokens.basis2_5;
+export const basis3: StyleToken = basisTokens.basis3;
+export const basis3_5: StyleToken = basisTokens.basis3_5;
+export const basis4: StyleToken = basisTokens.basis4;
+export const basis5: StyleToken = basisTokens.basis5;
+export const basis6: StyleToken = basisTokens.basis6;
+export const basis7: StyleToken = basisTokens.basis7;
+export const basis8: StyleToken = basisTokens.basis8;
+export const basis9: StyleToken = basisTokens.basis9;
+export const basis10: StyleToken = basisTokens.basis10;
+export const basis11: StyleToken = basisTokens.basis11;
+export const basis12: StyleToken = basisTokens.basis12;
+export const basis14: StyleToken = basisTokens.basis14;
+export const basis16: StyleToken = basisTokens.basis16;
+export const basis20: StyleToken = basisTokens.basis20;
+export const basis24: StyleToken = basisTokens.basis24;
+export const basis28: StyleToken = basisTokens.basis28;
+export const basis32: StyleToken = basisTokens.basis32;
+export const basis36: StyleToken = basisTokens.basis36;
+export const basis40: StyleToken = basisTokens.basis40;
+export const basis44: StyleToken = basisTokens.basis44;
+export const basis48: StyleToken = basisTokens.basis48;
+export const basis52: StyleToken = basisTokens.basis52;
+export const basis56: StyleToken = basisTokens.basis56;
+export const basis60: StyleToken = basisTokens.basis60;
+export const basis64: StyleToken = basisTokens.basis64;
+export const basis72: StyleToken = basisTokens.basis72;
+export const basis80: StyleToken = basisTokens.basis80;
+export const basis96: StyleToken = basisTokens.basis96;
+export const basisAuto: StyleToken = basisTokens.basisAuto;
+export const basisFull: StyleToken = basisTokens.basisFull;
+export const basisHalf: StyleToken = basisTokens.basisHalf;
+export const basisThird: StyleToken = basisTokens.basisThird;
+export const basisTwoThirds: StyleToken = basisTokens.basisTwoThirds;
+export const basisQuarter: StyleToken = basisTokens.basisQuarter;
+export const basisThreeQuarters: StyleToken = basisTokens.basisThreeQuarters;
 
 // ============================================
 // Individual token exports (flat) - Justify Content
 // ============================================
 
-export const {
-  justifyNormal,
-  justifyStart,
-  justifyEnd,
-  justifyCenter,
-  justifyBetween,
-  justifyAround,
-  justifyEvenly,
-  justifyStretch,
-} = justifyContentTokens;
+export const justifyNormal: StyleToken = justifyContentTokens.justifyNormal;
+export const justifyStart: StyleToken = justifyContentTokens.justifyStart;
+export const justifyEnd: StyleToken = justifyContentTokens.justifyEnd;
+export const justifyCenter: StyleToken = justifyContentTokens.justifyCenter;
+export const justifyBetween: StyleToken = justifyContentTokens.justifyBetween;
+export const justifyAround: StyleToken = justifyContentTokens.justifyAround;
+export const justifyEvenly: StyleToken = justifyContentTokens.justifyEvenly;
+export const justifyStretch: StyleToken = justifyContentTokens.justifyStretch;
 
 // ============================================
 // Individual token exports (flat) - Justify Items
 // ============================================
 
-export const { justifyItemsStart, justifyItemsEnd, justifyItemsCenter, justifyItemsStretch } =
-  justifyItemsTokens;
+export const justifyItemsStart: StyleToken = justifyItemsTokens.justifyItemsStart;
+export const justifyItemsEnd: StyleToken = justifyItemsTokens.justifyItemsEnd;
+export const justifyItemsCenter: StyleToken = justifyItemsTokens.justifyItemsCenter;
+export const justifyItemsStretch: StyleToken = justifyItemsTokens.justifyItemsStretch;
 
 // ============================================
 // Individual token exports (flat) - Justify Self
 // ============================================
 
-export const {
-  justifySelfAuto,
-  justifySelfStart,
-  justifySelfEnd,
-  justifySelfCenter,
-  justifySelfStretch,
-} = justifySelfTokens;
+export const justifySelfAuto: StyleToken = justifySelfTokens.justifySelfAuto;
+export const justifySelfStart: StyleToken = justifySelfTokens.justifySelfStart;
+export const justifySelfEnd: StyleToken = justifySelfTokens.justifySelfEnd;
+export const justifySelfCenter: StyleToken = justifySelfTokens.justifySelfCenter;
+export const justifySelfStretch: StyleToken = justifySelfTokens.justifySelfStretch;
 
 // ============================================
 // Individual token exports (flat) - Align Content
 // ============================================
 
-export const {
-  contentNormal,
-  contentStart,
-  contentEnd,
-  contentCenter,
-  contentBetween,
-  contentAround,
-  contentEvenly,
-  contentBaseline,
-  contentStretch,
-} = alignContentTokens;
+export const contentNormal: StyleToken = alignContentTokens.contentNormal;
+export const contentStart: StyleToken = alignContentTokens.contentStart;
+export const contentEnd: StyleToken = alignContentTokens.contentEnd;
+export const contentCenter: StyleToken = alignContentTokens.contentCenter;
+export const contentBetween: StyleToken = alignContentTokens.contentBetween;
+export const contentAround: StyleToken = alignContentTokens.contentAround;
+export const contentEvenly: StyleToken = alignContentTokens.contentEvenly;
+export const contentBaseline: StyleToken = alignContentTokens.contentBaseline;
+export const contentStretch: StyleToken = alignContentTokens.contentStretch;
 
 // ============================================
 // Individual token exports (flat) - Align Items
 // ============================================
 
-export const { itemsStart, itemsEnd, itemsCenter, itemsBaseline, itemsStretch } = alignItemsTokens;
+export const itemsStart: StyleToken = alignItemsTokens.itemsStart;
+export const itemsEnd: StyleToken = alignItemsTokens.itemsEnd;
+export const itemsCenter: StyleToken = alignItemsTokens.itemsCenter;
+export const itemsBaseline: StyleToken = alignItemsTokens.itemsBaseline;
+export const itemsStretch: StyleToken = alignItemsTokens.itemsStretch;
 
 // ============================================
 // Individual token exports (flat) - Align Self
 // ============================================
 
-export const { selfAuto, selfStart, selfEnd, selfCenter, selfBaseline, selfStretch } =
-  alignSelfTokens;
+export const selfAuto: StyleToken = alignSelfTokens.selfAuto;
+export const selfStart: StyleToken = alignSelfTokens.selfStart;
+export const selfEnd: StyleToken = alignSelfTokens.selfEnd;
+export const selfCenter: StyleToken = alignSelfTokens.selfCenter;
+export const selfBaseline: StyleToken = alignSelfTokens.selfBaseline;
+export const selfStretch: StyleToken = alignSelfTokens.selfStretch;
 
 // ============================================
 // Individual token exports (flat) - Place Content
 // ============================================
 
-export const {
-  placeContentStart,
-  placeContentEnd,
-  placeContentCenter,
-  placeContentBetween,
-  placeContentAround,
-  placeContentEvenly,
-  placeContentBaseline,
-  placeContentStretch,
-} = placeContentTokens;
+export const placeContentStart: StyleToken = placeContentTokens.placeContentStart;
+export const placeContentEnd: StyleToken = placeContentTokens.placeContentEnd;
+export const placeContentCenter: StyleToken = placeContentTokens.placeContentCenter;
+export const placeContentBetween: StyleToken = placeContentTokens.placeContentBetween;
+export const placeContentAround: StyleToken = placeContentTokens.placeContentAround;
+export const placeContentEvenly: StyleToken = placeContentTokens.placeContentEvenly;
+export const placeContentBaseline: StyleToken = placeContentTokens.placeContentBaseline;
+export const placeContentStretch: StyleToken = placeContentTokens.placeContentStretch;
 
 // ============================================
 // Individual token exports (flat) - Place Items
 // ============================================
 
-export const {
-  placeItemsStart,
-  placeItemsEnd,
-  placeItemsCenter,
-  placeItemsBaseline,
-  placeItemsStretch,
-} = placeItemsTokens;
+export const placeItemsStart: StyleToken = placeItemsTokens.placeItemsStart;
+export const placeItemsEnd: StyleToken = placeItemsTokens.placeItemsEnd;
+export const placeItemsCenter: StyleToken = placeItemsTokens.placeItemsCenter;
+export const placeItemsBaseline: StyleToken = placeItemsTokens.placeItemsBaseline;
+export const placeItemsStretch: StyleToken = placeItemsTokens.placeItemsStretch;
 
 // ============================================
 // Individual token exports (flat) - Place Self
 // ============================================
 
-export const { placeSelfAuto, placeSelfStart, placeSelfEnd, placeSelfCenter, placeSelfStretch } =
-  placeSelfTokens;
+export const placeSelfAuto: StyleToken = placeSelfTokens.placeSelfAuto;
+export const placeSelfStart: StyleToken = placeSelfTokens.placeSelfStart;
+export const placeSelfEnd: StyleToken = placeSelfTokens.placeSelfEnd;
+export const placeSelfCenter: StyleToken = placeSelfTokens.placeSelfCenter;
+export const placeSelfStretch: StyleToken = placeSelfTokens.placeSelfStretch;
 
 // ============================================
 // Individual token exports (flat) - Order
 // ============================================
 
-export const {
-  order1,
-  order2,
-  order3,
-  order4,
-  order5,
-  order6,
-  order7,
-  order8,
-  order9,
-  order10,
-  order11,
-  order12,
-  orderFirst,
-  orderLast,
-  orderNone,
-} = orderTokens;
+export const order1: StyleToken = orderTokens.order1;
+export const order2: StyleToken = orderTokens.order2;
+export const order3: StyleToken = orderTokens.order3;
+export const order4: StyleToken = orderTokens.order4;
+export const order5: StyleToken = orderTokens.order5;
+export const order6: StyleToken = orderTokens.order6;
+export const order7: StyleToken = orderTokens.order7;
+export const order8: StyleToken = orderTokens.order8;
+export const order9: StyleToken = orderTokens.order9;
+export const order10: StyleToken = orderTokens.order10;
+export const order11: StyleToken = orderTokens.order11;
+export const order12: StyleToken = orderTokens.order12;
+export const orderFirst: StyleToken = orderTokens.orderFirst;
+export const orderLast: StyleToken = orderTokens.orderLast;
+export const orderNone: StyleToken = orderTokens.orderNone;
 
 // ============================================
 // Namespace export (grouped)
 // ============================================
 
 /** All flexbox tokens in a namespace */
-export const flexbox = {
+export const flexbox: Record<string, StyleToken | TaggedUtilityFn> = {
   // Display
   ...displayTokens,
   // Flex direction
@@ -833,22 +850,22 @@ export type FlexValues = Record<string, StyleToken>;
 export type FlexboxGroup = FlexboxNamespace;
 
 // Legacy exports for backwards compatibility
-export const flexboxArb = {
+export const flexboxArb: Record<string, TaggedUtilityFn> = {
   basis,
   order,
   flex: flexArb,
 };
 
 // Legacy proxy exports (for backwards compatibility)
-export const display = displayTokens;
-export const flexDirection = flexDirectionTokens;
-export const flexWrapProxy = flexWrapTokens;
-export const justify = justifyContentTokens;
-export const justifyItems = justifyItemsTokens;
-export const justifySelf = justifySelfTokens;
-export const content = alignContentTokens;
-export const items = alignItemsTokens;
-export const self = alignSelfTokens;
-export const placeContent = placeContentTokens;
-export const placeItems = placeItemsTokens;
-export const placeSelf = placeSelfTokens;
+export const display: Record<string, StyleToken> = displayTokens;
+export const flexDirection: Record<string, StyleToken> = flexDirectionTokens;
+export const flexWrapProxy: Record<string, StyleToken> = flexWrapTokens;
+export const justify: Record<string, StyleToken> = justifyContentTokens;
+export const justifyItems: Record<string, StyleToken> = justifyItemsTokens;
+export const justifySelf: Record<string, StyleToken> = justifySelfTokens;
+export const content: Record<string, StyleToken> = alignContentTokens;
+export const items: Record<string, StyleToken> = alignItemsTokens;
+export const self: Record<string, StyleToken> = alignSelfTokens;
+export const placeContent: Record<string, StyleToken> = placeContentTokens;
+export const placeItems: Record<string, StyleToken> = placeItemsTokens;
+export const placeSelf: Record<string, StyleToken> = placeSelfTokens;

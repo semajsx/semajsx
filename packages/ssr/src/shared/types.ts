@@ -1,4 +1,4 @@
-import type { JSXNode, VNode } from "@semajsx/core/types";
+import type { JSXNode, VNode } from "@semajsx/core";
 import type { UserConfig as ViteUserConfig, ViteDevServer } from "vite";
 
 /**
@@ -119,6 +119,16 @@ export interface RouteContext {
  * Route handler function
  */
 export type RouteHandler = (context: RouteContext) => VNode;
+
+/**
+ * Route metadata for per-route configuration
+ */
+export interface RouteMeta {
+  /** Page title */
+  title?: string;
+  /** Additional metadata */
+  [key: string]: unknown;
+}
 
 /**
  * Document template function for rendering complete HTML documents
@@ -299,7 +309,7 @@ export interface App {
   readonly config: AppConfig;
 
   /** Register a route */
-  route(path: string, handler: RouteHandler): this;
+  route(path: string, handler: RouteHandler, meta?: RouteMeta): this;
 
   /** Register multiple routes */
   routes(routes: Record<string, RouteHandler>): this;

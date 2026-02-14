@@ -7,12 +7,12 @@ category: Advanced
 
 # Static Site Generation
 
-`@semajsx/ssg` provides a powerful static site generator with collections, MDX support, and incremental builds.
+`semajsx/ssg` provides a powerful static site generator with collections, MDX support, and incremental builds.
 
 ## Installation
 
 ```bash
-bun add @semajsx/ssg
+bun add semajsx
 ```
 
 ## Quick Start
@@ -20,7 +20,7 @@ bun add @semajsx/ssg
 Create a build script (`build.tsx`):
 
 ```tsx
-import { createSSG, defineCollection, fileSource, z } from "@semajsx/ssg";
+import { createSSG, defineCollection, fileSource, z } from "semajsx/ssg";
 
 // Define a collection
 const blog = defineCollection({
@@ -63,7 +63,7 @@ await ssg.build();
 Collections are type-safe content sources with schema validation:
 
 ```tsx
-import { defineCollection, fileSource, z } from "@semajsx/ssg";
+import { defineCollection, fileSource, z } from "semajsx/ssg";
 
 const docs = defineCollection({
   name: "docs",
@@ -86,7 +86,7 @@ const docs = defineCollection({
 Load content from Markdown/MDX files:
 
 ```tsx
-import { fileSource } from "@semajsx/ssg";
+import { fileSource } from "semajsx/ssg";
 
 const source = fileSource({
   directory: "content/blog",
@@ -100,7 +100,7 @@ const source = fileSource({
 Load data from Git history:
 
 ```tsx
-import { gitSource } from "@semajsx/ssg";
+import { gitSource } from "semajsx/ssg";
 
 // From commits
 const changelog = gitSource({
@@ -121,7 +121,7 @@ const releases = gitSource({
 Fetch content from APIs:
 
 ```tsx
-import { remoteSource } from "@semajsx/ssg";
+import { remoteSource } from "semajsx/ssg";
 
 const posts = remoteSource({
   fetch: async () => {

@@ -1,8 +1,8 @@
-/** @jsxImportSource @semajsx/dom */
+/** @jsxImportSource semajsx/dom */
 
-import { createSSG, defineCollection, fileSource, z } from "@semajsx/ssg";
-import { resource } from "@semajsx/ssr";
-import type { VNode } from "@semajsx/core";
+import { createSSG, defineCollection, fileSource, z } from "semajsx/ssg";
+import { resource } from "semajsx/ssr";
+import type { VNode } from "semajsx";
 import {
   cx,
   flex,
@@ -46,10 +46,14 @@ import {
   border,
   border2,
   uppercase,
-} from "@semajsx/tailwind";
+} from "semajsx/tailwind";
 
 // Import components
 import { Layout, DocTemplate, Callout, CodeBlock } from "./components";
+import { NotFound } from "./components/NotFound";
+
+// Import Apple theme styles
+import * as theme from "./styles/theme.style";
 
 // Get the directory where this script is located
 const rootDir = import.meta.dir;
@@ -144,69 +148,61 @@ export const homePageCss = extractCss(...allPageTokens);
 const HomePage = (): VNode => (
   <Layout>
     <Style href="./styles.css" />
-    <div class="home-container">
-      <header class={cx(py16, textCenter)}>
-        <h1 class="hero-title">SemaJSX</h1>
-        <p class={cx(textXl, textColor.gray500, mb8)}>
+
+    {/* Hero Section - Apple Style */}
+    <div class={theme.heroBg._} style="padding: 120px 20px; position: relative;">
+      <div style="max-width: 980px; margin: 0 auto; position: relative; z-index: 1;">
+        <h1 class={theme.heroTitle._} style="text-align: center;">
+          SemaJSX
+        </h1>
+        <p class={theme.heroSubtitle._} style="text-align: center;">
           A lightweight, signal-based reactive JSX runtime for building modern web applications
         </p>
-        <div class={cx(flex, gap4, justifyCenter, mt8)}>
-          <a
-            href="/docs/getting-started"
-            class={cx(
-              inlineBlock,
-              px6,
-              py3,
-              roundedMd,
-              bg.blue500,
-              textColor.white,
-              fontSemibold,
-              noUnderline,
-              "btn-hover-primary",
-            )}
-          >
+        <div class={cx(flex, gap4, justifyCenter)} style="margin-top: 2.5rem;">
+          <a href="/docs/getting-started" class={theme.primaryButton._}>
             Get Started
           </a>
-          <a
-            href="/guides"
-            class={cx(
-              inlineBlock,
-              px6,
-              py3,
-              roundedMd,
-              border2,
-              textColor.blue500,
-              fontSemibold,
-              noUnderline,
-              "btn-hover-secondary",
-            )}
-          >
+          <a href="/guides" class={theme.secondaryButton._}>
             View Guides
           </a>
         </div>
-      </header>
-
-      <section class={cx(grid, gap8, mt8, "features-grid")}>
-        <div class={cx(p6, roundedLg, bg.gray100)}>
-          <h2 class={cx(text2xl, fontBold, mb2)}>🚀 Fine-Grained Reactivity</h2>
-          <p>
-            Signals automatically track dependencies and update only what changed - no virtual DOM
-            needed.
-          </p>
-        </div>
-        <div class={cx(p6, roundedLg, bg.gray100)}>
-          <h2 class={cx(text2xl, fontBold, mb2)}>📦 Modular Architecture</h2>
-          <p>
-            Choose what you need: DOM rendering, Terminal UI, SSR, or SSG - all with the same
-            reactive core.
-          </p>
-        </div>
-        <div class={cx(p6, roundedLg, bg.gray100)}>
-          <h2 class={cx(text2xl, fontBold, mb2)}>🎯 Type-Safe</h2>
-          <p>Full TypeScript support with comprehensive type inference and IDE autocompletion.</p>
-        </div>
-      </section>
+      </div>
     </div>
+
+    {/* Features Section */}
+    <section style="max-width: 1200px; margin: 80px auto; padding: 0 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;">
+      <div class={theme.featureCard._}>
+        <div style="font-size: 3rem; margin-bottom: 1rem;">⚡</div>
+        <h2 class={cx(text2xl, fontBold, mb2)} style="color: #1d1d1f;">
+          Fine-Grained Reactivity
+        </h2>
+        <p style="color: #6e6e73; line-height: 1.6;">
+          Signals automatically track dependencies and update only what changed - no virtual DOM
+          needed.
+        </p>
+      </div>
+
+      <div class={theme.featureCard._}>
+        <div style="font-size: 3rem; margin-bottom: 1rem;">📦</div>
+        <h2 class={cx(text2xl, fontBold, mb2)} style="color: #1d1d1f;">
+          Modular Architecture
+        </h2>
+        <p style="color: #6e6e73; line-height: 1.6;">
+          Choose what you need: DOM rendering, Terminal UI, SSR, or SSG - all with the same reactive
+          core.
+        </p>
+      </div>
+
+      <div class={theme.featureCard._}>
+        <div style="font-size: 3rem; margin-bottom: 1rem;">🎯</div>
+        <h2 class={cx(text2xl, fontBold, mb2)} style="color: #1d1d1f;">
+          Type-Safe
+        </h2>
+        <p style="color: #6e6e73; line-height: 1.6;">
+          Full TypeScript support with comprehensive type inference and IDE autocompletion.
+        </p>
+      </div>
+    </section>
   </Layout>
 );
 
@@ -448,6 +444,11 @@ const ssg = createSSG({
           }),
         );
       },
+    },
+    {
+      path: "/404",
+      component: NotFound as (props: Record<string, unknown>) => VNode,
+      props: { title: "404 - Page Not Found | SemaJSX Documentation" },
     },
   ],
 });

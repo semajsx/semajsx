@@ -32,6 +32,7 @@ import {
   h,
   type InjectionKey,
   type Ref,
+  type Component,
 } from "vue";
 import { signal as createSignal, type Signal } from "@semajsx/signal";
 import { isStyleToken, injectStyles, uniqueId, type StyleToken } from "./index";
@@ -82,7 +83,7 @@ type CxArg = StyleToken | string | false | null | undefined;
  * </template>
  * ```
  */
-export function useStyle() {
+export function useStyle(): (...args: CxArg[]) => string {
   const registry = inject(StyleAnchorKey, null);
 
   const cx = (...args: CxArg[]): string => {
@@ -127,7 +128,7 @@ export function useStyle() {
  * </script>
  * ```
  */
-export const StyleAnchor = defineComponent({
+export const StyleAnchor: Component = defineComponent({
   name: "StyleAnchor",
   props: {
     /** Target for style injection (defaults to document.head) */

@@ -405,120 +405,127 @@ export const tracking: TaggedUtilityFn = createTaggedUtility(letterSpacingFn);
 // Individual token exports (flat) - Font Size
 // ============================================
 
-export const {
-  textXs,
-  textSm,
-  textBase,
-  textLg,
-  textXl,
-  text2xl,
-  text3xl,
-  text4xl,
-  text5xl,
-  text6xl,
-  text7xl,
-  text8xl,
-  text9xl,
-} = fontSizeTokens;
+export const textXs: StyleToken = fontSizeTokens.textXs;
+export const textSm: StyleToken = fontSizeTokens.textSm;
+export const textBase: StyleToken = fontSizeTokens.textBase;
+export const textLg: StyleToken = fontSizeTokens.textLg;
+export const textXl: StyleToken = fontSizeTokens.textXl;
+export const text2xl: StyleToken = fontSizeTokens.text2xl;
+export const text3xl: StyleToken = fontSizeTokens.text3xl;
+export const text4xl: StyleToken = fontSizeTokens.text4xl;
+export const text5xl: StyleToken = fontSizeTokens.text5xl;
+export const text6xl: StyleToken = fontSizeTokens.text6xl;
+export const text7xl: StyleToken = fontSizeTokens.text7xl;
+export const text8xl: StyleToken = fontSizeTokens.text8xl;
+export const text9xl: StyleToken = fontSizeTokens.text9xl;
 
 // ============================================
 // Individual token exports (flat) - Font Weight
 // ============================================
 
-export const {
-  fontThin,
-  fontExtralight,
-  fontLight,
-  fontNormal,
-  fontMedium,
-  fontSemibold,
-  fontBold,
-  fontExtrabold,
-  fontBlack,
-} = fontWeightTokens;
+export const fontThin: StyleToken = fontWeightTokens.fontThin;
+export const fontExtralight: StyleToken = fontWeightTokens.fontExtralight;
+export const fontLight: StyleToken = fontWeightTokens.fontLight;
+export const fontNormal: StyleToken = fontWeightTokens.fontNormal;
+export const fontMedium: StyleToken = fontWeightTokens.fontMedium;
+export const fontSemibold: StyleToken = fontWeightTokens.fontSemibold;
+export const fontBold: StyleToken = fontWeightTokens.fontBold;
+export const fontExtrabold: StyleToken = fontWeightTokens.fontExtrabold;
+export const fontBlack: StyleToken = fontWeightTokens.fontBlack;
 
 // ============================================
 // Individual token exports (flat) - Line Height
 // ============================================
 
-export const {
-  leadingNone,
-  leadingTight,
-  leadingSnug,
-  leadingNormal,
-  leadingRelaxed,
-  leadingLoose,
-  leading3,
-  leading4,
-  leading5,
-  leading6,
-  leading7,
-  leading8,
-  leading9,
-  leading10,
-} = lineHeightTokens;
+export const leadingNone: StyleToken = lineHeightTokens.leadingNone;
+export const leadingTight: StyleToken = lineHeightTokens.leadingTight;
+export const leadingSnug: StyleToken = lineHeightTokens.leadingSnug;
+export const leadingNormal: StyleToken = lineHeightTokens.leadingNormal;
+export const leadingRelaxed: StyleToken = lineHeightTokens.leadingRelaxed;
+export const leadingLoose: StyleToken = lineHeightTokens.leadingLoose;
+export const leading3: StyleToken = lineHeightTokens.leading3;
+export const leading4: StyleToken = lineHeightTokens.leading4;
+export const leading5: StyleToken = lineHeightTokens.leading5;
+export const leading6: StyleToken = lineHeightTokens.leading6;
+export const leading7: StyleToken = lineHeightTokens.leading7;
+export const leading8: StyleToken = lineHeightTokens.leading8;
+export const leading9: StyleToken = lineHeightTokens.leading9;
+export const leading10: StyleToken = lineHeightTokens.leading10;
 
 // ============================================
 // Individual token exports (flat) - Letter Spacing
 // ============================================
 
-export const {
-  trackingTighter,
-  trackingTight,
-  trackingNormal,
-  trackingWide,
-  trackingWider,
-  trackingWidest,
-} = letterSpacingTokens;
+export const trackingTighter: StyleToken = letterSpacingTokens.trackingTighter;
+export const trackingTight: StyleToken = letterSpacingTokens.trackingTight;
+export const trackingNormal: StyleToken = letterSpacingTokens.trackingNormal;
+export const trackingWide: StyleToken = letterSpacingTokens.trackingWide;
+export const trackingWider: StyleToken = letterSpacingTokens.trackingWider;
+export const trackingWidest: StyleToken = letterSpacingTokens.trackingWidest;
 
 // ============================================
 // Individual token exports (flat) - Text Align
 // ============================================
 
-export const { textLeft, textCenter, textRight, textJustify, textStart, textEnd } = textAlignTokens;
+export const textLeft: StyleToken = textAlignTokens.textLeft;
+export const textCenter: StyleToken = textAlignTokens.textCenter;
+export const textRight: StyleToken = textAlignTokens.textRight;
+export const textJustify: StyleToken = textAlignTokens.textJustify;
+export const textStart: StyleToken = textAlignTokens.textStart;
+export const textEnd: StyleToken = textAlignTokens.textEnd;
 
 // ============================================
 // Individual token exports (flat) - Font Family
 // ============================================
 
-export const { fontSans, fontSerif, fontMono } = fontFamilyTokens;
+export const fontSans: StyleToken = fontFamilyTokens.fontSans;
+export const fontSerif: StyleToken = fontFamilyTokens.fontSerif;
+export const fontMono: StyleToken = fontFamilyTokens.fontMono;
 
 // ============================================
 // Individual token exports (flat) - Font Style
 // ============================================
 
-export const { italic, notItalic } = fontStyleTokens;
+export const italic: StyleToken = fontStyleTokens.italic;
+export const notItalic: StyleToken = fontStyleTokens.notItalic;
 
 // ============================================
 // Individual token exports (flat) - Text Decoration
 // ============================================
 
-export const { underline, overline, lineThrough, noUnderline } = textDecorationTokens;
+export const underline: StyleToken = textDecorationTokens.underline;
+export const overline: StyleToken = textDecorationTokens.overline;
+export const lineThrough: StyleToken = textDecorationTokens.lineThrough;
+export const noUnderline: StyleToken = textDecorationTokens.noUnderline;
 
 // ============================================
 // Individual token exports (flat) - Text Transform
 // ============================================
 
-export const { uppercase, lowercase, capitalize, normalCase } = textTransformTokens;
+export const uppercase: StyleToken = textTransformTokens.uppercase;
+export const lowercase: StyleToken = textTransformTokens.lowercase;
+export const capitalize: StyleToken = textTransformTokens.capitalize;
+export const normalCase: StyleToken = textTransformTokens.normalCase;
 
 // ============================================
 // Individual token exports (flat) - Whitespace
 // ============================================
 
-export const {
-  whitespaceNormal,
-  whitespaceNowrap,
-  whitespacePre,
-  whitespacePreLine,
-  whitespacePreWrap,
-  whitespaceBreakSpaces,
-} = whitespaceTokens;
+export const whitespaceNormal: StyleToken = whitespaceTokens.whitespaceNormal;
+export const whitespaceNowrap: StyleToken = whitespaceTokens.whitespaceNowrap;
+export const whitespacePre: StyleToken = whitespaceTokens.whitespacePre;
+export const whitespacePreLine: StyleToken = whitespaceTokens.whitespacePreLine;
+export const whitespacePreWrap: StyleToken = whitespaceTokens.whitespacePreWrap;
+export const whitespaceBreakSpaces: StyleToken = whitespaceTokens.whitespaceBreakSpaces;
 
 // ============================================
 // Individual token exports (flat) - Word Break
 // ============================================
 
-export const { breakNormal, breakWords, breakAll, breakKeep } = wordBreakTokens;
+export const breakNormal: StyleToken = wordBreakTokens.breakNormal;
+export const breakWords: StyleToken = wordBreakTokens.breakWords;
+export const breakAll: StyleToken = wordBreakTokens.breakAll;
+export const breakKeep: StyleToken = wordBreakTokens.breakKeep;
 
 // ============================================
 // Individual token exports (flat) - Truncate
@@ -531,7 +538,7 @@ export const truncate: StyleToken = generateTruncateToken();
 // ============================================
 
 /** All typography tokens in a namespace */
-export const typography = {
+export const typography: Record<string, StyleToken | TaggedUtilityFn> = {
   // Font size
   ...fontSizeTokens,
   // Font weight

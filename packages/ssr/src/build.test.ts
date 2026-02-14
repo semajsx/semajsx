@@ -78,7 +78,7 @@ describe("App Build Integration", () => {
     // With HTML entry build, Vite processes CSS and outputs to assets/
     // Check that HTML file was created
     const indexHtml = await readFile(join(OUT_DIR, "index.html"), "utf-8");
-    expect(indexHtml).toContain("<html>");
+    expect(indexHtml).toContain('<html lang="en">');
 
     // CSS should be linked in the HTML (Vite injects it)
     expect(indexHtml).toMatch(/<link[^>]+stylesheet/);
@@ -206,7 +206,7 @@ describe("App Build Integration", () => {
     // With HTML entry build, Vite handles assets
     // Check that HTML file was created
     const indexHtml = await readFile(join(OUT_DIR, "index.html"), "utf-8");
-    expect(indexHtml).toContain("<html>");
+    expect(indexHtml).toContain('<html lang="en">');
   });
 
   it("should handle build errors gracefully", async () => {

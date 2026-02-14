@@ -42,7 +42,7 @@ SemaJSX is built with Bun and works best with Bun's fast runtime and built-in Ty
 Here's a simple counter example using SemaJSX:
 
 ```tsx
-/** @jsxImportSource @semajsx/dom */
+/** @jsxImportSource semajsx/dom */
 
 import { signal } from "semajsx/signal";
 import { render } from "semajsx/dom";
@@ -70,7 +70,7 @@ Add JSX configuration to your `tsconfig.json`:
 {
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "@semajsx/dom"
+    "jsxImportSource": "semajsx/dom"
   }
 }
 ```

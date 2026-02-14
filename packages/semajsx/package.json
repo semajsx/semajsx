@@ -16,13 +16,20 @@
     "dist"
   ],
   "type": "module",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/index.d.mts",
   "exports": {
     ".": "./src/index.ts",
     "./dom": "./src/dom/index.ts",
     "./dom/jsx-dev-runtime": "./src/dom/jsx-dev-runtime.ts",
     "./dom/jsx-runtime": "./src/dom/jsx-runtime.ts",
     "./signal": "./src/signal/index.ts",
+    "./ssg": "./src/ssg/index.ts",
+    "./ssr": "./src/ssr/index.ts",
+    "./ssr/client": "./src/ssr/client.ts",
+    "./style": "./src/style/index.ts",
+    "./style/react": "./src/style/react.ts",
+    "./style/vue": "./src/style/vue.ts",
+    "./tailwind": "./src/tailwind/index.ts",
     "./terminal": "./src/terminal/index.ts",
     "./terminal/jsx-dev-runtime": "./src/terminal/jsx-dev-runtime.ts",
     "./terminal/jsx-runtime": "./src/terminal/jsx-runtime.ts",
@@ -35,6 +42,13 @@
       "./dom/jsx-dev-runtime": "./dist/dom/jsx-dev-runtime.mjs",
       "./dom/jsx-runtime": "./dist/dom/jsx-runtime.mjs",
       "./signal": "./dist/signal/index.mjs",
+      "./ssg": "./dist/ssg/index.mjs",
+      "./ssr": "./dist/ssr/index.mjs",
+      "./ssr/client": "./dist/ssr/client.mjs",
+      "./style": "./dist/style/index.mjs",
+      "./style/react": "./dist/style/react.mjs",
+      "./style/vue": "./dist/style/vue.mjs",
+      "./tailwind": "./dist/tailwind/index.mjs",
       "./terminal": "./dist/terminal/index.mjs",
       "./terminal/jsx-dev-runtime": "./dist/terminal/jsx-dev-runtime.mjs",
       "./terminal/jsx-runtime": "./dist/terminal/jsx-runtime.mjs",
@@ -52,26 +66,33 @@
     "test:coverage": "vitest run --coverage --config vitest.unit.config.ts",
     "test:terminal": "vitest run tests/terminal --config vitest.unit.config.ts",
     "clean": "rm -rf dist",
-    "example:dev": "cd examples/vite-counter && vite",
-    "example:build": "cd examples/vite-counter && bun run build",
-    "example:bun": "bun --conditions=development --port=0 examples/bun-server/server.tsx",
-    "example:perf": "bun --conditions=development --port=0 examples/performance-test/server.tsx",
-    "example:ssr": "bun --conditions=development examples/ssr-islands/server.tsx",
-    "example:terminal": "bun --conditions=development examples/terminal-counter/simple.tsx",
-    "example:terminal-print": "bun --conditions=development examples/terminal-print/simple-print.tsx",
-    "example:logger": "bun --conditions=development examples/logger/basic.tsx",
-    "example:logger:showcase": "bun --conditions=development examples/logger/showcase.tsx"
+    "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@semajsx/core": "workspace:*",
-    "@semajsx/dom": "workspace:*",
-    "@semajsx/signal": "workspace:*",
-    "@semajsx/ssr": "workspace:*",
-    "@semajsx/terminal": "workspace:*",
-    "@semajsx/utils": "workspace:*"
+    "ansi-escapes": "^7.2.0",
+    "chalk": "^5.6.2",
+    "cli-boxes": "^4.0.1",
+    "glob": "^13.0.0",
+    "gray-matter": "^4.0.3",
+    "lightningcss": "^1.31.1",
+    "minimatch": "^10.1.1",
+    "slice-ansi": "^7.1.2",
+    "string-width": "^8.1.0",
+    "wrap-ansi": "^9.0.2",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@semajsx/configs": "workspace:*",
+    "@semajsx/core": "workspace:*",
+    "@semajsx/dom": "workspace:*",
+    "@semajsx/logger": "workspace:*",
+    "@semajsx/signal": "workspace:*",
+    "@semajsx/ssg": "workspace:*",
+    "@semajsx/ssr": "workspace:*",
+    "@semajsx/style": "workspace:*",
+    "@semajsx/tailwind": "workspace:*",
+    "@semajsx/terminal": "workspace:*",
+    "@semajsx/utils": "workspace:*",
     "@types/bun": "latest",
     "@types/node": "^25.0.10",
     "@vitest/browser": "^4.0.18",
@@ -81,5 +102,29 @@
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "vitest": "^4.0.18"
+  },
+  "peerDependencies": {
+    "@mdx-js/mdx": "^3.1.1",
+    "react": ">=18.0.0",
+    "vite": "^7.0.0",
+    "vue": ">=3.0.0",
+    "yoga-layout-prebuilt": "^1.10.0"
+  },
+  "peerDependenciesMeta": {
+    "@mdx-js/mdx": {
+      "optional": true
+    },
+    "vite": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    },
+    "yoga-layout-prebuilt": {
+      "optional": true
+    }
   }
 }

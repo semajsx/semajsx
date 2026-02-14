@@ -195,11 +195,15 @@ export class SSG<
         const staticPaths = await route.getStaticPaths(this);
         for (const sp of staticPaths) {
           const path = this.applyParams(route.path, sp.params);
-          const props = { ...sp.props, params: sp.params };
+          const props: Record<string, unknown> = { ...sp.props, params: sp.params };
 
-          this.app.route(path, (_context: RouteContext) => {
-            return route.component(props);
-          });
+          this.app.route(
+            path,
+            (_context: RouteContext) => {
+              return route.component(props);
+            },
+            { title: props.title as string | undefined },
+          );
         }
       } else {
         // Static route
@@ -210,9 +214,13 @@ export class SSG<
           props = route.props;
         }
 
-        this.app.route(route.path, (_context: RouteContext) => {
-          return route.component(props);
-        });
+        this.app.route(
+          route.path,
+          (_context: RouteContext) => {
+            return route.component(props);
+          },
+          { title: props.title as string | undefined },
+        );
       }
     }
   }

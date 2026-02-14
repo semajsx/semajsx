@@ -22,13 +22,7 @@
       "name": "@semajsx/docs",
       "version": "0.1.0",
       "dependencies": {
-        "@semajsx/core": "workspace:*",
-        "@semajsx/dom": "workspace:*",
-        "@semajsx/signal": "workspace:*",
-        "@semajsx/ssg": "workspace:*",
-        "@semajsx/ssr": "workspace:*",
-        "@semajsx/tailwind": "workspace:*",
-        "zod": "^4.3.6",
+        "semajsx": "workspace:*",
       },
       "devDependencies": {
         "@semajsx/configs": "workspace:*",
@@ -84,15 +78,30 @@
       "name": "semajsx",
       "version": "0.1.0",
       "dependencies": {
-        "@semajsx/core": "workspace:*",
-        "@semajsx/dom": "workspace:*",
-        "@semajsx/signal": "workspace:*",
-        "@semajsx/ssr": "workspace:*",
-        "@semajsx/terminal": "workspace:*",
-        "@semajsx/utils": "workspace:*",
+        "ansi-escapes": "^7.2.0",
+        "chalk": "^5.6.2",
+        "cli-boxes": "^4.0.1",
+        "glob": "^13.0.0",
+        "gray-matter": "^4.0.3",
+        "lightningcss": "^1.31.1",
+        "minimatch": "^10.1.1",
+        "slice-ansi": "^7.1.2",
+        "string-width": "^8.1.0",
+        "wrap-ansi": "^9.0.2",
+        "zod": "^4.3.6",
       },
       "devDependencies": {
         "@semajsx/configs": "workspace:*",
+        "@semajsx/core": "workspace:*",
+        "@semajsx/dom": "workspace:*",
+        "@semajsx/logger": "workspace:*",
+        "@semajsx/signal": "workspace:*",
+        "@semajsx/ssg": "workspace:*",
+        "@semajsx/ssr": "workspace:*",
+        "@semajsx/style": "workspace:*",
+        "@semajsx/tailwind": "workspace:*",
+        "@semajsx/terminal": "workspace:*",
+        "@semajsx/utils": "workspace:*",
         "@types/bun": "latest",
         "@types/node": "^25.0.10",
         "@vitest/browser": "^4.0.18",
@@ -103,6 +112,20 @@
         "vite": "^7.3.1",
         "vitest": "^4.0.18",
       },
+      "peerDependencies": {
+        "@mdx-js/mdx": "^3.1.1",
+        "react": ">=18.0.0",
+        "vite": "^7.0.0",
+        "vue": ">=3.0.0",
+        "yoga-layout-prebuilt": "^1.10.0",
+      },
+      "optionalPeers": [
+        "@mdx-js/mdx",
+        "react",
+        "vite",
+        "vue",
+        "yoga-layout-prebuilt",
+      ],
     },
     "packages/signal": {
       "name": "@semajsx/signal",
@@ -1237,6 +1260,8 @@
 
     "rolldown-plugin-dts/@babel/types": ["@babel/types@8.0.0-beta.4", "", { "dependencies": { "@babel/helper-string-parser": "^8.0.0-beta.4", "@babel/helper-validator-identifier": "^8.0.0-beta.4" } }, "sha512-xjk2xqYp25ePzAs0I08hN2lrbUDDQFfCjwq6MIEa8HwHa0WK8NfNtdvtXod8Ku2CbE1iui7qwWojGvjQiyrQeA=="],
 
+    "semajsx/@types/bun": ["@types/bun@1.3.8", "", { "dependencies": { "bun-types": "1.3.8" } }, "sha512-3LvWJ2q5GerAXYxO2mffLTqOzEu5qnhEAlh48Vnu8WQfnmSwbgagjGZV6BoHKJztENYEDn6QmVd949W4uESRJA=="],
+
     "wrap-ansi/string-width": ["string-width@7.2.0", "", { "dependencies": { "emoji-regex": "^10.3.0", "get-east-asian-width": "^1.0.0", "strip-ansi": "^7.1.0" } }, "sha512-tsaTIkKW9b4N+AEj+SVA+WhJzV7/zMhcSu78mLKWSk7cXMOSHsBKFWUs0fWwq8QyK3MgJBQRX6Gbi4kYbdvGkQ=="],
 
     "yargs/string-width": ["string-width@4.2.3", "", { "dependencies": { "emoji-regex": "^8.0.0", "is-fullwidth-code-point": "^3.0.0", "strip-ansi": "^6.0.1" } }, "sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g=="],
@@ -1262,6 +1287,8 @@
     "rolldown-plugin-dts/@babel/types/@babel/helper-string-parser": ["@babel/helper-string-parser@8.0.0-beta.4", "", {}, "sha512-FGwbdQ/I2nJXXfyxa7dT0Fr/zPWwgX7m+hNVj0HrIHYJtyLxSQeQY1Kd8QkAYviQJV3OWFlRLuGd5epF03bdQg=="],
 
     "rolldown-plugin-dts/@babel/types/@babel/helper-validator-identifier": ["@babel/helper-validator-identifier@8.0.0-beta.4", "", {}, "sha512-6t0IaUEzlinbLmsGIvBZIHEJGjuchx+cMj+FbS78zL17tucYervgbwO07V5/CgBenVraontpmyMCTVyqCfxhFQ=="],
+
+    "semajsx/@types/bun/bun-types": ["bun-types@1.3.8", "", { "dependencies": { "@types/node": "*" } }, "sha512-fL99nxdOWvV4LqjmC+8Q9kW3M4QTtTR1eePs94v5ctGqU8OeceWrSUaRw3JYb7tU3FkMIAjkueehrHPPPGKi5Q=="],
 
     "yargs/string-width/emoji-regex": ["emoji-regex@8.0.0", "", {}, "sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A=="],
 

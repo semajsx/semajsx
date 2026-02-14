@@ -1,6 +1,6 @@
-/** @jsxImportSource @semajsx/dom */
+/** @jsxImportSource semajsx/dom */
 
-import type { VNode } from "@semajsx/core";
+import type { VNode } from "semajsx";
 import {
   cx,
   flex,
@@ -22,7 +22,9 @@ import {
   bg,
   textColor,
   extractCss,
-} from "@semajsx/tailwind";
+} from "semajsx/tailwind";
+import * as theme from "../styles/theme.style";
+import { extractThemeCss } from "../styles/extract";
 
 // Collect all tokens used in this file for CSS extraction
 const usedTokens = [
@@ -51,41 +53,54 @@ const usedTokens = [
 // Export CSS for build-time extraction
 export const layoutCss = extractCss(...usedTokens);
 
+// Extract all Apple theme CSS once for embedding in Layout
+const themeCss = extractThemeCss(theme.appleTheme);
+
 interface LayoutProps {
   children: VNode | VNode[];
 }
 
 /**
- * Main layout component for documentation pages
- *
- * Mixed approach: using @semajsx/tailwind where possible,
- * falling back to custom CSS classes for unsupported features.
- *
- * Now available in tailwind: mxAuto, borderB, borderT
- * Still using custom CSS: min-h-screen, max-width container
+ * Main layout component for documentation pages with Apple-inspired frosted glass design
  */
 export function Layout({ children }: LayoutProps): VNode {
   return (
     <div class={cx(flex, flexCol, "min-h-screen")}>
-      {/* Navbar - using mix of tailwind and custom CSS */}
-      <nav class={cx(bg.gray100, py4, sticky, top0, z50, "navbar-border")}>
+      {/* Inject Apple theme CSS on every page */}
+      <style>{themeCss}</style>
+
+      {/* Frosted Glass Navigation - Apple Style */}
+      <nav class={cx(theme.glassNav._, sticky, top0, z50)} style="padding: 16px 0;">
         <div class={cx(flex, justifyBetween, itemsCenter, px8, "max-w-container mx-auto")}>
-          <a href="/" class={cx(textXl, fontBold, textColor.blue500, "no-underline")}>
+          <a href="/" class={cx(textXl, fontBold, "no-underline")} style="color: #1d1d1f;">
             <strong>SemaJSX</strong>
           </a>
           <ul class={cx(flex, gap8, "list-none")}>
             <li>
-              <a href="/docs" class="nav-link">
+              <a
+                href="/docs"
+                class="nav-link"
+                style="color: #1d1d1f; text-decoration: none; font-weight: 500; transition: all 0.2s;"
+              >
                 Docs
               </a>
             </li>
             <li>
-              <a href="/guides" class="nav-link">
+              <a
+                href="/guides"
+                class="nav-link"
+                style="color: #1d1d1f; text-decoration: none; font-weight: 500; transition: all 0.2s;"
+              >
                 Guides
               </a>
             </li>
             <li>
-              <a href="https://github.com/semajsx/semajsx" target="_blank" class="nav-link">
+              <a
+                href="https://github.com/semajsx/semajsx"
+                target="_blank"
+                class="nav-link"
+                style="color: #1d1d1f; text-decoration: none; font-weight: 500; transition: all 0.2s;"
+              >
                 GitHub
               </a>
             </li>
@@ -95,12 +110,13 @@ export function Layout({ children }: LayoutProps): VNode {
 
       <main class={cx(flex1, wFull, p8, "max-w-container mx-auto")}>{children}</main>
 
-      <footer class={cx(bg.gray100, p8, textCenter, textColor.gray500, "footer-border")}>
-        <p>
+      {/* Minimal Footer - Apple Style */}
+      <footer style="background: #f5f5f7; padding: 40px 20px; text-align: center; border-top: 1px solid rgba(0, 0, 0, 0.1);">
+        <p style="color: #6e6e73; font-size: 14px; margin: 0;">
           Built with{" "}
           <a
             href="https://github.com/semajsx/semajsx"
-            class={cx(textColor.blue500, "no-underline")}
+            style="color: #0071e3; text-decoration: none; font-weight: 500;"
           >
             SemaJSX
           </a>{" "}

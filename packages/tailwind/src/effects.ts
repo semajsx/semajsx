@@ -459,174 +459,192 @@ export const opacity: TaggedUtilityFn = createTaggedUtility(opacityFn);
 // Individual token exports (flat) - Border Width
 // ============================================
 
-export const { border, border0, border2, border4, border8 } = borderWidthTokens;
+export const border: StyleToken = borderWidthTokens.border;
+export const border0: StyleToken = borderWidthTokens.border0;
+export const border2: StyleToken = borderWidthTokens.border2;
+export const border4: StyleToken = borderWidthTokens.border4;
+export const border8: StyleToken = borderWidthTokens.border8;
 
 // Border Top
-export const { borderTop, borderTop0, borderTop2, borderTop4, borderTop8 } = borderTopTokens;
+export const borderTop: StyleToken = borderTopTokens.borderTop;
+export const borderTop0: StyleToken = borderTopTokens.borderTop0;
+export const borderTop2: StyleToken = borderTopTokens.borderTop2;
+export const borderTop4: StyleToken = borderTopTokens.borderTop4;
+export const borderTop8: StyleToken = borderTopTokens.borderTop8;
 
 // Border Right
-export const { borderRight, borderRight0, borderRight2, borderRight4, borderRight8 } =
-  borderRightTokens;
+export const borderRight: StyleToken = borderRightTokens.borderRight;
+export const borderRight0: StyleToken = borderRightTokens.borderRight0;
+export const borderRight2: StyleToken = borderRightTokens.borderRight2;
+export const borderRight4: StyleToken = borderRightTokens.borderRight4;
+export const borderRight8: StyleToken = borderRightTokens.borderRight8;
 
 // Border Bottom
-export const { borderBottom, borderBottom0, borderBottom2, borderBottom4, borderBottom8 } =
-  borderBottomTokens;
+export const borderBottom: StyleToken = borderBottomTokens.borderBottom;
+export const borderBottom0: StyleToken = borderBottomTokens.borderBottom0;
+export const borderBottom2: StyleToken = borderBottomTokens.borderBottom2;
+export const borderBottom4: StyleToken = borderBottomTokens.borderBottom4;
+export const borderBottom8: StyleToken = borderBottomTokens.borderBottom8;
 
 // Border Left
-export const { borderLeft, borderLeft0, borderLeft2, borderLeft4, borderLeft8 } = borderLeftTokens;
+export const borderLeft: StyleToken = borderLeftTokens.borderLeft;
+export const borderLeft0: StyleToken = borderLeftTokens.borderLeft0;
+export const borderLeft2: StyleToken = borderLeftTokens.borderLeft2;
+export const borderLeft4: StyleToken = borderLeftTokens.borderLeft4;
+export const borderLeft8: StyleToken = borderLeftTokens.borderLeft8;
 
 // Short aliases (Tailwind naming: border-t, border-b, etc.)
-export const borderT = borderTop;
-export const borderT0 = borderTop0;
-export const borderT2 = borderTop2;
-export const borderT4 = borderTop4;
-export const borderT8 = borderTop8;
+export const borderT: StyleToken = borderTop;
+export const borderT0: StyleToken = borderTop0;
+export const borderT2: StyleToken = borderTop2;
+export const borderT4: StyleToken = borderTop4;
+export const borderT8: StyleToken = borderTop8;
 
-export const borderR = borderRight;
-export const borderR0 = borderRight0;
-export const borderR2 = borderRight2;
-export const borderR4 = borderRight4;
-export const borderR8 = borderRight8;
+export const borderR: StyleToken = borderRight;
+export const borderR0: StyleToken = borderRight0;
+export const borderR2: StyleToken = borderRight2;
+export const borderR4: StyleToken = borderRight4;
+export const borderR8: StyleToken = borderRight8;
 
-export const borderB = borderBottom;
-export const borderB0 = borderBottom0;
-export const borderB2 = borderBottom2;
-export const borderB4 = borderBottom4;
-export const borderB8 = borderBottom8;
+export const borderB: StyleToken = borderBottom;
+export const borderB0: StyleToken = borderBottom0;
+export const borderB2: StyleToken = borderBottom2;
+export const borderB4: StyleToken = borderBottom4;
+export const borderB8: StyleToken = borderBottom8;
 
-export const borderL = borderLeft;
-export const borderL0 = borderLeft0;
-export const borderL2 = borderLeft2;
-export const borderL4 = borderLeft4;
-export const borderL8 = borderLeft8;
+export const borderL: StyleToken = borderLeft;
+export const borderL0: StyleToken = borderLeft0;
+export const borderL2: StyleToken = borderLeft2;
+export const borderL4: StyleToken = borderLeft4;
+export const borderL8: StyleToken = borderLeft8;
 
 // ============================================
 // Individual token exports (flat) - Border Radius
 // ============================================
 
-export const {
-  rounded: roundedBase, // Alias for the token (rounded is reserved for tagged template)
-  roundedNone,
-  roundedSm,
-  roundedMd,
-  roundedLg,
-  roundedXl,
-  rounded2xl,
-  rounded3xl,
-  roundedFull,
-} = borderRadiusTokens;
+export const roundedBase: StyleToken = borderRadiusTokens.rounded;
+export const roundedNone: StyleToken = borderRadiusTokens.roundedNone;
+export const roundedSm: StyleToken = borderRadiusTokens.roundedSm;
+export const roundedMd: StyleToken = borderRadiusTokens.roundedMd;
+export const roundedLg: StyleToken = borderRadiusTokens.roundedLg;
+export const roundedXl: StyleToken = borderRadiusTokens.roundedXl;
+export const rounded2xl: StyleToken = borderRadiusTokens.rounded2xl;
+export const rounded3xl: StyleToken = borderRadiusTokens.rounded3xl;
+export const roundedFull: StyleToken = borderRadiusTokens.roundedFull;
 
 // ============================================
 // Individual token exports (flat) - Box Shadow
 // ============================================
 
-export const {
-  shadow: shadowBase, // Alias for the token (shadow is reserved for tagged template)
-  shadowSm,
-  shadowMd,
-  shadowLg,
-  shadowXl,
-  shadow2xl,
-  shadowInner,
-  shadowNone,
-} = boxShadowTokens;
+export const shadowBase: StyleToken = boxShadowTokens.shadow;
+export const shadowSm: StyleToken = boxShadowTokens.shadowSm;
+export const shadowMd: StyleToken = boxShadowTokens.shadowMd;
+export const shadowLg: StyleToken = boxShadowTokens.shadowLg;
+export const shadowXl: StyleToken = boxShadowTokens.shadowXl;
+export const shadow2xl: StyleToken = boxShadowTokens.shadow2xl;
+export const shadowInner: StyleToken = boxShadowTokens.shadowInner;
+export const shadowNone: StyleToken = boxShadowTokens.shadowNone;
 
 // ============================================
 // Individual token exports (flat) - Opacity
 // ============================================
 
-export const {
-  opacity0,
-  opacity5,
-  opacity10,
-  opacity15,
-  opacity20,
-  opacity25,
-  opacity30,
-  opacity35,
-  opacity40,
-  opacity45,
-  opacity50,
-  opacity55,
-  opacity60,
-  opacity65,
-  opacity70,
-  opacity75,
-  opacity80,
-  opacity85,
-  opacity90,
-  opacity95,
-  opacity100,
-} = opacityTokens;
+export const opacity0: StyleToken = opacityTokens.opacity0;
+export const opacity5: StyleToken = opacityTokens.opacity5;
+export const opacity10: StyleToken = opacityTokens.opacity10;
+export const opacity15: StyleToken = opacityTokens.opacity15;
+export const opacity20: StyleToken = opacityTokens.opacity20;
+export const opacity25: StyleToken = opacityTokens.opacity25;
+export const opacity30: StyleToken = opacityTokens.opacity30;
+export const opacity35: StyleToken = opacityTokens.opacity35;
+export const opacity40: StyleToken = opacityTokens.opacity40;
+export const opacity45: StyleToken = opacityTokens.opacity45;
+export const opacity50: StyleToken = opacityTokens.opacity50;
+export const opacity55: StyleToken = opacityTokens.opacity55;
+export const opacity60: StyleToken = opacityTokens.opacity60;
+export const opacity65: StyleToken = opacityTokens.opacity65;
+export const opacity70: StyleToken = opacityTokens.opacity70;
+export const opacity75: StyleToken = opacityTokens.opacity75;
+export const opacity80: StyleToken = opacityTokens.opacity80;
+export const opacity85: StyleToken = opacityTokens.opacity85;
+export const opacity90: StyleToken = opacityTokens.opacity90;
+export const opacity95: StyleToken = opacityTokens.opacity95;
+export const opacity100: StyleToken = opacityTokens.opacity100;
 
 // ============================================
 // Individual token exports (flat) - Border Style
 // ============================================
 
-export const { borderSolid, borderDashed, borderDotted, borderDouble, borderHidden, borderNone } =
-  borderStyleTokens;
+export const borderSolid: StyleToken = borderStyleTokens.borderSolid;
+export const borderDashed: StyleToken = borderStyleTokens.borderDashed;
+export const borderDotted: StyleToken = borderStyleTokens.borderDotted;
+export const borderDouble: StyleToken = borderStyleTokens.borderDouble;
+export const borderHidden: StyleToken = borderStyleTokens.borderHidden;
+export const borderNone: StyleToken = borderStyleTokens.borderNone;
 
 // ============================================
 // Individual token exports (flat) - Cursor
 // ============================================
 
-export const {
-  cursorAuto,
-  cursorDefault,
-  cursorPointer,
-  cursorWait,
-  cursorText,
-  cursorMove,
-  cursorHelp,
-  cursorNotAllowed,
-  cursorNone,
-  cursorContextMenu,
-  cursorProgress,
-  cursorCell,
-  cursorCrosshair,
-  cursorVerticalText,
-  cursorAlias,
-  cursorCopy,
-  cursorNoDrop,
-  cursorGrab,
-  cursorGrabbing,
-  cursorAllScroll,
-  cursorColResize,
-  cursorRowResize,
-  cursorNResize,
-  cursorEResize,
-  cursorSResize,
-  cursorWResize,
-  cursorNeResize,
-  cursorNwResize,
-  cursorSeResize,
-  cursorSwResize,
-  cursorEwResize,
-  cursorNsResize,
-  cursorNeswResize,
-  cursorNwseResize,
-  cursorZoomIn,
-  cursorZoomOut,
-} = cursorTokens;
+export const cursorAuto: StyleToken = cursorTokens.cursorAuto;
+export const cursorDefault: StyleToken = cursorTokens.cursorDefault;
+export const cursorPointer: StyleToken = cursorTokens.cursorPointer;
+export const cursorWait: StyleToken = cursorTokens.cursorWait;
+export const cursorText: StyleToken = cursorTokens.cursorText;
+export const cursorMove: StyleToken = cursorTokens.cursorMove;
+export const cursorHelp: StyleToken = cursorTokens.cursorHelp;
+export const cursorNotAllowed: StyleToken = cursorTokens.cursorNotAllowed;
+export const cursorNone: StyleToken = cursorTokens.cursorNone;
+export const cursorContextMenu: StyleToken = cursorTokens.cursorContextMenu;
+export const cursorProgress: StyleToken = cursorTokens.cursorProgress;
+export const cursorCell: StyleToken = cursorTokens.cursorCell;
+export const cursorCrosshair: StyleToken = cursorTokens.cursorCrosshair;
+export const cursorVerticalText: StyleToken = cursorTokens.cursorVerticalText;
+export const cursorAlias: StyleToken = cursorTokens.cursorAlias;
+export const cursorCopy: StyleToken = cursorTokens.cursorCopy;
+export const cursorNoDrop: StyleToken = cursorTokens.cursorNoDrop;
+export const cursorGrab: StyleToken = cursorTokens.cursorGrab;
+export const cursorGrabbing: StyleToken = cursorTokens.cursorGrabbing;
+export const cursorAllScroll: StyleToken = cursorTokens.cursorAllScroll;
+export const cursorColResize: StyleToken = cursorTokens.cursorColResize;
+export const cursorRowResize: StyleToken = cursorTokens.cursorRowResize;
+export const cursorNResize: StyleToken = cursorTokens.cursorNResize;
+export const cursorEResize: StyleToken = cursorTokens.cursorEResize;
+export const cursorSResize: StyleToken = cursorTokens.cursorSResize;
+export const cursorWResize: StyleToken = cursorTokens.cursorWResize;
+export const cursorNeResize: StyleToken = cursorTokens.cursorNeResize;
+export const cursorNwResize: StyleToken = cursorTokens.cursorNwResize;
+export const cursorSeResize: StyleToken = cursorTokens.cursorSeResize;
+export const cursorSwResize: StyleToken = cursorTokens.cursorSwResize;
+export const cursorEwResize: StyleToken = cursorTokens.cursorEwResize;
+export const cursorNsResize: StyleToken = cursorTokens.cursorNsResize;
+export const cursorNeswResize: StyleToken = cursorTokens.cursorNeswResize;
+export const cursorNwseResize: StyleToken = cursorTokens.cursorNwseResize;
+export const cursorZoomIn: StyleToken = cursorTokens.cursorZoomIn;
+export const cursorZoomOut: StyleToken = cursorTokens.cursorZoomOut;
 
 // ============================================
 // Individual token exports (flat) - Pointer Events
 // ============================================
 
-export const { pointerEventsNone, pointerEventsAuto } = pointerEventsTokens;
+export const pointerEventsNone: StyleToken = pointerEventsTokens.pointerEventsNone;
+export const pointerEventsAuto: StyleToken = pointerEventsTokens.pointerEventsAuto;
 
 // ============================================
 // Individual token exports (flat) - User Select
 // ============================================
 
-export const { selectNone, selectText, selectAll, selectAuto } = userSelectTokens;
+export const selectNone: StyleToken = userSelectTokens.selectNone;
+export const selectText: StyleToken = userSelectTokens.selectText;
+export const selectAll: StyleToken = userSelectTokens.selectAll;
+export const selectAuto: StyleToken = userSelectTokens.selectAuto;
 
 // ============================================
 // Namespace export (grouped)
 // ============================================
 
 /** All effects tokens in a namespace */
-export const effects = {
+export const effects: Record<string, StyleToken | TaggedUtilityFn> = {
   // Border width
   ...borderWidthTokens,
   // Border side widths
@@ -684,7 +702,7 @@ export type EffectsValues = Record<string, StyleToken>;
 export type EffectsGroup = EffectsNamespace;
 
 // Legacy exports for backwards compatibility
-export const effectsArb = {
+export const effectsArb: Record<string, TaggedUtilityFn> = {
   borderW,
   rounded,
   shadow,
@@ -692,10 +710,10 @@ export const effectsArb = {
 };
 
 // Legacy proxies (for backwards compatibility only)
-export const borderWidth = borderWidthTokens;
-export const borderRadius = borderRadiusTokens;
-export const borderStyle = borderStyleTokens;
-export const boxShadow = boxShadowTokens;
-export const cursor = cursorTokens;
-export const pointerEvents = pointerEventsTokens;
-export const userSelect = userSelectTokens;
+export const borderWidth: Record<string, StyleToken> = borderWidthTokens;
+export const borderRadius: Record<string, StyleToken> = borderRadiusTokens;
+export const borderStyle: Record<string, StyleToken> = borderStyleTokens;
+export const boxShadow: Record<string, StyleToken> = boxShadowTokens;
+export const cursor: Record<string, StyleToken> = cursorTokens;
+export const pointerEvents: Record<string, StyleToken> = pointerEventsTokens;
+export const userSelect: Record<string, StyleToken> = userSelectTokens;

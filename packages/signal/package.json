@@ -18,13 +18,11 @@
   "types": "./dist/index.d.mts",
   "exports": {
     ".": "./src/index.ts",
-    "./utils": "./src/utils.ts",
     "./package.json": "./package.json"
   },
   "publishConfig": {
     "exports": {
       ".": "./dist/index.mjs",
-      "./utils": "./dist/utils.mjs",
       "./package.json": "./package.json"
     }
   },

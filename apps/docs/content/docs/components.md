@@ -14,7 +14,7 @@ Components are the building blocks of SemaJSX applications. They are simple func
 In SemaJSX, components are just functions that return VNodes:
 
 ```tsx
-/** @jsxImportSource @semajsx/dom */
+/** @jsxImportSource semajsx/dom */
 
 function Greeting({ name }: { name: string }) {
   return <h1>Hello, {name}!</h1>;
@@ -143,7 +143,7 @@ Always provide a unique `key` prop when rendering lists to help SemaJSX identify
 Components can receive a second parameter with additional APIs:
 
 ```tsx
-import { context } from "semajsx/core";
+import { context } from "semajsx";
 
 const ThemeContext = context<Theme>("theme");
 
