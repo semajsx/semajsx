@@ -20,7 +20,10 @@ export function NotFound(_props: NotFoundProps): VNode {
         class={cx(flex, flexCol, itemsCenter, justifyCenter, textCenter)}
         style="min-height: 60vh;"
       >
-        <h1 style="font-size: 6rem; font-weight: 700; color: #1d1d1f; letter-spacing: -0.03em; margin-bottom: 0.5rem; line-height: 1;">
+        <h1
+          class="not-found-title"
+          style="font-size: 6rem; font-weight: 700; color: #1d1d1f; letter-spacing: -0.03em; margin-bottom: 0.5rem; line-height: 1;"
+        >
           404
         </h1>
         <p style="font-size: 1.5rem; font-weight: 400; color: #6e6e73; margin-bottom: 0.75rem;">

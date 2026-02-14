@@ -72,17 +72,17 @@ export function Layout({ children }: LayoutProps): VNode {
       {/* Apple-style Frosted Glass Navigation */}
       <nav class={cx(theme.glassNav._, sticky, top0, z50)}>
         <div
-          class={cx(flex, justifyBetween, itemsCenter, "max-w-container mx-auto")}
+          class={cx(flex, justifyBetween, itemsCenter, "max-w-container mx-auto nav-inner")}
           style="padding: 14px 2rem; height: 52px;"
         >
           <a
             href="/"
-            class="no-underline"
+            class="no-underline nav-logo"
             style="color: #1d1d1f; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em;"
           >
             SemaJSX
           </a>
-          <ul class={cx(flex, gap8, "list-none")} style="margin: 0;">
+          <ul class={cx(flex, "list-none nav-links")} style="margin: 0; gap: 2rem;">
             <li>
               <a
                 href="/docs"
@@ -115,17 +115,20 @@ export function Layout({ children }: LayoutProps): VNode {
         </div>
       </nav>
 
-      <main class={cx(flex1, wFull, "max-w-container mx-auto")} style="padding: 2rem 2rem 4rem;">
+      <main
+        class={cx(flex1, wFull, "max-w-container mx-auto main-content")}
+        style="padding: 2rem 2rem 4rem;"
+      >
         {children}
       </main>
 
       {/* Apple-style Footer */}
       <footer style="border-top: 0.5px solid rgba(0, 0, 0, 0.08); background: #f5f5f7;">
         <div
-          class="max-w-container mx-auto"
+          class="max-w-container mx-auto footer-inner"
           style="padding: 2rem 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;"
         >
-          <div style="display: flex; gap: 2rem; align-items: center;">
+          <div class="footer-links" style="display: flex; gap: 2rem; align-items: center;">
             <a
               href="/docs"
               style="color: #6e6e73; text-decoration: none; font-size: 0.8125rem; transition: color 0.2s;"

@@ -153,13 +153,16 @@ const HomePage = (): VNode => (
     <Style href="./styles.css" />
 
     {/* Hero Section - Apple-style minimal with generous whitespace */}
-    <div class={theme.heroBg._} style="padding: 100px 24px 80px; position: relative;">
+    <div
+      class={cx(theme.heroBg._, "hero-section")}
+      style="padding: 100px 24px 80px; position: relative;"
+    >
       <div style="max-width: 680px; margin: 0 auto; position: relative; z-index: 1; text-align: center;">
         <h1 class={theme.heroTitle._}>SemaJSX</h1>
         <p class={theme.heroSubtitle._}>
           A lightweight, signal-based reactive JSX runtime. Fine-grained updates. No virtual DOM.
         </p>
-        <div class={cx(flex, gap4, justifyCenter)} style="margin-top: 2rem;">
+        <div class={cx(flex, gap4, justifyCenter, "hero-cta")} style="margin-top: 2rem;">
           <a href="/docs/getting-started" class={theme.primaryButton._}>
             Get Started
           </a>
@@ -171,17 +174,29 @@ const HomePage = (): VNode => (
     </div>
 
     {/* Features Section - Apple-style cards with subtle elevation */}
-    <section style="max-width: 1080px; margin: 0 auto; padding: 80px 24px;">
+    <section
+      class="section-features"
+      style="max-width: 1080px; margin: 0 auto; padding: 80px 24px;"
+    >
       <div style="text-align: center; margin-bottom: 3.5rem;">
         <h2 class={theme.sectionTitle._}>Why SemaJSX?</h2>
         <p class={theme.sectionSubtitle._}>Simple primitives. Powerful results.</p>
       </div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+      <div
+        class="features-grid"
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;"
+      >
         <div class={theme.featureCard._}>
-          <div style="font-size: 2rem; margin-bottom: 1.25rem; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #f5f5f7; border-radius: 12px;">
+          <div
+            class="feature-icon"
+            style="font-size: 2rem; margin-bottom: 1.25rem; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #f5f5f7; border-radius: 12px;"
+          >
             {"⚡"}
           </div>
-          <h3 style="font-size: 1.375rem; font-weight: 600; color: #1d1d1f; margin-bottom: 0.5rem; letter-spacing: -0.01em;">
+          <h3
+            class="feature-heading"
+            style="font-size: 1.375rem; font-weight: 600; color: #1d1d1f; margin-bottom: 0.5rem; letter-spacing: -0.01em;"
+          >
             Fine-Grained Reactivity
           </h3>
           <p style="color: #6e6e73; line-height: 1.6; font-size: 0.9375rem;">
@@ -191,10 +206,16 @@ const HomePage = (): VNode => (
         </div>
 
         <div class={theme.featureCard._}>
-          <div style="font-size: 2rem; margin-bottom: 1.25rem; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #f5f5f7; border-radius: 12px;">
+          <div
+            class="feature-icon"
+            style="font-size: 2rem; margin-bottom: 1.25rem; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #f5f5f7; border-radius: 12px;"
+          >
             {"📦"}
           </div>
-          <h3 style="font-size: 1.375rem; font-weight: 600; color: #1d1d1f; margin-bottom: 0.5rem; letter-spacing: -0.01em;">
+          <h3
+            class="feature-heading"
+            style="font-size: 1.375rem; font-weight: 600; color: #1d1d1f; margin-bottom: 0.5rem; letter-spacing: -0.01em;"
+          >
             Modular Architecture
           </h3>
           <p style="color: #6e6e73; line-height: 1.6; font-size: 0.9375rem;">
@@ -204,10 +225,16 @@ const HomePage = (): VNode => (
         </div>
 
         <div class={theme.featureCard._}>
-          <div style="font-size: 2rem; margin-bottom: 1.25rem; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #f5f5f7; border-radius: 12px;">
+          <div
+            class="feature-icon"
+            style="font-size: 2rem; margin-bottom: 1.25rem; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #f5f5f7; border-radius: 12px;"
+          >
             {"🎯"}
           </div>
-          <h3 style="font-size: 1.375rem; font-weight: 600; color: #1d1d1f; margin-bottom: 0.5rem; letter-spacing: -0.01em;">
+          <h3
+            class="feature-heading"
+            style="font-size: 1.375rem; font-weight: 600; color: #1d1d1f; margin-bottom: 0.5rem; letter-spacing: -0.01em;"
+          >
             Type-Safe
           </h3>
           <p style="color: #6e6e73; line-height: 1.6; font-size: 0.9375rem;">
@@ -219,11 +246,20 @@ const HomePage = (): VNode => (
     </section>
 
     {/* Quick Links Section */}
-    <section style="max-width: 1080px; margin: 0 auto; padding: 0 24px 100px;">
-      <div style="border-top: 0.5px solid rgba(0, 0, 0, 0.06); padding-top: 80px; text-align: center;">
+    <section
+      class="section-links"
+      style="max-width: 1080px; margin: 0 auto; padding: 0 24px 100px;"
+    >
+      <div
+        class="section-links-inner"
+        style="border-top: 0.5px solid rgba(0, 0, 0, 0.06); padding-top: 80px; text-align: center;"
+      >
         <h2 class={theme.sectionTitle._}>Get started in seconds.</h2>
         <p class={theme.sectionSubtitle._}>Everything you need to build reactive applications.</p>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; max-width: 720px; margin: 0 auto;">
+        <div
+          class="links-grid"
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; max-width: 720px; margin: 0 auto;"
+        >
           <a href="/docs" class={theme.docCard._} style="text-align: left;">
             <h3 style="font-size: 1.125rem; font-weight: 600; color: #1d1d1f; margin-bottom: 0.375rem; letter-spacing: -0.01em;">
               Documentation
@@ -277,10 +313,13 @@ const DocsIndex = ({
       <Style href="./styles.css" />
       <div style="max-width: 720px;">
         <div style="margin-bottom: 3rem;">
-          <h1 style="font-size: 2.25rem; font-weight: 700; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 0.5rem;">
+          <h1
+            class="page-title"
+            style="font-size: 2.25rem; font-weight: 700; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 0.5rem;"
+          >
             Documentation
           </h1>
-          <p style="font-size: 1.125rem; color: #6e6e73; line-height: 1.5;">
+          <p class="page-desc" style="font-size: 1.125rem; color: #6e6e73; line-height: 1.5;">
             Learn the fundamentals and explore the API.
           </p>
         </div>
@@ -321,11 +360,17 @@ const DocPage = ({
     <Style href="./styles.css" />
     <article class="page-container">
       <div style="margin-bottom: 2.5rem;">
-        <h1 style="font-size: 2.25rem; font-weight: 700; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 0.5rem;">
+        <h1
+          class="page-title"
+          style="font-size: 2.25rem; font-weight: 700; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 0.5rem;"
+        >
           {doc.data.title}
         </h1>
         {doc.data.description && (
-          <p style="font-size: 1.125rem; color: #6e6e73; line-height: 1.5; padding-bottom: 1.5rem; border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);">
+          <p
+            class="page-desc"
+            style="font-size: 1.125rem; color: #6e6e73; line-height: 1.5; padding-bottom: 1.5rem; border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);"
+          >
             {doc.data.description}
           </p>
         )}
@@ -378,10 +423,13 @@ const GuidesIndex = ({
       <Style href="./styles.css" />
       <div style="max-width: 720px;">
         <div style="margin-bottom: 3rem;">
-          <h1 style="font-size: 2.25rem; font-weight: 700; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 0.5rem;">
+          <h1
+            class="page-title"
+            style="font-size: 2.25rem; font-weight: 700; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 0.5rem;"
+          >
             Guides
           </h1>
-          <p style="font-size: 1.125rem; color: #6e6e73; line-height: 1.5;">
+          <p class="page-desc" style="font-size: 1.125rem; color: #6e6e73; line-height: 1.5;">
             Practical tutorials to help you build with SemaJSX.
           </p>
         </div>
@@ -443,11 +491,17 @@ const GuidePage = ({
           >
             {guide.data.difficulty}
           </span>
-          <h1 style="font-size: 2.25rem; font-weight: 700; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 0.5rem;">
+          <h1
+            class="page-title"
+            style="font-size: 2.25rem; font-weight: 700; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 0.5rem;"
+          >
             {guide.data.title}
           </h1>
           {guide.data.description && (
-            <p style="font-size: 1.125rem; color: #6e6e73; line-height: 1.5; padding-bottom: 1.5rem; border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);">
+            <p
+              class="page-desc"
+              style="font-size: 1.125rem; color: #6e6e73; line-height: 1.5; padding-bottom: 1.5rem; border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);"
+            >
               {guide.data.description}
             </p>
           )}

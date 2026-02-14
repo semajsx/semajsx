@@ -238,19 +238,145 @@ body {
  * ============================================ */
 
 @media (max-width: 768px) {
+  /* --- Navigation --- */
+  .nav-inner {
+    padding: 12px 1rem !important;
+    height: 48px !important;
+  }
+
+  .nav-logo {
+    font-size: 1.125rem !important;
+  }
+
+  .nav-links {
+    gap: 1.25rem !important;
+  }
+
+  .nav-link {
+    font-size: 0.8125rem;
+  }
+
+  /* --- Main content area --- */
+  .main-content {
+    padding: 1.25rem 1rem 2.5rem !important;
+  }
+
+  /* --- Hero section --- */
+  .hero-section {
+    padding: 60px 16px 48px !important;
+  }
+
+  .hero-cta {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+  }
+
+  /* --- Sections --- */
+  .section-features {
+    padding: 48px 16px !important;
+  }
+
+  .section-links {
+    padding: 0 16px 60px !important;
+  }
+
+  .section-links-inner {
+    padding-top: 48px !important;
+  }
+
+  /* --- Feature cards grid --- */
+  .features-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .feature-heading {
+    font-size: 1.25rem !important;
+  }
+
+  /* --- Quick links grid --- */
+  .links-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* --- Page titles --- */
+  .page-title {
+    font-size: 1.75rem !important;
+  }
+
+  .page-desc {
+    font-size: 1rem !important;
+  }
+
+  /* --- Page container --- */
+  .page-container {
+    max-width: 100%;
+  }
+
+  /* --- Footer --- */
+  .footer-inner {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center;
+    padding: 1.5rem 1rem !important;
+  }
+
+  .footer-links {
+    justify-content: center !important;
+    gap: 1.5rem !important;
+  }
+
+  /* --- 404 page --- */
+  .not-found-title {
+    font-size: 4rem !important;
+  }
+
+  /* --- Content typography --- */
+  .content {
+    line-height: 1.7;
+  }
+
   .content h1 {
     font-size: 1.5rem;
+    margin-top: 2rem;
   }
 
   .content h2 {
     font-size: 1.25rem;
+    margin-top: 2rem;
+    padding-top: 1.25rem;
   }
 
   .content h3 {
     font-size: 1.125rem;
+    margin-top: 1.5rem;
   }
 
-  .page-container {
-    max-width: 100%;
+  .content pre {
+    padding: 1rem;
+    font-size: 0.8125rem;
+    border-radius: 10px;
+  }
+
+  .content ul,
+  .content ol {
+    margin-left: 1.25rem;
+  }
+
+  /* --- Code blocks --- */
+  .code-block {
+    border-radius: 10px;
+  }
+
+  .code-header {
+    padding: 0.375rem 1rem;
+  }
+
+  /* --- Callouts --- */
+  .callout {
+    padding: 1rem 1.125rem !important;
+    border-radius: 12px !important;
+    margin: 1.25rem 0 !important;
   }
 }
