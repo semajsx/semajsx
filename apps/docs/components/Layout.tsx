@@ -61,26 +61,33 @@ interface LayoutProps {
 }
 
 /**
- * Main layout component for documentation pages with Apple-inspired frosted glass design
+ * Main layout component with Apple-inspired frosted glass navigation
  */
 export function Layout({ children }: LayoutProps): VNode {
   return (
-    <div class={cx(flex, flexCol, "min-h-screen")}>
+    <div class={cx(flex, flexCol, "min-h-screen")} style="background: #fbfbfd;">
       {/* Inject Apple theme CSS on every page */}
       <style>{themeCss}</style>
 
-      {/* Frosted Glass Navigation - Apple Style */}
-      <nav class={cx(theme.glassNav._, sticky, top0, z50)} style="padding: 16px 0;">
-        <div class={cx(flex, justifyBetween, itemsCenter, px8, "max-w-container mx-auto")}>
-          <a href="/" class={cx(textXl, fontBold, "no-underline")} style="color: #1d1d1f;">
-            <strong>SemaJSX</strong>
+      {/* Apple-style Frosted Glass Navigation */}
+      <nav class={cx(theme.glassNav._, sticky, top0, z50)}>
+        <div
+          class={cx(flex, justifyBetween, itemsCenter, "max-w-container mx-auto")}
+          style="padding: 14px 2rem; height: 52px;"
+        >
+          <a
+            href="/"
+            class="no-underline"
+            style="color: #1d1d1f; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em;"
+          >
+            SemaJSX
           </a>
-          <ul class={cx(flex, gap8, "list-none")}>
+          <ul class={cx(flex, gap8, "list-none")} style="margin: 0;">
             <li>
               <a
                 href="/docs"
                 class="nav-link"
-                style="color: #1d1d1f; text-decoration: none; font-weight: 500; transition: all 0.2s;"
+                style="color: #1d1d1f; text-decoration: none; font-size: 0.875rem; font-weight: 400; letter-spacing: -0.005em; transition: color 0.2s ease;"
               >
                 Docs
               </a>
@@ -89,7 +96,7 @@ export function Layout({ children }: LayoutProps): VNode {
               <a
                 href="/guides"
                 class="nav-link"
-                style="color: #1d1d1f; text-decoration: none; font-weight: 500; transition: all 0.2s;"
+                style="color: #1d1d1f; text-decoration: none; font-size: 0.875rem; font-weight: 400; letter-spacing: -0.005em; transition: color 0.2s ease;"
               >
                 Guides
               </a>
@@ -99,7 +106,7 @@ export function Layout({ children }: LayoutProps): VNode {
                 href="https://github.com/semajsx/semajsx"
                 target="_blank"
                 class="nav-link"
-                style="color: #1d1d1f; text-decoration: none; font-weight: 500; transition: all 0.2s;"
+                style="color: #1d1d1f; text-decoration: none; font-size: 0.875rem; font-weight: 400; letter-spacing: -0.005em; transition: color 0.2s ease;"
               >
                 GitHub
               </a>
@@ -108,20 +115,40 @@ export function Layout({ children }: LayoutProps): VNode {
         </div>
       </nav>
 
-      <main class={cx(flex1, wFull, p8, "max-w-container mx-auto")}>{children}</main>
+      <main class={cx(flex1, wFull, "max-w-container mx-auto")} style="padding: 2rem 2rem 4rem;">
+        {children}
+      </main>
 
-      {/* Minimal Footer - Apple Style */}
-      <footer style="background: #f5f5f7; padding: 40px 20px; text-align: center; border-top: 1px solid rgba(0, 0, 0, 0.1);">
-        <p style="color: #6e6e73; font-size: 14px; margin: 0;">
-          Built with{" "}
-          <a
-            href="https://github.com/semajsx/semajsx"
-            style="color: #0071e3; text-decoration: none; font-weight: 500;"
-          >
-            SemaJSX
-          </a>{" "}
-          | MIT License | © {new Date().getFullYear()}
-        </p>
+      {/* Apple-style Footer */}
+      <footer style="border-top: 0.5px solid rgba(0, 0, 0, 0.08); background: #f5f5f7;">
+        <div
+          class="max-w-container mx-auto"
+          style="padding: 2rem 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;"
+        >
+          <div style="display: flex; gap: 2rem; align-items: center;">
+            <a
+              href="/docs"
+              style="color: #6e6e73; text-decoration: none; font-size: 0.8125rem; transition: color 0.2s;"
+            >
+              Documentation
+            </a>
+            <a
+              href="/guides"
+              style="color: #6e6e73; text-decoration: none; font-size: 0.8125rem; transition: color 0.2s;"
+            >
+              Guides
+            </a>
+            <a
+              href="https://github.com/semajsx/semajsx"
+              style="color: #6e6e73; text-decoration: none; font-size: 0.8125rem; transition: color 0.2s;"
+            >
+              GitHub
+            </a>
+          </div>
+          <p style="color: #86868b; font-size: 0.8125rem; margin: 0;">
+            {`\u00A9 ${new Date().getFullYear()} SemaJSX`}. MIT License.
+          </p>
+        </div>
       </footer>
     </div>
   );

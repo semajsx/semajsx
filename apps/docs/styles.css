@@ -208,19 +208,15 @@
 /**
  * Custom styles for features not covered by @semajsx/tailwind
  *
- * This file supplements tailwind with:
- * - min-h-screen (not in tailwind yet)
- * - mx-auto (margin auto not in tailwind)
- * - max-width container
- * - border-bottom/top
- * - list-style-none
- * - text-decoration-none
- * - link hover states
- *
- * TODO: These should be added to @semajsx/tailwind over time
+ * Apple Design Language:
+ * - Consistent color palette (#0071e3, #1d1d1f, #6e6e73, #86868b, #fbfbfd)
+ * - SF Pro typography with -apple-system stack + Inter fallback
+ * - 0.5px hairline borders
+ * - Generous whitespace
+ * - Subtle shadows and transitions
  */
 
-/* Global reset - keep this */
+/* Global reset */
 * {
   margin: 0;
   padding: 0;
@@ -229,10 +225,14 @@
 
 body {
   font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
   line-height: 1.6;
-  color: #333;
-  background: #fff;
+  color: #1d1d1f;
+  background: #fbfbfd;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* Utilities not in tailwind */
@@ -257,228 +257,207 @@ body {
   text-decoration: none;
 }
 
-.navbar-border {
-  border-bottom: 1px solid #e9ecef;
-}
-
-.footer-border {
-  border-top: 1px solid #e9ecef;
-}
-
-/* Navigation links */
+/* Navigation links - Apple style */
 .nav-link {
-  color: #333;
+  color: #1d1d1f;
   text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s;
+  font-weight: 400;
+  font-size: 0.875rem;
+  transition: color 0.2s ease;
 }
 
 .nav-link:hover {
-  color: #3b82f6;
+  color: #0071e3;
 }
 
 /* ============================================
- * Below: Custom styles for features not in tailwind
+ * Page containers
  * ============================================ */
 
-/* Home Page - only styles that can't be expressed in tailwind */
-.home-container {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.hero-title {
-  font-size: 3.5rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.features-grid {
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-}
-
-.btn-hover-primary {
-  transition: background-color 0.2s;
-  border: 2px solid transparent;
-}
-
-.btn-hover-primary:hover {
-  background: #2563eb;
-}
-
-.btn-hover-secondary {
-  transition: all 0.2s;
-  border-color: #3b82f6;
-  background: transparent;
-}
-
-.btn-hover-secondary:hover {
-  background: #3b82f6;
-  color: white;
-}
-
-/* Index and Page containers */
-.index-container,
 .page-container {
-  max-width: 800px;
+  max-width: 720px;
 }
 
-/* List item hover effect */
-.list-item-hover {
-  border-color: #e9ecef;
-  transition: all 0.2s;
-}
-
-.list-item-hover:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
-}
-
-/* Inherit color for links */
-.inherit-color {
-  color: inherit;
-}
-
-/* Border bottom for descriptions */
-.border-bottom {
-  border-bottom: 1px solid #e9ecef;
-}
-
-/* Difficulty badges */
-.difficulty-beginner {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.difficulty-intermediate {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.difficulty-advanced {
-  background: #fecaca;
-  color: #991b1b;
-}
+/* ============================================
+ * Content typography - Apple reading experience
+ * ============================================ */
 
 .content {
-  line-height: 1.8;
+  line-height: 1.75;
+  color: #1d1d1f;
 }
 
 .content h1 {
-  font-size: 2rem;
-  margin-top: 2rem;
-  margin-bottom: 1rem;
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-top: 3rem;
+  margin-bottom: 0.75rem;
+  color: #1d1d1f;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
 }
 
 .content h2 {
-  font-size: 1.75rem;
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-  color: #3b82f6;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+  color: #1d1d1f;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  padding-top: 1.5rem;
+  border-top: 0.5px solid rgba(0, 0, 0, 0.06);
+}
+
+.content h2:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
 }
 
 .content h3 {
-  font-size: 1.5rem;
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+  color: #1d1d1f;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
 }
 
 .content p {
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 1rem;
+  color: #1d1d1f;
 }
 
 .content ul,
 .content ol {
-  margin-left: 2rem;
-  margin-bottom: 1rem;
+  margin-left: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .content li {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.375rem;
+  font-size: 1rem;
+  line-height: 1.65;
 }
 
 .content code {
-  background: #f8f9fa;
-  padding: 0.2rem 0.4rem;
-  border-radius: 0.25rem;
-  font-family: "Monaco", "Courier New", monospace;
-  font-size: 0.9em;
-  color: #e83e8c;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 0.15rem 0.4rem;
+  border-radius: 5px;
+  font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+  font-size: 0.875em;
+  color: #1d1d1f;
+  border: 0.5px solid rgba(0, 0, 0, 0.06);
 }
 
 .content pre {
-  background: #282c34;
-  color: #abb2bf;
-  padding: 1.5rem;
-  border-radius: 0.5rem;
+  background: #1d1d1f;
+  color: #e5e5ea;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
   overflow-x: auto;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  border: 0.5px solid rgba(0, 0, 0, 0.1);
 }
 
 .content pre code {
   background: none;
   color: inherit;
   padding: 0;
+  border: none;
+  font-size: inherit;
 }
 
 .content a {
-  color: #3b82f6;
+  color: #0071e3;
   text-decoration: none;
+  transition: color 0.2s ease;
 }
 
 .content a:hover {
   text-decoration: underline;
 }
 
-/* Code Blocks */
+.content strong {
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.content blockquote {
+  border-left: 3px solid rgba(0, 0, 0, 0.08);
+  padding: 0.75rem 1.25rem;
+  margin: 1.5rem 0;
+  color: #6e6e73;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 0 10px 10px 0;
+}
+
+.content hr {
+  border: none;
+  border-top: 0.5px solid rgba(0, 0, 0, 0.06);
+  margin: 2.5rem 0;
+}
+
+/* ============================================
+ * Code Blocks - Apple dark terminal style
+ * ============================================ */
+
 .code-block {
   margin: 1.5rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 0.5px solid rgba(0, 0, 0, 0.1);
 }
 
 .code-header {
-  background: #1e2127;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem 0.5rem 0 0;
+  background: #161617;
+  padding: 0.5rem 1.25rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .code-lang {
-  color: #abb2bf;
-  font-size: 0.75rem;
+  color: #86868b;
+  font-size: 0.6875rem;
   text-transform: uppercase;
   font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
 .code-block pre {
   margin: 0;
-  border-radius: 0 0 0.5rem 0.5rem;
+  border-radius: 0;
+  border: none;
 }
 
 .code-header + pre {
-  border-radius: 0 0 0.5rem 0.5rem;
+  border-radius: 0;
 }
 
-/* Responsive */
+/* ============================================
+ * Responsive Design
+ * ============================================ */
+
 @media (max-width: 768px) {
-  .hero h1 {
-    font-size: 2.5rem;
+  .content h1 {
+    font-size: 1.5rem;
   }
 
-  .tagline {
-    font-size: 1rem;
+  .content h2 {
+    font-size: 1.25rem;
   }
 
-  .actions {
-    flex-direction: column;
+  .content h3 {
+    font-size: 1.125rem;
   }
 
-  .features {
-    grid-template-columns: 1fr;
+  .page-container {
+    max-width: 100%;
   }
 }
