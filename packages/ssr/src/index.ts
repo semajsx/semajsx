@@ -45,6 +45,7 @@ export type {
   SSRResult,
   RouteContext,
   RouteHandler,
+  RouteMeta,
   RouterConfig,
   DocumentTemplate,
   LinkMetadata,

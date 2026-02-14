@@ -26,6 +26,7 @@ import type {
   RenderResult,
   RouteContext,
   RouteHandler,
+  RouteMeta,
 } from "./shared/types";
 
 const logger = createLogger({ prefix: "App" });
@@ -37,6 +38,7 @@ class AppImpl implements App {
   readonly config: AppConfig;
 
   private _routes: Map<string, RouteHandler> = new Map();
+  private _routeMeta: Map<string, RouteMeta> = new Map();
   private _viteServer: ViteDevServer | null = null;
   private _islandCache: LRUCache<string, IslandMetadata>;
   private _initialized = false;
@@ -60,8 +62,11 @@ class AppImpl implements App {
     }
   }
 
-  route(path: string, handler: RouteHandler): this {
+  route(path: string, handler: RouteHandler, meta?: RouteMeta): this {
     this._routes.set(path, handler);
+    if (meta) {
+      this._routeMeta.set(path, meta);
+    }
     return this;
   }
 
@@ -276,12 +281,14 @@ class AppImpl implements App {
           }
 
           // Generate HTML
+          const routeMeta = this._routeMeta.get(path);
+          const pageTitle = routeMeta?.title ?? this.config.title ?? "Page";
           const html = `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Page</title>
+  <title>${pageTitle}</title>
   ${cssRefs.map((href) => `<link rel="stylesheet" href="${href}">`).join("\n  ")}
 </head>
 <body>

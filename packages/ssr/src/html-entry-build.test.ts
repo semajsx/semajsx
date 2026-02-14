@@ -57,7 +57,7 @@ describe("HTML Entry Build Output", () => {
 
     // Check HTML structure
     expect(indexHtml).toContain("<!DOCTYPE html>");
-    expect(indexHtml).toContain("<html>");
+    expect(indexHtml).toContain('<html lang="en">');
     expect(indexHtml).toContain("</html>");
     expect(indexHtml).toContain("Hello World");
 

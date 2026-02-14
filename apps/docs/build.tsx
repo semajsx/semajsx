@@ -54,7 +54,6 @@ import { NotFound } from "./components/NotFound";
 
 // Import Apple theme styles
 import * as theme from "./styles/theme.style";
-import type { StyleToken } from "semajsx/style";
 
 // Get the directory where this script is located
 const rootDir = import.meta.dir;
@@ -145,26 +144,10 @@ const allPageTokens = [
 ];
 export const homePageCss = extractCss(...allPageTokens);
 
-// Helper function to extract CSS from StyleTokens
-function extractThemeCss(theme: Record<string, unknown>): string {
-  const cssStrings: string[] = [];
-  for (const value of Object.values(theme)) {
-    if (value && typeof value === "object" && "__cssTemplate" in value) {
-      const token = value as StyleToken;
-      cssStrings.push(token.__cssTemplate);
-    }
-  }
-  return cssStrings.join("\n");
-}
-
-// Extract Apple theme styles for SSG
-export const appleThemeCss = extractThemeCss(theme.appleTheme);
-
 // Components
 const HomePage = (): VNode => (
   <Layout>
     <Style href="./styles.css" />
-    <style>{appleThemeCss}</style>
 
     {/* Hero Section - Apple Style */}
     <div class={theme.heroBg._} style="padding: 120px 20px; position: relative;">

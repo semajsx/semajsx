@@ -1,14 +1,14 @@
 /** @jsxImportSource semajsx/dom */
 
 import type { VNode } from "semajsx";
-import { DocTemplate } from "./Document";
+import { resource } from "semajsx/ssr";
+import { Layout } from "./Layout";
 import {
   cx,
   flex,
   flexCol,
   itemsCenter,
   justifyCenter,
-  minHScreen,
   text6xl,
   text2xl,
   textColor,
@@ -23,26 +23,37 @@ import {
   textCenter,
 } from "semajsx/tailwind";
 
+const { Style } = resource(import.meta.url);
+
 export interface NotFoundProps {
   title?: string;
 }
 
 export function NotFound({ title = "404 - Page Not Found | SemaJSX" }: NotFoundProps): VNode {
   return (
-    <DocTemplate title={title}>
-      <div className={cx(flex, flexCol, itemsCenter, justifyCenter, minHScreen, textCenter)}>
-        <h1 className={cx(text6xl, fontBold, textColor.gray800, mb4)}>404</h1>
-        <p className={cx(text2xl, textColor.gray600, mb8)}>Page Not Found</p>
-        <p className={cx(textColor.gray500, mb8)}>
+    <Layout>
+      <Style href="./styles.css" />
+      <div
+        class={cx(flex, flexCol, itemsCenter, justifyCenter, textCenter)}
+        style="min-height: 60vh;"
+      >
+        <h1 class={cx(text6xl, fontBold, mb4)} style="color: #1d1d1f;">
+          404
+        </h1>
+        <p class={cx(text2xl, mb8)} style="color: #6e6e73;">
+          Page Not Found
+        </p>
+        <p class={cx(mb8)} style="color: #86868b;">
           The page you're looking for doesn't exist or has been moved.
         </p>
         <a
           href="/"
-          className={cx(px6, py3, bg.blue500, textColor.white, roundedMd, noUnderline, fontBold)}
+          class={cx(px6, py3, roundedMd, noUnderline, fontBold)}
+          style="background: #0071e3; color: white; border-radius: 980px;"
         >
           Go Back Home
         </a>
       </div>
-    </DocTemplate>
+    </Layout>
   );
 }

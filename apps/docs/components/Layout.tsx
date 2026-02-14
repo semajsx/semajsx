@@ -24,19 +24,7 @@ import {
   extractCss,
 } from "semajsx/tailwind";
 import * as theme from "../styles/theme.style";
-import type { StyleToken } from "semajsx/style";
-
-// Helper function to extract CSS from StyleTokens
-function extractThemeCss(themeObj: Record<string, unknown>): string {
-  const cssStrings: string[] = [];
-  for (const value of Object.values(themeObj)) {
-    if (value && typeof value === "object" && "__cssTemplate" in value) {
-      const token = value as StyleToken;
-      cssStrings.push(token.__cssTemplate);
-    }
-  }
-  return cssStrings.join("\n");
-}
+import { extractThemeCss } from "../styles/extract";
 
 // Collect all tokens used in this file for CSS extraction
 const usedTokens = [
@@ -64,7 +52,9 @@ const usedTokens = [
 
 // Export CSS for build-time extraction
 export const layoutCss = extractCss(...usedTokens);
-export const layoutThemeCss = extractThemeCss({ glassNav: theme.glassNav });
+
+// Extract all Apple theme CSS once for embedding in Layout
+const themeCss = extractThemeCss(theme.appleTheme);
 
 interface LayoutProps {
   children: VNode | VNode[];
@@ -76,6 +66,9 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps): VNode {
   return (
     <div class={cx(flex, flexCol, "min-h-screen")}>
+      {/* Inject Apple theme CSS on every page */}
+      <style>{themeCss}</style>
+
       {/* Frosted Glass Navigation - Apple Style */}
       <nav class={cx(theme.glassNav._, sticky, top0, z50)} style="padding: 16px 0;">
         <div class={cx(flex, justifyBetween, itemsCenter, px8, "max-w-container mx-auto")}>
