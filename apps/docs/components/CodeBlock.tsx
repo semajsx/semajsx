@@ -9,7 +9,7 @@ interface CodeBlockProps {
 }
 
 /**
- * Code block component for syntax highlighting in MDX
+ * Apple-style code block with refined dark theme and subtle chrome
  */
 export function CodeBlock({ children, className, language }: CodeBlockProps): VNode {
   // Extract language from className (format: language-xxx)
