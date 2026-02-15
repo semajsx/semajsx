@@ -374,7 +374,7 @@ function parseColorProp(prop: string): string | null {
  */
 function createColorUtility(
   utilityFn: (value: string, valueName?: string) => StyleToken,
-  classPrefix: string,
+  _classPrefix: string,
 ): TaggedUtilityFn & ColorValues {
   // Cache for generated tokens
   const tokenCache = new Map<string, StyleToken>();

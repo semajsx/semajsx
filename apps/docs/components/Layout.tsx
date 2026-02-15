@@ -44,10 +44,10 @@ const usedTokens = [
   textCenter,
   flex1,
   wFull,
-  bg.gray100,
-  bg.gray50,
-  textColor.blue500,
-  textColor.gray500,
+  bg.gray100!,
+  bg.gray50!,
+  textColor.blue500!,
+  textColor.gray500!,
 ];
 
 // Export CSS for build-time extraction
