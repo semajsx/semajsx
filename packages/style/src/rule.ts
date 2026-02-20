@@ -52,7 +52,7 @@ function extractClassName(css: string): string | undefined {
  */
 export function rule(
   strings: TemplateStringsArray,
-  ...values: (ClassRef | ReadableSignal<unknown> | string | number)[]
+  ...values: (ClassRef | ReadableSignal<unknown> | string | number | { toString(): string })[]
 ): StyleToken {
   const bindingDefs: SignalBindingDef[] = [];
 
