@@ -263,8 +263,10 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
         insertAfter = strategy.getNextSibling(node);
       }
 
-      // Cleanup old subscriptions
-      cleanupSubscriptions(currentRendered);
+      // Unmount old rendered tree: cleans up subscriptions AND removes
+      // portal children from their containers (cleanupSubscriptions alone
+      // would leave portal content orphaned in the portal container)
+      unmount(currentRendered);
 
       currentRendered = newRendered;
     });
