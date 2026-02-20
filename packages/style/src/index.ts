@@ -46,6 +46,43 @@ export { inject, injectStyles, preload } from "./inject";
 export { StyleRegistry, createRegistry, createCx } from "./registry";
 export { hashString, uniqueId } from "./hash";
 
+// Theme system
+export { defineTokens, createTheme, isTokenRef } from "./theme";
+
+// Keyframes & Animations
+export { keyframes, keyframesToken, isKeyframeRef } from "./keyframes";
+export {
+  // Keyframe definitions
+  fadeInKf,
+  fadeOutKf,
+  slideUpKf,
+  slideDownKf,
+  slideLeftKf,
+  slideRightKf,
+  scaleInKf,
+  scaleOutKf,
+  spinKf,
+  pingKf,
+  pulseKf,
+  bounceKf,
+  // Animation class tokens
+  fadeIn,
+  fadeOut,
+  slideUp,
+  slideDown,
+  slideLeft,
+  slideRight,
+  scaleIn,
+  scaleOut,
+  spin,
+  ping,
+  pulse,
+  bounce,
+} from "./animate";
+
+// Responsive utilities
+export { defineBreakpoints, breakpoints, media, container } from "./responsive";
+
 // Types
 export type {
   ClassRef,
@@ -55,3 +92,6 @@ export type {
   InjectOptions,
   RegistryOptions,
 } from "./types";
+export type { TokenRef, TokenDefinition, TokenRefs, TokenOverrides } from "./theme";
+export type { KeyframeRef } from "./keyframes";
+export type { BreakpointRef, BreakpointRefs } from "./responsive";
