@@ -4,9 +4,53 @@
 
 **Current Focus**: Establish SemaJSX as the preferred **no-build component library runtime** (Stage 1)
 
-**Last Updated**: 2026-01-11
+**Last Updated**: 2026-02-20
 
 **Execution Model**: This roadmap is designed for **AI Agent execution** - phases are organized by dependency order, not calendar timelines.
+
+---
+
+## Current Status
+
+### Core Runtime - COMPLETE
+
+| Package             | Status      | Tests          | Description                                                        |
+| ------------------- | ----------- | -------------- | ------------------------------------------------------------------ |
+| `@semajsx/signal`   | ✅ Complete | 33 passing     | Signal, computed, batch reactivity primitives                      |
+| `@semajsx/core`     | ✅ Complete | 67 passing     | VNode, Fragment, Portal, Context, helpers (when, resource, stream) |
+| `@semajsx/dom`      | ✅ Complete | 100+ (browser) | DOM rendering, JSX runtime, keyed reconciliation, portal, ref      |
+| `@semajsx/terminal` | ✅ Complete | 73 passing     | Terminal rendering, Box/Text components, Yoga layout               |
+| `@semajsx/utils`    | ✅ Complete | 20 passing     | Shared utilities and type guards                                   |
+| `@semajsx/logger`   | ✅ Complete | 28 passing     | Logging utilities                                                  |
+
+### Styling & Integration - COMPLETE
+
+| Package             | Status      | Tests           | Description                                                       |
+| ------------------- | ----------- | --------------- | ----------------------------------------------------------------- |
+| `@semajsx/style`    | ✅ Complete | 6 files passing | classes(), rule(), rules(), CSS injection, signal-reactive styles |
+| `@semajsx/tailwind` | ✅ Complete | 306 passing     | Tailwind-style utilities, tree-shakeable, tagged templates        |
+
+### Server & Build - IMPLEMENTED (Needs Polish)
+
+| Package        | Status         | Tests      | Description                                                    |
+| -------------- | -------------- | ---------- | -------------------------------------------------------------- |
+| `@semajsx/ssr` | ⚠️ Implemented | 76 passing | SSR rendering, island architecture, hydration, Vite builder    |
+| `@semajsx/ssg` | ⚠️ Implemented | 7 passing  | SSG engine, MDX support, collections, multiple content sources |
+
+### Not Started
+
+| Feature                        | Priority | Description                                                       |
+| ------------------------------ | -------- | ----------------------------------------------------------------- |
+| Framework adapters (React/Vue) | Phase 2  | toReact(), fromReact(), toVue(), fromVue() bidirectional wrapping |
+| Component library              | Phase 3  | 25+ production components (Button, Card, Modal, etc.)             |
+| Advanced styling               | Phase 1  | Theme system, design tokens, animation utilities, responsive      |
+| Documentation site             | Phase 3  | Interactive playground and API reference                          |
+
+### Test Summary
+
+- **Total**: 579 tests passing across 32 test files (non-browser)
+- **DOM browser tests**: Require Playwright (chromium) for real browser API testing
+- **All packages** have collocated tests (`*.test.ts` / `*.test.tsx` next to source)
 
 ---
 
@@ -44,9 +88,9 @@ SemaJSX is a complete framework, but development is staged to ensure each capabi
 ### Stage 1: No-Build Component Library Runtime
 
 ```
-Phase 1: Style Foundation      - Core style system + Tailwind integration
-Phase 2: Framework Adapters    - React + Vue adapters with style integration
-Phase 3: Component Library     - 25+ components + Basic SSR + Documentation
+Phase 1: Style Foundation      - Core style system + Tailwind integration    [~80% done]
+Phase 2: Framework Adapters    - React + Vue adapters with style integration [not started]
+Phase 3: Component Library     - 25+ components + Basic SSR + Documentation  [not started]
 ```
 
 ### Stage 2: Complete Independent Framework
@@ -70,66 +114,59 @@ Phase 8: Enterprise & Ecosystem - Enterprise support + Community growth
 
 **Goal**: Complete style system with Tailwind integration
 
+**Status**: Core style system and Tailwind integration complete. Advanced styling remaining.
+
 ### Dependency Chain
 
 ```
-Core Style System (classes, rule, rules)
+Core Style System (classes, rule, rules)         ✅ DONE
     ↓
-    ├─→ Signal-Reactive Styles
+    ├─→ Signal-Reactive Styles                   ✅ DONE
     │       ↓
     └─→ Tailwind Integration ──→ Advanced Styling
+              ✅ DONE              ⬜ TODO
                                       ↓
-                                  Documentation
+                                  Documentation   ⬜ TODO
 ```
 
 ### Key Deliverables
 
-**Core Style System**
+**Core Style System** - ✅ COMPLETE
 
-- **Complexity**: High
-- **Priority**: P0 (Must complete first)
-- **Dependencies**: None (foundation)
+- **Package**: `@semajsx/style`
+- Core API: `classes()`, `rule()`, `rules()` - implemented
+- Style injection (DOM/Shadow DOM) - implemented
+- Signal-reactive styles with CSS variables - implemented
+- Memory management and cleanup - implemented
+- Tests: 6 test files passing
 
-Deliverables:
+**Tailwind Integration** - ✅ COMPLETE
 
-- Core API implementation (`classes()`, `rule()`, `rules()`)
-- Style injection system (DOM/Shadow DOM support)
-- Signal-reactive styles with CSS variables
-- Memory management and cleanup
+- **Package**: `@semajsx/tailwind`
+- Code generator for Tailwind utilities - implemented
+- Arbitrary values support (tagged templates) - implemented
+- Tree-shakeable flat tokens - implemented
+- Tests: 306 tests passing across 8 files
 
-**Tailwind Integration**
-
-- **Complexity**: Medium
-- **Priority**: P0
-- **Dependencies**: Core Style System complete
-
-Deliverables:
-
-- Code generator for Tailwind utilities
-- `@semajsx/tailwind` package
-- Arbitrary values support (`` p`4px` ``)
-- Tree-shaking verification
-
-**Advanced Styling**
+**Advanced Styling** - ⬜ TODO
 
 - **Complexity**: Medium
 - **Priority**: P1
-- **Dependencies**: Core Style System + Tailwind
+- **Dependencies**: Core Style System + Tailwind (both done)
 
-Deliverables:
+Remaining:
 
 - Theme system (CSS custom properties)
 - Design tokens support
 - Animation utilities (fade, slide, scale, keyframes)
 - Responsive design utilities (breakpoints, media queries)
 
-**Documentation**
+**Documentation** - ⬜ TODO
 
 - **Complexity**: Low
 - **Priority**: P1
-- **Dependencies**: All above deliverables
 
-Deliverables:
+Remaining:
 
 - Style system API reference
 - Tailwind integration guide
@@ -140,10 +177,10 @@ Deliverables:
 
 - ✅ All style APIs from RFC 006 implemented
 - ✅ Tailwind integration complete and tested
-- ✅ Advanced styling features available
-- ✅ Runtime bundle ≤ 15KB (style system only)
+- ⬜ Advanced styling features available
+- ⬜ Runtime bundle ≤ 15KB (style system only)
 - ✅ Test coverage ≥ 80%
-- ✅ Documentation complete
+- ⬜ Documentation complete
 
 **Implementation Details**: See `/docs/implementation/001-style-system/` for detailed task breakdown and validation commands
 
@@ -775,6 +812,6 @@ This roadmap provides **high-level strategic direction** for the SemaJSX project
 - Progress tracking: `progress.md` files (session-based)
 - Technical decisions: `decisions.md` files (append-only)
 
-**Current Focus**: Stage 1, Phase 1 (Style Foundation) - See `/docs/implementation/001-style-system/`
+**Current Focus**: Stage 1 - Phase 1 remaining items (Advanced Styling, Documentation), then Phase 2 (Framework Adapters)
 
 **Note**: Stage 2-3 planning is for long-term vision. Current development focuses exclusively on Stage 1.

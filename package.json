@@ -42,6 +42,7 @@
     "@types/node": "^25.0.10",
     "@typescript/native-preview": "^7.0.0-dev.20260128.1",
     "@vitest/coverage-v8": "^4.0.18",
+    "happy-dom": "^20.6.3",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
     "oxfmt": "^0.27.0",

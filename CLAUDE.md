@@ -6,6 +6,30 @@ This file provides guidance to Claude Code when working with this repository.
 
 SemaJSX is a lightweight, signal-based reactive JSX runtime for building modern web applications. It uses fine-grained reactivity with signals for efficient updates without virtual DOM diffing.
 
+## Current Status (2026-02-20)
+
+### What's Done
+
+| Area          | Packages            | Status                                                                  |
+| ------------- | ------------------- | ----------------------------------------------------------------------- |
+| Reactivity    | `@semajsx/signal`   | Signal, computed, batch - complete                                      |
+| Core Runtime  | `@semajsx/core`     | VNode, Fragment, Portal, Context, when/resource/stream - complete       |
+| DOM Rendering | `@semajsx/dom`      | Render, reconciliation, JSX runtime, portal, ref, hydration - complete  |
+| Terminal      | `@semajsx/terminal` | Box, Text, Yoga layout, ANSI colors - complete                          |
+| Styling       | `@semajsx/style`    | classes(), rule(), CSS injection, signal-reactive - complete            |
+| Tailwind      | `@semajsx/tailwind` | Utility tokens, tree-shakeable, tagged templates - complete (306 tests) |
+| SSR           | `@semajsx/ssr`      | Island architecture, hydration, Vite builder - implemented              |
+| SSG           | `@semajsx/ssg`      | MDX, collections, content sources - implemented                         |
+
+### What's Next (Priority Order)
+
+1. **Advanced Styling** - Theme system, design tokens, animations, responsive utilities
+2. **Framework Adapters** - React/Vue bidirectional wrapping (toReact, fromReact, toVue, fromVue)
+3. **Component Library** - 25+ accessible components (Button, Card, Modal, etc.)
+4. **Documentation Site** - Interactive playground, API reference
+
+See [docs/ROADMAP.md](./docs/ROADMAP.md) for full roadmap with phases and metrics.
+
 ## Documentation Organization
 
 **IMPORTANT**: This project has two distinct types of documentation:
@@ -118,12 +142,15 @@ semajsx/
 
 2. **Core Runtime** (`packages/core/`)
    - VNode creation and normalization
+   - Fragment and Portal support
+   - Context API (provide/inject)
    - Runtime helpers (when, resource, stream)
 
 3. **DOM Rendering** (`packages/dom/`)
    - DOM manipulation and rendering
    - JSX runtime for DOM
-   - Hydration support
+   - Portal rendering (createPortal, PortalComponent)
+   - Keyed list reconciliation
 
 4. **Terminal Rendering** (`packages/terminal/`)
    - Terminal-specific rendering
@@ -502,6 +529,7 @@ npm publish
 
 ## Useful Resources
 
+- [docs/ROADMAP.md](./docs/ROADMAP.md) - Project roadmap with current status and priorities
 - [TESTING.md](./TESTING.md) - Detailed testing guide with examples
 - [MONOREPO_ARCHITECTURE.md](./MONOREPO_ARCHITECTURE.md) - Detailed architecture and migration plan
 - [Bun Workspaces](https://bun.sh/docs/install/workspaces)

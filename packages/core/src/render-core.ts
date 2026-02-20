@@ -131,6 +131,12 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
       return nodes;
     }
 
+    // Portal: children are rendered into a different container,
+    // so they should not be collected in the parent tree
+    if (rendered.vnode.type === Portal) {
+      return nodes;
+    }
+
     // Signal marker: include marker node + content children
     if (rendered.vnode.type === "#signal") {
       if (rendered.node) {
@@ -257,8 +263,10 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
         insertAfter = strategy.getNextSibling(node);
       }
 
-      // Cleanup old subscriptions
-      cleanupSubscriptions(currentRendered);
+      // Unmount old rendered tree: cleans up subscriptions AND removes
+      // portal children from their containers (cleanupSubscriptions alone
+      // would leave portal content orphaned in the portal container)
+      unmount(currentRendered);
 
       currentRendered = newRendered;
     });
