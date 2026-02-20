@@ -17,6 +17,7 @@
     "@semajsx/ssg": "workspace:*",
     "@semajsx/ssr": "workspace:*",
     "@semajsx/tailwind": "workspace:*",
+    "@shikijs/rehype": "^3.22.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
