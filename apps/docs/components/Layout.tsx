@@ -70,7 +70,7 @@ export function Layout({ children }: LayoutProps): VNode {
       <style>{themeCss}</style>
 
       {/* Apple-style Frosted Glass Navigation */}
-      <nav class={cx(theme.glassNav._, sticky, top0, z50)}>
+      <nav class={cx(theme.glassNav, sticky, top0, z50)}>
         <div
           class={cx(flex, justifyBetween, itemsCenter, "max-w-container mx-auto nav-inner")}
           style="padding: 14px 2rem; height: 52px;"

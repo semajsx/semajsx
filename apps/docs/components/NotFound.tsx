@@ -32,7 +32,7 @@ export function NotFound(_props: NotFoundProps): VNode {
         <p style="color: #86868b; font-size: 1rem; margin-bottom: 2.5rem; max-width: 24rem; line-height: 1.5;">
           The page you're looking for doesn't exist or has been moved.
         </p>
-        <a href="/" class={theme.primaryButton._}>
+        <a href="/" class={cx(theme.primaryButton)}>
           Go Back Home
         </a>
       </div>

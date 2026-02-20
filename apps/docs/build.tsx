@@ -155,22 +155,22 @@ const HomePage = (): VNode => (
 
     {/* Hero Section - Apple-style minimal with generous whitespace */}
     <div
-      class={cx(theme.heroBg._, "hero-section")}
+      class={cx(theme.heroBg, "hero-section")}
       style="padding: 100px 24px 80px; position: relative;"
     >
       <div style="max-width: 680px; margin: 0 auto; position: relative; z-index: 1; text-align: center;">
-        <h1 class={cx(theme.heroTitle._, theme.animSlideUp._)}>SemaJSX</h1>
-        <p class={cx(theme.heroSubtitle._, theme.animSlideUp._, theme.stagger1._)}>
+        <h1 class={cx(theme.heroTitle, theme.animSlideUp)}>SemaJSX</h1>
+        <p class={cx(theme.heroSubtitle, theme.animSlideUp, theme.stagger1)}>
           A lightweight, signal-based reactive JSX runtime. Fine-grained updates. No virtual DOM.
         </p>
         <div
-          class={cx(flex, gap4, justifyCenter, theme.animSlideUp._, theme.stagger2._, "hero-cta")}
+          class={cx(flex, gap4, justifyCenter, theme.animSlideUp, theme.stagger2, "hero-cta")}
           style="margin-top: 2rem;"
         >
-          <a href="/docs/getting-started" class={theme.primaryButton._}>
+          <a href="/docs/getting-started" class={cx(theme.primaryButton)}>
             Get Started
           </a>
-          <a href="/guides" class={theme.secondaryButton._}>
+          <a href="/guides" class={cx(theme.secondaryButton)}>
             View Guides
           </a>
         </div>
@@ -183,8 +183,8 @@ const HomePage = (): VNode => (
       style="max-width: 1080px; margin: 0 auto; padding: 80px 24px;"
     >
       <div style="text-align: center; margin-bottom: 3.5rem;">
-        <h2 class={cx(theme.sectionTitle._, theme.animSlideUp._)}>Why SemaJSX?</h2>
-        <p class={cx(theme.sectionSubtitle._, theme.animSlideUp._, theme.stagger1._)}>
+        <h2 class={cx(theme.sectionTitle, theme.animSlideUp)}>Why SemaJSX?</h2>
+        <p class={cx(theme.sectionSubtitle, theme.animSlideUp, theme.stagger1)}>
           Simple primitives. Powerful results.
         </p>
       </div>
@@ -192,7 +192,7 @@ const HomePage = (): VNode => (
         class="features-grid"
         style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;"
       >
-        <div class={cx(theme.featureCard._, theme.animScaleIn._, theme.stagger2._)}>
+        <div class={cx(theme.featureCard, theme.animScaleIn, theme.stagger2)}>
           <div
             class="feature-icon"
             style="font-size: 2rem; margin-bottom: 1.25rem; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #f5f5f7; border-radius: 12px;"
@@ -211,7 +211,7 @@ const HomePage = (): VNode => (
           </p>
         </div>
 
-        <div class={cx(theme.featureCard._, theme.animScaleIn._, theme.stagger3._)}>
+        <div class={cx(theme.featureCard, theme.animScaleIn, theme.stagger3)}>
           <div
             class="feature-icon"
             style="font-size: 2rem; margin-bottom: 1.25rem; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #f5f5f7; border-radius: 12px;"
@@ -230,7 +230,7 @@ const HomePage = (): VNode => (
           </p>
         </div>
 
-        <div class={cx(theme.featureCard._, theme.animScaleIn._, theme.stagger4._)}>
+        <div class={cx(theme.featureCard, theme.animScaleIn, theme.stagger4)}>
           <div
             class="feature-icon"
             style="font-size: 2rem; margin-bottom: 1.25rem; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: #f5f5f7; border-radius: 12px;"
@@ -260,8 +260,8 @@ const HomePage = (): VNode => (
         class="section-links-inner"
         style="border-top: 0.5px solid rgba(0, 0, 0, 0.06); padding-top: 80px; text-align: center;"
       >
-        <h2 class={cx(theme.sectionTitle._, theme.animSlideUp._)}>Get started in seconds.</h2>
-        <p class={cx(theme.sectionSubtitle._, theme.animSlideUp._, theme.stagger1._)}>
+        <h2 class={cx(theme.sectionTitle, theme.animSlideUp)}>Get started in seconds.</h2>
+        <p class={cx(theme.sectionSubtitle, theme.animSlideUp, theme.stagger1)}>
           Everything you need to build reactive applications.
         </p>
         <div
@@ -270,7 +270,7 @@ const HomePage = (): VNode => (
         >
           <a
             href="/docs"
-            class={cx(theme.docCard._, theme.animScaleIn._, theme.stagger2._)}
+            class={cx(theme.docCard, theme.animScaleIn, theme.stagger2)}
             style="text-align: left;"
           >
             <h3 style="font-size: 1.125rem; font-weight: 600; color: #1d1d1f; margin-bottom: 0.375rem; letter-spacing: -0.01em;">
@@ -282,7 +282,7 @@ const HomePage = (): VNode => (
           </a>
           <a
             href="/guides"
-            class={cx(theme.docCard._, theme.animScaleIn._, theme.stagger3._)}
+            class={cx(theme.docCard, theme.animScaleIn, theme.stagger3)}
             style="text-align: left;"
           >
             <h3 style="font-size: 1.125rem; font-weight: 600; color: #1d1d1f; margin-bottom: 0.375rem; letter-spacing: -0.01em;">
@@ -330,20 +330,20 @@ const DocsIndex = ({
       <div style="max-width: 720px;">
         <div style="margin-bottom: 3rem;">
           <h1
-            class={cx("page-title", theme.animSlideUp._)}
+            class={cx("page-title", theme.animSlideUp)}
             style="font-size: 2.25rem; font-weight: 700; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 0.5rem;"
           >
             Documentation
           </h1>
           <p
-            class={cx("page-desc", theme.animSlideUp._, theme.stagger1._)}
+            class={cx("page-desc", theme.animSlideUp, theme.stagger1)}
             style="font-size: 1.125rem; color: #6e6e73; line-height: 1.5;"
           >
             Learn the fundamentals and explore the API.
           </p>
         </div>
         {Object.entries(byCategory).map(([category, items]) => (
-          <section key={category} class={theme.fadeIn._} style="margin-bottom: 2.5rem;">
+          <section key={category} class={cx(theme.fadeIn)} style="margin-bottom: 2.5rem;">
             <h2 style="font-size: 0.8125rem; font-weight: 600; color: #86868b; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem;">
               {category}
             </h2>
@@ -352,7 +352,7 @@ const DocsIndex = ({
                 <a
                   key={doc.slug}
                   href={`/docs/${doc.slug}`}
-                  class={cx(theme.docCard._, theme.animScaleIn._)}
+                  class={cx(theme.docCard, theme.animScaleIn)}
                   style={`animation-delay: ${0.1 + i * 0.08}s;`}
                 >
                   <h3 style="font-size: 1.0625rem; font-weight: 600; color: #1d1d1f; margin-bottom: 0.25rem; letter-spacing: -0.01em;">
@@ -385,21 +385,21 @@ const DocPage = ({
     <article class="page-container">
       <div style="margin-bottom: 2.5rem;">
         <h1
-          class={cx("page-title", theme.animSlideUp._)}
+          class={cx("page-title", theme.animSlideUp)}
           style="font-size: 2.25rem; font-weight: 700; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 0.5rem;"
         >
           {doc.data.title}
         </h1>
         {doc.data.description && (
           <p
-            class={cx("page-desc", theme.animSlideUp._, theme.stagger1._)}
+            class={cx("page-desc", theme.animSlideUp, theme.stagger1)}
             style="font-size: 1.125rem; color: #6e6e73; line-height: 1.5; padding-bottom: 1.5rem; border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);"
           >
             {doc.data.description}
           </p>
         )}
       </div>
-      <div class={cx("content", theme.fadeIn._)}>{content}</div>
+      <div class={cx("content", theme.fadeIn)}>{content}</div>
     </article>
   </Layout>
 );
@@ -448,13 +448,13 @@ const GuidesIndex = ({
       <div style="max-width: 720px;">
         <div style="margin-bottom: 3rem;">
           <h1
-            class={cx("page-title", theme.animSlideUp._)}
+            class={cx("page-title", theme.animSlideUp)}
             style="font-size: 2.25rem; font-weight: 700; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 0.5rem;"
           >
             Guides
           </h1>
           <p
-            class={cx("page-desc", theme.animSlideUp._, theme.stagger1._)}
+            class={cx("page-desc", theme.animSlideUp, theme.stagger1)}
             style="font-size: 1.125rem; color: #6e6e73; line-height: 1.5;"
           >
             Practical tutorials to help you build with SemaJSX.
@@ -463,7 +463,7 @@ const GuidesIndex = ({
         {Object.entries(byDifficulty).map(([difficulty, items]) => {
           const meta = getDifficultyMeta(difficulty);
           return (
-            <section key={difficulty} class={theme.fadeIn._} style="margin-bottom: 2.5rem;">
+            <section key={difficulty} class={cx(theme.fadeIn)} style="margin-bottom: 2.5rem;">
               <h2 style="font-size: 0.8125rem; font-weight: 600; color: #86868b; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1rem;">
                 {meta.label}
               </h2>
@@ -474,7 +474,7 @@ const GuidesIndex = ({
                     <a
                       key={guide.slug}
                       href={`/guides/${guide.slug}`}
-                      class={cx(theme.docCard._, theme.animScaleIn._)}
+                      class={cx(theme.docCard, theme.animScaleIn)}
                       style={`animation-delay: ${0.1 + i * 0.08}s;`}
                     >
                       <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.375rem;">
@@ -519,27 +519,27 @@ const GuidePage = ({
       <article class="page-container">
         <div style="margin-bottom: 2.5rem;">
           <span
-            class={theme.fadeIn._}
+            class={cx(theme.fadeIn)}
             style={`display: inline-block; font-size: 0.6875rem; font-weight: 600; padding: 0.1875rem 0.625rem; border-radius: 980px; background: ${meta.bg}; color: ${meta.color}; letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 1rem;`}
           >
             {guide.data.difficulty}
           </span>
           <h1
-            class={cx("page-title", theme.animSlideUp._)}
+            class={cx("page-title", theme.animSlideUp)}
             style="font-size: 2.25rem; font-weight: 700; color: #1d1d1f; letter-spacing: -0.02em; margin-bottom: 0.5rem;"
           >
             {guide.data.title}
           </h1>
           {guide.data.description && (
             <p
-              class={cx("page-desc", theme.animSlideUp._, theme.stagger1._)}
+              class={cx("page-desc", theme.animSlideUp, theme.stagger1)}
               style="font-size: 1.125rem; color: #6e6e73; line-height: 1.5; padding-bottom: 1.5rem; border-bottom: 0.5px solid rgba(0, 0, 0, 0.06);"
             >
               {guide.data.description}
             </p>
           )}
         </div>
-        <div class={cx("content", theme.fadeIn._)}>{content}</div>
+        <div class={cx("content", theme.fadeIn)}>{content}</div>
       </article>
     </Layout>
   );

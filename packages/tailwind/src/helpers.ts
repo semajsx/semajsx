@@ -19,13 +19,22 @@
 import type { StyleToken } from "./types";
 
 /**
+ * Loose style token type accepted by cx() — compatible with both
+ * @semajsx/tailwind StyleToken (_: string) and @semajsx/style StyleToken (_?: string)
+ */
+interface StyleTokenLike {
+  __kind: "style";
+  _?: string;
+}
+
+/**
  * Type for values that can be passed to cx()
- * - StyleToken: a token from any utility
+ * - StyleToken / StyleTokenLike: a token from @semajsx/tailwind or @semajsx/style
  * - string: a raw class name
  * - false | null | undefined: ignored (for conditional classes)
  * - array of the above
  */
-export type CxValue = StyleToken | string | false | null | undefined | CxValue[];
+export type CxValue = StyleToken | StyleTokenLike | string | false | null | undefined | CxValue[];
 
 /**
  * Combine multiple style tokens into a single class string.
