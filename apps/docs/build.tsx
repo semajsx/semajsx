@@ -2,6 +2,7 @@
 
 import remarkGfm from "remark-gfm";
 import rehypeShiki from "@shikijs/rehype";
+import type { ShikiTransformer } from "@shikijs/types";
 import { createSSG, defineCollection, fileSource, z } from "semajsx/ssg";
 import { resource } from "semajsx/ssr";
 import type { VNode } from "semajsx";
@@ -568,10 +569,10 @@ const ssg = createSSG({
           transformers: [
             {
               name: "add-language-data",
-              pre(node: { properties: Record<string, unknown> }) {
+              pre(node) {
                 node.properties["data-language"] = this.options.lang;
               },
-            },
+            } satisfies ShikiTransformer,
           ],
         },
       ],
