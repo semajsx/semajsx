@@ -9,7 +9,7 @@
  * - Subtle micro-interactions and smooth cubic-bezier transitions
  * - Refined shadows and border treatments
  */
-import { rule, rules, classes } from "semajsx/style";
+import { rule, rules, classes, keyframes, keyframesToken } from "semajsx/style";
 
 const c = classes([
   // Layout
@@ -35,7 +35,30 @@ const c = classes([
   "smoothTransition",
   "hoverLift",
   "fadeIn",
+
+  // Animations (using @semajsx/style keyframes)
+  "animSlideUp",
+  "animScaleIn",
+  "stagger1",
+  "stagger2",
+  "stagger3",
+  "stagger4",
+  "stagger5",
 ]);
+
+// ============================================
+// Keyframe Definitions (via @semajsx/style)
+// ============================================
+
+const fadeInUpKf = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const fadeInScaleKf = keyframes`
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+`;
 
 // ============================================
 // Global Styles
@@ -276,19 +299,33 @@ export const hoverLift = rule`${c.hoverLift!}:hover {
 }`;
 
 export const fadeIn = rule`${c.fadeIn!} {
-  animation: fadeInUp 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+  animation: ${fadeInUpKf} 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) both;
 }`;
 
-export const fadeInKeyframes = rule`@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+export const fadeInKeyframes = keyframesToken(fadeInUpKf);
+
+// ============================================
+// Animation Classes (Apple-tuned timings)
+// ============================================
+
+/** Slide up with fade - for hero content and section intros */
+export const animSlideUp = rule`${c.animSlideUp!} {
+  animation: ${fadeInUpKf} 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) both;
 }`;
+
+/** Scale in with subtle upward drift - for cards */
+export const animScaleIn = rule`${c.animScaleIn!} {
+  animation: ${fadeInScaleKf} 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}`;
+
+export const animScaleInKeyframes = keyframesToken(fadeInScaleKf);
+
+/** Stagger delay classes for sequential reveal */
+export const stagger1 = rule`${c.stagger1!} { animation-delay: 0.1s; }`;
+export const stagger2 = rule`${c.stagger2!} { animation-delay: 0.2s; }`;
+export const stagger3 = rule`${c.stagger3!} { animation-delay: 0.35s; }`;
+export const stagger4 = rule`${c.stagger4!} { animation-delay: 0.5s; }`;
+export const stagger5 = rule`${c.stagger5!} { animation-delay: 0.65s; }`;
 
 // ============================================
 // Navigation Links
@@ -342,4 +379,14 @@ export const appleTheme = {
   hoverLift,
   fadeIn,
   fadeInKeyframes,
+
+  // Animations
+  animSlideUp,
+  animScaleIn,
+  animScaleInKeyframes,
+  stagger1,
+  stagger2,
+  stagger3,
+  stagger4,
+  stagger5,
 };
