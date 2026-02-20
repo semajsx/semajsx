@@ -1,6 +1,7 @@
 /** @jsxImportSource semajsx/dom */
 
 import remarkGfm from "remark-gfm";
+import rehypeShiki from "@shikijs/rehype";
 import { createSSG, defineCollection, fileSource, z } from "semajsx/ssg";
 import { resource } from "semajsx/ssr";
 import type { VNode } from "semajsx";
@@ -559,6 +560,22 @@ const ssg = createSSG({
   // MDX configuration with custom components
   mdx: {
     remarkPlugins: [remarkGfm],
+    rehypePlugins: [
+      [
+        rehypeShiki,
+        {
+          theme: "github-dark-dimmed",
+          transformers: [
+            {
+              name: "add-language-data",
+              pre(node: { properties: Record<string, unknown> }) {
+                node.properties["data-language"] = this.options.lang;
+              },
+            },
+          ],
+        },
+      ],
+    ],
     components: {
       Callout,
       CodeBlock,

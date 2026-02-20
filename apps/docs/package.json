@@ -11,6 +11,7 @@
     "serve": "bun run --bun vite preview --outDir dist"
   },
   "dependencies": {
+    "@shikijs/rehype": "^3.22.0",
     "remark-gfm": "^4.0.1",
     "semajsx": "workspace:*"
   },
