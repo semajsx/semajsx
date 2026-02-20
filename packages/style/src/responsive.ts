@@ -111,7 +111,13 @@ export function defineBreakpoints<T extends Record<string, string>>(
 /**
  * Default breakpoints matching Tailwind CSS defaults
  */
-export const breakpoints = defineBreakpoints({
+export const breakpoints: BreakpointRefs<{
+  sm: string;
+  md: string;
+  lg: string;
+  xl: string;
+  "2xl": string;
+}> = defineBreakpoints({
   sm: "640px",
   md: "768px",
   lg: "1024px",
