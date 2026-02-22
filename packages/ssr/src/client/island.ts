@@ -45,7 +45,12 @@ export function island<T extends Component<any>>(component: T, modulePath: strin
   }) as T;
 
   // Also mark the wrapper function itself for static analysis
-  (wrappedComponent as any)[ISLAND_MARKER] = {
+  // Use type-safe Symbol property access - cast through unknown to allow symbol index signature
+  (
+    wrappedComponent as unknown as Component<any> & {
+      [ISLAND_MARKER]?: { modulePath: string; component: Component<any> };
+    }
+  )[ISLAND_MARKER] = {
     modulePath,
     component,
   };

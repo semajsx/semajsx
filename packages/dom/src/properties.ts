@@ -4,6 +4,12 @@ import { isSignal } from "@semajsx/signal";
 import { isStyleToken, inject, type StyleToken } from "@semajsx/style";
 
 /**
+ * Type-safe storage for event listeners on DOM elements
+ * Uses WeakMap to avoid memory leaks and maintain type safety
+ */
+const eventListeners = new WeakMap<Element, Record<string, EventListener>>();
+
+/**
  * Class value type - can be string, StyleToken, array, or falsy
  */
 type ClassValue = string | StyleToken | ClassValue[] | false | null | undefined;
@@ -61,17 +67,17 @@ export function setProperty(element: Element, key: string, value: unknown): void
 
     // Use addEventListener instead of property assignment for better reliability
     // especially in hydration scenarios
-    const element_any = element as any;
-
-    // Remove old listener if exists (stored on element)
-    const oldListener = element_any[`__${key}`];
+    // Use WeakMap for type-safe event listener storage
+    const oldListener = eventListeners.get(element)?.[key];
     if (oldListener) {
       element.removeEventListener(eventName, oldListener);
     }
 
     // Add new listener and store reference for future cleanup
     element.addEventListener(eventName, value as EventListener);
-    element_any[`__${key}`] = value;
+    const listeners = eventListeners.get(element) || {};
+    listeners[key] = value as EventListener;
+    eventListeners.set(element, listeners);
 
     return;
   }

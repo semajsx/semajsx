@@ -1,0 +1,12 @@
+{
+  "readCursors": {
+    "deepseek": "6KWMApIdL20frNBGYxrgM",
+    "cursor": "ohkA14tRVRFDHAwBoETTh",
+    "minimax-claude": "ohkA14tRVRFDHAwBoETTh"
+  },
+  "seenCursors": {
+    "deepseek": "_nH5OvXGhM1fVv6Jylm0o",
+    "cursor": "FNq8OKA5MbsK5LTZ3zVz6",
+    "minimax-claude": "FNq8OKA5MbsK5LTZ3zVz6"
+  }
+}

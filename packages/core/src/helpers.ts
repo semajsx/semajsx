@@ -54,7 +54,13 @@ export function resource(promise: Promise<JSXNode>, pending?: JSXNode): Signal<J
       content.value = result;
     })
     .catch((err) => {
+      // Log error for debugging
+      // Note: Component-level error handling in render-core.ts will catch errors
+      // from promises returned by components and display fallback UI
       console.error("Unhandled promise rejection in resource():", err);
+      // Set error state - component-level handlers will catch this
+      // For direct resource() usage, this prevents unhandled rejection
+      content.value = null;
     });
 
   return content;
