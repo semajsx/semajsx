@@ -1,45 +1,44 @@
-# Architecture Review Working Group
+# Architecture Review Working Group - Introspection Workflow
 #
-# This workflow creates a multi-agent architecture review team that:
-# - Discusses design decisions from different perspectives
-# - Reviews PRs for architectural consistency
-# - Proposes improvements to the codebase
+# This workflow provides project introspection and diagnostics.
+# It reviews the project's current state, identifies issues, technical debt, and improvement opportunities.
 #
 # Agents:
-#   - @deepseek: Fast reasoning, good at spotting patterns
-#   - @cursor: Thorough analysis, implementation-focused
-#   - @minimax-claude: High-level design, long-term thinking
+#   - @deepseek: Pattern scanner - quick scan for anti-patterns
+#   - @cursor: Implementation analyst - deep code quality analysis
+#   - @minimax-claude: Architecture reviewer - design coherence evaluation
 #
 # Usage:
-#   agent-worker run .workflows/architecture-review.yaml --tag <pr-number|feature-name>
-#   agent-worker start .workflows/architecture-review.yaml --tag my-feature
+#   agent-worker run .workflows/architecture-review.yaml
+#   agent-worker run .workflows/architecture-review.yaml --tag <area>
+#
+# Examples:
+#   agent-worker run .workflows/architecture-review.yaml --tag style-system
+#   agent-worker run .workflows/architecture-review.yaml --tag performance
+#   agent-worker run .workflows/architecture-review.yaml --tag testing
 
 name: Architecture Review
 
 agents:
-  # DeepSeek: Fast, pattern-matching specialist
-  # Good at: Quick reviews, identifying anti-patterns, consistency checks
+  # DeepSeek: Pattern scanner
+  # Good at: Quick scans, anti-patterns, inconsistencies
   deepseek:
     model: deepseek:deepseek-chat
     backend: sdk
     system_prompt: |
       You are DeepSeek, a fast-reasoning AI assistant specializing in pattern recognition.
       Your strengths:
-      - Quick comprehension of code changes
-      - Spotting inconsistencies and anti-patterns
-      - Enforcing naming conventions and style
-      - Flagging potential bugs early
+      - Quick comprehension of project structure
+      - Spotting anti-patterns and inconsistencies
+      - Identifying obvious issues early
 
       You speak concisely. Focus on:
-      1. Does this follow existing patterns?
-      2. Are there obvious issues?
-      3. What might break?
+      1. Overall project structure health
+      2. Obvious problems or missing pieces
+      3. What might cause issues later
 
-      You're skeptical but helpful. Ask clarifying questions when uncertain.
-
-  # Cursor Composer: Implementation-focused analyst
-  # Good at: Deep code analysis, edge cases, testing scenarios
-  # Note: Using composer-1 instead of sonnet-4.6 for better cost efficiency (included in Pro plan)
+  # Cursor: Implementation analyst
+  # Good at: Deep code analysis, edge cases, quality
   cursor:
     model: composer-1
     backend: cursor
@@ -47,20 +46,18 @@ agents:
       You are Cursor Composer, an implementation-focused AI assistant.
       Your strengths:
       - Deep code analysis and edge case hunting
-      - Testing strategy and coverage
+      - Testing strategy evaluation
       - API design review
       - Performance considerations
 
-      You think carefully about how code will be used. Focus on:
+      You think carefully about code quality. Focus on:
       1. What edge cases are missing?
-      2. How would this be tested?
+      2. How well is the code tested?
       3. Is the API ergonomic?
-      4. Performance implications?
+      4. Any performance concerns?
 
-      You're thorough but not pedantic. Suggest improvements with rationale.
-
-  # MiniMax Claude: High-level architect
-  # Good at: Design principles, long-term coherence, trade-offs
+  # MiniMax Claude: Architecture reviewer
+  # Good at: Design principles, long-term coherence
   minimax-claude:
     backend: claude
     system_prompt: |
@@ -69,15 +66,13 @@ agents:
       - Design principles and coherence
       - Long-term maintainability
       - Trade-off analysis
-      - Cross-cutting concerns
+      - Technical debt assessment
 
       You think about the big picture. Focus on:
-      1. Does this fit the overall architecture?
+      1. Is the project heading in the right direction?
       2. What are the long-term implications?
-      3. Are there better approaches?
-      4. What did we miss?
-
-      You're thoughtful and strategic. Synthesize insights from the team.
+      3. What trade-offs have been made?
+      4. What's the technical debt situation?
 
 context:
   provider: file
@@ -85,86 +80,70 @@ context:
     bind: .workflow/architecture-review/
 
 setup:
-  # Parse PR or feature context
   - shell: echo "$TAG"
-    as: context_tag
+    as: focus_area
 
-  # Fetch PR info if applicable (PR number format: digits only)
   - shell: |
-      if [[ "$TAG" =~ ^[0-9]+$ ]]; then
-        gh pr view "$TAG" --repo semajsx/semajsx \
-          --json title,body,baseRefName,headRefName,author,files,additions,deletions \
-          > /tmp/pr-info.json 2>/dev/null || echo "{}" > /tmp/pr-info.json
-        cat /tmp/pr-info.json
+      if [[ -n "$TAG" ]]; then
+        echo "Focus area: $TAG"
       else
-        echo "{}"
+        echo "Full project diagnostics"
       fi
-    as: pr_info
+    as: context_info
 
-  # Get changed files for this context
-  - shell: |
-      if [[ "$TAG" =~ ^[0-9]+$ ]]; then
-        gh pr view "$TAG" --repo semajsx/semajsx --json files --jq '.files[].path' 2>/dev/null | head -50
-      else
-        echo "Feature branch: $TAG"
-      fi
-    as: changed_files
-
-  # Fetch commits for this context
-  - shell: |
-      if [[ "$TAG" =~ ^[0-9]+$ ]]; then
-        gh pr view "$TAG" --repo semajsx/semajsx --json commits --jq '.commits | length'
-      else
-        echo "0"
-      fi
-    as: commit_count
+  - shell: ls -la
+    as: project_structure
 
 kickoff: |
-  # Architecture Review Session
+  # Architecture Review - Project Introspection
 
-  **Context**: ${{ context_tag }}
-  **Type**: ${{ pr_info ? "PR #" ~ pr_info.number : "Feature Discussion" }}
-
-  $${pr_info ? "**" ~ pr_info.title ~ "**\n\n" ~ pr_info.body : ""}
+  **Focus**: ${{ focus_area }}
+  **Context**: ${{ context_info }}
 
   ---
 
-  ## Changed Files
+  ## Project Structure
   ```
-  ${{ changed_files }}
+  ${{ project_structure }}
   ```
 
   ---
 
-  ## Review Process
+  ## Diagnostic Process
 
   ### Phase 1: Quick Scan (@deepseek)
-  Review the changes for:
-  - Pattern consistency with existing code
-  - Naming conventions
-  - Obvious bugs or issues
-  - Style violations
+
+  Scan the project for:
+  - Directory structure anomalies
+  - Missing files/configurations
+  - Obvious anti-patterns
+  - Dependency issues
+  - Naming convention violations
 
   **Output**: Brief scan report in `#phase1`
 
   ---
 
   ### Phase 2: Deep Analysis (@cursor)
-  Review the changes for:
-  - Edge cases and error handling
-  - Testing strategy
-  - API design quality
+
+  Analyze code for:
+  - Edge cases and error handling gaps
+  - Type safety issues
   - Performance concerns
+  - Testing coverage
+  - API design quality
 
   **Output**: Detailed analysis in `#phase2`
 
   ---
 
   ### Phase 3: Architecture Review (@minimax-claude)
-  Evaluate the changes for:
-  - Design coherence
-  - Long-term implications
+
+  Evaluate:
+  - Design coherence with project goals
   - Trade-offs made
+  - Long-term maintainability
+  - Technical debt assessment
   - Missing considerations
 
   **Output**: Architectural assessment in `#phase3`
@@ -172,24 +151,25 @@ kickoff: |
   ---
 
   ### Phase 4: Synthesis (@deepseek)
-  Discuss and converge on:
-  - Key findings from all perspectives
-  - Blockers vs. nits vs. suggestions
-  - Action items for follow-up
-  - Questions for the author
 
-  **Output**: Final review summary in `#summary`
+  Synthesize findings into:
+  - Prioritized issue list
+  - Actionable recommendations
+  - Risk assessment
+  - Overall project health score
+
+  **Output**: Final diagnostic report in `#summary`
 
   ---
 
   ## Instructions
 
-  **@deepseek**: Start with a quick scan. What stands out? Any red flags?
+  **@deepseek**: Start with a broad quick scan. What's the overall project structure? Any obvious issues?
 
-  **@cursor**: After @deepseek, do a deep dive. What did they miss?
+  **@cursor**: After quick scan, dive deep into code quality. What problems can you find?
 
-  **@minimax-claude**: After both analyses, provide architectural context. Is this the right direction?
+  **@minimax-claude**: Provide architectural context. Is the project heading in the right direction?
 
-  **@deepseek**: After both analyses and architectural review, synthesize findings into a final verdict.
+  **@deepseek**: Synthesize all findings into a diagnostic report. What's the verdict?
 
-  Reply in the channel. Use `@agentname` to address specific reviewers.
+  Reply in the channel. Use `@agentname` to address specific agents.
