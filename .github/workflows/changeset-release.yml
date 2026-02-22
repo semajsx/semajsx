@@ -1,0 +1,119 @@
+name: Changeset Release
+
+# Flow:
+# 1. PR merged to main → create changeset (auto or manual)
+# 2. On main branch push with changeset files → version + publish + release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - ".changeset/*.md"
+      - "packages/semajsx/**"
+  workflow_dispatch:
+
+concurrency:
+  group: changeset-release
+  cancel-in-progress: true
+
+jobs:
+  # Step 1: Create changeset from merged PR
+  create-changeset:
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Create changeset
+        run: |
+          PR_NUM=${{ github.event.pull_request.number }}
+          PR_TITLE="${{ github.event.pull_request.title }}"
+
+          # Create changeset file
+          cat > ".changeset/pr-${PR_NUM}.md" << EOF
+          ---
+          "semajsx": patch
+          ---
+
+          ${PR_TITLE}
+          EOF
+
+      - name: Commit changeset
+        run: |
+          git config user.name "Changeset Bot"
+          git config user.email "changeset-bot@users.noreply.github.com"
+          git add .changeset/
+          git commit -m "chore: add changeset for PR #${{ github.event.pull_request.number }}"
+          git push origin main
+
+  # Step 2: Version, Publish, Release
+  release:
+    needs: create-changeset
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build
+        run: bun run build
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Version
+        run: |
+          bun run version
+
+      - name: Publish to npm
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          cd packages/semajsx
+          npm publish --access public
+
+      - name: Create Git tag
+        run: |
+          VERSION=$(node -p "require('./packages/semajsx/package.json').version")
+          TAG="v${VERSION}"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./packages/semajsx/package.json').version")
+          gh release create "v${VERSION}" \
+            --title "semajsx v${VERSION}" \
+            --generate-notes \
+            --latest
