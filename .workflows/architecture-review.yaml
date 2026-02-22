@@ -171,7 +171,7 @@ kickoff: |
 
   ---
 
-  ### Phase 4: Synthesis (@all)
+  ### Phase 4: Synthesis (@deepseek)
   Discuss and converge on:
   - Key findings from all perspectives
   - Blockers vs. nits vs. suggestions
@@ -190,6 +190,6 @@ kickoff: |
 
   **@minimax-claude**: After both analyses, provide architectural context. Is this the right direction?
 
-  **@all**: Converge on a summary. What's the verdict?
+  **@deepseek**: After both analyses and architectural review, synthesize findings into a final verdict.
 
   Reply in the channel. Use `@agentname` to address specific reviewers.
