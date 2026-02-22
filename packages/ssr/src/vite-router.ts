@@ -61,7 +61,7 @@ export class ViteRouter {
 
     // Initialize LRU cache with configurable max size
     // Default: 1000 islands (should be enough for most apps)
-    const cacheSize = (config as any).islandCacheSize ?? 1000;
+    const cacheSize = config.islandCacheSize ?? 1000;
     this.islandsCache = new LRUCache<string, IslandMetadata>(cacheSize);
   }
 
