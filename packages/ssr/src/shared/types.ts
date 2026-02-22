@@ -161,6 +161,8 @@ export interface RouterConfig {
   title?: string;
   /** Additional metadata (passed to document template) */
   meta?: Record<string, any>;
+  /** Maximum size of island cache (default: 1000) */
+  islandCacheSize?: number;
 }
 
 /**
