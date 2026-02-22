@@ -42,16 +42,8 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
     scheduleUpdate(() => {
       // Directly iterate over the Set - no need to copy to array
       // The Set is stable during iteration even if modified
-      // Wrap each listener call in try/catch to prevent one listener error
-      // from crashing the entire reactive system
       for (const listener of subscribers) {
-        try {
-          listener(value);
-        } catch (error) {
-          // Log error but continue notifying other subscribers
-          // This prevents a single listener error from breaking the entire reactive system
-          console.error("[Signal] Error in signal listener:", error);
-        }
+        listener(value);
       }
     });
   }

@@ -1,9 +1,9 @@
-import type { VNode, Ref, ContextProps, ContextProvide } from "./types";
+import type { VNode, Ref } from "./types";
 import { Fragment, Portal } from "./types";
 import { isSignal } from "@semajsx/signal";
 import { isVNode } from "./vnode";
 import { resource, stream } from "./helpers";
-import { type ContextMap, createComponentAPI, CONTEXT_PROVIDER_SYMBOL } from "./context";
+import { type ContextMap, createComponentAPI } from "./context";
 import { normalizeChildrenProp, normalizeComponentResult } from "./component";
 
 /**
@@ -97,25 +97,15 @@ export interface RenderStrategy<TNode> {
 /**
  * Check if a value is a Promise
  */
-export function isPromise<T>(value: unknown): value is Promise<T> {
-  return (
-    value != null &&
-    typeof value === "object" &&
-    "then" in value &&
-    typeof (value as { then?: unknown }).then === "function"
-  );
+export function isPromise<T>(value: any): value is Promise<T> {
+  return value && typeof value.then === "function";
 }
 
 /**
  * Check if a value is an AsyncIterator
  */
-export function isAsyncIterator<T>(value: unknown): value is AsyncIterableIterator<T> {
-  return (
-    value != null &&
-    typeof value === "object" &&
-    Symbol.asyncIterator in value &&
-    typeof (value as { [Symbol.asyncIterator]?: unknown })[Symbol.asyncIterator] === "function"
-  );
+export function isAsyncIterator<T>(value: any): value is AsyncIterableIterator<T> {
+  return value && typeof value[Symbol.asyncIterator] === "function";
 }
 
 /**
@@ -344,15 +334,8 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
   function renderPortal(vnode: VNode, parentContext: ContextMap): RenderedNode<TNode> {
     const container = vnode.props?.container;
 
-    if (container == null) {
+    if (!container) {
       throw new Error("Portal must have a container prop");
-    }
-
-    // Validate container is a valid node (not null/undefined)
-    // Note: Type-specific validation (e.g., DOM node checks) should be done
-    // at the strategy level when appendChild is called
-    if (typeof container !== "object") {
-      throw new Error(`Portal container must be a valid node object, got ${typeof container}`);
     }
 
     // Render children with same context
@@ -392,15 +375,13 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
     // Prepare current component's context
     let currentContext = parentContext;
 
-    // Check if this is a Context Provider using type-safe Symbol check
-    const isContextProvider =
-      (Component as { [CONTEXT_PROVIDER_SYMBOL]?: boolean })[CONTEXT_PROVIDER_SYMBOL] === true;
+    // Check if this is a Context Provider
+    const isContextProvider = (Component as any).__isContextProvider;
 
     if (isContextProvider) {
       // Context Provider: create new context map with provided values
       currentContext = new Map(parentContext);
-      // Type-safe access to provide prop - we know this is ContextProps at this point
-      const provide = props && "provide" in props ? (props as ContextProps).provide : undefined;
+      const provide = (props as any).provide;
 
       if (provide) {
         // Check if it's a single provide [Context, value] or multiple [[Context, value], ...]
@@ -408,11 +389,11 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
 
         if (isSingle) {
           // Single: [Context, value]
-          const [context, value] = provide as ContextProvide;
+          const [context, value] = provide;
           currentContext.set(context, value);
         } else {
           // Multiple: [[Context, value], ...]
-          for (const [context, value] of provide as ContextProvide[]) {
+          for (const [context, value] of provide) {
             currentContext.set(context, value);
           }
         }
@@ -423,26 +404,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
     const ctx = createComponentAPI(currentContext);
 
     // Call component function with props and ctx
-    // Wrap in try/catch to handle component errors gracefully
-    let result: unknown;
-    try {
-      result = Component(props, ctx);
-    } catch (error) {
-      // Component threw synchronously - render error fallback
-      console.error("[Component] Error rendering component:", error);
-      const errorVNode: VNode = {
-        type: "#text",
-        props: { nodeValue: `Error: ${error instanceof Error ? error.message : String(error)}` },
-        children: [],
-      };
-      const rendered = renderNode(errorVNode, currentContext);
-      return {
-        vnode,
-        node: rendered.node,
-        subscriptions: rendered.subscriptions,
-        children: [rendered],
-      };
-    }
+    const result = Component(props, ctx);
 
     // Handle async component (Promise<VNode>)
     if (isPromise(result)) {
@@ -451,17 +413,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
         props: { nodeValue: "" },
         children: [],
       };
-      // Wrap promise to handle errors with fallback UI
-      const errorHandledPromise = result.catch((error) => {
-        console.error("[Component] Error in async component:", error);
-        const errorVNode: VNode = {
-          type: "#text",
-          props: { nodeValue: `Error: ${error instanceof Error ? error.message : String(error)}` },
-          children: [],
-        };
-        return errorVNode;
-      });
-      const resultSignal = resource(errorHandledPromise, pending);
+      const resultSignal = resource(result, pending);
       const signalVNode: VNode = {
         type: "#signal",
         props: { signal: resultSignal, context: currentContext },
@@ -483,22 +435,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
         props: { nodeValue: "" },
         children: [],
       };
-      // Wrap async iterator to handle errors with fallback UI
-      const errorHandledIterator = (async function* () {
-        try {
-          yield* result;
-        } catch (error) {
-          console.error("[Component] Error in async generator component:", error);
-          yield {
-            type: "#text",
-            props: {
-              nodeValue: `Error: ${error instanceof Error ? error.message : String(error)}`,
-            },
-            children: [],
-          } as VNode;
-        }
-      })();
-      const resultSignal = stream(errorHandledIterator, pending);
+      const resultSignal = stream(result, pending);
       const signalVNode: VNode = {
         type: "#signal",
         props: { signal: resultSignal, context: currentContext },
