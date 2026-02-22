@@ -82,8 +82,5 @@ function normalizeIterableChildren(children: Iterable<JSXNode>): VNode[] {
 }
 
 function isIterable(value: unknown): value is Iterable<unknown> {
-  return (
-    value != null &&
-    typeof (value as { [Symbol.iterator]?: unknown })[Symbol.iterator] === "function"
-  );
+  return value != null && typeof (value as any)[Symbol.iterator] === "function";
 }
