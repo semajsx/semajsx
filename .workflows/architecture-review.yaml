@@ -1,0 +1,195 @@
+# Architecture Review Working Group
+#
+# This workflow creates a multi-agent architecture review team that:
+# - Discusses design decisions from different perspectives
+# - Reviews PRs for architectural consistency
+# - Proposes improvements to the codebase
+#
+# Agents:
+#   - @deepseek: Fast reasoning, good at spotting patterns
+#   - @cursor: Thorough analysis, implementation-focused
+#   - @minimax-claude: High-level design, long-term thinking
+#
+# Usage:
+#   agent-worker run .workflows/architecture-review.yaml --tag <pr-number|feature-name>
+#   agent-worker start .workflows/architecture-review.yaml --tag my-feature
+
+name: Architecture Review
+
+agents:
+  # DeepSeek: Fast, pattern-matching specialist
+  # Good at: Quick reviews, identifying anti-patterns, consistency checks
+  deepseek:
+    model: deepseek:deepseek-chat
+    backend: sdk
+    system_prompt: |
+      You are DeepSeek, a fast-reasoning AI assistant specializing in pattern recognition.
+      Your strengths:
+      - Quick comprehension of code changes
+      - Spotting inconsistencies and anti-patterns
+      - Enforcing naming conventions and style
+      - Flagging potential bugs early
+
+      You speak concisely. Focus on:
+      1. Does this follow existing patterns?
+      2. Are there obvious issues?
+      3. What might break?
+
+      You're skeptical but helpful. Ask clarifying questions when uncertain.
+
+  # Cursor Composer: Implementation-focused analyst
+  # Good at: Deep code analysis, edge cases, testing scenarios
+  # Note: Using composer-1 instead of sonnet-4.6 for better cost efficiency (included in Pro plan)
+  cursor:
+    model: composer-1
+    backend: cursor
+    system_prompt: |
+      You are Cursor Composer, an implementation-focused AI assistant.
+      Your strengths:
+      - Deep code analysis and edge case hunting
+      - Testing strategy and coverage
+      - API design review
+      - Performance considerations
+
+      You think carefully about how code will be used. Focus on:
+      1. What edge cases are missing?
+      2. How would this be tested?
+      3. Is the API ergonomic?
+      4. Performance implications?
+
+      You're thorough but not pedantic. Suggest improvements with rationale.
+
+  # MiniMax Claude: High-level architect
+  # Good at: Design principles, long-term coherence, trade-offs
+  minimax-claude:
+    backend: claude
+    system_prompt: |
+      You are Claude (via MiniMax), a high-level architect focused on system design.
+      Your strengths:
+      - Design principles and coherence
+      - Long-term maintainability
+      - Trade-off analysis
+      - Cross-cutting concerns
+
+      You think about the big picture. Focus on:
+      1. Does this fit the overall architecture?
+      2. What are the long-term implications?
+      3. Are there better approaches?
+      4. What did we miss?
+
+      You're thoughtful and strategic. Synthesize insights from the team.
+
+context:
+  provider: file
+  config:
+    bind: .workflow/architecture-review/
+
+setup:
+  # Parse PR or feature context
+  - shell: echo "$TAG"
+    as: context_tag
+
+  # Fetch PR info if applicable (PR number format: digits only)
+  - shell: |
+      if [[ "$TAG" =~ ^[0-9]+$ ]]; then
+        gh pr view "$TAG" --repo semajsx/semajsx \
+          --json title,body,baseRefName,headRefName,author,files,additions,deletions \
+          > /tmp/pr-info.json 2>/dev/null || echo "{}" > /tmp/pr-info.json
+        cat /tmp/pr-info.json
+      else
+        echo "{}"
+      fi
+    as: pr_info
+
+  # Get changed files for this context
+  - shell: |
+      if [[ "$TAG" =~ ^[0-9]+$ ]]; then
+        gh pr view "$TAG" --repo semajsx/semajsx --json files --jq '.files[].path' 2>/dev/null | head -50
+      else
+        echo "Feature branch: $TAG"
+      fi
+    as: changed_files
+
+  # Fetch commits for this context
+  - shell: |
+      if [[ "$TAG" =~ ^[0-9]+$ ]]; then
+        gh pr view "$TAG" --repo semajsx/semajsx --json commits --jq '.commits | length'
+      else
+        echo "0"
+      fi
+    as: commit_count
+
+kickoff: |
+  # Architecture Review Session
+
+  **Context**: ${{ context_tag }}
+  **Type**: ${{ pr_info ? "PR #" ~ pr_info.number : "Feature Discussion" }}
+
+  $${pr_info ? "**" ~ pr_info.title ~ "**\n\n" ~ pr_info.body : ""}
+
+  ---
+
+  ## Changed Files
+  ```
+  ${{ changed_files }}
+  ```
+
+  ---
+
+  ## Review Process
+
+  ### Phase 1: Quick Scan (@deepseek)
+  Review the changes for:
+  - Pattern consistency with existing code
+  - Naming conventions
+  - Obvious bugs or issues
+  - Style violations
+
+  **Output**: Brief scan report in `#phase1`
+
+  ---
+
+  ### Phase 2: Deep Analysis (@cursor)
+  Review the changes for:
+  - Edge cases and error handling
+  - Testing strategy
+  - API design quality
+  - Performance concerns
+
+  **Output**: Detailed analysis in `#phase2`
+
+  ---
+
+  ### Phase 3: Architecture Review (@minimax-claude)
+  Evaluate the changes for:
+  - Design coherence
+  - Long-term implications
+  - Trade-offs made
+  - Missing considerations
+
+  **Output**: Architectural assessment in `#phase3`
+
+  ---
+
+  ### Phase 4: Synthesis (@all)
+  Discuss and converge on:
+  - Key findings from all perspectives
+  - Blockers vs. nits vs. suggestions
+  - Action items for follow-up
+  - Questions for the author
+
+  **Output**: Final review summary in `#summary`
+
+  ---
+
+  ## Instructions
+
+  **@deepseek**: Start with a quick scan. What stands out? Any red flags?
+
+  **@cursor**: After @deepseek, do a deep dive. What did they miss?
+
+  **@minimax-claude**: After both analyses, provide architectural context. Is this the right direction?
+
+  **@all**: Converge on a summary. What's the verdict?
+
+  Reply in the channel. Use `@agentname` to address specific reviewers.
