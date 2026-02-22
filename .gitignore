@@ -154,4 +154,4 @@ test-results
 .content-temp
 
 # Temporary workspace (workflow)
-.workspace/
+.workspace/.workflows/.workflow/
