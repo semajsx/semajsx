@@ -1,7 +1,7 @@
 name: Changeset Release
 
 # Flow:
-# 1. PR merged to main → create changeset (auto or manual)
+# 1. Agent analyzes merged PR → creates changeset
 # 2. On main branch push with changeset files → version + publish + release
 
 on:
@@ -11,8 +11,8 @@ on:
   push:
     branches: [main]
     paths:
-      - ".changeset/*.md"
-      - "packages/semajsx/**"
+      - '.changeset/*.md'
+      - 'packages/semajsx/**'
   workflow_dispatch:
 
 concurrency:
@@ -20,43 +20,86 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Step 1: Create changeset from merged PR
-  create-changeset:
+  # Step 1: Agent analyzes merged PR and creates changeset
+  analyze-and-create-changeset:
     if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
 
-      - name: Create changeset
-        run: |
-          PR_NUM=${{ github.event.pull_request.number }}
-          PR_TITLE="${{ github.event.pull_request.title }}"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
-          # Create changeset file
-          cat > ".changeset/pr-${PR_NUM}.md" << EOF
-          ---
-          "semajsx": patch
-          ---
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
 
-          ${PR_TITLE}
-          EOF
+      - name: Install dependencies
+        run: bun install
 
-      - name: Commit changeset
+      - name: Build agent-worker
+        working-directory: ../moniro
+        run: bun run build
+
+      - name: Configure git
         run: |
           git config user.name "Changeset Bot"
           git config user.email "changeset-bot@users.noreply.github.com"
-          git add .changeset/
-          git commit -m "chore: add changeset for PR #${{ github.event.pull_request.number }}"
+
+      - name: Analyze PR with agent
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        working-directory: ../moniro
+        run: |
+          bun run ./packages/agent-worker/dist/cli/index.ts run ../semajsx/.workflows/agent-changeset.yaml
+
+      - name: Check result
+        id: result
+        run: |
+          if [ ! -f /tmp/changeset-result.json ] || ! jq empty /tmp/changeset-result.json 2>/dev/null; then
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "needed=$(jq -r '.needed // false' /tmp/changeset-result.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Commit changeset to main
+        if: steps.result.outputs.needed == 'true'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          CHANGESET_ID="auto-pr-${PR_NUMBER}"
+          DESC=$(jq -r '.description // "update"' /tmp/changeset-result.json)
+          PKG_VERSION=$(jq -r '.packages.semajsx // "patch"' /tmp/changeset-result.json)
+
+          cat > ".changeset/${CHANGESET_ID}.md" << EOF
+          ---
+          "semajsx": ${PKG_VERSION}
+          ---
+
+          ${DESC}
+          EOF
+
+          git add ".changeset/${CHANGESET_ID}.md"
+          git commit -m "chore: add changeset for PR #${PR_NUMBER}"
           git push origin main
 
   # Step 2: Version, Publish, Release
   release:
-    needs: create-changeset
+    needs: analyze-and-create-changeset
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
