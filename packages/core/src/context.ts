@@ -58,14 +58,8 @@ export function Context(props: ContextProps): VNode {
   return h(Fragment, null, ...children);
 }
 
-/**
- * Symbol to mark context provider components
- * Using Symbol ensures type safety and avoids property name conflicts
- */
-export const CONTEXT_PROVIDER_SYMBOL = Symbol.for("__isContextProvider");
-
 // Mark as special context provider component
-(Context as { [CONTEXT_PROVIDER_SYMBOL]?: boolean })[CONTEXT_PROVIDER_SYMBOL] = true;
+(Context as any).__isContextProvider = true;
 
 /**
  * Create ComponentAPI instance for a component
