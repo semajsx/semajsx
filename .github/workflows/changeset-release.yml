@@ -1,7 +1,7 @@
 name: Changeset Release
 
 # Flow:
-# 1. PR merged to main → create changeset
+# 1. PR merged to main → create changeset (auto or manual)
 # 2. On main branch push with changeset files → version + publish + release
 
 on:
@@ -37,7 +37,7 @@ jobs:
           PR_NUM=${{ github.event.pull_request.number }}
           PR_TITLE="${{ github.event.pull_request.title }}"
 
-          # Create changeset file - default to patch
+          # Create changeset file
           cat > ".changeset/pr-${PR_NUM}.md" << EOF
           ---
           "semajsx": patch
