@@ -1,12 +1,9 @@
 /** @jsxImportSource semajsx/dom */
 
 import type { VNode } from "semajsx";
-import { resource } from "semajsx/ssr";
 import { Layout } from "./Layout";
 import { cx, flex, gap4, justifyCenter } from "semajsx/tailwind";
 import * as theme from "../styles/theme.style";
-
-const { Style } = resource(import.meta.url);
 
 export interface NotFoundProps {
   title?: string;
@@ -15,7 +12,6 @@ export interface NotFoundProps {
 export function NotFound(_props: NotFoundProps): VNode {
   return (
     <Layout>
-      <Style href="../styles.css" />
       <div
         class={cx(theme.heroBg, "not-found-section")}
         style="padding: 100px 24px 80px; position: relative;"
