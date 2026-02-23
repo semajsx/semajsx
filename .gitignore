@@ -155,3 +155,4 @@ test-results
 
 # Temporary workspace (workflow)
 .workspace/.workflows/.workflow/
+.npmrc
