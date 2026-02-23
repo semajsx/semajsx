@@ -73,8 +73,31 @@ jobs:
           fi
           echo "needed=$(jq -r '.needed // false' /tmp/changeset-result.json)" >> "$GITHUB_OUTPUT"
 
-      - name: Merge changeset to main via PR
+      - name: Validate changeset result
         if: steps.result.outputs.needed == 'true'
+        id: validate
+        run: |
+          # Build list of valid package names from workspace
+          VALID_PACKAGES=$(find packages -maxdepth 2 -name 'package.json' -exec jq -r '.name // empty' {} \; | sort)
+          echo "Valid packages:"
+          echo "$VALID_PACKAGES"
+
+          # Check every package in the changeset result exists in workspace
+          INVALID=$(jq -r '.packages | keys[]' /tmp/changeset-result.json | while read pkg; do
+            if ! echo "$VALID_PACKAGES" | grep -qxF "$pkg"; then
+              echo "$pkg"
+            fi
+          done)
+
+          if [ -n "$INVALID" ]; then
+            echo "::error::Changeset references packages not in workspace: $INVALID"
+            echo "valid=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "valid=true" >> "$GITHUB_OUTPUT"
+
+      - name: Merge changeset to main via PR
+        if: steps.result.outputs.needed == 'true' && steps.validate.outputs.valid == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
