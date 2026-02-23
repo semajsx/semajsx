@@ -11,8 +11,8 @@ on:
   push:
     branches: [main]
     paths:
-      - '.changeset/*.md'
-      - 'packages/semajsx/**'
+      - ".changeset/*.md"
+      - "packages/semajsx/**"
   workflow_dispatch:
 
 concurrency:
