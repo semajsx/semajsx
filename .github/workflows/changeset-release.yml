@@ -2,7 +2,8 @@ name: Changeset Release
 
 # Flow:
 # 1. PR merged → Agent analyzes PR, creates changeset
-# 2. Push with changeset → version + publish + release
+# 2. Push with changeset → create release/next PR
+# 3. User merges release PR → automatic publish
 
 on:
   pull_request:
@@ -84,9 +85,67 @@ jobs:
             fi
           fi
 
-  release:
+  create-release-pr:
     needs: generate-changeset
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Configure git
+        run: |
+          git config user.name "Changeset Bot"
+          git config user.email "changeset-bot@users.noreply.github.com"
+
+      - name: Create release branch
+        run: |
+          git checkout -b release/next
+
+      - name: Version
+        run: bun run version
+
+      - name: Commit version changes
+        run: |
+          git add .
+          git commit -m "chore: version bump for release"
+
+      - name: Push release branch
+        run: |
+          git push origin release/next --force
+
+      - name: Create release PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base main \
+            --head release/next \
+            --title "Release: Publish semajsx" \
+            --body "This PR was created automatically. Merging it will publish the new version to npm."
+
+  publish:
+    needs: create-release-pr
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -118,9 +177,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Version
-        run: bun run version
 
       - name: Publish to npm
         env:
