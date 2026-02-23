@@ -404,27 +404,24 @@ Each package has:
 
 ## Publishing Strategy
 
-### NPM Packages
+### NPM Package
 
-All packages except `@semajsx/configs` will be published to npm:
+Only the `semajsx` package is published to npm. All `@semajsx/*` packages are internal workspace packages that get built into `semajsx` via subpath exports:
 
-- `semajsx` - Main package (depends on all sub-packages)
-- `@semajsx/core` - Can be used standalone
-- `@semajsx/signal` - Can be used standalone
-- `@semajsx/dom` - Can be used standalone
-- `@semajsx/terminal` - Can be used standalone
-- `@semajsx/ssr` - Requires dom package
-- `@semajsx/ssg` - Static site generation
-- `@semajsx/style` - Can be used standalone
-- `@semajsx/logger` - Can be used standalone
-- `@semajsx/utils` - Can be used standalone
+- `semajsx` — The single published package
+  - `semajsx/dom` — DOM rendering (from `@semajsx/dom`)
+  - `semajsx/signal` — Signal reactivity (from `@semajsx/signal`)
+  - `semajsx/terminal` — Terminal rendering (from `@semajsx/terminal`)
+  - `semajsx/ssr` — Server-side rendering (from `@semajsx/ssr`)
+  - `semajsx/ssg` — Static site generation (from `@semajsx/ssg`)
+  - `semajsx/style` — Styling system (from `@semajsx/style`)
+  - `semajsx/tailwind` — Tailwind utilities (from `@semajsx/tailwind`)
+
+This approach reduces publishing complexity — one package, one version, one release.
 
 ### Versioning
 
-- **Synchronized versioning**: All packages share the same version (easier)
-- **Independent versioning**: Each package has its own version (more flexible)
-
-Recommendation: Start with synchronized versioning, move to independent later if needed.
+The project uses [Changesets](https://github.com/changesets/changesets) for version management. All `@semajsx/*` packages are in the changeset `ignore` list, so only `semajsx` is versioned and published.
 
 ## Future Enhancements
 
@@ -432,4 +429,3 @@ Recommendation: Start with synchronized versioning, move to independent later if
 2. **apps/playground**: Interactive playground for trying SemaJSX
 3. **packages/devtools**: Browser devtools extension
 4. **packages/testing**: Testing utilities for SemaJSX apps
-5. **Changesets**: Automated changelog and version management
