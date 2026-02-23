@@ -15,7 +15,7 @@ export interface NotFoundProps {
 export function NotFound(_props: NotFoundProps): VNode {
   return (
     <Layout>
-      <Style href="./styles.css" />
+      <Style href="../styles.css" />
       <div
         class={cx(theme.heroBg, "not-found-section")}
         style="padding: 100px 24px 80px; position: relative;"
