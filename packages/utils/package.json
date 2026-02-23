@@ -1,6 +1,7 @@
 {
   "name": "@semajsx/utils",
   "version": "0.1.0",
+  "private": true,
   "description": "Shared utility functions for SemaJSX",
   "keywords": [
     "helpers",

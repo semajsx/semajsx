@@ -16,7 +16,6 @@
     "dist"
   ],
   "type": "module",
-  "types": "./dist/index.d.mts",
   "exports": {
     ".": "./src/index.ts",
     "./dom": "./src/dom/index.ts",
@@ -37,21 +36,66 @@
   },
   "publishConfig": {
     "exports": {
-      ".": "./dist/index.mjs",
-      "./dom": "./dist/dom/index.mjs",
-      "./dom/jsx-dev-runtime": "./dist/dom/jsx-dev-runtime.mjs",
-      "./dom/jsx-runtime": "./dist/dom/jsx-runtime.mjs",
-      "./signal": "./dist/signal/index.mjs",
-      "./ssg": "./dist/ssg/index.mjs",
-      "./ssr": "./dist/ssr/index.mjs",
-      "./ssr/client": "./dist/ssr/client.mjs",
-      "./style": "./dist/style/index.mjs",
-      "./style/react": "./dist/style/react.mjs",
-      "./style/vue": "./dist/style/vue.mjs",
-      "./tailwind": "./dist/tailwind/index.mjs",
-      "./terminal": "./dist/terminal/index.mjs",
-      "./terminal/jsx-dev-runtime": "./dist/terminal/jsx-dev-runtime.mjs",
-      "./terminal/jsx-runtime": "./dist/terminal/jsx-runtime.mjs",
+      ".": {
+        "types": "./dist/index.d.mts",
+        "import": "./dist/index.mjs"
+      },
+      "./dom": {
+        "types": "./dist/dom/index.d.mts",
+        "import": "./dist/dom/index.mjs"
+      },
+      "./dom/jsx-dev-runtime": {
+        "types": "./dist/dom/jsx-dev-runtime.d.mts",
+        "import": "./dist/dom/jsx-dev-runtime.mjs"
+      },
+      "./dom/jsx-runtime": {
+        "types": "./dist/dom/jsx-runtime.d.mts",
+        "import": "./dist/dom/jsx-runtime.mjs"
+      },
+      "./signal": {
+        "types": "./dist/signal/index.d.mts",
+        "import": "./dist/signal/index.mjs"
+      },
+      "./ssg": {
+        "types": "./dist/ssg/index.d.mts",
+        "import": "./dist/ssg/index.mjs"
+      },
+      "./ssr": {
+        "types": "./dist/ssr/index.d.mts",
+        "import": "./dist/ssr/index.mjs"
+      },
+      "./ssr/client": {
+        "types": "./dist/ssr/client.d.mts",
+        "import": "./dist/ssr/client.mjs"
+      },
+      "./style": {
+        "types": "./dist/style/index.d.mts",
+        "import": "./dist/style/index.mjs"
+      },
+      "./style/react": {
+        "types": "./dist/style/react.d.mts",
+        "import": "./dist/style/react.mjs"
+      },
+      "./style/vue": {
+        "types": "./dist/style/vue.d.mts",
+        "import": "./dist/style/vue.mjs"
+      },
+      "./tailwind": {
+        "types": "./dist/tailwind/index.d.mts",
+        "import": "./dist/tailwind/index.mjs"
+      },
+      "./terminal": {
+        "types": "./dist/terminal/index.d.mts",
+        "import": "./dist/terminal/index.mjs"
+      },
+      "./terminal/jsx-dev-runtime": {
+        "types": "./dist/terminal/jsx-dev-runtime.d.mts",
+        "import": "./dist/terminal/jsx-dev-runtime.mjs"
+      },
+      "./terminal/jsx-runtime": {
+        "types": "./dist/terminal/jsx-runtime.d.mts",
+        "import": "./dist/terminal/jsx-runtime.mjs"
+      },
       "./package.json": "./package.json"
     }
   },

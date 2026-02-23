@@ -1,6 +1,7 @@
 {
   "name": "@semajsx/ssr",
   "version": "0.1.0",
+  "private": true,
   "description": "Server-side rendering and Island architecture for SemaJSX",
   "files": [
     "dist",
