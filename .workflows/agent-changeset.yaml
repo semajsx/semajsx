@@ -47,9 +47,9 @@ setup:
         --json files --jq '.files[].path'
     as: changed_files
 
-  # Filter to only semajsx package changes
+  # Filter to only semajsx package changes (packages/* is semajsx's bundled packages)
   - shell: |
-      echo "$changed_files" | grep -E '^packages/semajsx/' || echo ""
+      echo "$changed_files" | grep -E '^packages/' | head -20 || echo ""
     as: semajsx_changes
 
   # Check for existing changesets in the merged PR
@@ -80,7 +80,7 @@ kickoff: |
   ${{ changed_files }}
   ```
 
-  ## semajsx Package Changes
+  ## semajsx Package Changes (packages/*)
   ```
   ${{ semajsx_changes }}
   ```
@@ -94,7 +94,7 @@ kickoff: |
      EOF
      ```
 
-  2. If `semajsx_changes` is empty (no changes to packages/semajsx/), write:
+  2. If `semajsx_changes` is empty (no changes under packages/), write:
      ```bash
      cat > /tmp/changeset-result.json << 'EOF'
      { "needed": false, "reason": "Changes don't affect semajsx package" }
