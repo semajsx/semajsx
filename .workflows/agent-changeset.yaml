@@ -2,9 +2,25 @@ agents:
   changeset_analyzer:
     model: deepseek:deepseek-chat
     system_prompt: |
-      You are a changeset analyzer for a monorepo using changesets.
+      You are a changeset analyzer for the semajsx monorepo using changesets.
       You analyze merged PRs and determine which packages need version bumps.
       You produce structured JSON output — you do NOT create branches, PRs, or run git commands.
+
+      **VALID PACKAGE NAMES (use ONLY these in the "packages" field):**
+      - "@semajsx/core"
+      - "@semajsx/signal"
+      - "@semajsx/dom"
+      - "@semajsx/terminal"
+      - "@semajsx/ssr"
+      - "@semajsx/ssg"
+      - "@semajsx/style"
+      - "@semajsx/tailwind"
+      - "@semajsx/logger"
+      - "@semajsx/utils"
+      - "semajsx"
+
+      NEVER use any package name not in this list. If the PR changes code
+      that doesn't map to one of these packages, set "needed" to false.
 
       Version bump guidelines:
       - patch: bug fixes, documentation updates, internal refactors
@@ -47,9 +63,9 @@ setup:
         --json files --jq '.files[].path'
     as: changed_files
 
-  # Filter to only semajsx package changes (packages/* is semajsx's bundled packages)
+  # Filter to only package changes (packages/* are the monorepo's publishable packages)
   - shell: |
-      echo "$changed_files" | grep -E '^packages/' | head -20 || echo ""
+      echo "$changed_files" | grep -E '^packages/' | head -50 || echo ""
     as: semajsx_changes
 
   # Check for existing changesets in the merged PR
@@ -106,13 +122,25 @@ kickoff: |
      gh pr diff ${{ pr_number }} --repo ${{ repo }}
      ```
 
-     Then write your analysis:
+     Then write your analysis. Map changed directories to package names:
+     - `packages/core/` → `"@semajsx/core"`
+     - `packages/signal/` → `"@semajsx/signal"`
+     - `packages/dom/` → `"@semajsx/dom"`
+     - `packages/terminal/` → `"@semajsx/terminal"`
+     - `packages/ssr/` → `"@semajsx/ssr"`
+     - `packages/ssg/` → `"@semajsx/ssg"`
+     - `packages/style/` → `"@semajsx/style"`
+     - `packages/tailwind/` → `"@semajsx/tailwind"`
+     - `packages/logger/` → `"@semajsx/logger"`
+     - `packages/utils/` → `"@semajsx/utils"`
+     - `packages/semajsx/` → `"semajsx"`
+
      ```bash
      cat > /tmp/changeset-result.json << 'EOF'
      {
        "needed": true,
        "packages": {
-         "semajsx": "patch|minor"
+         "@semajsx/core": "patch|minor"
        },
        "description": "Brief description of the change for CHANGELOG"
      }
@@ -120,7 +148,8 @@ kickoff: |
      ```
 
   Rules:
-  - Only generate changeset for changes in `packages/semajsx/` directory
+  - Only generate changesets for changes in `packages/` directories
+  - Use the EXACT package names listed above — never invent package names
   - Ignore docs/, .github/, scripts/, or other non-package changes
   - The `description` field should be a concise CHANGELOG entry (one line)
   - During 0.x, use "minor" for breaking changes (not "major")
