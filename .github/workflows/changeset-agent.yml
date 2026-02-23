@@ -2,7 +2,7 @@ name: Changeset Agent
 
 # Flow:
 # 1. Agent analyzes merged PR -> /tmp/changeset-result.json
-# 2. If needed: create .changeset/auto-pr-{N}.md, commit to main
+# 2. If needed: create .changeset/auto-pr-{N}.md on a branch, merge via PR
 # 3. Always: check for ANY pending changesets (auto or manual)
 # 4. If pending: create release/next from main, run changeset version
 # 5. Force push release/next, create/update release PR
@@ -10,6 +10,7 @@ name: Changeset Agent
 # Changeset files on main are the single source of truth.
 # `changeset version` on the release branch consumes them;
 # merging the release PR brings the deletions back to main.
+# Changesets are merged via PR to respect branch protection rules.
 
 on:
   pull_request:
@@ -72,12 +73,14 @@ jobs:
           fi
           echo "needed=$(jq -r '.needed // false' /tmp/changeset-result.json)" >> "$GITHUB_OUTPUT"
 
-      - name: Commit changeset to main
+      - name: Merge changeset to main via PR
         if: steps.result.outputs.needed == 'true'
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           CHANGESET_ID="auto-pr-${PR_NUMBER}"
+          BRANCH="changeset/${CHANGESET_ID}"
           DESC=$(jq -r '.description // "update"' /tmp/changeset-result.json)
           {
             echo "---"
@@ -87,9 +90,21 @@ jobs:
             echo "$DESC"
           } > ".changeset/${CHANGESET_ID}.md"
 
+          git checkout -b "$BRANCH"
           git add ".changeset/${CHANGESET_ID}.md"
           git commit -m "chore: add changeset for PR #${PR_NUMBER}"
-          git push origin main
+          git push -u origin "$BRANCH"
+
+          # Create and merge the changeset PR
+          gh pr create \
+            --title "chore: changeset for PR #${PR_NUMBER}" \
+            --body "Auto-generated changeset for #${PR_NUMBER}." \
+            --base main --head "$BRANCH"
+          gh pr merge "$BRANCH" --squash --delete-branch
+
+          # Return to updated main
+          git checkout main
+          git pull origin main
 
       - name: Version and create release PR
         env:
