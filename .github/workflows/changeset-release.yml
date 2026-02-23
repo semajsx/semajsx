@@ -71,13 +71,17 @@ jobs:
               DESC=$(jq -r '.description // "update"' /tmp/changeset-result.json)
               PKG_VERSION=$(jq -r '.packages.semajsx // "patch"' /tmp/changeset-result.json)
 
-              cat > ".changeset/auto-pr-${PR_NUM}.md" << EOF
+              cat > ".changeset/auto-pr-${PR_NUM}.md" << 'EOF'
               ---
-              "semajsx": ${PKG_VERSION}
+              "semajsx": PKG_VERSION
               ---
 
-              ${DESC}
+              DESC
               EOF
+
+              # Replace the placeholders
+              sed -i "s/PKG_VERSION/$PKG_VERSION/" ".changeset/auto-pr-${PR_NUM}.md"
+              sed -i "s/DESC/$DESC/" ".changeset/auto-pr-${PR_NUM}.md"
 
               git add .changeset/
               git commit -m "chore: add changeset for PR #${PR_NUM}"

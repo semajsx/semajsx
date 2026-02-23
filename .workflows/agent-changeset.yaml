@@ -17,7 +17,6 @@ agents:
       - This keeps versions in 0.x range (e.g., 0.4.0 -> 0.5.0, NOT 1.0.0)
 
       Look for keywords: "BREAKING", "breaking change", "feat:", "fix:", etc.
-      Multiple packages can be affected by one PR.
 
 context:
   provider: memory
@@ -48,6 +47,11 @@ setup:
         --json files --jq '.files[].path'
     as: changed_files
 
+  # Filter to only semajsx package changes
+  - shell: |
+      echo "$changed_files" | grep -E '^packages/semajsx/' || echo ""
+    as: semajsx_changes
+
   # Check for existing changesets in the merged PR
   - shell: |
       CHANGESETS=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
@@ -59,28 +63,8 @@ setup:
       fi
     as: has_existing_changeset
 
-  # List packages in monorepo
-  - shell: |
-      if [ ! -f "package.json" ]; then
-        echo "No package.json found"
-        exit 0
-      fi
-      WORKSPACE_PATTERNS=$(jq -r '.workspaces // [] | if type == "array" then .[] else .packages[]? end' package.json 2>/dev/null)
-      if [ -z "$WORKSPACE_PATTERNS" ]; then
-        echo "No workspaces configured"
-        exit 0
-      fi
-      echo "$WORKSPACE_PATTERNS" | while read -r pattern; do
-        for pkg_json in ${pattern}/package.json; do
-          if [ -f "$pkg_json" ]; then
-            jq -r '.name // empty' "$pkg_json" 2>/dev/null
-          fi
-        done
-      done | sort -u
-    as: packages
-
 kickoff: |
-  @changeset_analyzer Analyze merged PR #${{ pr_number }} and determine if a changeset is needed.
+  @changeset_analyzer Analyze merged PR #${{ pr_number }} and determine if a changeset is needed for the semajsx package.
 
   ## Context
 
@@ -91,14 +75,14 @@ kickoff: |
   ${{ pr_info }}
   ```
 
-  ## Changed Files
+  ## Changed Files (ALL)
   ```
   ${{ changed_files }}
   ```
 
-  ## Available Packages
+  ## semajsx Package Changes
   ```
-  ${{ packages }}
+  ${{ semajsx_changes }}
   ```
 
   ## Instructions
@@ -110,14 +94,14 @@ kickoff: |
      EOF
      ```
 
-  2. If changes only affect non-package files (.github/, docs/, root config, .memory/), write:
+  2. If `semajsx_changes` is empty (no changes to packages/semajsx/), write:
      ```bash
      cat > /tmp/changeset-result.json << 'EOF'
-     { "needed": false, "reason": "Changes don't affect any published packages" }
+     { "needed": false, "reason": "Changes don't affect semajsx package" }
      EOF
      ```
 
-  3. Otherwise, analyze the changes. View the diff if needed:
+  3. Otherwise, analyze the semajsx changes:
      ```bash
      gh pr diff ${{ pr_number }} --repo ${{ repo }}
      ```
@@ -128,7 +112,7 @@ kickoff: |
      {
        "needed": true,
        "packages": {
-         "package-name": "patch|minor"
+         "semajsx": "patch|minor"
        },
        "description": "Brief description of the change for CHANGELOG"
      }
@@ -136,8 +120,8 @@ kickoff: |
      ```
 
   Rules:
-  - The `packages` field must use exact package names from the "Available Packages" list
+  - Only generate changeset for changes in `packages/semajsx/` directory
+  - Ignore docs/, .github/, scripts/, or other non-package changes
   - The `description` field should be a concise CHANGELOG entry (one line)
-  - Remember: during 0.x, use "minor" for breaking changes (not "major")
+  - During 0.x, use "minor" for breaking changes (not "major")
   - The JSON must be valid — the CI will parse it to create the changeset
-  - You ONLY write JSON. The CI handles branch creation, versioning, and PR creation.
