@@ -1,5 +1,5 @@
 {
-  "name": "@semajsx/semajsx",
+  "name": "semajsx",
   "version": "0.1.0",
   "description": "A signal-based reactive JSX runtime for building modern web applications",
   "keywords": [
