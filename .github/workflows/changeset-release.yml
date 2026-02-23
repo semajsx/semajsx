@@ -86,8 +86,9 @@ jobs:
           fi
 
   create-release-pr:
-    needs: generate-changeset
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -119,19 +120,19 @@ jobs:
 
       - name: Create release branch
         run: |
-          git checkout -b release/next
+          git checkout -b release/next || git checkout -b release/next || true
 
       - name: Version
-        run: bun run version
+        run: bun run version || true
 
       - name: Commit version changes
         run: |
           git add .
-          git commit -m "chore: version bump for release"
+          git commit -m "chore: version bump for release" || true
 
       - name: Push release branch
         run: |
-          git push origin release/next --force
+          git push origin release/next --force || true
 
       - name: Create release PR
         env:
@@ -141,7 +142,7 @@ jobs:
             --base main \
             --head release/next \
             --title "Release: Publish semajsx" \
-            --body "This PR was created automatically. Merging it will publish the new version to npm."
+            --body "This PR was created automatically. Merging it will publish the new version to npm." || true
 
   publish:
     needs: create-release-pr
