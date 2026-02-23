@@ -3,24 +3,14 @@ agents:
     model: deepseek:deepseek-chat
     system_prompt: |
       You are a changeset analyzer for the semajsx monorepo using changesets.
-      You analyze merged PRs and determine which packages need version bumps.
+      You analyze merged PRs and determine if the published package needs a version bump.
       You produce structured JSON output — you do NOT create branches, PRs, or run git commands.
 
-      **VALID PACKAGE NAMES (use ONLY these in the "packages" field):**
-      - "@semajsx/core"
-      - "@semajsx/signal"
-      - "@semajsx/dom"
-      - "@semajsx/terminal"
-      - "@semajsx/ssr"
-      - "@semajsx/ssg"
-      - "@semajsx/style"
-      - "@semajsx/tailwind"
-      - "@semajsx/logger"
-      - "@semajsx/utils"
-      - "semajsx"
-
-      NEVER use any package name not in this list. If the PR changes code
-      that doesn't map to one of these packages, set "needed" to false.
+      **IMPORTANT - Single Published Package:**
+      This monorepo only publishes ONE package: "semajsx".
+      All @semajsx/* packages are internal and get bundled into the "semajsx" package
+      via subpath exports (e.g., semajsx/dom, semajsx/signal).
+      The ONLY valid package name in changesets is "semajsx".
 
       Version bump guidelines:
       - patch: bug fixes, documentation updates, internal refactors
@@ -117,30 +107,20 @@ kickoff: |
      EOF
      ```
 
-  3. Otherwise, analyze the semajsx changes:
+  3. Otherwise, analyze the changes:
      ```bash
      gh pr diff ${{ pr_number }} --repo ${{ repo }}
      ```
 
-     Then write your analysis. Map changed directories to package names:
-     - `packages/core/` → `"@semajsx/core"`
-     - `packages/signal/` → `"@semajsx/signal"`
-     - `packages/dom/` → `"@semajsx/dom"`
-     - `packages/terminal/` → `"@semajsx/terminal"`
-     - `packages/ssr/` → `"@semajsx/ssr"`
-     - `packages/ssg/` → `"@semajsx/ssg"`
-     - `packages/style/` → `"@semajsx/style"`
-     - `packages/tailwind/` → `"@semajsx/tailwind"`
-     - `packages/logger/` → `"@semajsx/logger"`
-     - `packages/utils/` → `"@semajsx/utils"`
-     - `packages/semajsx/` → `"semajsx"`
+     Then write your analysis. Since all packages are bundled into "semajsx",
+     any change under `packages/` affects the published "semajsx" package:
 
      ```bash
      cat > /tmp/changeset-result.json << 'EOF'
      {
        "needed": true,
        "packages": {
-         "@semajsx/core": "patch|minor"
+         "semajsx": "patch|minor"
        },
        "description": "Brief description of the change for CHANGELOG"
      }
@@ -148,8 +128,9 @@ kickoff: |
      ```
 
   Rules:
+  - The "packages" field must ALWAYS use "semajsx" — it is the only published package
+  - NEVER use @semajsx/* names or any other package name in changesets
   - Only generate changesets for changes in `packages/` directories
-  - Use the EXACT package names listed above — never invent package names
   - Ignore docs/, .github/, scripts/, or other non-package changes
   - The `description` field should be a concise CHANGELOG entry (one line)
   - During 0.x, use "minor" for breaking changes (not "major")

@@ -77,20 +77,12 @@ jobs:
         if: steps.result.outputs.needed == 'true'
         id: validate
         run: |
-          # Build list of valid package names from workspace
-          VALID_PACKAGES=$(find packages -maxdepth 2 -name 'package.json' -exec jq -r '.name // empty' {} \; | sort)
-          echo "Valid packages:"
-          echo "$VALID_PACKAGES"
-
-          # Check every package in the changeset result exists in workspace
-          INVALID=$(jq -r '.packages | keys[]' /tmp/changeset-result.json | while read pkg; do
-            if ! echo "$VALID_PACKAGES" | grep -qxF "$pkg"; then
-              echo "$pkg"
-            fi
-          done)
+          # Only "semajsx" is published — reject any other package name
+          PACKAGES=$(jq -r '.packages | keys[]' /tmp/changeset-result.json)
+          INVALID=$(echo "$PACKAGES" | grep -vxF 'semajsx' || true)
 
           if [ -n "$INVALID" ]; then
-            echo "::error::Changeset references packages not in workspace: $INVALID"
+            echo "::error::Changeset references invalid packages: $INVALID (only 'semajsx' is published)"
             echo "valid=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
