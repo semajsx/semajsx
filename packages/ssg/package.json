@@ -1,15 +1,9 @@
 {
   "name": "@semajsx/ssg",
   "version": "0.1.0",
+  "private": true,
   "description": "Static site generation with collections and MDX support for SemaJSX",
-  "files": [
-    "dist",
-    "src"
-  ],
   "type": "module",
-  "main": "./dist/index.mjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
   "exports": {
     ".": "./src/index.ts",
     "./package.json": "./package.json"

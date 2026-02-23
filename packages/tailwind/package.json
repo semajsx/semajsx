@@ -1,6 +1,7 @@
 {
   "name": "@semajsx/tailwind",
   "version": "0.1.0",
+  "private": true,
   "description": "Tailwind-style utility classes for SemaJSX - type-safe and tree-shakeable",
   "keywords": [
     "css",
@@ -11,22 +12,10 @@
   ],
   "license": "MIT",
   "author": "lidessen",
-  "files": [
-    "dist"
-  ],
   "type": "module",
-  "main": "./dist/index.mjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
   "exports": {
     ".": "./src/index.ts",
     "./package.json": "./package.json"
-  },
-  "publishConfig": {
-    "exports": {
-      ".": "./dist/index.mjs",
-      "./package.json": "./package.json"
-    }
   },
   "scripts": {
     "build": "tsdown",

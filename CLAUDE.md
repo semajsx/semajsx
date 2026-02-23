@@ -517,15 +517,43 @@ When adding a new package to the monorepo:
 
 ## Publishing
 
-Currently, only the `semajsx` package is published to npm. In the future, individual packages will be published separately.
+This monorepo publishes a **single package** `semajsx` to npm. All `@semajsx/*` packages are internal (`"private": true`) and are bundled into `semajsx` at build time via `tsdown`.
 
-For now:
+Users consume functionality through subpath imports:
+
+```typescript
+import { signal, computed } from "semajsx"; // core + signal
+import { render } from "semajsx/dom"; // DOM rendering
+import { Box, Text } from "semajsx/terminal"; // terminal rendering
+import { rule, classes } from "semajsx/style"; // styling
+import { cx, p4 } from "semajsx/tailwind"; // tailwind utilities
+import { createSSR } from "semajsx/ssr"; // SSR
+import { createSSG } from "semajsx/ssg"; // SSG
+```
+
+### How it works
+
+- `packages/semajsx/src/` contains thin re-export files (e.g., `export * from "@semajsx/dom"`)
+- `tsdown` bundles all internal `@semajsx/*` code into `dist/` with code splitting
+- `publishConfig.exports` maps each subpath to its built output with `types` + `import` conditions
+- `typesVersions` provides backward compatibility for older TypeScript versions
+- Changesets only tracks the `semajsx` package (private packages are auto-skipped)
+
+### Manual publish
 
 ```bash
 cd packages/semajsx
 bun run build
 npm publish
 ```
+
+### Automated release (CI)
+
+Releases are managed via changesets + GitHub Actions:
+
+1. PRs merged to `main` trigger changeset analysis
+2. A release PR is created on `release/next` branch
+3. Merging the release PR publishes to npm with provenance
 
 ## Useful Resources
 

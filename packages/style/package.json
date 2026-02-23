@@ -1,6 +1,7 @@
 {
   "name": "@semajsx/style",
   "version": "0.1.0",
+  "private": true,
   "description": "Modular styling system for SemaJSX - tree-shakeable CSS with native syntax",
   "keywords": [
     "css",
@@ -11,26 +12,12 @@
   ],
   "license": "MIT",
   "author": "lidessen",
-  "files": [
-    "dist"
-  ],
   "type": "module",
-  "main": "./dist/index.mjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
   "exports": {
     ".": "./src/index.ts",
     "./react": "./src/react.ts",
     "./vue": "./src/vue.ts",
     "./package.json": "./package.json"
-  },
-  "publishConfig": {
-    "exports": {
-      ".": "./dist/index.mjs",
-      "./react": "./dist/react.mjs",
-      "./vue": "./dist/vue.mjs",
-      "./package.json": "./package.json"
-    }
   },
   "scripts": {
     "build": "tsdown",
