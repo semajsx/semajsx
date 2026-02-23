@@ -106,12 +106,13 @@ jobs:
           PR_BODY="## Pending Changes"
           for f in $PENDING; do
             BASENAME=$(basename "$f" .md)
+            # Extract description: everything after the closing "---" frontmatter
+            DESC=$(awk '/^---$/{n++; next} n>=2' "$f" | sed '/^$/d' | head -1)
+            [ -z "$DESC" ] && DESC="(no description)"
             if [[ "$BASENAME" == auto-pr-* ]]; then
               PR_NUM="${BASENAME#auto-pr-}"
-              DESC=$(tail -1 "$f")
               PR_BODY="${PR_BODY}"$'\n'"- #${PR_NUM}: ${DESC}"
             else
-              DESC=$(tail -1 "$f")
               PR_BODY="${PR_BODY}"$'\n'"- ${BASENAME}: ${DESC}"
             fi
           done

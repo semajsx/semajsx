@@ -58,13 +58,11 @@ jobs:
         id: publish
         run: |
           TAGS_BEFORE=$(git tag --list)
-          bun run release
+          bunx changeset publish
           TAGS_AFTER=$(git tag --list)
           NEW_TAGS=$(comm -13 <(echo "$TAGS_BEFORE" | sort) <(echo "$TAGS_AFTER" | sort) | tr '\n' ' ')
           echo "new_tags=$NEW_TAGS" >> "$GITHUB_OUTPUT"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
       - name: Push tags
@@ -75,10 +73,11 @@ jobs:
         if: steps.publish.outputs.new_tags != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_TAGS: ${{ steps.publish.outputs.new_tags }}
         run: |
           LATEST_TAG=""
           LATEST_VER=""
-          for TAG in ${{ steps.publish.outputs.new_tags }}; do
+          for TAG in $NEW_TAGS; do
             # Extract package name and version from tag (e.g., semajsx@0.2.0)
             if [[ "$TAG" =~ ^(.+)@([0-9]+\..+)$ ]]; then
               PKG="${BASH_REMATCH[1]}"
