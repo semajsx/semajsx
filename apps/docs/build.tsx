@@ -138,7 +138,7 @@ const allPageTokens = [
   border2,
   uppercase,
 ];
-export const homePageCss = extractCss(...allPageTokens);
+export const homePageCss = extractCss(allPageTokens as any);
 
 // Components
 const HomePage = (): VNode => (
