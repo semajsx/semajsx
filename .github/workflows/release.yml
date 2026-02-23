@@ -63,36 +63,25 @@ jobs:
           NEW_TAGS=$(comm -13 <(echo "$TAGS_BEFORE" | sort) <(echo "$TAGS_AFTER" | sort) | tr '\n' ' ')
           echo "new_tags=$NEW_TAGS" >> "$GITHUB_OUTPUT"
         env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
       - name: Push tags
         if: steps.publish.outputs.new_tags != ''
         run: git push --tags
 
-      - name: Create GitHub Releases
+      - name: Create GitHub Release
         if: steps.publish.outputs.new_tags != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NEW_TAGS: ${{ steps.publish.outputs.new_tags }}
         run: |
-          LATEST_TAG=""
-          LATEST_VER=""
-          for TAG in $NEW_TAGS; do
-            # Extract package name and version from tag (e.g., semajsx@0.2.0)
-            if [[ "$TAG" =~ ^(.+)@([0-9]+\..+)$ ]]; then
-              PKG="${BASH_REMATCH[1]}"
-              VER="${BASH_REMATCH[2]}"
-              gh release create "$TAG" --title "${PKG}@${VER}" --generate-notes --latest=false
-
-              # Track the highest version to mark as latest
-              if [[ -z "$LATEST_VER" ]] || printf '%s\n%s\n' "$LATEST_VER" "$VER" | sort -V | tail -1 | grep -qx "$VER"; then
-                LATEST_TAG="$TAG"
-                LATEST_VER="$VER"
-              fi
-            fi
-          done
-
-          # Mark the release with the highest version as latest
-          if [[ -n "$LATEST_TAG" ]]; then
-            gh release edit "$LATEST_TAG" --latest
+          # Only semajsx is published, so there's at most one tag (semajsx@x.y.z)
+          TAG=$(echo "$NEW_TAGS" | tr ' ' '\n' | head -1)
+          if [[ "$TAG" =~ ^semajsx@(.+)$ ]]; then
+            VER="${BASH_REMATCH[1]}"
+            gh release create "$TAG" \
+              --title "v${VER}" \
+              --generate-notes \
+              --latest
           fi
