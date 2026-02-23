@@ -1,4 +1,4 @@
-import type { JSXNode, VNode } from "@semajsx/core/types";
+import type { JSXNode, VNode } from "@semajsx/core";
 import type { UserConfig as ViteUserConfig, ViteDevServer } from "vite";
 
 /**

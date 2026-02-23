@@ -1,14 +1,14 @@
-import type { JSXNode, VNode } from "@semajsx/core/types";
+import type { JSXNode, VNode } from "@semajsx/core";
 import type {
   IslandMetadata,
   IslandScriptTransformer,
   RenderToStringOptions,
   SSRResult,
 } from "./shared/types";
-import { Fragment } from "@semajsx/core/types";
+import { Fragment } from "@semajsx/core";
 import { getIslandMetadata, isIslandVNode } from "./client/island";
 import { STYLE_MARKER, LINK_MARKER, ASSET_MARKER } from "./client/resource";
-import { isSignal, unwrap } from "@semajsx/signal/utils";
+import { isSignal, unwrap } from "@semajsx/signal";
 
 /**
  * Render context for collecting islands during traversal
