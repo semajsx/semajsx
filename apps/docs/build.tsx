@@ -4,7 +4,6 @@ import remarkGfm from "remark-gfm";
 import rehypeShiki from "@shikijs/rehype";
 import type { ShikiTransformer } from "@shikijs/types";
 import { createSSG, defineCollection, fileSource, z } from "semajsx/ssg";
-import { resource } from "semajsx/ssr";
 import type { VNode } from "semajsx";
 import {
   cx,
@@ -60,9 +59,6 @@ import * as theme from "./styles/theme.style";
 
 // Get the directory where this script is located
 const rootDir = import.meta.dir;
-
-// Create resource tools for CSS
-const { Style } = resource(import.meta.url);
 
 // Define docs collection
 const docs = defineCollection({
@@ -153,8 +149,6 @@ export const homePageCss = extractCss(...allPageTokens);
 
 const HomePage = (): VNode => (
   <Layout>
-    <Style href="./styles.css" />
-
     {/* Hero Section - Apple-style minimal with generous whitespace */}
     <div
       class={cx(theme.heroBg, "hero-section")}
@@ -328,7 +322,6 @@ const DocsIndex = ({
 
   return (
     <Layout>
-      <Style href="./styles.css" />
       <div style="max-width: 720px;">
         <div style="margin-bottom: 3rem;">
           <h1
@@ -383,7 +376,6 @@ const DocPage = ({
   content: VNode;
 }): VNode => (
   <Layout>
-    <Style href="./styles.css" />
     <article class="page-container">
       <div style="margin-bottom: 2.5rem;">
         <h1
@@ -446,7 +438,6 @@ const GuidesIndex = ({
 
   return (
     <Layout>
-      <Style href="./styles.css" />
       <div style="max-width: 720px;">
         <div style="margin-bottom: 3rem;">
           <h1
@@ -517,7 +508,6 @@ const GuidePage = ({
 
   return (
     <Layout>
-      <Style href="./styles.css" />
       <article class="page-container">
         <div style="margin-bottom: 2.5rem;">
           <span

@@ -1,6 +1,7 @@
 /** @jsxImportSource semajsx/dom */
 
 import type { VNode } from "semajsx";
+import { resource } from "semajsx/ssr";
 import {
   cx,
   flex,
@@ -25,6 +26,8 @@ import {
 } from "semajsx/tailwind";
 import * as theme from "../styles/theme.style";
 import { extractThemeCss } from "../styles/extract";
+
+const { Style } = resource(import.meta.url);
 
 // Collect all tokens used in this file for CSS extraction
 const usedTokens = [
@@ -68,6 +71,7 @@ export function Layout({ children }: LayoutProps): VNode {
     <div class={cx(flex, flexCol, "min-h-screen")} style="background: #fbfbfd;">
       {/* Inject Apple theme CSS on every page */}
       <style>{themeCss}</style>
+      <Style href="../styles.css" />
 
       {/* Apple-style Frosted Glass Navigation */}
       <nav class={cx(theme.glassNav, sticky, top0, z50)}>
