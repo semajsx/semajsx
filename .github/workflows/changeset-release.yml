@@ -153,7 +153,6 @@ jobs:
             --body "This PR was created automatically. Merging it will publish the new version to npm." || true
 
   publish:
-    needs: create-release-pr
     if: |
       (github.event_name == 'pull_request' && github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')) ||
       github.event_name == 'workflow_dispatch'
