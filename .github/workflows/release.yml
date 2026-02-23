@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Release
+    # Run on manual dispatch, or when a release PR is merged
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged && startsWith(github.event.pull_request.head.ref, 'release/'))
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build packages
+        run: bun run build
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Publish packages
+        id: publish
+        run: |
+          TAGS_BEFORE=$(git tag --list)
+          bun run release
+          TAGS_AFTER=$(git tag --list)
+          NEW_TAGS=$(comm -13 <(echo "$TAGS_BEFORE" | sort) <(echo "$TAGS_AFTER" | sort) | tr '\n' ' ')
+          echo "new_tags=$NEW_TAGS" >> "$GITHUB_OUTPUT"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
+
+      - name: Push tags
+        if: steps.publish.outputs.new_tags != ''
+        run: git push --tags
+
+      - name: Create GitHub Releases
+        if: steps.publish.outputs.new_tags != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LATEST_TAG=""
+          LATEST_VER=""
+          for TAG in ${{ steps.publish.outputs.new_tags }}; do
+            # Extract package name and version from tag (e.g., semajsx@0.2.0)
+            if [[ "$TAG" =~ ^(.+)@([0-9]+\..+)$ ]]; then
+              PKG="${BASH_REMATCH[1]}"
+              VER="${BASH_REMATCH[2]}"
+              gh release create "$TAG" --title "${PKG}@${VER}" --generate-notes --latest=false
+
+              # Track the highest version to mark as latest
+              if [[ -z "$LATEST_VER" ]] || printf '%s\n%s\n' "$LATEST_VER" "$VER" | sort -V | tail -1 | grep -qx "$VER"; then
+                LATEST_TAG="$TAG"
+                LATEST_VER="$VER"
+              fi
+            fi
+          done
+
+          # Mark the release with the highest version as latest
+          if [[ -n "$LATEST_TAG" ]]; then
+            gh release edit "$LATEST_TAG" --latest
+          fi
