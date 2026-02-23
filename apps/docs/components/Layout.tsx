@@ -49,7 +49,7 @@ const usedTokens = [
 ];
 
 // Export CSS for build-time extraction
-export const layoutCss = extractCss(...usedTokens);
+export const layoutCss = extractCss(usedTokens as any);
 
 interface LayoutProps {
   children: VNode | VNode[];

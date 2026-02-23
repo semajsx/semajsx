@@ -21,7 +21,8 @@ import type { StyleToken, TaggedUtilityFn } from "./types";
 import { createUtility, createTaggedUtility } from "./core";
 import { getConfig } from "./config";
 
-type UtilityFn = (value: string, valueName?: string) => StyleToken;
+// Unused type - keeping for potential future use
+// type UtilityFn = (value: string, valueName?: string) => StyleToken;
 
 // ============================================
 // Scale definitions
