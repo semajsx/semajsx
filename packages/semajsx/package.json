@@ -29,17 +29,8 @@
     "./package.json": "./package.json"
   },
   "publishConfig": {
-    "exports": {
-      ".": "./dist/index.mjs",
-      "./dom": "./dist/dom/index.mjs",
-      "./dom/jsx-dev-runtime": "./dist/dom/jsx-dev-runtime.mjs",
-      "./dom/jsx-runtime": "./dist/dom/jsx-runtime.mjs",
-      "./signal": "./dist/signal/index.mjs",
-      "./terminal": "./dist/terminal/index.mjs",
-      "./terminal/jsx-dev-runtime": "./dist/terminal/jsx-dev-runtime.mjs",
-      "./terminal/jsx-runtime": "./dist/terminal/jsx-runtime.mjs",
-      "./package.json": "./package.json"
-    }
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
     "build": "tsdown",
