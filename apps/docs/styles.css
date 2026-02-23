@@ -610,8 +610,14 @@ body {
   }
 
   /* --- 404 page --- */
-  .not-found-title {
-    font-size: 4rem !important;
+  .not-found-section {
+    padding: 60px 16px 48px !important;
+  }
+
+  .not-found-cta {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
   }
 
   /* --- Content typography --- */
