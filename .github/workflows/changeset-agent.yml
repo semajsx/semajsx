@@ -1,0 +1,144 @@
+name: Changeset Agent
+
+# Flow:
+# 1. Agent analyzes merged PR -> /tmp/changeset-result.json
+# 2. If needed: create .changeset/auto-pr-{N}.md, commit to main
+# 3. Always: check for ANY pending changesets (auto or manual)
+# 4. If pending: create release/next from main, run changeset version
+# 5. Force push release/next, create/update release PR
+#
+# Changeset files on main are the single source of truth.
+# `changeset version` on the release branch consumes them;
+# merging the release PR brings the deletions back to main.
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+# Serialize runs - prevents races on main and release/next
+concurrency:
+  group: changeset-release
+  cancel-in-progress: false
+
+jobs:
+  generate-changeset:
+    if: github.event.pull_request.merged == true && !startsWith(github.event.pull_request.head.ref, 'release/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Configure git
+        run: |
+          git config user.name "Changeset Bot"
+          git config user.email "changeset-bot@users.noreply.github.com"
+
+      - name: Analyze PR with Agent
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          bunx agent-worker run .workflows/agent-changeset.yaml
+
+      - name: Check result
+        id: result
+        run: |
+          if [ ! -f /tmp/changeset-result.json ] || ! jq empty /tmp/changeset-result.json 2>/dev/null; then
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "needed=$(jq -r '.needed // false' /tmp/changeset-result.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Commit changeset to main
+        if: steps.result.outputs.needed == 'true'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          CHANGESET_ID="auto-pr-${PR_NUMBER}"
+          DESC=$(jq -r '.description // "update"' /tmp/changeset-result.json)
+          {
+            echo "---"
+            jq -r '.packages | to_entries[] | "\"\(.key)\": \(.value)"' /tmp/changeset-result.json
+            echo "---"
+            echo ""
+            echo "$DESC"
+          } > ".changeset/${CHANGESET_ID}.md"
+
+          git add ".changeset/${CHANGESET_ID}.md"
+          git commit -m "chore: add changeset for PR #${PR_NUMBER}"
+          git push origin main
+
+      - name: Version and create release PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Collect ALL pending changeset files (exclude README.md)
+          PENDING=$(find .changeset -maxdepth 1 -name '*.md' ! -name 'README.md' -print 2>/dev/null || true)
+          if [ -z "$PENDING" ]; then
+            echo "No pending changesets"
+            exit 0
+          fi
+
+          PR_BODY="## Pending Changes"
+          for f in $PENDING; do
+            BASENAME=$(basename "$f" .md)
+            if [[ "$BASENAME" == auto-pr-* ]]; then
+              PR_NUM="${BASENAME#auto-pr-}"
+              DESC=$(tail -1 "$f")
+              PR_BODY="${PR_BODY}"$'\n'"- #${PR_NUM}: ${DESC}"
+            else
+              DESC=$(tail -1 "$f")
+              PR_BODY="${PR_BODY}"$'\n'"- ${BASENAME}: ${DESC}"
+            fi
+          done
+          PR_BODY="${PR_BODY}"$'\n\n'"---"$'\n'"Merge to publish packages to npm."
+
+          # Fresh release branch from current main
+          git branch -D release/next 2>/dev/null || true
+          git checkout -b release/next
+
+          bunx changeset version
+
+          git add -A
+          git commit -m "chore: version packages" || { echo "No version changes"; exit 0; }
+          git push -f -u origin release/next
+
+          # Create or update PR
+          EXISTING=$(gh pr list --head release/next --state open --json number --jq '.[0].number // empty' 2>/dev/null || true)
+          if [ -n "$EXISTING" ]; then
+            gh pr edit "$EXISTING" --body "$PR_BODY"
+            echo "Updated release PR #${EXISTING}"
+          else
+            gh pr create --title "chore: release packages" --body "$PR_BODY" --base main --head release/next
+            echo "Created release PR"
+          fi
+
+      - name: Summary
+        run: |
+          echo "### Changeset Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "- PR: #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Changeset needed: ${{ steps.result.outputs.needed }}" >> $GITHUB_STEP_SUMMARY
