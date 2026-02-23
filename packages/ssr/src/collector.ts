@@ -1,7 +1,7 @@
-import type { VNode } from "@semajsx/core/types";
+import type { VNode } from "@semajsx/core";
 import type { IslandMetadata } from "./shared/types";
 import { isIslandVNode, getIslandMetadata } from "./client/island";
-import { Fragment } from "@semajsx/core/types";
+import { Fragment } from "@semajsx/core";
 
 /**
  * Island collector - traverses VNode tree and collects island metadata
