@@ -63,7 +63,8 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           cd packages/semajsx
-          npm publish --access public
+          npm config set //registry.npmjs.org/:_authToken=$NPM_TOKEN
+          npm publish --access public --tag latest
 
       - name: Create Git tag
         run: |
@@ -160,7 +161,8 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           cd packages/semajsx
-          npm publish --access public
+          npm config set //registry.npmjs.org/:_authToken=$NPM_TOKEN
+          npm publish --access public --tag latest
 
       - name: Create Git tag
         run: |
