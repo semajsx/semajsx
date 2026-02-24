@@ -19,7 +19,7 @@
   ],
   "type": "module",
   "scripts": {
-    "build": "bun run --filter=@semajsx/* build",
+    "build": "bun run --filter './packages/*' build",
     "dev": "bun run --filter '*' dev",
     "test": "vitest",
     "test:unit": "vitest --config vitest.unit.config.ts",
