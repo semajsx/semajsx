@@ -1,6 +1,7 @@
 {
   "name": "@semajsx/logger",
   "version": "0.1.0",
+  "private": true,
   "description": "Rich terminal logging utility for SemaJSX",
   "files": [
     "dist",
