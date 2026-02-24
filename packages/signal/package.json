@@ -1,6 +1,7 @@
 {
   "name": "@semajsx/signal",
   "version": "0.1.0",
+  "private": true,
   "description": "Fine-grained reactive signal system for SemaJSX",
   "keywords": [
     "computed",

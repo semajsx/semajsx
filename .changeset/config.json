@@ -7,17 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": [
-    "@semajsx/configs",
-    "@semajsx/core",
-    "@semajsx/signal",
-    "@semajsx/dom",
-    "@semajsx/terminal",
-    "@semajsx/ssr",
-    "@semajsx/ssg",
-    "@semajsx/style",
-    "@semajsx/tailwind",
-    "@semajsx/logger",
-    "@semajsx/utils"
-  ]
+  "ignore": []
 }
