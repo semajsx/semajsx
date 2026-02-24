@@ -213,6 +213,18 @@ jobs:
           git commit -m "chore: version packages" || { echo "No version changes"; exit 0; }
           git push -f -u origin release/next
 
+          # Wait for GitHub to index the new branch before creating PR
+          echo "Waiting for GitHub to index the pushed branch..."
+          for i in 1 2 3 4 5; do
+            sleep 5
+            REF_SHA=$(gh api "repos/${{ github.repository }}/git/ref/heads/release/next" --jq '.object.sha' 2>/dev/null || true)
+            if [ -n "$REF_SHA" ]; then
+              echo "Branch indexed (sha: $REF_SHA)"
+              break
+            fi
+            echo "Attempt $i: branch not yet indexed, retrying..."
+          done
+
           # Create or update PR
           EXISTING=$(gh pr list --head release/next --state open --json number --jq '.[0].number // empty' 2>/dev/null || true)
           if [ -n "$EXISTING" ]; then
