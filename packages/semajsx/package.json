@@ -12,6 +12,11 @@
   ],
   "license": "MIT",
   "author": "lidessen",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/semajsx/semajsx",
+    "directory": "packages/semajsx"
+  },
   "files": [
     "dist"
   ],
