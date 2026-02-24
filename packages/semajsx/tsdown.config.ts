@@ -47,7 +47,5 @@ export default defineConfig({
     "react-dom",
     "vue",
   ],
-  exports: {
-    devExports: true,
-  },
+  exports: false,
 });
