@@ -23,21 +23,66 @@
   "type": "module",
   "types": "./dist/index.d.mts",
   "exports": {
-    ".": "./src/index.ts",
-    "./dom": "./src/dom/index.ts",
-    "./dom/jsx-dev-runtime": "./src/dom/jsx-dev-runtime.ts",
-    "./dom/jsx-runtime": "./src/dom/jsx-runtime.ts",
-    "./signal": "./src/signal/index.ts",
-    "./ssg": "./src/ssg/index.ts",
-    "./ssr": "./src/ssr/index.ts",
-    "./ssr/client": "./src/ssr/client.ts",
-    "./style": "./src/style/index.ts",
-    "./style/react": "./src/style/react.ts",
-    "./style/vue": "./src/style/vue.ts",
-    "./tailwind": "./src/tailwind/index.ts",
-    "./terminal": "./src/terminal/index.ts",
-    "./terminal/jsx-dev-runtime": "./src/terminal/jsx-dev-runtime.ts",
-    "./terminal/jsx-runtime": "./src/terminal/jsx-runtime.ts",
+    ".": {
+      "source": "./src/index.ts",
+      "default": "./dist/index.mjs"
+    },
+    "./dom": {
+      "source": "./src/dom/index.ts",
+      "default": "./dist/dom/index.mjs"
+    },
+    "./dom/jsx-dev-runtime": {
+      "source": "./src/dom/jsx-dev-runtime.ts",
+      "default": "./dist/dom/jsx-dev-runtime.mjs"
+    },
+    "./dom/jsx-runtime": {
+      "source": "./src/dom/jsx-runtime.ts",
+      "default": "./dist/dom/jsx-runtime.mjs"
+    },
+    "./signal": {
+      "source": "./src/signal/index.ts",
+      "default": "./dist/signal/index.mjs"
+    },
+    "./ssg": {
+      "source": "./src/ssg/index.ts",
+      "default": "./dist/ssg/index.mjs"
+    },
+    "./ssr": {
+      "source": "./src/ssr/index.ts",
+      "default": "./dist/ssr/index.mjs"
+    },
+    "./ssr/client": {
+      "source": "./src/ssr/client.ts",
+      "default": "./dist/ssr/client.mjs"
+    },
+    "./style": {
+      "source": "./src/style/index.ts",
+      "default": "./dist/style/index.mjs"
+    },
+    "./style/react": {
+      "source": "./src/style/react.ts",
+      "default": "./dist/style/react.mjs"
+    },
+    "./style/vue": {
+      "source": "./src/style/vue.ts",
+      "default": "./dist/style/vue.mjs"
+    },
+    "./tailwind": {
+      "source": "./src/tailwind/index.ts",
+      "default": "./dist/tailwind/index.mjs"
+    },
+    "./terminal": {
+      "source": "./src/terminal/index.ts",
+      "default": "./dist/terminal/index.mjs"
+    },
+    "./terminal/jsx-dev-runtime": {
+      "source": "./src/terminal/jsx-dev-runtime.ts",
+      "default": "./dist/terminal/jsx-dev-runtime.mjs"
+    },
+    "./terminal/jsx-runtime": {
+      "source": "./src/terminal/jsx-runtime.ts",
+      "default": "./dist/terminal/jsx-runtime.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -54,8 +99,6 @@
     "test:coverage": "vitest run --coverage --config vitest.unit.config.ts",
     "test:terminal": "vitest run tests/terminal --config vitest.unit.config.ts",
     "clean": "rm -rf dist",
-    "prepack": "node scripts/prepack.mjs",
-    "postpack": "git checkout -- package.json",
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
