@@ -36,25 +36,7 @@
     "./package.json": "./package.json"
   },
   "publishConfig": {
-    "access": "public",
-    "exports": {
-      ".": "./dist/index.mjs",
-      "./dom": "./dist/dom/index.mjs",
-      "./dom/jsx-dev-runtime": "./dist/dom/jsx-dev-runtime.mjs",
-      "./dom/jsx-runtime": "./dist/dom/jsx-runtime.mjs",
-      "./signal": "./dist/signal/index.mjs",
-      "./ssg": "./dist/ssg/index.mjs",
-      "./ssr": "./dist/ssr/index.mjs",
-      "./ssr/client": "./dist/ssr/client.mjs",
-      "./style": "./dist/style/index.mjs",
-      "./style/react": "./dist/style/react.mjs",
-      "./style/vue": "./dist/style/vue.mjs",
-      "./tailwind": "./dist/tailwind/index.mjs",
-      "./terminal": "./dist/terminal/index.mjs",
-      "./terminal/jsx-dev-runtime": "./dist/terminal/jsx-dev-runtime.mjs",
-      "./terminal/jsx-runtime": "./dist/terminal/jsx-runtime.mjs",
-      "./package.json": "./package.json"
-    }
+    "access": "public"
   },
   "scripts": {
     "build": "tsdown",
@@ -67,6 +49,8 @@
     "test:coverage": "vitest run --coverage --config vitest.unit.config.ts",
     "test:terminal": "vitest run tests/terminal --config vitest.unit.config.ts",
     "clean": "rm -rf dist",
+    "prepack": "node scripts/prepack.mjs",
+    "postpack": "git checkout -- package.json",
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
