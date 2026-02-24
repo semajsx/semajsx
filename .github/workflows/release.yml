@@ -63,6 +63,7 @@ jobs:
           NEW_TAGS=$(comm -13 <(echo "$TAGS_BEFORE" | sort) <(echo "$TAGS_AFTER" | sort) | tr '\n' ' ')
           echo "new_tags=$NEW_TAGS" >> "$GITHUB_OUTPUT"
         env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
       - name: Push tags
