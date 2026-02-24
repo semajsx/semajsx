@@ -30,11 +30,11 @@ export class MDXProcessor {
       remarkPlugins: (this.config.remarkPlugins ?? []) as Pluggable[],
       rehypePlugins: (this.config.rehypePlugins ?? []) as Pluggable[],
       // Use SemaJSX runtime
-      jsxImportSource: "@semajsx/dom",
+      jsxImportSource: "semajsx/dom",
     });
 
     // Dynamic import of JSX runtime
-    const jsxRuntime = await import("@semajsx/dom/jsx-runtime");
+    const jsxRuntime = await import("semajsx/dom/jsx-runtime");
 
     // Create the Content component
     const Content = this.createComponent(
