@@ -41,7 +41,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24"
-          registry-url: "https://registry.npmjs.org"
+
+      - name: Configure npm authentication
+        run: |
+          echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > "$HOME/.npmrc"
+          echo "registry=https://registry.npmjs.org/" >> "$HOME/.npmrc"
 
       - name: Install dependencies
         run: bun install
