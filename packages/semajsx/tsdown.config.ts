@@ -49,5 +49,11 @@ export default defineConfig({
     "react-dom",
     "vue",
   ],
-  exports: false,
+  exports: {
+    devExports: "source",
+    customExports(pkg) {
+      pkg["./package.json"] = "./package.json";
+      return pkg;
+    },
+  },
 });
