@@ -1,9 +1,9 @@
 name: Changeset Agent
 
 # Flow:
-# 1. Agent analyzes merged PR -> /tmp/changeset-result.json
+# 1. On PR merge: Agent analyzes merged PR -> /tmp/changeset-result.json
 # 2. If needed: create .changeset/auto-pr-{N}.md on a branch, merge via PR
-# 3. Always: check for ANY pending changesets (auto or manual)
+# 3. On PR merge OR push with changeset changes: check for ANY pending changesets
 # 4. If pending: create release/next from main, run changeset version
 # 5. Force push release/next, create/update release PR
 #
@@ -16,6 +16,11 @@ on:
   pull_request:
     types: [closed]
     branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - ".changeset/*.md"
+      - "!.changeset/README.md"
 
 # Serialize runs - prevents races on main and release/next
 concurrency:
@@ -24,7 +29,12 @@ concurrency:
 
 jobs:
   generate-changeset:
-    if: github.event.pull_request.merged == true && !startsWith(github.event.pull_request.head.ref, 'release/')
+    # Only on PR merge (not push), skip release and changeset branch merges
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true &&
+      !startsWith(github.event.pull_request.head.ref, 'release/') &&
+      !startsWith(github.event.pull_request.head.ref, 'changeset/')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -121,6 +131,51 @@ jobs:
           git checkout main
           git pull origin main
 
+      - name: Summary
+        run: |
+          echo "### Changeset Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "- PR: #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Changeset needed: ${{ steps.result.outputs.needed }}" >> $GITHUB_STEP_SUMMARY
+
+  version-release:
+    # Run after generate-changeset (on PR merge) or independently (on push)
+    # Skip when a release PR is merged (release.yml handles that)
+    needs: [generate-changeset]
+    if: >-
+      always() &&
+      !cancelled() &&
+      (needs.generate-changeset.result == 'success' || needs.generate-changeset.result == 'skipped') &&
+      !(github.event_name == 'pull_request' && startsWith(github.event.pull_request.head.ref, 'release/'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Configure git
+        run: |
+          git config user.name "Changeset Bot"
+          git config user.email "changeset-bot@users.noreply.github.com"
+
       - name: Version and create release PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -167,9 +222,3 @@ jobs:
             gh pr create --title "chore: release packages" --body "$PR_BODY" --base main --head release/next
             echo "Created release PR"
           fi
-
-      - name: Summary
-        run: |
-          echo "### Changeset Analysis" >> $GITHUB_STEP_SUMMARY
-          echo "- PR: #${{ github.event.pull_request.number }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Changeset needed: ${{ steps.result.outputs.needed }}" >> $GITHUB_STEP_SUMMARY
