@@ -23,6 +23,8 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   splitting: true,
+  // Bundle all @semajsx/* workspace packages into the output
+  noExternal: [/^@semajsx\//],
   external: [
     // Terminal
     "yoga-layout-prebuilt",
