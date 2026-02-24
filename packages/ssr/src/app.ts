@@ -316,7 +316,7 @@ class AppImpl implements App {
         const componentName = island.componentName;
 
         const entryCode = `
-import { hydrateAllIslands } from '@semajsx/ssr/client';
+import { hydrateAllIslands } from 'semajsx/ssr/client';
 import * as ComponentModule from '${componentPath}';
 
 const Component = ${componentName ? `ComponentModule['${componentName}'] || ComponentModule.${componentName}` : "ComponentModule.default"} ||
@@ -469,8 +469,8 @@ if (Component) {
 
     // Generate entry point code
     const entryCode = `
-import { hydrateIsland } from '@semajsx/ssr/client';
-import { markIslandHydrated } from '@semajsx/ssr/client';
+import { hydrateIsland } from 'semajsx/ssr/client';
+import { markIslandHydrated } from 'semajsx/ssr/client';
 import * as ComponentModule from '${componentPath}';
 
 // Get the component (try named export first, then default, then first function)
@@ -633,8 +633,8 @@ if (Component) {
           const componentName = island.componentName;
 
           return `
-import { hydrateIsland } from '@semajsx/ssr/client';
-import { markIslandHydrated } from '@semajsx/ssr/client';
+import { hydrateIsland } from 'semajsx/ssr/client';
+import { markIslandHydrated } from 'semajsx/ssr/client';
 import * as ComponentModule from '${componentPath}';
 
 // Get the component (try named export first, then default, then first function)

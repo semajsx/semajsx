@@ -29,7 +29,7 @@ export function viteMDXPlugin(options: MDXPluginOptions = {}): PluginOption {
       try {
         // Compile MDX to JavaScript (not JSX)
         const compiled = await compile(code, {
-          jsxImportSource: "@semajsx/dom",
+          jsxImportSource: "semajsx/dom",
           outputFormat: "program",
           development: false,
           remarkPlugins: (options.remarkPlugins ?? []) as Pluggable[],
