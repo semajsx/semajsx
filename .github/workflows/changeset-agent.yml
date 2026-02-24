@@ -207,6 +207,12 @@ jobs:
           git branch -D release/next 2>/dev/null || true
           git checkout -b release/next
 
+          # Verify GitHub API access before running changeset version
+          echo "GITHUB_TOKEN is set: $([ -n "$GITHUB_TOKEN" ] && echo 'yes (length: ${#GITHUB_TOKEN})' || echo 'no')"
+          curl -sf -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/${{ github.repository }} > /dev/null \
+            && echo "GitHub API: accessible" \
+            || echo "::warning::GitHub API: not accessible with current token"
+
           bunx changeset version
 
           git add -A
