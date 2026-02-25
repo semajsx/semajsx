@@ -97,8 +97,9 @@ export interface StaticPath<P = Record<string, string>> {
 export interface RouteConfig<TRegistry extends Record<string, unknown> = Record<string, unknown>> {
   /** Route path pattern (e.g., '/blog/:slug') */
   path: string;
-  /** Component to render */
-  component: (props: Record<string, unknown>) => VNode;
+  /** Component to render. Props are provided dynamically by the route config. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Route props are dynamic, typed via `props`/`getStaticPaths`
+  component: (props: any) => VNode;
   /** Static props for the route */
   props?:
     | Record<string, unknown>

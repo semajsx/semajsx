@@ -4,7 +4,7 @@ import { defineCollection } from "../../index";
 import type { DocsThemeOptions } from "./types";
 import { createComponents, Callout, CodeBlock } from "./components";
 import { lucide as lucidePlugin } from "../lucide/index";
-import type { VNode } from "@semajsx/core";
+import type { Component } from "@semajsx/core";
 
 export type {
   DocsThemeOptions,
@@ -122,7 +122,7 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
       // Home page
       routes.push({
         path: "/",
-        component: components.HomePage as (props: Record<string, unknown>) => VNode,
+        component: components.HomePage,
         props: { title: options.title },
       });
 
@@ -130,7 +130,7 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
       if (options.docs) {
         routes.push({
           path: docsBasePath,
-          component: components.DocsIndex as (props: Record<string, unknown>) => VNode,
+          component: components.DocsIndex,
           props: async (ssg) => ({
             title: options.docs?.heading ?? "Documentation",
             docs: await ssg.getCollection("docs"),
@@ -139,7 +139,7 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
 
         routes.push({
           path: `${docsBasePath}/:slug`,
-          component: components.DocPage as (props: Record<string, unknown>) => VNode,
+          component: components.DocPage,
           getStaticPaths: async (ssg) => {
             const allDocs = await ssg.getCollection("docs");
             return Promise.all(
@@ -163,7 +163,7 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
       if (options.guides) {
         routes.push({
           path: guidesBasePath,
-          component: components.GuidesIndex as (props: Record<string, unknown>) => VNode,
+          component: components.GuidesIndex,
           props: async (ssg) => ({
             title: options.guides?.heading ?? "Guides",
             guides: await ssg.getCollection("guides"),
@@ -172,7 +172,7 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
 
         routes.push({
           path: `${guidesBasePath}/:slug`,
-          component: components.GuidePage as (props: Record<string, unknown>) => VNode,
+          component: components.GuidePage,
           getStaticPaths: async (ssg) => {
             const allGuides = await ssg.getCollection("guides");
             return Promise.all(
@@ -195,13 +195,13 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
       // 404 page
       routes.push({
         path: "/404",
-        component: components.NotFound as (props: Record<string, unknown>) => VNode,
+        component: components.NotFound,
         props: { title: `404 - Page Not Found | ${options.title}` },
       });
 
       // --- MDX ---
 
-      const mdxComponents: Record<string, unknown> = {
+      const mdxComponents: Record<string, Component> = {
         Callout,
         CodeBlock,
         ...options.mdx?.components,
