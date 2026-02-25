@@ -54,6 +54,9 @@ export type {
   WatchOptions,
   Watcher,
 
+  // Plugin types
+  SSGPlugin,
+
   // MDX types
   MDXConfig,
 

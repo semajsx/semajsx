@@ -7,7 +7,9 @@ import type { VNode } from "@semajsx/core";
 import {
   RawHTML,
   type SSGConfig,
+  type SSGPlugin,
   type SSGInstance,
+  type MDXConfig,
   type Collection,
   type CollectionEntry,
   type BuildOptions,
@@ -21,6 +23,60 @@ import {
 import { viteMDXPlugin } from "./mdx";
 
 /**
+ * Sort plugins by enforce order: 'pre' → normal → 'post'
+ */
+function sortPlugins(plugins: SSGPlugin[]): SSGPlugin[] {
+  const pre: SSGPlugin[] = [];
+  const normal: SSGPlugin[] = [];
+  const post: SSGPlugin[] = [];
+
+  for (const plugin of plugins) {
+    if (plugin.enforce === "pre") pre.push(plugin);
+    else if (plugin.enforce === "post") post.push(plugin);
+    else normal.push(plugin);
+  }
+
+  return [...pre, ...normal, ...post];
+}
+
+/**
+ * Merge a partial MDX config into an existing one.
+ */
+function mergeMdxConfig(base: MDXConfig, partial: Partial<MDXConfig>): MDXConfig {
+  return {
+    remarkPlugins: [...(base.remarkPlugins ?? []), ...(partial.remarkPlugins ?? [])],
+    rehypePlugins: [...(base.rehypePlugins ?? []), ...(partial.rehypePlugins ?? [])],
+    components: { ...base.components, ...partial.components },
+  };
+}
+
+/**
+ * Run config hooks on all plugins, then merge with user MDX config.
+ * Order: enforce:'pre' → normal → enforce:'post' → user mdx config.
+ */
+function resolvePlugins(plugins: SSGPlugin[], config: SSGConfig): MDXConfig {
+  const sorted = sortPlugins(plugins);
+  let mdx: MDXConfig = { remarkPlugins: [], rehypePlugins: [], components: {} };
+
+  // Call config hooks in order
+  for (const plugin of sorted) {
+    if (plugin.config) {
+      const partial = plugin.config(config);
+      if (partial?.mdx) {
+        mdx = mergeMdxConfig(mdx, partial.mdx);
+      }
+    }
+  }
+
+  // User mdx config takes precedence (applied last)
+  if (config.mdx) {
+    mdx = mergeMdxConfig(mdx, config.mdx);
+  }
+
+  return mdx;
+}
+
+/**
  * SSG (Static Site Generator) core class
  * Built on top of server's createApp
  */
@@ -28,6 +84,7 @@ export class SSG<
   TRegistry extends Record<string, unknown> = Record<string, unknown>,
 > implements SSGInstance<TRegistry> {
   private config: SSGConfig;
+  private plugins: SSGPlugin[];
   private rootDir: string;
   private collections: Map<string, Collection>;
   private entriesCache: Map<string, CollectionEntry[]>;
@@ -38,11 +95,23 @@ export class SSG<
     // Resolve rootDir
     this.rootDir = config.rootDir ?? process.cwd();
 
+    // Sort and store plugins
+    this.plugins = sortPlugins(config.plugins ?? []);
+
+    // Run config hooks, then merge with user mdx config
+    const resolvedMdx = resolvePlugins(this.plugins, config);
+
     this.config = {
       base: "/",
       ...config,
+      mdx: resolvedMdx,
       outDir: resolve(this.rootDir, config.outDir),
     };
+
+    // Call configResolved on all plugins
+    for (const plugin of this.plugins) {
+      plugin.configResolved?.(this.config);
+    }
     this.collections = new Map();
     this.entriesCache = new Map();
 
@@ -67,7 +136,7 @@ export class SSG<
             },
           },
           // MDX compiler plugin
-          viteMDXPlugin(config.mdx ?? {}),
+          viteMDXPlugin(resolvedMdx),
         ],
       },
     });
@@ -155,6 +224,11 @@ export class SSG<
     const { incremental = false, state: prevState } = options;
     const outDir = this.config.outDir;
 
+    // Plugin hook: buildStart
+    for (const plugin of this.plugins) {
+      await plugin.buildStart?.();
+    }
+
     // Initialize App (starts Vite)
     await this.app.prepare();
 
@@ -179,6 +253,11 @@ export class SSG<
           },
         },
       });
+
+      // Plugin hook: buildEnd
+      for (const plugin of this.plugins) {
+        await plugin.buildEnd?.(result);
+      }
 
       return result;
     } finally {
