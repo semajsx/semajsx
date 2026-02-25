@@ -262,6 +262,25 @@ export interface BuildOptions {
 
   /** Callback when an island is built */
   onIslandBuilt?: (island: IslandMetadata) => void;
+
+  /**
+   * Custom HTML renderer for build output.
+   * When provided, used instead of the default minimal HTML template.
+   * This allows callers (e.g., SSG) to inject their own Document template
+   * with custom head elements (fonts, meta tags, etc.).
+   */
+  renderHtml?: (opts: {
+    /** Rendered page content (HTML string) */
+    html: string;
+    /** CSS stylesheet paths */
+    css: string[];
+    /** Island script tags (HTML string) */
+    scripts: string;
+    /** Page title */
+    title: string;
+    /** Route path */
+    path: string;
+  }) => string;
 }
 
 /**

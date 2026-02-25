@@ -130,9 +130,30 @@ function renderElement(tag: string, props: any, children: any[]): string {
     return `<${tag}${attrs} />`;
   }
 
-  const childrenHTML = (children || []).map((child) => renderDocumentVNode(child)).join("");
+  // Raw text elements: content must NOT be HTML-escaped
+  const isRawText = tag === "style" || tag === "script";
+  const childrenHTML = isRawText
+    ? (children || []).map((child) => extractRawText(child)).join("")
+    : (children || []).map((child) => renderDocumentVNode(child)).join("");
 
   return `<${tag}${attrs}>${childrenHTML}</${tag}>`;
+}
+
+/**
+ * Extract raw text from a VNode without HTML escaping.
+ * Used for <style> and <script> content.
+ */
+function extractRawText(vnode: any): string {
+  if (vnode == null || typeof vnode === "boolean") return "";
+  if (typeof vnode === "string" || typeof vnode === "number") return String(vnode);
+  if (Array.isArray(vnode)) return vnode.map(extractRawText).join("");
+  if (typeof vnode === "object" && "type" in vnode) {
+    if (vnode.type === "#text") return String(vnode.props?.nodeValue ?? "");
+    if (vnode.type === "#signal") return (vnode.children || []).map(extractRawText).join("");
+    // Nested elements inside style/script (rare) - render normally
+    return renderDocumentVNode(vnode);
+  }
+  return "";
 }
 
 /**
@@ -156,7 +177,7 @@ function renderAttributes(props: Record<string, any>): string {
       continue;
     }
 
-    // Map React attribute names to HTML
+    // Map React/JSX attribute names to HTML
     const attrName =
       key === "className"
         ? "class"
@@ -164,7 +185,9 @@ function renderAttributes(props: Record<string, any>): string {
           ? "for"
           : key === "charSet"
             ? "charset"
-            : key;
+            : key === "crossOrigin"
+              ? "crossorigin"
+              : key;
 
     attrs.push(`${attrName}="${escapeHTML(String(value))}"`);
   }
