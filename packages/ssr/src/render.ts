@@ -590,7 +590,9 @@ function renderAttributes(props: Record<string, any>): string {
             ? "charset"
             : key === "crossOrigin"
               ? "crossorigin"
-              : key;
+              : key === "httpEquiv"
+                ? "http-equiv"
+                : key;
 
     // Handle style object
     if (attrName === "style" && typeof attrValue === "object") {

@@ -302,7 +302,7 @@ export class SSG<
             path: routePath,
             props: {},
             scripts: scriptsHtml ? new RawHTML(scriptsHtml) : undefined,
-            css: css.length > 0 ? css : undefined,
+            css: css ?? [],
           };
           const documentVNode = documentTemplate(documentProps);
           return renderDocument(documentVNode);
@@ -456,7 +456,7 @@ export class SSG<
       path,
       props,
       scripts: result.scripts ? new RawHTML(result.scripts) : undefined,
-      css: result.css.length > 0 ? result.css : undefined,
+      css: result.css ?? [],
     };
 
     const template = this.config.document ?? DefaultDocument;
