@@ -164,6 +164,21 @@ export type DocumentTemplate = (props: DocumentProps) => VNode;
 // Plugin System
 // =============================================================================
 
+/**
+ * Partial SSG config that a plugin's config() hook can return.
+ * Each field has a defined merge strategy:
+ * - mdx: merge (concat arrays, merge component objects)
+ * - document: override (last writer wins)
+ * - routes: concat
+ * - collections: concat
+ */
+export interface SSGPluginConfig {
+  mdx?: Partial<MDXConfig>;
+  document?: DocumentTemplate;
+  routes?: RouteConfig[];
+  collections?: readonly Collection[];
+}
+
 export interface SSGPlugin {
   /** Plugin name for identification and debugging */
   name: string;
@@ -173,10 +188,10 @@ export interface SSGPlugin {
 
   /**
    * Modify SSG config before it is resolved.
-   * Return partial config to merge (currently supports mdx).
-   * Called in plugin order: enforce:'pre' → normal → enforce:'post' → user mdx config.
+   * Return partial config to merge.
+   * Called in plugin order: enforce:'pre' → normal → enforce:'post' → user config.
    */
-  config?(config: SSGConfig): { mdx?: Partial<MDXConfig> } | void;
+  config?(config: SSGConfig): SSGPluginConfig | void;
 
   /** Called after config is fully resolved. Read-only inspection. */
   configResolved?(config: SSGConfig): void;

@@ -56,6 +56,7 @@ export type {
 
   // Plugin types
   SSGPlugin,
+  SSGPluginConfig,
 
   // MDX types
   MDXConfig,
