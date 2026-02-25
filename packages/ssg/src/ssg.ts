@@ -292,13 +292,16 @@ export class SSG<
         mode: "full",
         minify: true,
         renderHtml: ({ html, css, scripts, title, path: routePath }) => {
+          const scriptsHtml = scripts
+            .map((s) => `<script type="module" src="${s.src}"></script>`)
+            .join("\n");
           const documentProps: DocumentProps = {
             children: new RawHTML(html),
             title,
             base: this.config.base ?? "/",
             path: routePath,
             props: {},
-            scripts: scripts ? new RawHTML(scripts) : undefined,
+            scripts: scriptsHtml ? new RawHTML(scriptsHtml) : undefined,
             css: css.length > 0 ? css : undefined,
           };
           const documentVNode = documentTemplate(documentProps);
