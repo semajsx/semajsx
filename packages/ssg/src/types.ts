@@ -177,6 +177,8 @@ export interface SSGPluginConfig {
   document?: DocumentTemplate;
   routes?: RouteConfig[];
   collections?: readonly Collection[];
+  /** Sub-plugins to install alongside this plugin */
+  plugins?: SSGPlugin[];
 }
 
 export interface SSGPlugin {

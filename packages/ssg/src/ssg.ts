@@ -64,6 +64,15 @@ interface ResolvedPluginConfig {
 }
 
 /**
+ * Result of plugin resolution: merged config + flat list of all plugins
+ * (including sub-plugins discovered via `plugins` in SSGPluginConfig).
+ */
+interface PluginResolutionResult {
+  config: ResolvedPluginConfig;
+  allPlugins: SSGPlugin[];
+}
+
+/**
  * Run config hooks on all plugins, then merge with user config.
  *
  * Merge strategies:
@@ -71,24 +80,41 @@ interface ResolvedPluginConfig {
  * - document: override (last writer wins, user config last)
  * - routes: concat (plugin routes first, then user routes)
  * - collections: concat (plugin collections first, then user collections)
+ * - plugins: recursively resolved (sub-plugins before parent config)
  */
-function resolvePlugins(plugins: SSGPlugin[], config: SSGConfig): ResolvedPluginConfig {
+function resolvePlugins(plugins: SSGPlugin[], config: SSGConfig): PluginResolutionResult {
   const sorted = sortPlugins(plugins);
   let mdx: MDXConfig = { remarkPlugins: [], rehypePlugins: [], components: {} };
   let document: DocumentTemplate | undefined;
   const routes: RouteConfig[] = [];
   const collections: Collection[] = [];
+  const allPlugins: SSGPlugin[] = [];
 
-  // Call config hooks in order
-  for (const plugin of sorted) {
-    if (!plugin.config) continue;
+  function processPlugin(plugin: SSGPlugin): void {
+    allPlugins.push(plugin);
+
+    if (!plugin.config) return;
     const partial = plugin.config(config);
-    if (!partial) continue;
+    if (!partial) return;
 
+    // Resolve sub-plugins first (dependencies before parent config)
+    if (partial.plugins?.length) {
+      const subSorted = sortPlugins(partial.plugins);
+      for (const sub of subSorted) {
+        processPlugin(sub);
+      }
+    }
+
+    // Then merge this plugin's own config
     if (partial.mdx) mdx = mergeMdxConfig(mdx, partial.mdx);
     if (partial.document) document = partial.document;
     if (partial.routes) routes.push(...partial.routes);
     if (partial.collections) collections.push(...partial.collections);
+  }
+
+  // Call config hooks in order
+  for (const plugin of sorted) {
+    processPlugin(plugin);
   }
 
   // User config takes precedence (applied last)
@@ -97,7 +123,7 @@ function resolvePlugins(plugins: SSGPlugin[], config: SSGConfig): ResolvedPlugin
   if (config.routes) routes.push(...config.routes);
   if (config.collections) collections.push(...config.collections);
 
-  return { mdx, document, routes, collections };
+  return { config: { mdx, document, routes, collections }, allPlugins };
 }
 
 /**
@@ -119,11 +145,11 @@ export class SSG<
     // Resolve rootDir
     this.rootDir = config.rootDir ?? process.cwd();
 
-    // Sort and store plugins
-    this.plugins = sortPlugins(config.plugins ?? []);
+    // Run config hooks — merges plugins + user config, collects all plugins (including nested)
+    const { config: resolved, allPlugins } = resolvePlugins(config.plugins ?? [], config);
 
-    // Run config hooks — merges plugins + user config
-    const resolved = resolvePlugins(this.plugins, config);
+    // Store all plugins (including sub-plugins) for lifecycle hooks
+    this.plugins = allPlugins;
 
     this.config = {
       base: "/",
