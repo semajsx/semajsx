@@ -226,6 +226,7 @@ class AppImpl implements App {
       minify = true,
       sourcemap = false,
       onIslandBuilt,
+      renderHtml: customRenderHtml,
     } = options;
 
     logger.info(`Building for production (mode: ${mode})...`);
@@ -283,7 +284,17 @@ class AppImpl implements App {
           // Generate HTML
           const routeMeta = this._routeMeta.get(path);
           const pageTitle = routeMeta?.title ?? this.config.title ?? "Page";
-          const html = `<!DOCTYPE html>
+          const scriptsHtml = islandScripts.join("\n  ");
+
+          const html = customRenderHtml
+            ? customRenderHtml({
+                html: result.html,
+                css: cssRefs,
+                scripts: scriptsHtml,
+                title: pageTitle,
+                path,
+              })
+            : `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -293,7 +304,7 @@ class AppImpl implements App {
 </head>
 <body>
   ${result.html}
-  ${islandScripts.join("\n  ")}
+  ${scriptsHtml}
 </body>
 </html>`;
 

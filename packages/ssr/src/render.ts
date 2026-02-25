@@ -502,6 +502,12 @@ async function renderElement(vnode: VNode, context: RenderContext): Promise<stri
     return `<${tag}${attrs} />`;
   }
 
+  // Raw text elements: content must NOT be HTML-escaped
+  if (tag === "style" || tag === "script") {
+    const rawChildren = (vnode.children || []).map((child: JSXNode) => extractRawText(child));
+    return `<${tag}${attrs}>${rawChildren.join("")}</${tag}>`;
+  }
+
   // Regular tag with children
   const childResults = await Promise.all(
     (vnode.children || []).map((child: JSXNode) => renderVNodeToHTML(child, context)),
@@ -509,6 +515,28 @@ async function renderElement(vnode: VNode, context: RenderContext): Promise<stri
   const children = childResults.join("");
 
   return `<${tag}${attrs}>${children}</${tag}>`;
+}
+
+/**
+ * Extract raw text from a VNode without HTML escaping.
+ * Used for <style> and <script> content.
+ */
+function extractRawText(vnode: JSXNode): string {
+  if (vnode == null || typeof vnode === "boolean") return "";
+  if (typeof vnode === "string" || typeof vnode === "number") return String(vnode);
+  if (Array.isArray(vnode)) return vnode.map(extractRawText).join("");
+  if (typeof vnode === "object" && "type" in vnode) {
+    const v = vnode as VNode;
+    if (v.type === "#text") return String(v.props?.nodeValue ?? "");
+    if (v.type === "#signal") {
+      const signal = v.props?.signal;
+      if (signal && isSignal(signal)) return String(unwrap(signal));
+      return "";
+    }
+    // Flatten children
+    return (v.children || []).map(extractRawText).join("");
+  }
+  return "";
 }
 
 /**
@@ -552,8 +580,17 @@ function renderAttributes(props: Record<string, any>): string {
       continue;
     }
 
-    // Handle className -> class
-    const attrName = key === "className" ? "class" : key;
+    // Handle JSX -> HTML attribute name mapping
+    const attrName =
+      key === "className"
+        ? "class"
+        : key === "htmlFor"
+          ? "for"
+          : key === "charSet"
+            ? "charset"
+            : key === "crossOrigin"
+              ? "crossorigin"
+              : key;
 
     // Handle style object
     if (attrName === "style" && typeof attrValue === "object") {

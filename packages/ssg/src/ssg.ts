@@ -284,10 +284,26 @@ export class SSG<
       const result = await this.buildPages(incremental, prevState, outDir);
 
       // Build islands for client-side hydration
+      // Pass renderHtml so the Vite build uses the SSG's Document template
+      // instead of a hardcoded minimal HTML template
+      const documentTemplate = this.config.document ?? DefaultDocument;
       await this.app.build({
         outDir,
         mode: "full",
         minify: true,
+        renderHtml: ({ html, css, scripts, title, path: routePath }) => {
+          const documentProps: DocumentProps = {
+            children: new RawHTML(html),
+            title,
+            base: this.config.base ?? "/",
+            path: routePath,
+            props: {},
+            scripts: scripts ? new RawHTML(scripts) : undefined,
+            css: css.length > 0 ? css : undefined,
+          };
+          const documentVNode = documentTemplate(documentProps);
+          return renderDocument(documentVNode);
+        },
         vite: {
           build: {
             rollupOptions: {
