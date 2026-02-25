@@ -51,6 +51,10 @@
       "source": "./src/ssg/plugins/lucide.ts",
       "default": "./dist/ssg/plugins/lucide.mjs"
     },
+    "./ssg/plugins/docs-theme": {
+      "source": "./src/ssg/plugins/docs-theme.ts",
+      "default": "./dist/ssg/plugins/docs-theme.mjs"
+    },
     "./ssr": {
       "source": "./src/ssr/index.ts",
       "default": "./dist/ssr/index.mjs"
@@ -99,6 +103,7 @@
       "./signal": "./dist/signal/index.mjs",
       "./ssg": "./dist/ssg/index.mjs",
       "./ssg/plugins/lucide": "./dist/ssg/plugins/lucide.mjs",
+      "./ssg/plugins/docs-theme": "./dist/ssg/plugins/docs-theme.mjs",
       "./ssr": "./dist/ssr/index.mjs",
       "./ssr/client": "./dist/ssr/client.mjs",
       "./style": "./dist/style/index.mjs",
