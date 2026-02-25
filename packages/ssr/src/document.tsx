@@ -187,7 +187,9 @@ function renderAttributes(props: Record<string, any>): string {
             ? "charset"
             : key === "crossOrigin"
               ? "crossorigin"
-              : key;
+              : key === "httpEquiv"
+                ? "http-equiv"
+                : key;
 
     attrs.push(`${attrName}="${escapeHTML(String(value))}"`);
   }
