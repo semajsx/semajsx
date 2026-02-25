@@ -54,6 +54,7 @@ export type {
   App,
   AppConfig,
   BuildOptions,
+  BuildScriptEntry,
   DevOptions,
   BuildResult,
   RenderResult,

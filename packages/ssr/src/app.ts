@@ -21,6 +21,7 @@ import type {
   AppConfig,
   BuildOptions,
   BuildResult,
+  BuildScriptEntry,
   DevOptions,
   IslandMetadata,
   RenderResult,
@@ -270,27 +271,24 @@ class AppImpl implements App {
 
           // Island script references - deduplicate by component path
           const seenComponents = new Set<string>();
-          const islandScripts: string[] = [];
+          const islandScriptEntries: BuildScriptEntry[] = [];
           for (const island of result.islands) {
             const componentKey = this._getComponentKey(island.path, rootDir);
             if (!seenComponents.has(componentKey)) {
               seenComponents.add(componentKey);
-              islandScripts.push(
-                `<script type="module" src="/_semajsx/islands/${componentKey}.ts"></script>`,
-              );
+              islandScriptEntries.push({ src: `/_semajsx/islands/${componentKey}.ts` });
             }
           }
 
           // Generate HTML
           const routeMeta = this._routeMeta.get(path);
           const pageTitle = routeMeta?.title ?? this.config.title ?? "Page";
-          const scriptsHtml = islandScripts.join("\n  ");
 
           const html = customRenderHtml
             ? customRenderHtml({
                 html: result.html,
                 css: cssRefs,
-                scripts: scriptsHtml,
+                scripts: islandScriptEntries,
                 title: pageTitle,
                 path,
               })
@@ -304,7 +302,7 @@ class AppImpl implements App {
 </head>
 <body>
   ${result.html}
-  ${scriptsHtml}
+  ${islandScriptEntries.map((s) => `<script type="module" src="${s.src}"></script>`).join("\n  ")}
 </body>
 </html>`;
 

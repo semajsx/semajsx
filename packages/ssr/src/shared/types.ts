@@ -242,6 +242,14 @@ export interface AppConfig {
 }
 
 /**
+ * Script entry included in a build page (e.g., island hydration scripts).
+ */
+export interface BuildScriptEntry {
+  /** Script module URL (resolved by Vite during build) */
+  src: string;
+}
+
+/**
  * Build options for production
  */
 export interface BuildOptions {
@@ -274,8 +282,8 @@ export interface BuildOptions {
     html: string;
     /** CSS stylesheet paths */
     css: string[];
-    /** Island script tags (HTML string) */
-    scripts: string;
+    /** Island script entries to include */
+    scripts: BuildScriptEntry[];
     /** Page title */
     title: string;
     /** Route path */
