@@ -47,6 +47,10 @@
       "source": "./src/ssg/index.ts",
       "default": "./dist/ssg/index.mjs"
     },
+    "./ssg/plugins/lucide": {
+      "source": "./src/ssg/plugins/lucide.ts",
+      "default": "./dist/ssg/plugins/lucide.mjs"
+    },
     "./ssr": {
       "source": "./src/ssr/index.ts",
       "default": "./dist/ssr/index.mjs"
@@ -94,6 +98,7 @@
       "./dom/jsx-runtime": "./dist/dom/jsx-runtime.mjs",
       "./signal": "./dist/signal/index.mjs",
       "./ssg": "./dist/ssg/index.mjs",
+      "./ssg/plugins/lucide": "./dist/ssg/plugins/lucide.mjs",
       "./ssr": "./dist/ssr/index.mjs",
       "./ssr/client": "./dist/ssr/client.mjs",
       "./style": "./dist/style/index.mjs",

@@ -254,6 +254,15 @@ async function renderVNodeToHTML(vnode: VNode | JSXNode, context: RenderContext)
     return "";
   }
 
+  // Handle native nodes - serialize via outerHTML when available
+  if (vnodeTyped.type === "#native") {
+    const nativeNode = vnodeTyped.props?.__nativeNode;
+    if (nativeNode && typeof (nativeNode as { outerHTML?: string }).outerHTML === "string") {
+      return (nativeNode as { outerHTML: string }).outerHTML;
+    }
+    return "";
+  }
+
   // Handle fragments
   if (vnodeTyped.type === Fragment) {
     const results = await Promise.all(
