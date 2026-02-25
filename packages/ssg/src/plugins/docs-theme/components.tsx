@@ -1,7 +1,6 @@
 /** @jsxImportSource @semajsx/dom */
 
-import { h } from "@semajsx/core";
-import type { VNode } from "@semajsx/core";
+import type { VNode, JSXNode } from "@semajsx/core";
 import type { DocumentProps } from "../../types";
 import type { DocsThemeOptions, NavLink } from "./types";
 import { THEME_CSS } from "./styles";
@@ -15,7 +14,9 @@ function cx(...args: (string | false | null | undefined)[]): string {
 // Callout — MDX component (does not depend on theme options)
 // =============================================================================
 
-const CALLOUT_STYLES: Record<string, { bg: string; accent: string; icon: string }> = {
+type CalloutType = "info" | "warning" | "success" | "error" | "tip";
+
+const CALLOUT_STYLES: Record<CalloutType, { bg: string; accent: string; icon: string }> = {
   info: { bg: "rgba(0, 122, 255, 0.06)", accent: "#007aff", icon: "i" },
   warning: { bg: "rgba(255, 159, 10, 0.08)", accent: "#ff9f0a", icon: "!" },
   success: { bg: "rgba(52, 199, 89, 0.08)", accent: "#34c759", icon: "\u2713" },
@@ -24,13 +25,13 @@ const CALLOUT_STYLES: Record<string, { bg: string; accent: string; icon: string 
 };
 
 interface CalloutProps {
-  type?: "info" | "warning" | "success" | "error" | "tip";
+  type?: CalloutType;
   title?: string;
-  children: VNode | VNode[];
+  children: JSXNode;
 }
 
 export function Callout({ type = "info", title, children }: CalloutProps): VNode {
-  const s = CALLOUT_STYLES[type] ?? CALLOUT_STYLES.info;
+  const s = CALLOUT_STYLES[type];
   return (
     <div class={`dt-callout dt-callout-${type}`} style={{ background: s.bg }}>
       {title && (
@@ -76,30 +77,70 @@ export function CodeBlock({ children, className, language }: CodeBlockProps): VN
 // Difficulty metadata for guides
 // =============================================================================
 
-const DIFFICULTY_META: Record<string, { bg: string; color: string; label: string }> = {
-  beginner: { bg: "rgba(52, 199, 89, 0.12)", color: "#248a3d", label: "Beginner" },
+interface DifficultyMeta {
+  bg: string;
+  color: string;
+  label: string;
+}
+
+const BEGINNER_META: DifficultyMeta = {
+  bg: "rgba(52, 199, 89, 0.12)",
+  color: "#248a3d",
+  label: "Beginner",
+};
+
+const DIFFICULTY_META: Record<string, DifficultyMeta> = {
+  beginner: BEGINNER_META,
   intermediate: { bg: "rgba(255, 159, 10, 0.12)", color: "#b25000", label: "Intermediate" },
   advanced: { bg: "rgba(255, 69, 58, 0.12)", color: "#d70015", label: "Advanced" },
 };
 
-function getDifficultyMeta(difficulty: string) {
-  return DIFFICULTY_META[difficulty] ?? DIFFICULTY_META.beginner;
+function getDifficultyMeta(difficulty: string): DifficultyMeta {
+  return DIFFICULTY_META[difficulty] ?? BEGINNER_META;
 }
 
 // =============================================================================
 // Component factory — creates all page components bound to theme options
 // =============================================================================
 
+// =============================================================================
+// Prop types for page components
+// =============================================================================
+
+interface DocsIndexProps {
+  docs: Array<{
+    slug: string;
+    data: { title: string; description?: string; category?: string; order: number };
+  }>;
+}
+
+interface DocPageProps {
+  doc: { data: { title: string; description?: string } };
+  content: VNode;
+}
+
+interface GuidesIndexProps {
+  guides: Array<{
+    slug: string;
+    data: { title: string; description?: string; difficulty: string; order: number };
+  }>;
+}
+
+interface GuidePageProps {
+  guide: { data: { title: string; description?: string; difficulty: string } };
+  content: VNode;
+}
+
 /** Component map returned by createComponents */
 export interface DocsThemeComponents {
   Document: (props: DocumentProps) => VNode;
-  Layout: (props: { children: VNode | VNode[] }) => VNode;
-  HomePage: (props: { title?: string }) => VNode;
-  DocsIndex: (props: { title?: string; docs?: unknown[] }) => VNode;
-  DocPage: (props: { doc?: unknown; content?: VNode; title?: string }) => VNode;
-  GuidesIndex: (props: { title?: string; guides?: unknown[] }) => VNode;
-  GuidePage: (props: { guide?: unknown; content?: VNode; title?: string }) => VNode;
-  NotFound: (props: { title?: string }) => VNode;
+  Layout: (props: { children: JSXNode }) => VNode;
+  HomePage: () => VNode;
+  DocsIndex: (props: DocsIndexProps) => VNode;
+  DocPage: (props: DocPageProps) => VNode;
+  GuidesIndex: (props: GuidesIndexProps) => VNode;
+  GuidePage: (props: GuidePageProps) => VNode;
+  NotFound: () => VNode;
   Callout: typeof Callout;
   CodeBlock: typeof CodeBlock;
 }
@@ -144,7 +185,7 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
   // --------------------------------------------------
   // Layout (nav + main + footer)
   // --------------------------------------------------
-  function Layout({ children }: { children: VNode | VNode[] }): VNode {
+  function Layout({ children }: { children: JSXNode }): VNode {
     const footerLinks = options.footer?.links ?? options.nav.links;
     const copyrightName = options.footer?.copyright ?? options.title;
 
@@ -314,14 +355,7 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
   // --------------------------------------------------
   // Docs Index
   // --------------------------------------------------
-  function DocsIndex({
-    docs: docsList,
-  }: {
-    docs: Array<{
-      slug: string;
-      data: { title: string; description?: string; category?: string; order: number };
-    }>;
-  }): VNode {
+  function DocsIndex({ docs: docsList }: DocsIndexProps): VNode {
     const docsConf = options.docs;
     const heading = docsConf?.heading ?? "Documentation";
     const desc = docsConf?.description ?? "";
@@ -372,13 +406,7 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
   // --------------------------------------------------
   // Doc Page
   // --------------------------------------------------
-  function DocPage({
-    doc,
-    content,
-  }: {
-    doc: { data: { title: string; description?: string } };
-    content: VNode;
-  }): VNode {
+  function DocPage({ doc, content }: DocPageProps): VNode {
     return (
       <Layout>
         <article class="dt-page-container">
@@ -399,14 +427,7 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
   // --------------------------------------------------
   // Guides Index
   // --------------------------------------------------
-  function GuidesIndex({
-    guides: guidesList,
-  }: {
-    guides: Array<{
-      slug: string;
-      data: { title: string; description?: string; difficulty: string; order: number };
-    }>;
-  }): VNode {
+  function GuidesIndex({ guides: guidesList }: GuidesIndexProps): VNode {
     const guidesConf = options.guides;
     const heading = guidesConf?.heading ?? "Guides";
     const desc = guidesConf?.description ?? "";
@@ -477,13 +498,7 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
   // --------------------------------------------------
   // Guide Page
   // --------------------------------------------------
-  function GuidePage({
-    guide,
-    content,
-  }: {
-    guide: { data: { title: string; description?: string; difficulty: string } };
-    content: VNode;
-  }): VNode {
+  function GuidePage({ guide, content }: GuidePageProps): VNode {
     const meta = getDifficultyMeta(guide.data.difficulty);
 
     return (

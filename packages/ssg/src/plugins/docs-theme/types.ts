@@ -1,3 +1,4 @@
+import type { Component } from "@semajsx/core";
 import type { CollectionSource } from "../../types";
 import type { LucidePluginOptions } from "../lucide/index";
 
@@ -139,7 +140,7 @@ export interface DocsThemeOptions {
     remarkPlugins?: unknown[];
     rehypePlugins?: unknown[];
     /** Extra MDX components (merged with theme defaults) */
-    components?: Record<string, unknown>;
+    components?: Record<string, Component>;
   };
 
   /** Lucide icon plugin options. Set to `false` to disable. Enabled by default. */
