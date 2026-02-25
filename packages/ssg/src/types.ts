@@ -161,6 +161,34 @@ export interface DocumentProps {
 export type DocumentTemplate = (props: DocumentProps) => VNode;
 
 // =============================================================================
+// Plugin System
+// =============================================================================
+
+export interface SSGPlugin {
+  /** Plugin name for identification and debugging */
+  name: string;
+
+  /** Plugin ordering: 'pre' runs before normal plugins, 'post' runs after */
+  enforce?: "pre" | "post";
+
+  /**
+   * Modify SSG config before it is resolved.
+   * Return partial config to merge (currently supports mdx).
+   * Called in plugin order: enforce:'pre' → normal → enforce:'post' → user mdx config.
+   */
+  config?(config: SSGConfig): { mdx?: Partial<MDXConfig> } | void;
+
+  /** Called after config is fully resolved. Read-only inspection. */
+  configResolved?(config: SSGConfig): void;
+
+  /** Called before build starts */
+  buildStart?(): void | Promise<void>;
+
+  /** Called after build completes */
+  buildEnd?(result: BuildResult): void | Promise<void>;
+}
+
+// =============================================================================
 // SSG Configuration
 // =============================================================================
 
@@ -178,7 +206,9 @@ export interface SSGConfig<
   collections?: TCollections;
   /** Route definitions */
   routes?: RouteConfig<TRegistry>[];
-  /** MDX configuration */
+  /** Plugins that contribute remark/rehype plugins and components */
+  plugins?: SSGPlugin[];
+  /** MDX configuration (merged after plugins, takes precedence) */
   mdx?: MDXConfig;
   /** Custom document template */
   document?: DocumentTemplate;

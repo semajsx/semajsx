@@ -148,43 +148,71 @@ describe("SSR #native support", () => {
 });
 
 // =============================================================================
-// lucide() plugin helper
+// lucide() plugin
 // =============================================================================
 
-describe("lucide() plugin helper", () => {
-  it("returns MDXConfig with Icon component", () => {
-    const config = lucide();
+describe("lucide() plugin", () => {
+  it("returns SSGPlugin with name and config hook", () => {
+    const plugin = lucide();
 
-    expect(config.components).toBeDefined();
-    expect(config.components!.Icon).toBe(Icon);
+    expect(plugin.name).toBe("lucide");
+    expect(plugin.config).toBeTypeOf("function");
   });
 
-  it("returns empty plugin arrays by default", () => {
-    const config = lucide();
+  it("config hook returns Icon component", () => {
+    const plugin = lucide();
+    const partial = plugin.config!({} as never);
 
-    expect(config.remarkPlugins).toEqual([]);
-    expect(config.rehypePlugins).toEqual([]);
+    expect(partial).toBeDefined();
+    expect(partial!.mdx!.components!.Icon).toBe(Icon);
   });
 
-  it("passes through additional remark plugins", () => {
-    const fakePlugin = () => {};
-    const config = lucide({ remarkPlugins: [fakePlugin] });
+  it("uses original Icon when no options provided", () => {
+    const plugin = lucide();
+    const partial = plugin.config!({} as never);
 
-    expect(config.remarkPlugins).toEqual([fakePlugin]);
+    expect(partial!.mdx!.components!.Icon).toBe(Icon);
   });
 
-  it("passes through additional rehype plugins", () => {
-    const fakePlugin = () => {};
-    const config = lucide({ rehypePlugins: [fakePlugin] });
+  it("wraps Icon with custom default size", async () => {
+    const plugin = lucide({ size: 16 });
+    const partial = plugin.config!({} as never);
+    const WrappedIcon = partial!.mdx!.components!.Icon;
 
-    expect(config.rehypePlugins).toEqual([fakePlugin]);
+    const result = await renderToString(<WrappedIcon name="rocket" />);
+
+    expect(result.html).toContain('width="16"');
+    expect(result.html).toContain('height="16"');
   });
 
-  it("merges additional components with Icon", () => {
-    const Callout = () => <div />;
-    const config = lucide({ components: { Callout } });
+  it("wraps Icon with custom default color", async () => {
+    const plugin = lucide({ color: "#333" });
+    const partial = plugin.config!({} as never);
+    const WrappedIcon = partial!.mdx!.components!.Icon;
 
-    expect(config.components!.Icon).toBe(Icon);
-    expect(config.components!.Callout).toBe(Callout);
+    const result = await renderToString(<WrappedIcon name="rocket" />);
+
+    expect(result.html).toContain('stroke="#333"');
+  });
+
+  it("wraps Icon with custom default strokeWidth", async () => {
+    const plugin = lucide({ strokeWidth: 1.5 });
+    const partial = plugin.config!({} as never);
+    const WrappedIcon = partial!.mdx!.components!.Icon;
+
+    const result = await renderToString(<WrappedIcon name="rocket" />);
+
+    expect(result.html).toContain('stroke-width="1.5"');
+  });
+
+  it("per-icon props override plugin defaults", async () => {
+    const plugin = lucide({ size: 16, color: "#333" });
+    const partial = plugin.config!({} as never);
+    const WrappedIcon = partial!.mdx!.components!.Icon;
+
+    const result = await renderToString(<WrappedIcon name="rocket" size={32} color="red" />);
+
+    expect(result.html).toContain('width="32"');
+    expect(result.html).toContain('stroke="red"');
   });
 });
