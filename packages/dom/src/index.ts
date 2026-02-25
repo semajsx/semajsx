@@ -29,3 +29,6 @@ export {
   setComponentStyleTarget,
 } from "./style-anchor";
 export type { AppStyleAnchorProps, ComponentStyleAnchorProps } from "./style-anchor";
+
+export { Native } from "./native";
+export type { NativeProps } from "./native";
