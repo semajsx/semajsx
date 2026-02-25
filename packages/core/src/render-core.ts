@@ -184,6 +184,11 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
       return renderPortal(vnode, parentContext);
     }
 
+    // Native node (pre-created element from external libraries)
+    if (type === "#native") {
+      return renderNativeNode(vnode);
+    }
+
     // Component
     if (typeof type === "function") {
       return renderComponent(vnode, parentContext);
@@ -363,6 +368,41 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
       node: null,
       subscriptions: [],
       children,
+    };
+  }
+
+  /**
+   * Render a native node (pre-created element from external libraries)
+   * The element is used directly without creating a new one.
+   * Additional props are applied via the strategy's setProperty/setSignalProperty.
+   */
+  function renderNativeNode(vnode: VNode): RenderedNode<TNode> {
+    const nativeNode = vnode.props?.__nativeNode as TNode;
+
+    if (!nativeNode) {
+      throw new Error("Native VNode must have an __nativeNode prop");
+    }
+
+    const subscriptions: Array<() => void> = [];
+
+    // Apply additional props to the native node
+    const props = vnode.props || {};
+    for (const [key, value] of Object.entries(props)) {
+      if (key === "__nativeNode" || key === "key" || key === "children") continue;
+
+      if (isSignal(value)) {
+        const unsub = strategy.setSignalProperty(nativeNode, key, value);
+        subscriptions.push(unsub);
+      } else {
+        strategy.setProperty(nativeNode, key, value);
+      }
+    }
+
+    return {
+      vnode,
+      node: nativeNode,
+      subscriptions,
+      children: [],
     };
   }
 
