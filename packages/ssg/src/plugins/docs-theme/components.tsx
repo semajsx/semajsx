@@ -90,7 +90,21 @@ function getDifficultyMeta(difficulty: string) {
 // Component factory — creates all page components bound to theme options
 // =============================================================================
 
-export function createComponents(options: DocsThemeOptions) {
+/** Component map returned by createComponents */
+export interface DocsThemeComponents {
+  Document: (props: DocumentProps) => VNode;
+  Layout: (props: { children: VNode | VNode[] }) => VNode;
+  HomePage: (props: { title?: string }) => VNode;
+  DocsIndex: (props: { title?: string; docs?: unknown[] }) => VNode;
+  DocPage: (props: { doc?: unknown; content?: VNode; title?: string }) => VNode;
+  GuidesIndex: (props: { title?: string; guides?: unknown[] }) => VNode;
+  GuidePage: (props: { guide?: unknown; content?: VNode; title?: string }) => VNode;
+  NotFound: (props: { title?: string }) => VNode;
+  Callout: typeof Callout;
+  CodeBlock: typeof CodeBlock;
+}
+
+export function createComponents(options: DocsThemeOptions): DocsThemeComponents {
   // --------------------------------------------------
   // Document
   // --------------------------------------------------
