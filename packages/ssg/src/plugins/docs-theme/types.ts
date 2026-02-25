@@ -1,4 +1,5 @@
 import type { CollectionSource } from "../../types";
+import type { LucidePluginOptions } from "../lucide/index";
 
 // =============================================================================
 // Navigation
@@ -140,4 +141,7 @@ export interface DocsThemeOptions {
     /** Extra MDX components (merged with theme defaults) */
     components?: Record<string, unknown>;
   };
+
+  /** Lucide icon plugin options. Set to `false` to disable. Enabled by default. */
+  lucide?: LucidePluginOptions | false;
 }

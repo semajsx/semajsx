@@ -3,6 +3,7 @@ import type { SSGPlugin, Collection, RouteConfig } from "../../types";
 import { defineCollection } from "../../index";
 import type { DocsThemeOptions } from "./types";
 import { createComponents, Callout, CodeBlock } from "./components";
+import { lucide as lucidePlugin } from "../lucide/index";
 import type { VNode } from "@semajsx/core";
 
 export type {
@@ -198,6 +199,15 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin {
         props: { title: `404 - Page Not Found | ${options.title}` },
       });
 
+      // --- Sub-plugins ---
+
+      const plugins: SSGPlugin[] = [];
+
+      if (options.lucide !== false) {
+        const lucideOpts = typeof options.lucide === "object" ? options.lucide : {};
+        plugins.push(lucidePlugin(lucideOpts));
+      }
+
       // --- MDX ---
 
       const mdxComponents: Record<string, unknown> = {
@@ -210,6 +220,7 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin {
         document: components.Document,
         collections,
         routes,
+        plugins,
         mdx: {
           remarkPlugins: options.mdx?.remarkPlugins,
           rehypePlugins: options.mdx?.rehypePlugins,
