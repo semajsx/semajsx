@@ -8,8 +8,11 @@ import {
   RawHTML,
   type SSGConfig,
   type SSGPlugin,
+  type SSGPluginConfig,
   type SSGInstance,
   type MDXConfig,
+  type RouteConfig,
+  type DocumentTemplate,
   type Collection,
   type CollectionEntry,
   type BuildOptions,
@@ -51,29 +54,50 @@ function mergeMdxConfig(base: MDXConfig, partial: Partial<MDXConfig>): MDXConfig
 }
 
 /**
- * Run config hooks on all plugins, then merge with user MDX config.
- * Order: enforce:'pre' → normal → enforce:'post' → user mdx config.
+ * Resolved config produced by running all plugin config hooks.
  */
-function resolvePlugins(plugins: SSGPlugin[], config: SSGConfig): MDXConfig {
+interface ResolvedPluginConfig {
+  mdx: MDXConfig;
+  document?: DocumentTemplate;
+  routes: RouteConfig[];
+  collections: Collection[];
+}
+
+/**
+ * Run config hooks on all plugins, then merge with user config.
+ *
+ * Merge strategies:
+ * - mdx: merge (concat arrays, merge component objects)
+ * - document: override (last writer wins, user config last)
+ * - routes: concat (plugin routes first, then user routes)
+ * - collections: concat (plugin collections first, then user collections)
+ */
+function resolvePlugins(plugins: SSGPlugin[], config: SSGConfig): ResolvedPluginConfig {
   const sorted = sortPlugins(plugins);
   let mdx: MDXConfig = { remarkPlugins: [], rehypePlugins: [], components: {} };
+  let document: DocumentTemplate | undefined;
+  const routes: RouteConfig[] = [];
+  const collections: Collection[] = [];
 
   // Call config hooks in order
   for (const plugin of sorted) {
-    if (plugin.config) {
-      const partial = plugin.config(config);
-      if (partial?.mdx) {
-        mdx = mergeMdxConfig(mdx, partial.mdx);
-      }
-    }
+    if (!plugin.config) continue;
+    const partial = plugin.config(config);
+    if (!partial) continue;
+
+    if (partial.mdx) mdx = mergeMdxConfig(mdx, partial.mdx);
+    if (partial.document) document = partial.document;
+    if (partial.routes) routes.push(...partial.routes);
+    if (partial.collections) collections.push(...partial.collections);
   }
 
-  // User mdx config takes precedence (applied last)
-  if (config.mdx) {
-    mdx = mergeMdxConfig(mdx, config.mdx);
-  }
+  // User config takes precedence (applied last)
+  if (config.mdx) mdx = mergeMdxConfig(mdx, config.mdx);
+  if (config.document) document = config.document;
+  if (config.routes) routes.push(...config.routes);
+  if (config.collections) collections.push(...config.collections);
 
-  return mdx;
+  return { mdx, document, routes, collections };
 }
 
 /**
@@ -98,13 +122,16 @@ export class SSG<
     // Sort and store plugins
     this.plugins = sortPlugins(config.plugins ?? []);
 
-    // Run config hooks, then merge with user mdx config
-    const resolvedMdx = resolvePlugins(this.plugins, config);
+    // Run config hooks — merges plugins + user config
+    const resolved = resolvePlugins(this.plugins, config);
 
     this.config = {
       base: "/",
       ...config,
-      mdx: resolvedMdx,
+      mdx: resolved.mdx,
+      document: resolved.document,
+      routes: resolved.routes,
+      collections: resolved.collections,
       outDir: resolve(this.rootDir, config.outDir),
     };
 
@@ -136,13 +163,13 @@ export class SSG<
             },
           },
           // MDX compiler plugin
-          viteMDXPlugin(resolvedMdx),
+          viteMDXPlugin(resolved.mdx),
         ],
       },
     });
 
-    // Register collections
-    for (const collection of config.collections ?? []) {
+    // Register collections (from resolved config — plugins + user)
+    for (const collection of this.config.collections ?? []) {
       this.collections.set(collection.name, collection);
     }
   }

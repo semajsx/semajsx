@@ -2,7 +2,7 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createSSG, defineCollection, RawHTML, z } from "./index";
-import type { CollectionSource, CollectionEntry } from "./types";
+import type { CollectionSource, CollectionEntry, SSGPlugin } from "./types";
 
 // Mock source for testing
 function createMockSource<T>(entries: CollectionEntry<T>[]): CollectionSource<T> {
@@ -141,5 +141,224 @@ describe("SSG", () => {
     });
 
     await expect(ssg.getCollection("posts")).rejects.toThrow("Validation error");
+  });
+});
+
+describe("SSG plugin resolution", () => {
+  it("should merge plugin collections with user collections", async () => {
+    const pluginSource = createMockSource<{ title: string }>([
+      { id: "a", slug: "a", data: { title: "A" }, body: "", render: vi.fn() },
+    ]);
+    const userSource = createMockSource<{ name: string }>([
+      { id: "b", slug: "b", data: { name: "B" }, body: "", render: vi.fn() },
+    ]);
+
+    const plugin: SSGPlugin = {
+      name: "test-plugin",
+      config() {
+        return {
+          collections: [
+            defineCollection({
+              name: "docs",
+              source: pluginSource,
+              schema: z.object({ title: z.string() }),
+            }),
+          ],
+        };
+      },
+    };
+
+    const ssg = createSSG({
+      outDir: "./dist",
+      plugins: [plugin],
+      collections: [
+        defineCollection({
+          name: "posts",
+          source: userSource,
+          schema: z.object({ name: z.string() }),
+        }),
+      ],
+    });
+
+    // Both plugin and user collections should be available
+    const docs = await ssg.getCollection("docs");
+    expect(docs).toHaveLength(1);
+    expect(docs[0].data.title).toBe("A");
+
+    const posts = await ssg.getCollection("posts");
+    expect(posts).toHaveLength(1);
+    expect(posts[0].data.name).toBe("B");
+  });
+
+  it("should merge plugin routes with user routes", () => {
+    const pluginRoute = { path: "/docs", component: () => <div>docs</div> };
+    const userRoute = { path: "/about", component: () => <div>about</div> };
+
+    const plugin: SSGPlugin = {
+      name: "test-plugin",
+      config() {
+        return { routes: [pluginRoute] };
+      },
+    };
+
+    // Routes are merged in constructor — verify via configResolved
+    let resolvedRoutes: unknown[] = [];
+    const inspector: SSGPlugin = {
+      name: "inspector",
+      enforce: "post",
+      configResolved(config) {
+        resolvedRoutes = config.routes ?? [];
+      },
+    };
+
+    createSSG({
+      outDir: "./dist",
+      plugins: [plugin, inspector],
+      routes: [userRoute],
+    });
+
+    expect(resolvedRoutes).toHaveLength(2);
+    expect((resolvedRoutes[0] as { path: string }).path).toBe("/docs");
+    expect((resolvedRoutes[1] as { path: string }).path).toBe("/about");
+  });
+
+  it("should let user document override plugin document", () => {
+    const pluginDoc = () => (
+      <html>
+        <body>plugin</body>
+      </html>
+    );
+    const userDoc = () => (
+      <html>
+        <body>user</body>
+      </html>
+    );
+
+    const plugin: SSGPlugin = {
+      name: "theme",
+      config() {
+        return { document: pluginDoc };
+      },
+    };
+
+    let resolvedDoc: unknown;
+    const inspector: SSGPlugin = {
+      name: "inspector",
+      enforce: "post",
+      configResolved(config) {
+        resolvedDoc = config.document;
+      },
+    };
+
+    createSSG({
+      outDir: "./dist",
+      plugins: [plugin, inspector],
+      document: userDoc,
+    });
+
+    // User document wins
+    expect(resolvedDoc).toBe(userDoc);
+  });
+
+  it("should use plugin document when user does not provide one", () => {
+    const pluginDoc = () => (
+      <html>
+        <body>theme</body>
+      </html>
+    );
+
+    const plugin: SSGPlugin = {
+      name: "theme",
+      config() {
+        return { document: pluginDoc };
+      },
+    };
+
+    let resolvedDoc: unknown;
+    const inspector: SSGPlugin = {
+      name: "inspector",
+      enforce: "post",
+      configResolved(config) {
+        resolvedDoc = config.document;
+      },
+    };
+
+    createSSG({
+      outDir: "./dist",
+      plugins: [plugin, inspector],
+    });
+
+    expect(resolvedDoc).toBe(pluginDoc);
+  });
+
+  it("should respect enforce ordering for plugins", () => {
+    const order: string[] = [];
+
+    const prePlugin: SSGPlugin = {
+      name: "pre",
+      enforce: "pre",
+      config() {
+        order.push("pre");
+      },
+    };
+    const normalPlugin: SSGPlugin = {
+      name: "normal",
+      config() {
+        order.push("normal");
+      },
+    };
+    const postPlugin: SSGPlugin = {
+      name: "post",
+      enforce: "post",
+      config() {
+        order.push("post");
+      },
+    };
+
+    // Pass in reverse order — enforce should re-sort them
+    createSSG({
+      outDir: "./dist",
+      plugins: [postPlugin, normalPlugin, prePlugin],
+    });
+
+    expect(order).toEqual(["pre", "normal", "post"]);
+  });
+
+  it("should merge mdx components from multiple plugins", () => {
+    const Comp1 = () => <div>1</div>;
+    const Comp2 = () => <div>2</div>;
+    const UserComp = () => <div>user</div>;
+
+    const plugin1: SSGPlugin = {
+      name: "p1",
+      config() {
+        return { mdx: { components: { Comp1 } } };
+      },
+    };
+    const plugin2: SSGPlugin = {
+      name: "p2",
+      config() {
+        return { mdx: { components: { Comp2 } } };
+      },
+    };
+
+    let resolvedComponents: Record<string, unknown> = {};
+    const inspector: SSGPlugin = {
+      name: "inspector",
+      enforce: "post",
+      configResolved(config) {
+        resolvedComponents = (config.mdx?.components as Record<string, unknown>) ?? {};
+      },
+    };
+
+    createSSG({
+      outDir: "./dist",
+      plugins: [plugin1, plugin2, inspector],
+      mdx: { components: { UserComp } },
+    });
+
+    expect(resolvedComponents.Comp1).toBe(Comp1);
+    expect(resolvedComponents.Comp2).toBe(Comp2);
+    expect(resolvedComponents.UserComp).toBe(UserComp);
   });
 });
