@@ -13,6 +13,8 @@ export default defineConfig({
     "src/ssr/index.ts",
     "src/ssr/client.ts",
     "src/ssg/index.ts",
+    "src/ssg/plugins/docs-theme.ts",
+    "src/ssg/plugins/lucide.ts",
     "src/tailwind/index.ts",
     "src/style/index.ts",
     "src/style/react.ts",
@@ -41,6 +43,7 @@ export default defineConfig({
     // SSG
     "@mdx-js/mdx",
     "gray-matter",
+    "lucide",
     "zod",
     // SSR/SSG optional
     "vite",
