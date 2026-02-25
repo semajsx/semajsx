@@ -83,12 +83,12 @@ const guidesSchema = z.object({
  * });
  * ```
  */
-export function docsTheme(options: DocsThemeOptions): SSGPlugin {
+export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
   const components = createComponents(options);
   const docsBasePath = options.docs?.basePath ?? "/docs";
   const guidesBasePath = options.guides?.basePath ?? "/guides";
 
-  return {
+  const mainPlugin: SSGPlugin = {
     name: "docs-theme",
 
     config() {
@@ -199,15 +199,6 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin {
         props: { title: `404 - Page Not Found | ${options.title}` },
       });
 
-      // --- Sub-plugins ---
-
-      const plugins: SSGPlugin[] = [];
-
-      if (options.lucide !== false) {
-        const lucideOpts = typeof options.lucide === "object" ? options.lucide : {};
-        plugins.push(lucidePlugin(lucideOpts));
-      }
-
       // --- MDX ---
 
       const mdxComponents: Record<string, unknown> = {
@@ -220,7 +211,6 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin {
         document: components.Document,
         collections,
         routes,
-        plugins,
         mdx: {
           remarkPlugins: options.mdx?.remarkPlugins,
           rehypePlugins: options.mdx?.rehypePlugins,
@@ -229,4 +219,14 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin {
       };
     },
   };
+
+  // Compose sub-plugins Vite-style: return flat array
+  const plugins: SSGPlugin[] = [mainPlugin];
+
+  if (options.lucide !== false) {
+    const lucideOpts = typeof options.lucide === "object" ? options.lucide : {};
+    plugins.push(lucidePlugin(lucideOpts));
+  }
+
+  return plugins;
 }

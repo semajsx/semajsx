@@ -8,7 +8,6 @@ import {
   RawHTML,
   type SSGConfig,
   type SSGPlugin,
-  type SSGPluginConfig,
   type SSGInstance,
   type MDXConfig,
   type RouteConfig,
@@ -64,8 +63,7 @@ interface ResolvedPluginConfig {
 }
 
 /**
- * Result of plugin resolution: merged config + flat list of all plugins
- * (including sub-plugins discovered via `plugins` in SSGPluginConfig).
+ * Result of plugin resolution: merged config + flat list of all plugins.
  */
 interface PluginResolutionResult {
   config: ResolvedPluginConfig;
@@ -75,46 +73,39 @@ interface PluginResolutionResult {
 /**
  * Run config hooks on all plugins, then merge with user config.
  *
+ * Plugin arrays are flattened Vite-style: plugin factories may return
+ * `SSGPlugin | SSGPlugin[]`, and the top-level array is `.flat()`-ed
+ * before sorting and processing.
+ *
  * Merge strategies:
  * - mdx: merge (concat arrays, merge component objects)
  * - document: override (last writer wins, user config last)
  * - routes: concat (plugin routes first, then user routes)
  * - collections: concat (plugin collections first, then user collections)
- * - plugins: recursively resolved (sub-plugins before parent config)
  */
-function resolvePlugins(plugins: SSGPlugin[], config: SSGConfig): PluginResolutionResult {
-  const sorted = sortPlugins(plugins);
+function resolvePlugins(
+  plugins: (SSGPlugin | SSGPlugin[])[],
+  config: SSGConfig,
+): PluginResolutionResult {
+  // Vite-style: flatten nested arrays from plugin factories
+  const flat = plugins.flat();
+  const sorted = sortPlugins(flat);
+
   let mdx: MDXConfig = { remarkPlugins: [], rehypePlugins: [], components: {} };
   let document: DocumentTemplate | undefined;
   const routes: RouteConfig[] = [];
   const collections: Collection[] = [];
-  const allPlugins: SSGPlugin[] = [];
 
-  function processPlugin(plugin: SSGPlugin): void {
-    allPlugins.push(plugin);
-
-    if (!plugin.config) return;
+  // Call config hooks in order
+  for (const plugin of sorted) {
+    if (!plugin.config) continue;
     const partial = plugin.config(config);
-    if (!partial) return;
+    if (!partial) continue;
 
-    // Resolve sub-plugins first (dependencies before parent config)
-    if (partial.plugins?.length) {
-      const subSorted = sortPlugins(partial.plugins);
-      for (const sub of subSorted) {
-        processPlugin(sub);
-      }
-    }
-
-    // Then merge this plugin's own config
     if (partial.mdx) mdx = mergeMdxConfig(mdx, partial.mdx);
     if (partial.document) document = partial.document;
     if (partial.routes) routes.push(...partial.routes);
     if (partial.collections) collections.push(...partial.collections);
-  }
-
-  // Call config hooks in order
-  for (const plugin of sorted) {
-    processPlugin(plugin);
   }
 
   // User config takes precedence (applied last)
@@ -123,7 +114,7 @@ function resolvePlugins(plugins: SSGPlugin[], config: SSGConfig): PluginResoluti
   if (config.routes) routes.push(...config.routes);
   if (config.collections) collections.push(...config.collections);
 
-  return { config: { mdx, document, routes, collections }, allPlugins };
+  return { config: { mdx, document, routes, collections }, allPlugins: sorted };
 }
 
 /**

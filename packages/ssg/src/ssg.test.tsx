@@ -324,6 +324,37 @@ describe("SSG plugin resolution", () => {
     expect(order).toEqual(["pre", "normal", "post"]);
   });
 
+  it("should flatten nested plugin arrays (Vite-style)", () => {
+    const order: string[] = [];
+
+    const pluginA: SSGPlugin = {
+      name: "a",
+      config() {
+        order.push("a");
+      },
+    };
+    const pluginB: SSGPlugin = {
+      name: "b",
+      config() {
+        order.push("b");
+      },
+    };
+    const pluginC: SSGPlugin = {
+      name: "c",
+      config() {
+        order.push("c");
+      },
+    };
+
+    // Pass [pluginA, pluginB] as a nested array (Vite-style factory return)
+    createSSG({
+      outDir: "./dist",
+      plugins: [[pluginA, pluginB], pluginC],
+    });
+
+    expect(order).toEqual(["a", "b", "c"]);
+  });
+
   it("should merge mdx components from multiple plugins", () => {
     const Comp1 = () => <div>1</div>;
     const Comp2 = () => <div>2</div>;

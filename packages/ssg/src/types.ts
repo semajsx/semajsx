@@ -177,8 +177,6 @@ export interface SSGPluginConfig {
   document?: DocumentTemplate;
   routes?: RouteConfig[];
   collections?: readonly Collection[];
-  /** Sub-plugins to install alongside this plugin */
-  plugins?: SSGPlugin[];
 }
 
 export interface SSGPlugin {
@@ -223,8 +221,9 @@ export interface SSGConfig<
   collections?: TCollections;
   /** Route definitions */
   routes?: RouteConfig<TRegistry>[];
-  /** Plugins that contribute remark/rehype plugins and components */
-  plugins?: SSGPlugin[];
+  /** Plugins that contribute remark/rehype plugins and components.
+   * Plugin factories may return arrays (Vite-style); nested arrays are flattened. */
+  plugins?: (SSGPlugin | SSGPlugin[])[];
   /** MDX configuration (merged after plugins, takes precedence) */
   mdx?: MDXConfig;
   /** Custom document template */

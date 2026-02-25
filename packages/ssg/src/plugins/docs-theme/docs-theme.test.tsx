@@ -35,14 +35,31 @@ function createMockSource<T>(entries: CollectionEntry<T>[]): CollectionSource<T>
 // =============================================================================
 
 describe("docsTheme plugin", () => {
-  it("should have correct plugin name", () => {
-    const plugin = docsTheme(createMinimalOptions());
-    expect(plugin.name).toBe("docs-theme");
+  it("should return an array of plugins (Vite-style)", () => {
+    const plugins = docsTheme(createMinimalOptions());
+    expect(Array.isArray(plugins)).toBe(true);
+    expect(plugins.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("should return an SSGPlugin with config() hook", () => {
-    const plugin = docsTheme(createMinimalOptions());
-    expect(typeof plugin.config).toBe("function");
+  it("should have docs-theme as the first plugin", () => {
+    const [main] = docsTheme(createMinimalOptions());
+    expect(main.name).toBe("docs-theme");
+  });
+
+  it("should include lucide plugin by default", () => {
+    const plugins = docsTheme(createMinimalOptions());
+    expect(plugins.find((p) => p.name === "lucide")).toBeDefined();
+  });
+
+  it("should exclude lucide plugin when lucide: false", () => {
+    const plugins = docsTheme(createMinimalOptions({ lucide: false }));
+    expect(plugins.find((p) => p.name === "lucide")).toBeUndefined();
+    expect(plugins).toHaveLength(1);
+  });
+
+  it("should have config() hook on main plugin", () => {
+    const [main] = docsTheme(createMinimalOptions());
+    expect(typeof main.config).toBe("function");
   });
 });
 
@@ -52,8 +69,8 @@ describe("docsTheme plugin", () => {
 
 describe("docsTheme config() — document", () => {
   it("should provide a document template", () => {
-    const plugin = docsTheme(createMinimalOptions());
-    const result = plugin.config!({} as never);
+    const [main] = docsTheme(createMinimalOptions());
+    const result = main.config!({} as never);
     expect(result).toBeDefined();
     expect(result!.document).toBeDefined();
     expect(typeof result!.document).toBe("function");
@@ -66,8 +83,8 @@ describe("docsTheme config() — document", () => {
 
 describe("docsTheme config() — routes", () => {
   it("should always include home and 404 routes", () => {
-    const plugin = docsTheme(createMinimalOptions());
-    const result = plugin.config!({} as never);
+    const [main] = docsTheme(createMinimalOptions());
+    const result = main.config!({} as never);
     const routes = result!.routes!;
 
     const paths = routes.map((r) => r.path);
@@ -76,14 +93,14 @@ describe("docsTheme config() — routes", () => {
   });
 
   it("should include docs routes when docs config is provided", () => {
-    const plugin = docsTheme(
+    const [main] = docsTheme(
       createMinimalOptions({
         docs: {
           source: createMockSource([]),
         },
       }),
     );
-    const result = plugin.config!({} as never);
+    const result = main.config!({} as never);
     const paths = result!.routes!.map((r) => r.path);
 
     expect(paths).toContain("/docs");
@@ -91,14 +108,14 @@ describe("docsTheme config() — routes", () => {
   });
 
   it("should include guides routes when guides config is provided", () => {
-    const plugin = docsTheme(
+    const [main] = docsTheme(
       createMinimalOptions({
         guides: {
           source: createMockSource([]),
         },
       }),
     );
-    const result = plugin.config!({} as never);
+    const result = main.config!({} as never);
     const paths = result!.routes!.map((r) => r.path);
 
     expect(paths).toContain("/guides");
@@ -106,8 +123,8 @@ describe("docsTheme config() — routes", () => {
   });
 
   it("should not include docs/guides routes when not configured", () => {
-    const plugin = docsTheme(createMinimalOptions());
-    const result = plugin.config!({} as never);
+    const [main] = docsTheme(createMinimalOptions());
+    const result = main.config!({} as never);
     const paths = result!.routes!.map((r) => r.path);
 
     expect(paths).not.toContain("/docs");
@@ -117,7 +134,7 @@ describe("docsTheme config() — routes", () => {
   });
 
   it("should use custom base paths", () => {
-    const plugin = docsTheme(
+    const [main] = docsTheme(
       createMinimalOptions({
         docs: {
           source: createMockSource([]),
@@ -129,7 +146,7 @@ describe("docsTheme config() — routes", () => {
         },
       }),
     );
-    const result = plugin.config!({} as never);
+    const result = main.config!({} as never);
     const paths = result!.routes!.map((r) => r.path);
 
     expect(paths).toContain("/reference");
@@ -148,8 +165,8 @@ describe("docsTheme config() — routes", () => {
 describe("docsTheme config() — collections", () => {
   it("should register docs collection when configured", () => {
     const source = createMockSource([]);
-    const plugin = docsTheme(createMinimalOptions({ docs: { source } }));
-    const result = plugin.config!({} as never);
+    const [main] = docsTheme(createMinimalOptions({ docs: { source } }));
+    const result = main.config!({} as never);
 
     expect(result!.collections).toHaveLength(1);
     expect(result!.collections![0].name).toBe("docs");
@@ -157,29 +174,29 @@ describe("docsTheme config() — collections", () => {
 
   it("should register guides collection when configured", () => {
     const source = createMockSource([]);
-    const plugin = docsTheme(createMinimalOptions({ guides: { source } }));
-    const result = plugin.config!({} as never);
+    const [main] = docsTheme(createMinimalOptions({ guides: { source } }));
+    const result = main.config!({} as never);
 
     expect(result!.collections).toHaveLength(1);
     expect(result!.collections![0].name).toBe("guides");
   });
 
   it("should register both collections when both configured", () => {
-    const plugin = docsTheme(
+    const [main] = docsTheme(
       createMinimalOptions({
         docs: { source: createMockSource([]) },
         guides: { source: createMockSource([]) },
       }),
     );
-    const result = plugin.config!({} as never);
+    const result = main.config!({} as never);
     const names = result!.collections!.map((c) => c.name);
 
     expect(names).toEqual(["docs", "guides"]);
   });
 
   it("should register no collections when neither configured", () => {
-    const plugin = docsTheme(createMinimalOptions());
-    const result = plugin.config!({} as never);
+    const [main] = docsTheme(createMinimalOptions());
+    const result = main.config!({} as never);
 
     expect(result!.collections).toHaveLength(0);
   });
@@ -191,8 +208,8 @@ describe("docsTheme config() — collections", () => {
 
 describe("docsTheme config() — mdx", () => {
   it("should include Callout and CodeBlock as default components", () => {
-    const plugin = docsTheme(createMinimalOptions());
-    const result = plugin.config!({} as never);
+    const [main] = docsTheme(createMinimalOptions());
+    const result = main.config!({} as never);
     const components = result!.mdx!.components as Record<string, unknown>;
 
     expect(components.Callout).toBe(Callout);
@@ -201,12 +218,12 @@ describe("docsTheme config() — mdx", () => {
 
   it("should merge user MDX components", () => {
     const Custom = () => <div>custom</div>;
-    const plugin = docsTheme(
+    const [main] = docsTheme(
       createMinimalOptions({
         mdx: { components: { Custom } },
       }),
     );
-    const result = plugin.config!({} as never);
+    const result = main.config!({} as never);
     const components = result!.mdx!.components as Record<string, unknown>;
 
     expect(components.Callout).toBe(Callout);
@@ -217,7 +234,7 @@ describe("docsTheme config() — mdx", () => {
   it("should pass through remark/rehype plugins", () => {
     const remarkPlugin = () => {};
     const rehypePlugin = () => {};
-    const plugin = docsTheme(
+    const [main] = docsTheme(
       createMinimalOptions({
         mdx: {
           remarkPlugins: [remarkPlugin],
@@ -225,7 +242,7 @@ describe("docsTheme config() — mdx", () => {
         },
       }),
     );
-    const result = plugin.config!({} as never);
+    const result = main.config!({} as never);
 
     expect(result!.mdx!.remarkPlugins).toContain(remarkPlugin);
     expect(result!.mdx!.rehypePlugins).toContain(rehypePlugin);
@@ -238,8 +255,8 @@ describe("docsTheme config() — mdx", () => {
 
 describe("docsTheme — no hardcoded content", () => {
   it("should use title from options in 404 route props", () => {
-    const plugin = docsTheme(createMinimalOptions({ title: "MySite" }));
-    const result = plugin.config!({} as never);
+    const [main] = docsTheme(createMinimalOptions({ title: "MySite" }));
+    const result = main.config!({} as never);
     const notFoundRoute = result!.routes!.find((r) => r.path === "/404");
 
     expect(notFoundRoute).toBeDefined();
@@ -248,8 +265,8 @@ describe("docsTheme — no hardcoded content", () => {
   });
 
   it("should use title from options in home route props", () => {
-    const plugin = docsTheme(createMinimalOptions({ title: "MySite" }));
-    const result = plugin.config!({} as never);
+    const [main] = docsTheme(createMinimalOptions({ title: "MySite" }));
+    const result = main.config!({} as never);
     const homeRoute = result!.routes!.find((r) => r.path === "/");
 
     expect(homeRoute).toBeDefined();
@@ -263,17 +280,17 @@ describe("docsTheme — no hardcoded content", () => {
 // =============================================================================
 
 describe("docsTheme — SSG integration", () => {
-  it("should work with createSSG as a plugin", () => {
-    const plugin = docsTheme(
+  it("should work with createSSG as a plugin array (Vite-style)", () => {
+    const plugins = docsTheme(
       createMinimalOptions({
         docs: { source: createMockSource([]) },
       }),
     );
 
-    // Should not throw
+    // Should not throw — nested arrays are flattened
     const ssg = createSSG({
       outDir: "./dist",
-      plugins: [plugin],
+      plugins: [plugins],
     });
 
     expect(ssg).toBeDefined();
@@ -300,7 +317,7 @@ describe("docsTheme — SSG integration", () => {
       },
     ]);
 
-    const plugin = docsTheme(
+    const plugins = docsTheme(
       createMinimalOptions({
         docs: { source: themeSource },
       }),
@@ -308,7 +325,7 @@ describe("docsTheme — SSG integration", () => {
 
     const ssg = createSSG({
       outDir: "./dist",
-      plugins: [plugin],
+      plugins: [plugins],
       collections: [
         defineCollection({
           name: "blog",
@@ -333,7 +350,7 @@ describe("docsTheme — SSG integration", () => {
       </html>
     );
 
-    const plugin = docsTheme(createMinimalOptions());
+    const plugins = docsTheme(createMinimalOptions());
 
     let resolvedDoc: unknown;
     const inspector: SSGPlugin = {
@@ -346,7 +363,7 @@ describe("docsTheme — SSG integration", () => {
 
     createSSG({
       outDir: "./dist",
-      plugins: [plugin, inspector],
+      plugins: [plugins, inspector],
       document: userDoc,
     });
 
