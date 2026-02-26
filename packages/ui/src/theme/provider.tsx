@@ -26,8 +26,8 @@
  */
 
 import { context, Context } from "@semajsx/core";
+import type { ContextType, JSXNode } from "@semajsx/core";
 import { inject } from "@semajsx/style";
-import type { JSXNode } from "@semajsx/core";
 import { tokens } from "./tokens";
 import { lightTheme, darkTheme } from "./themes";
 
@@ -42,7 +42,8 @@ export interface ThemeContextValue {
 /**
  * Context for passing theme tokens through the component tree
  */
-export const ThemeContext = context<ThemeContextValue>("semajsx-theme");
+export const ThemeContext: ContextType<ThemeContextValue> =
+  context<ThemeContextValue>("semajsx-theme");
 
 interface ThemeProviderProps {
   /** Which built-in theme to apply: "light" (default) or "dark" */

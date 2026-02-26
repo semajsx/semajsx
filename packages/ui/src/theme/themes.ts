@@ -20,17 +20,18 @@
  */
 
 import { createTheme } from "@semajsx/style";
+import type { StyleToken } from "@semajsx/style";
 import { tokens } from "./tokens";
 
 /**
  * Light theme - applies token defaults to :root
  */
-export const lightTheme = createTheme(tokens);
+export const lightTheme: StyleToken = createTheme(tokens);
 
 /**
  * Dark theme - scoped to a CSS class
  */
-export const darkTheme = createTheme(tokens, {
+export const darkTheme: StyleToken = createTheme(tokens, {
   colors: {
     primary: "#2997ff",
     primaryHover: "#5ab4ff",

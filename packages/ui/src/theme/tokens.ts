@@ -18,8 +18,9 @@
  */
 
 import { defineTokens } from "@semajsx/style";
+import type { TokenRefs } from "@semajsx/style";
 
-export const tokens = defineTokens({
+const tokenDefinition = {
   colors: {
     // Brand (Apple blue)
     primary: "#0071e3",
@@ -99,4 +100,6 @@ export const tokens = defineTokens({
     fast: "0.2s ease",
     normal: "0.3s cubic-bezier(0.25, 0.1, 0.25, 1)",
   },
-});
+} as const;
+
+export const tokens: TokenRefs<typeof tokenDefinition> = defineTokens(tokenDefinition);

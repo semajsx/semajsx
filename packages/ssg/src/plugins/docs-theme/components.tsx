@@ -6,12 +6,12 @@ import type { DocsThemeOptions, NavLink } from "./types";
 import { THEME_CSS } from "./styles";
 import { Icon } from "../lucide/component";
 
-import { Callout } from "@semajsx/ui/callout";
-import { Badge } from "@semajsx/ui/badge";
-import { Card } from "@semajsx/ui/card";
+import { Callout } from "@semajsx/ui/components/callout";
+import { Badge } from "@semajsx/ui/components/badge";
+import { Card } from "@semajsx/ui/components/card";
 import { componentCSS } from "@semajsx/ui/css";
 
-import type { BadgeColor } from "@semajsx/ui/badge";
+import type { BadgeColor } from "@semajsx/ui/components/badge";
 
 /** Concatenate class names, filtering falsy values */
 function cx(...args: (string | false | null | undefined)[]): string {

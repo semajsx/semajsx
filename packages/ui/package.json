@@ -15,30 +15,28 @@
     "dist"
   ],
   "type": "module",
-  "main": "./dist/index.mjs",
-  "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "exports": {
     ".": "./src/index.ts",
-    "./theme": "./src/theme/index.ts",
-    "./button": "./src/components/button/index.ts",
-    "./card": "./src/components/card/index.ts",
-    "./callout": "./src/components/callout/index.ts",
-    "./badge": "./src/components/badge/index.ts",
-    "./code-block": "./src/components/code-block/index.ts",
+    "./components/badge": "./src/components/badge/index.ts",
+    "./components/button": "./src/components/button/index.ts",
+    "./components/callout": "./src/components/callout/index.ts",
+    "./components/card": "./src/components/card/index.ts",
+    "./components/code-block": "./src/components/code-block/index.ts",
     "./css": "./src/css.ts",
+    "./theme": "./src/theme/index.ts",
     "./package.json": "./package.json"
   },
   "publishConfig": {
     "exports": {
       ".": "./dist/index.mjs",
-      "./theme": "./dist/theme/index.mjs",
-      "./button": "./dist/components/button/index.mjs",
-      "./card": "./dist/components/card/index.mjs",
-      "./callout": "./dist/components/callout/index.mjs",
-      "./badge": "./dist/components/badge/index.mjs",
-      "./code-block": "./dist/components/code-block/index.mjs",
+      "./components/badge": "./dist/components/badge/index.mjs",
+      "./components/button": "./dist/components/button/index.mjs",
+      "./components/callout": "./dist/components/callout/index.mjs",
+      "./components/card": "./dist/components/card/index.mjs",
+      "./components/code-block": "./dist/components/code-block/index.mjs",
       "./css": "./dist/css.mjs",
+      "./theme": "./dist/theme/index.mjs",
       "./package.json": "./package.json"
     }
   },
