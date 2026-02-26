@@ -1,6 +1,7 @@
 /** @jsxImportSource @semajsx/dom */
 
 import { describe, it, expect, vi } from "vitest";
+import type { VNode } from "@semajsx/core";
 import { docsTheme, Callout, CodeBlock } from "./index";
 import type { DocsThemeOptions } from "./types";
 import type { SSGPlugin, CollectionSource, CollectionEntry } from "../../types";
@@ -378,20 +379,22 @@ describe("docsTheme — SSG integration", () => {
 
 describe("Callout component", () => {
   it("should render with default info type", () => {
-    const result = Callout({ children: "Hello" });
+    const result = Callout({ children: "Hello" }) as VNode;
     expect(result).toBeDefined();
-    expect(result.props.class).toContain("dt-callout-info");
+    expect(result.props.role).toBe("note");
+    expect(result.props.style).toContain("rgba(0, 122, 255");
   });
 
   it("should render with specified type", () => {
-    const result = Callout({ type: "warning", children: "Warning!" });
-    expect(result.props.class).toContain("dt-callout-warning");
+    const result = Callout({ type: "warning", children: "Warning!" }) as VNode;
+    expect(result.props.role).toBe("note");
+    expect(result.props.style).toContain("rgba(255, 159, 10");
   });
 
   it("should render title when provided", () => {
-    const result = Callout({ title: "Note", children: "Content" });
-    // VNode children should include the title div
-    expect(result.children.length).toBeGreaterThan(0);
+    const result = Callout({ title: "Note", children: "Content" }) as VNode;
+    // VNode children should include the title div and content div
+    expect(result.children.length).toBeGreaterThan(1);
   });
 });
 

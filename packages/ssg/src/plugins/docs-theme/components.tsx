@@ -6,50 +6,20 @@ import type { DocsThemeOptions, NavLink } from "./types";
 import { THEME_CSS } from "./styles";
 import { Icon } from "../lucide/component";
 
+import { Callout } from "@semajsx/ui/callout";
+import { Badge } from "@semajsx/ui/badge";
+import { Card } from "@semajsx/ui/card";
+import { componentCSS } from "@semajsx/ui/css";
+
+import type { BadgeColor } from "@semajsx/ui/badge";
+
 /** Concatenate class names, filtering falsy values */
 function cx(...args: (string | false | null | undefined)[]): string {
   return args.filter(Boolean).join(" ");
 }
 
 // =============================================================================
-// Callout — MDX component (does not depend on theme options)
-// =============================================================================
-
-type CalloutType = "info" | "warning" | "success" | "error" | "tip";
-
-const CALLOUT_STYLES: Record<CalloutType, { bg: string; accent: string; icon: string }> = {
-  info: { bg: "rgba(0, 122, 255, 0.06)", accent: "#007aff", icon: "i" },
-  warning: { bg: "rgba(255, 159, 10, 0.08)", accent: "#ff9f0a", icon: "!" },
-  success: { bg: "rgba(52, 199, 89, 0.08)", accent: "#34c759", icon: "\u2713" },
-  error: { bg: "rgba(255, 69, 58, 0.08)", accent: "#ff453a", icon: "\u2715" },
-  tip: { bg: "rgba(175, 82, 222, 0.06)", accent: "#af52de", icon: "\u2731" },
-};
-
-interface CalloutProps {
-  type?: CalloutType;
-  title?: string;
-  children: JSXNode;
-}
-
-export function Callout({ type = "info", title, children }: CalloutProps): VNode {
-  const s = CALLOUT_STYLES[type];
-  return (
-    <div class={`dt-callout dt-callout-${type}`} style={{ background: s.bg }}>
-      {title && (
-        <div class="dt-callout-title" style={{ color: s.accent }}>
-          <span class="dt-callout-icon" style={{ background: s.accent }}>
-            {s.icon}
-          </span>
-          {title}
-        </div>
-      )}
-      <div class="dt-callout-content">{children}</div>
-    </div>
-  );
-}
-
-// =============================================================================
-// CodeBlock — MDX component
+// CodeBlock — MDX component (kept custom for Shiki className integration)
 // =============================================================================
 
 interface CodeBlockProps {
@@ -75,37 +45,23 @@ export function CodeBlock({ children, className, language }: CodeBlockProps): VN
 }
 
 // =============================================================================
-// Difficulty metadata for guides
+// Difficulty → Badge color mapping
 // =============================================================================
 
-interface DifficultyMeta {
-  bg: string;
-  color: string;
-  label: string;
-}
-
-const BEGINNER_META: DifficultyMeta = {
-  bg: "rgba(52, 199, 89, 0.12)",
-  color: "#248a3d",
-  label: "Beginner",
+const DIFFICULTY_COLORS: Record<string, BadgeColor> = {
+  beginner: "success",
+  intermediate: "warning",
+  advanced: "danger",
 };
 
-const DIFFICULTY_META: Record<string, DifficultyMeta> = {
-  beginner: BEGINNER_META,
-  intermediate: { bg: "rgba(255, 159, 10, 0.12)", color: "#b25000", label: "Intermediate" },
-  advanced: { bg: "rgba(255, 69, 58, 0.12)", color: "#d70015", label: "Advanced" },
+const DIFFICULTY_LABELS: Record<string, string> = {
+  beginner: "Beginner",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
 };
-
-function getDifficultyMeta(difficulty: string): DifficultyMeta {
-  return DIFFICULTY_META[difficulty] ?? BEGINNER_META;
-}
 
 // =============================================================================
 // Component factory — creates all page components bound to theme options
-// =============================================================================
-
-// =============================================================================
-// Prop types for page components
 // =============================================================================
 
 interface DocsIndexProps {
@@ -192,6 +148,7 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
 
     return (
       <div class="dt-root">
+        <style>{componentCSS}</style>
         <style>{THEME_CSS}</style>
 
         {/* Navigation */}
@@ -293,20 +250,13 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
               style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;"
             >
               {options.features.items.map((item, i) => (
-                <div
+                <Card
                   key={item.title}
-                  class={cx(
-                    "dt-feature-card",
-                    "dt-anim-scale-in",
-                    `dt-stagger-${Math.min(i + 2, 5)}`,
-                  )}
-                >
-                  <div class="dt-feature-icon">
-                    <Icon name={item.icon} size={24} />
-                  </div>
-                  <h3 class="dt-feature-heading">{item.title}</h3>
-                  <p class="dt-feature-desc">{item.description}</p>
-                </div>
+                  icon={<Icon name={item.icon} size={24} />}
+                  heading={item.title}
+                  description={item.description}
+                  class={cx("dt-anim-scale-in", `dt-stagger-${Math.min(i + 2, 5)}`)}
+                />
               ))}
             </div>
           </section>
@@ -331,21 +281,15 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
                 style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; max-width: 720px; margin: 0 auto;"
               >
                 {options.quickLinks.items.map((item, i) => (
-                  <a
+                  <Card
                     key={item.href}
+                    variant="link"
                     href={item.href}
-                    class={cx(
-                      "dt-doc-card",
-                      "dt-anim-scale-in",
-                      `dt-stagger-${Math.min(i + 2, 5)}`,
-                    )}
+                    heading={item.title}
+                    description={item.description}
+                    class={cx("dt-anim-scale-in", `dt-stagger-${Math.min(i + 2, 5)}`)}
                     style="text-align: left;"
-                  >
-                    <h3 style="font-size: 1.125rem; font-weight: 600; color: #1d1d1f; margin-bottom: 0.375rem; letter-spacing: -0.01em;">
-                      {item.title}
-                    </h3>
-                    <p class="dt-card-desc">{item.description}</p>
-                  </a>
+                  />
                 ))}
               </div>
             </div>
@@ -388,15 +332,15 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
               <h2 class="dt-category-heading">{category}</h2>
               <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                 {items.map((doc, i) => (
-                  <a
+                  <Card
                     key={doc.slug}
+                    variant="link"
                     href={`${basePath}/${doc.slug}`}
-                    class={cx("dt-doc-card", "dt-anim-scale-in")}
+                    heading={doc.data.title}
+                    description={doc.data.description}
+                    class={cx("dt-anim-scale-in")}
                     style={`animation-delay: ${0.1 + i * 0.08}s;`}
-                  >
-                    <h3 class="dt-card-title">{doc.data.title}</h3>
-                    {doc.data.description && <p class="dt-card-desc">{doc.data.description}</p>}
-                  </a>
+                  />
                 ))}
               </div>
             </section>
@@ -457,42 +401,32 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
             <h1 class={cx("dt-page-title", "dt-anim-slide-up")}>{heading}</h1>
             {desc && <p class={cx("dt-page-desc", "dt-anim-slide-up", "dt-stagger-1")}>{desc}</p>}
           </div>
-          {Object.entries(byDifficulty).map(([difficulty, items]) => {
-            const meta = getDifficultyMeta(difficulty);
-            return (
-              <section key={difficulty} class="dt-fade-in" style="margin-bottom: 2.5rem;">
-                <h2 class="dt-category-heading">{meta.label}</h2>
-                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                  {items.map((guide, i) => {
-                    const guideMeta = getDifficultyMeta(guide.data.difficulty);
-                    return (
-                      <a
-                        key={guide.slug}
-                        href={`${basePath}/${guide.slug}`}
-                        class={cx("dt-doc-card", "dt-anim-scale-in")}
-                        style={`animation-delay: ${0.1 + i * 0.08}s;`}
-                      >
-                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.375rem;">
-                          <h3 class="dt-card-title" style="margin: 0;">
-                            {guide.data.title}
-                          </h3>
-                          <span
-                            class="dt-difficulty-badge"
-                            style={`background: ${guideMeta.bg}; color: ${guideMeta.color};`}
-                          >
-                            {guide.data.difficulty}
-                          </span>
-                        </div>
-                        {guide.data.description && (
-                          <p class="dt-card-desc">{guide.data.description}</p>
-                        )}
-                      </a>
-                    );
-                  })}
-                </div>
-              </section>
-            );
-          })}
+          {Object.entries(byDifficulty).map(([difficulty, items]) => (
+            <section key={difficulty} class="dt-fade-in" style="margin-bottom: 2.5rem;">
+              <h2 class="dt-category-heading">{DIFFICULTY_LABELS[difficulty] ?? difficulty}</h2>
+              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {items.map((guide, i) => (
+                  <Card
+                    key={guide.slug}
+                    variant="link"
+                    href={`${basePath}/${guide.slug}`}
+                    class={cx("dt-anim-scale-in")}
+                    style={`animation-delay: ${0.1 + i * 0.08}s;`}
+                  >
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.375rem;">
+                      <h3 class="dt-card-title" style="margin: 0;">
+                        {guide.data.title}
+                      </h3>
+                      <Badge color={DIFFICULTY_COLORS[guide.data.difficulty] ?? "default"}>
+                        {guide.data.difficulty}
+                      </Badge>
+                    </div>
+                    {guide.data.description && <p class="dt-card-desc">{guide.data.description}</p>}
+                  </Card>
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
       </Layout>
     );
@@ -502,18 +436,15 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
   // Guide Page
   // --------------------------------------------------
   function GuidePage({ guide, content }: GuidePageProps): VNode {
-    const meta = getDifficultyMeta(guide.data.difficulty);
-
     return (
       <Layout>
         <article class="dt-page-container">
           <div style="margin-bottom: 2.5rem;">
-            <span
-              class={cx("dt-difficulty-badge", "dt-fade-in")}
-              style={`display: inline-block; background: ${meta.bg}; color: ${meta.color}; padding: 0.1875rem 0.625rem; margin-bottom: 1rem;`}
-            >
-              {guide.data.difficulty}
-            </span>
+            <div class="dt-fade-in" style="margin-bottom: 1rem;">
+              <Badge color={DIFFICULTY_COLORS[guide.data.difficulty] ?? "default"}>
+                {guide.data.difficulty}
+              </Badge>
+            </div>
             <h1 class={cx("dt-page-title", "dt-anim-slide-up")}>{guide.data.title}</h1>
             {guide.data.description && (
               <p class={cx("dt-content-desc", "dt-anim-slide-up", "dt-stagger-1")}>
@@ -578,3 +509,6 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
     CodeBlock,
   };
 }
+
+// Re-export for plugin index
+export { Callout };

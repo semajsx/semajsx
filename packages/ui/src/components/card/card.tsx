@@ -33,6 +33,8 @@ export interface CardProps {
   description?: string;
   /** Link URL (for "link" variant) */
   href?: string;
+  /** Inline style string */
+  style?: string;
   /** Additional CSS class(es) */
   class?: ClassValue;
   /** Content */
@@ -57,13 +59,22 @@ export function Card(props: CardProps): JSXNode {
 
   if (variant === "link") {
     return (
-      <a href={props.href} class={[styles.root, styles.link, styles.linkStates, props.class]}>
+      <a
+        href={props.href}
+        class={[styles.root, styles.link, styles.linkStates, props.class]}
+        style={props.style}
+      >
         {content}
       </a>
     );
   }
 
   return (
-    <div class={[styles.root, styles.feature, styles.featureStates, props.class]}>{content}</div>
+    <div
+      class={[styles.root, styles.feature, styles.featureStates, props.class]}
+      style={props.style}
+    >
+      {content}
+    </div>
   );
 }

@@ -26,6 +26,7 @@
     "./callout": "./src/components/callout/index.ts",
     "./badge": "./src/components/badge/index.ts",
     "./code-block": "./src/components/code-block/index.ts",
+    "./css": "./src/css.ts",
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -37,6 +38,7 @@
       "./callout": "./dist/components/callout/index.mjs",
       "./badge": "./dist/components/badge/index.mjs",
       "./code-block": "./dist/components/code-block/index.mjs",
+      "./css": "./dist/css.mjs",
       "./package.json": "./package.json"
     }
   },

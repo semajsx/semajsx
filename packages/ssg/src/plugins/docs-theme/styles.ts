@@ -2,7 +2,8 @@
  * Apple-inspired theme CSS for the docs-theme plugin.
  *
  * All class names are prefixed with `dt-` to avoid collisions.
- * The CSS is a plain string — no external style dependencies required.
+ * Component styles (Card, Callout, Badge) come from @semajsx/ui via componentCSS.
+ * This file contains layout, navigation, hero, typography, animations, and responsive styles.
  */
 
 export const THEME_CSS = /* css */ `
@@ -285,41 +286,6 @@ body {
 }
 
 /* ==============================================
- * Cards
- * ============================================== */
-
-.dt-feature-card {
-  background: white;
-  border-radius: 20px;
-  padding: 2.5rem;
-  border: 0.5px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
-}
-
-.dt-feature-card:hover {
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
-}
-
-.dt-doc-card {
-  background: white;
-  border-radius: 16px;
-  padding: 1.75rem;
-  border: 0.5px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-  text-decoration: none;
-  display: block;
-}
-
-.dt-doc-card:hover {
-  border-color: rgba(0, 113, 227, 0.3);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  transform: translateY(-2px);
-}
-
-/* ==============================================
  * Animations
  * ============================================== */
 
@@ -385,42 +351,6 @@ body {
   font-size: 0.875rem;
   line-height: 1.5;
   margin: 0;
-}
-
-.dt-feature-icon {
-  font-size: 2rem;
-  margin-bottom: 1.25rem;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f5f5f7;
-  border-radius: 12px;
-}
-
-.dt-feature-heading {
-  font-size: 1.375rem;
-  font-weight: 600;
-  color: #1d1d1f;
-  margin-bottom: 0.5rem;
-  letter-spacing: -0.01em;
-}
-
-.dt-feature-desc {
-  color: #6e6e73;
-  line-height: 1.6;
-  font-size: 0.9375rem;
-}
-
-.dt-difficulty-badge {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  padding: 0.125rem 0.5rem;
-  border-radius: 980px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  white-space: nowrap;
 }
 
 .dt-content-desc {
@@ -666,46 +596,6 @@ body {
 }
 
 /* ==============================================
- * Callout
- * ============================================== */
-
-.dt-callout {
-  padding: 1.25rem 1.5rem;
-  margin: 1.5rem 0;
-  border-radius: 14px;
-  border: 0.5px solid rgba(0, 0, 0, 0.04);
-}
-
-.dt-callout-title {
-  font-weight: 600;
-  font-size: 0.9375rem;
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  letter-spacing: -0.005em;
-}
-
-.dt-callout-icon {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  color: white;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.dt-callout-content {
-  color: #1d1d1f;
-  font-size: 0.9375rem;
-  line-height: 1.6;
-}
-
-/* ==============================================
  * 404 Page
  * ============================================== */
 
@@ -766,10 +656,6 @@ body {
     gap: 1rem !important;
   }
 
-  .dt-feature-heading {
-    font-size: 1.25rem !important;
-  }
-
   .dt-links-grid {
     grid-template-columns: 1fr !important;
   }
@@ -827,10 +713,5 @@ body {
   .dt-code-block { border-radius: 10px; }
   .dt-code-header { padding: 0.375rem 1rem; }
 
-  .dt-callout {
-    padding: 1rem 1.125rem !important;
-    border-radius: 12px !important;
-    margin: 1.25rem 0 !important;
-  }
 }
 `;
