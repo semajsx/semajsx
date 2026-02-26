@@ -504,6 +504,7 @@ export namespace JSX {
     abbr: HTMLAttributes<HTMLElement>;
     cite: HTMLAttributes<HTMLElement>;
     q: HTMLAttributes<HTMLQuoteElement>;
+    kbd: HTMLAttributes<HTMLElement>;
     sub: HTMLAttributes<HTMLElement>;
     sup: HTMLAttributes<HTMLElement>;
     time: HTMLAttributes<HTMLTimeElement>;

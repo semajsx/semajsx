@@ -2,7 +2,7 @@
  * Switch component styles
  */
 
-import { classes, rule, rules } from "@semajsx/style";
+import { classes, rule } from "@semajsx/style";
 import { tokens } from "../../theme/tokens";
 
 const c = classes(["root", "track", "thumb", "label", "checked"] as const);

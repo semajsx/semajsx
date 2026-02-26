@@ -851,7 +851,6 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
 
 // Re-export for plugin index
 export {
-  ComponentPreview,
   Callout,
   Tabs,
   TabList,
