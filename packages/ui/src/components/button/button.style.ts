@@ -27,17 +27,15 @@ export const root = rule`${c.root} {
   align-items: center;
   justify-content: center;
   gap: ${tokens.space.sm};
-  border: 1px solid transparent;
-  border-radius: ${tokens.radii.md};
+  border: 1.5px solid transparent;
+  border-radius: ${tokens.radii.pill};
   font-family: ${tokens.fonts.base};
   font-weight: ${tokens.fontWeights.medium};
   line-height: ${tokens.lineHeights.tight};
+  letter-spacing: -0.005em;
   cursor: pointer;
   user-select: none;
-  transition: background ${tokens.transitions.fast},
-              color ${tokens.transitions.fast},
-              border-color ${tokens.transitions.fast},
-              box-shadow ${tokens.transitions.fast};
+  transition: all ${tokens.transitions.normal};
 }`;
 
 export const rootStates = rules(
@@ -64,10 +62,14 @@ export const solidStates = rules(
   rule`${c.solid}:hover:not(:disabled) {
     background: ${tokens.colors.primaryHover};
     border-color: ${tokens.colors.primaryHover};
+    transform: scale(1.02);
+    box-shadow: ${tokens.shadows.primaryGlow};
   }`,
   rule`${c.solid}:active:not(:disabled) {
     background: ${tokens.colors.primaryActive};
     border-color: ${tokens.colors.primaryActive};
+    transform: scale(0.98);
+    box-shadow: none;
   }`,
 );
 
@@ -81,10 +83,12 @@ export const outlineStates = rules(
   rule`${c.outline}:hover:not(:disabled) {
     background: ${tokens.colors.primary};
     color: ${tokens.colors.onPrimary};
+    transform: scale(1.02);
   }`,
   rule`${c.outline}:active:not(:disabled) {
     background: ${tokens.colors.primaryActive};
     color: ${tokens.colors.onPrimary};
+    transform: scale(0.98);
   }`,
 );
 
@@ -115,6 +119,7 @@ export const dangerStates = rules(
   rule`${c.danger}:hover:not(:disabled) {
     background: ${tokens.colors.dangerHover};
     border-color: ${tokens.colors.dangerHover};
+    transform: scale(1.02);
   }`,
   rule`${c.danger}:focus-visible {
     outline-color: ${tokens.colors.danger};
@@ -124,17 +129,17 @@ export const dangerStates = rules(
 // --- Sizes ---
 
 export const sm = rule`${c.sm} {
-  padding: ${tokens.space.xs} ${tokens.space.sm};
+  padding: ${tokens.space.sm} ${tokens.space.lg};
   font-size: ${tokens.fontSizes.sm};
 }`;
 
 export const md = rule`${c.md} {
-  padding: ${tokens.space.sm} ${tokens.space.lg};
+  padding: ${tokens.space.md} ${tokens.space.xl};
   font-size: ${tokens.fontSizes.md};
 }`;
 
 export const lg = rule`${c.lg} {
-  padding: ${tokens.space.md} ${tokens.space.xl};
+  padding: 0.875rem 1.75rem;
   font-size: ${tokens.fontSizes.lg};
 }`;
 

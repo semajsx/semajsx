@@ -32,22 +32,31 @@ export const lightTheme = createTheme(tokens);
  */
 export const darkTheme = createTheme(tokens, {
   colors: {
-    primary: "#60a5fa",
-    primaryHover: "#93bbfd",
-    primaryActive: "#3b82f6",
+    primary: "#2997ff",
+    primaryHover: "#5ab4ff",
+    primaryActive: "#0071e3",
 
-    background: "#0f172a",
-    surface: "#1e293b",
-    border: "#334155",
-    text: "#f1f5f9",
-    textMuted: "#94a3b8",
+    background: "#000000",
+    surface: "#1c1c1e",
+    border: "rgba(255, 255, 255, 0.12)",
+    text: "#f5f5f7",
+    textMuted: "#a1a1a6",
+    textTertiary: "#6e6e73",
 
-    danger: "#f87171",
-    dangerHover: "#fca5a5",
-    success: "#4ade80",
-    warning: "#fbbf24",
+    danger: "#ff453a",
+    dangerHover: "#ff6961",
+    success: "#30d158",
+    warning: "#ffd60a",
+    info: "#0a84ff",
 
-    onPrimary: "#0f172a",
-    onDanger: "#0f172a",
+    onPrimary: "#ffffff",
+    onDanger: "#ffffff",
+  },
+
+  shadows: {
+    sm: "0 1px 3px rgba(0, 0, 0, 0.2)",
+    md: "0 1px 4px rgba(0, 0, 0, 0.3)",
+    lg: "0 8px 28px rgba(0, 0, 0, 0.4)",
+    primaryGlow: "0 4px 16px rgba(41, 151, 255, 0.3)",
   },
 });
