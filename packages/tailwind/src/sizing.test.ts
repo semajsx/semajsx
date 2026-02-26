@@ -3,16 +3,9 @@ import { resetConfig } from "./config";
 import {
   // Width - numbers
   w0,
-  w1,
-  w2,
   w4,
   w8,
-  w12,
   w16,
-  w24,
-  w32,
-  w48,
-  w64,
   w96,
   wpx,
   // Width - fractions
@@ -61,10 +54,6 @@ import {
   maxWLg,
   maxWXl,
   maxW2xl,
-  maxW3xl,
-  maxW4xl,
-  maxW5xl,
-  maxW6xl,
   maxW7xl,
   maxWProse,
   minW,

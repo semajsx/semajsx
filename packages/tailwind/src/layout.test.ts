@@ -12,42 +12,27 @@ import {
   top4,
   topAuto,
   topHalf,
-  topFull,
   top,
   // Right
-  right0,
   right4,
-  rightAuto,
   right,
   // Bottom
-  bottom0,
-  bottom4,
   bottomAuto,
-  bottom,
   // Left
-  left0,
-  left4,
-  leftAuto,
   leftHalf,
-  left,
   // Inset
   inset0,
   inset4,
   insetAuto,
   inset,
   // Inset X
-  insetX0,
   insetX4,
-  insetXAuto,
   insetX,
   // Inset Y
-  insetY0,
   insetY4,
-  insetYAuto,
   insetY,
   // Z-index
   z0,
-  z10,
   z50,
   zAuto,
   z,
@@ -56,8 +41,6 @@ import {
   overflowHidden,
   overflowScroll,
   overflowXAuto,
-  overflowXHidden,
-  overflowYAuto,
   overflowYScroll,
   // Visibility
   visible,

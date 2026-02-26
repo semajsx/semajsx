@@ -5,12 +5,10 @@ import {
   border,
   border0,
   border2,
-  border4,
   borderW,
   // Border radius
   roundedBase,
   roundedNone,
-  roundedSm,
   roundedLg,
   roundedFull,
   rounded,
