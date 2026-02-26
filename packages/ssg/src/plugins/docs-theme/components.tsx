@@ -721,7 +721,7 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
         );
       case "card":
         return (
-          <div style="transform: scale(0.55); transform-origin: center; position: relative; z-index: 1; width: 240px;">
+          <div style="transform: scale(0.45); transform-origin: center; position: relative; z-index: 1; width: 240px;">
             <Card heading="Card Title" description="A brief description" />
           </div>
         );
@@ -744,7 +744,7 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
         );
       case "steps":
         return (
-          <div style="transform: scale(0.55); transform-origin: center; position: relative; z-index: 1; width: 200px;">
+          <div style="transform: scale(0.4); transform-origin: center; position: relative; z-index: 1; width: 200px;">
             <Steps>
               <Step title="Install" number={1}>
                 bun add semajsx
