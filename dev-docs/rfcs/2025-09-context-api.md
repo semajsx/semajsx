@@ -2,7 +2,7 @@
 
 **Date**: 2025-09 (retroactive)
 **Status**: Implemented
-**Design Doc**: [docs/designs/context-api-design.md](../designs/context-api-design.md)
+**Design Doc**: [dev-docs/designs/context-api-design.md](../designs/context-api-design.md)
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Date**: 2025-10 (retroactive)
 **Status**: Implemented
-**Design Doc**: [docs/designs/logger-api-design.md](../designs/logger-api-design.md)
+**Design Doc**: [dev-docs/designs/logger-api-design.md](../designs/logger-api-design.md)
 
 ---
 

@@ -15,7 +15,7 @@ apps/docs/
 
 This directory contains **user-facing documentation** for SemaJSX - tutorials, guides, and API references published to the documentation website.
 
-**Note**: For internal development documentation (RFCs, design docs, ADRs), see the [docs/](../../docs/) directory in the project root.
+**Note**: For internal development documentation (RFCs, design docs, ADRs), see the [dev-docs/](../../dev-docs/) directory in the project root.
 
 ## Development
 

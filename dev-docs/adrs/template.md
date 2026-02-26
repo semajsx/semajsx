@@ -3,8 +3,8 @@
 **Date**: YYYY-MM-DD
 **Status**: Proposed | Accepted | Deprecated | Superseded
 **Superseded by**: ADR-XXXX (if applicable)
-**Related RFC**: `docs/rfcs/YYYY-MM-DD-feature.md` (if applicable)
-**Related Design**: `docs/designs/feature-design.md` (if applicable)
+**Related RFC**: `dev-docs/rfcs/YYYY-MM-DD-feature.md` (if applicable)
+**Related Design**: `dev-docs/designs/feature-design.md` (if applicable)
 
 ---
 
