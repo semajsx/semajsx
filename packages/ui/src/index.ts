@@ -17,3 +17,6 @@ export type { BadgeProps, BadgeColor } from "./components/badge";
 
 export { CodeBlock, InlineCode } from "./components/code-block";
 export type { CodeBlockProps, InlineCodeProps } from "./components/code-block";
+
+// CSS (for SSG/SSR)
+export { componentCSS } from "./css";
