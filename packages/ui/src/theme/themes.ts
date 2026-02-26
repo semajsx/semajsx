@@ -48,6 +48,7 @@ export const darkTheme = createTheme(tokens, {
     success: "#30d158",
     warning: "#ffd60a",
     info: "#0a84ff",
+    tip: "#bf5af2",
 
     onPrimary: "#ffffff",
     onDanger: "#ffffff",

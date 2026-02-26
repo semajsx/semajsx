@@ -22,6 +22,10 @@
     ".": "./src/index.ts",
     "./theme": "./src/theme/index.ts",
     "./button": "./src/components/button/index.ts",
+    "./card": "./src/components/card/index.ts",
+    "./callout": "./src/components/callout/index.ts",
+    "./badge": "./src/components/badge/index.ts",
+    "./code-block": "./src/components/code-block/index.ts",
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -29,6 +33,10 @@
       ".": "./dist/index.mjs",
       "./theme": "./dist/theme/index.mjs",
       "./button": "./dist/components/button/index.mjs",
+      "./card": "./dist/components/card/index.mjs",
+      "./callout": "./dist/components/callout/index.mjs",
+      "./badge": "./dist/components/badge/index.mjs",
+      "./code-block": "./dist/components/code-block/index.mjs",
       "./package.json": "./package.json"
     }
   },
