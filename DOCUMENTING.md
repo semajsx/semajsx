@@ -8,7 +8,7 @@ This document describes how documentation is organized in SemaJSX.
 
 | Type         | Purpose              | Location                                          |
 | ------------ | -------------------- | ------------------------------------------------- |
-| **Internal** | How we build SemaJSX | Root (`*.md`) + `dev-docs/` + `tasks/`            |
+| **Internal** | How we build SemaJSX | Root (`*.md`) + `design/` + `tasks/`              |
 | **User**     | How to use SemaJSX   | `README.md`, `packages/*/README.md`, `apps/docs/` |
 
 ### Internal Documentation
@@ -21,9 +21,9 @@ This document describes how documentation is organized in SemaJSX.
 [WORKFLOW.md](./WORKFLOW.md)
 
 **Design & Decisions**:
-[dev-docs/rfcs/](./dev-docs/rfcs/) |
-[dev-docs/designs/](./dev-docs/designs/) |
-[dev-docs/adrs/](./dev-docs/adrs/) |
+[design/rfcs/](./design/rfcs/) |
+[design/designs/](./design/designs/) |
+[design/adrs/](./design/adrs/) |
 [tasks/](./tasks/)
 
 ### User Documentation
@@ -58,7 +58,7 @@ project/
 ├── WORKFLOW.md              # Development workflow
 ├── DOCUMENTING.md           # This file
 │
-├── dev-docs/                # Formal documents (permanent, reviewed)
+├── design/                # Formal documents (permanent, reviewed)
 │   ├── rfcs/               # Feature proposals
 │   ├── adrs/               # Architecture decisions (cross-cutting)
 │   └── guides/             # User guides (optional)
@@ -82,15 +82,15 @@ project/
 
 ## Two Categories of Documents
 
-### Formal Documents (`dev-docs/`)
+### Formal Documents (`design/`)
 
 **Purpose**: Permanent, reviewed, organization-wide significance.
 
-| Type  | Location           | Content                              | Lifecycle                  |
-| ----- | ------------------ | ------------------------------------ | -------------------------- |
-| RFC   | `dev-docs/rfcs/`   | Feature proposals, requirements      | Permanent after acceptance |
-| ADR   | `dev-docs/adrs/`   | Cross-cutting architecture decisions | Permanent, append-only     |
-| Guide | `dev-docs/guides/` | User tutorials (if needed)           | Updated with releases      |
+| Type  | Location         | Content                              | Lifecycle                  |
+| ----- | ---------------- | ------------------------------------ | -------------------------- |
+| RFC   | `design/rfcs/`   | Feature proposals, requirements      | Permanent after acceptance |
+| ADR   | `design/adrs/`   | Cross-cutting architecture decisions | Permanent, append-only     |
+| Guide | `design/guides/` | User tutorials (if needed)           | Updated with releases      |
 
 **Characteristics**:
 
@@ -134,10 +134,10 @@ Create tasks/feature-name/
     │   - Research section (as you go)
     │
     ├── (Optional) Major feature?
-    │   └── Create dev-docs/rfcs/YYYY-MM-feature.md
+    │   └── Create design/rfcs/YYYY-MM-feature.md
     │
     └── (Optional) Cross-cutting decision?
-        └── Create dev-docs/adrs/NNN-decision.md
+        └── Create design/adrs/NNN-decision.md
 ```
 
 ### Evolution
@@ -264,7 +264,7 @@ Move valuable content from temporary to permanent locations:
 
 - Research insight → `EVOLUTION.md` Research section
 - Design draft → Consolidate into `README.md`
-- Repeated decision → Extract to `dev-docs/adrs/`
+- Repeated decision → Extract to `design/adrs/`
 
 ### Cleanup
 
@@ -288,7 +288,7 @@ Periodically:
 ## Relationship Between Documents
 
 ```
-dev-docs/rfcs/feature.md          tasks/feature/              packages/*/
+design/rfcs/feature.md          tasks/feature/              packages/*/
         │                            │                          │
         │  "What & Why"              │  "How"                   │  "Code"
         │                            │                          │
@@ -312,8 +312,8 @@ dev-docs/rfcs/feature.md          tasks/feature/              packages/*/
 | Situation              | Action                                             |
 | ---------------------- | -------------------------------------------------- |
 | Starting new feature   | Create `tasks/feature-name/`, start `EVOLUTION.md` |
-| Major feature proposal | Create RFC in `dev-docs/rfcs/`                     |
-| Cross-cutting decision | Create ADR in `dev-docs/adrs/`                     |
+| Major feature proposal | Create RFC in `design/rfcs/`                       |
+| Cross-cutting decision | Create ADR in `design/adrs/`                       |
 | Task-specific decision | Add to `EVOLUTION.md` or `tasks/feature/adr-*.md`  |
 | Research findings      | Add to `EVOLUTION.md` Research section             |
 | Design complete        | Write `tasks/feature/README.md`                    |
@@ -325,11 +325,11 @@ dev-docs/rfcs/feature.md          tasks/feature/              packages/*/
 
 ### RFC Template
 
-See `dev-docs/rfcs/template.md`
+See `design/rfcs/template.md`
 
 ### ADR Template
 
-See `dev-docs/adrs/template.md`
+See `design/adrs/template.md`
 
 ### Task README Template
 
@@ -459,12 +459,12 @@ See README.md for final design.
 
 ## Quick Reference
 
-| I need to...                  | Go to                              |
-| ----------------------------- | ---------------------------------- |
-| Understand a feature's design | `tasks/feature/README.md`          |
-| See why decisions were made   | `tasks/feature/EVOLUTION.md`       |
-| Find feature requirements     | `dev-docs/rfcs/` or `EVOLUTION.md` |
-| See cross-cutting decisions   | `dev-docs/adrs/`                   |
-| Learn how to use a package    | `packages/*/README.md`             |
+| I need to...                  | Go to                            |
+| ----------------------------- | -------------------------------- |
+| Understand a feature's design | `tasks/feature/README.md`        |
+| See why decisions were made   | `tasks/feature/EVOLUTION.md`     |
+| Find feature requirements     | `design/rfcs/` or `EVOLUTION.md` |
+| See cross-cutting decisions   | `design/adrs/`                   |
+| Learn how to use a package    | `packages/*/README.md`           |
 
 See [WORKFLOW.md](./WORKFLOW.md) for development process.

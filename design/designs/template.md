@@ -3,8 +3,8 @@
 **Date**: YYYY-MM-DD
 **Author**: [Your Name]
 **Status**: Draft | In Review | Approved | Implemented | Deprecated
-**Related RFC**: `dev-docs/rfcs/YYYY-MM-DD-feature.md`
-**Related ADRs**: `dev-docs/adrs/NNNN-decision.md`
+**Related RFC**: `design/rfcs/YYYY-MM-DD-feature.md`
+**Related ADRs**: `design/adrs/NNNN-decision.md`
 
 ---
 
