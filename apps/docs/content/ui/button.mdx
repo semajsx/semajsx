@@ -21,12 +21,16 @@ category: Actions
 
 <ComponentPreview label="Danger">
   <Button color="danger">Delete</Button>
-  <Button color="danger" variant="outline">Cancel</Button>
+  <Button color="danger" variant="outline">
+    Cancel
+  </Button>
 </ComponentPreview>
 
 <ComponentPreview label="Disabled">
   <Button disabled>Disabled</Button>
-  <Button variant="outline" disabled>Disabled</Button>
+  <Button variant="outline" disabled>
+    Disabled
+  </Button>
 </ComponentPreview>
 
 ## Usage
@@ -41,12 +45,12 @@ import { Button } from "@semajsx/ui/components/button";
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `variant` | `"solid" \| "outline" \| "ghost"` | `"solid"` | Visual variant |
-| `size` | `"sm" \| "md" \| "lg"` | `"md"` | Size preset |
-| `color` | `"default" \| "danger"` | `"default"` | Color scheme |
-| `disabled` | `boolean` | `false` | Disabled state |
-| `type` | `"button" \| "submit" \| "reset"` | `"button"` | HTML button type |
-| `onClick` | `(e: Event) => void` | — | Click handler |
-| `aria-label` | `string` | — | Accessible label |
+| Prop         | Type                              | Default     | Description      |
+| ------------ | --------------------------------- | ----------- | ---------------- |
+| `variant`    | `"solid" \| "outline" \| "ghost"` | `"solid"`   | Visual variant   |
+| `size`       | `"sm" \| "md" \| "lg"`            | `"md"`      | Size preset      |
+| `color`      | `"default" \| "danger"`           | `"default"` | Color scheme     |
+| `disabled`   | `boolean`                         | `false`     | Disabled state   |
+| `type`       | `"button" \| "submit" \| "reset"` | `"button"`  | HTML button type |
+| `onClick`    | `(e: Event) => void`              | —           | Click handler    |
+| `aria-label` | `string`                          | —           | Accessible label |

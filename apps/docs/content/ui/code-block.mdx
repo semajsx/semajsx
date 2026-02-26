@@ -29,7 +29,7 @@ In MDX files, code blocks are automatically rendered with the CodeBlock componen
 ```tsx
 import { Button } from "@semajsx/ui/components/button";
 
-<Button variant="outline">Click me</Button>
+<Button variant="outline">Click me</Button>;
 ```
 ````
 
@@ -38,20 +38,20 @@ For programmatic use:
 ```tsx
 import { CodeBlock } from "@semajsx/ui/components/code-block";
 
-<CodeBlock language="tsx">{`const x = 1;`}</CodeBlock>
+<CodeBlock language="tsx">{`const x = 1;`}</CodeBlock>;
 ```
 
 ## Props
 
 ### CodeBlock
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `language` | `string` | — | Programming language for the label |
-| `children` | `string` | — | Code content |
+| Prop       | Type     | Default | Description                        |
+| ---------- | -------- | ------- | ---------------------------------- |
+| `language` | `string` | —       | Programming language for the label |
+| `children` | `string` | —       | Code content                       |
 
 ### InlineCode
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `children` | `JSXNode` | — | Inline code content |
+| Prop       | Type      | Default | Description         |
+| ---------- | --------- | ------- | ------------------- |
+| `children` | `JSXNode` | —       | Inline code content |

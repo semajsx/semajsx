@@ -12,7 +12,12 @@ category: Layout
 </ComponentPreview>
 
 <ComponentPreview label="Link Card">
-  <Card variant="link" heading="Getting Started" description="Learn the basics in 5 minutes." href="/reference/getting-started" />
+  <Card
+    variant="link"
+    heading="Getting Started"
+    description="Learn the basics in 5 minutes."
+    href="/reference/getting-started"
+  />
 </ComponentPreview>
 
 ## Usage
@@ -38,10 +43,10 @@ import { Card } from "@semajsx/ui/components/card";
 
 ## Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `variant` | `"feature" \| "link"` | `"feature"` | Card variant |
-| `icon` | `JSXNode` | — | Icon content (emoji or JSX) |
-| `heading` | `string` | — | Card heading |
-| `description` | `string` | — | Card description |
-| `href` | `string` | — | Link URL (for link variant) |
+| Prop          | Type                  | Default     | Description                 |
+| ------------- | --------------------- | ----------- | --------------------------- |
+| `variant`     | `"feature" \| "link"` | `"feature"` | Card variant                |
+| `icon`        | `JSXNode`             | —           | Icon content (emoji or JSX) |
+| `heading`     | `string`              | —           | Card heading                |
+| `description` | `string`              | —           | Card description            |
+| `href`        | `string`              | —           | Link URL (for link variant) |
