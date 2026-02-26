@@ -740,15 +740,14 @@ body {
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  padding: 3rem 2rem;
+  padding: 3.5rem 2.5rem;
   min-height: 120px;
   background: white;
   position: relative;
 }
 
 .dt-preview-box > * {
-  margin-top: 0;
-  margin-bottom: 0;
+  pointer-events: none;
 }
 
 .dt-preview-box::before {
@@ -813,8 +812,7 @@ body {
 }
 
 .dt-ui-card-preview > * {
-  margin-top: 0;
-  margin-bottom: 0;
+  pointer-events: none;
 }
 
 .dt-ui-card-preview::before {
