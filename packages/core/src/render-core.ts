@@ -422,11 +422,12 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
    * Forward merges its props onto its single child and renders it directly
    */
   function renderForward(vnode: VNode, parentContext: ContextMap): RenderedNode<TNode> {
-    if (vnode.children.length !== 1) {
+    const child = vnode.children[0];
+
+    if (!child || vnode.children.length !== 1) {
       throw new Error("Forward must have exactly one child element");
     }
 
-    const child = vnode.children[0]!;
     const forwardProps = vnode.props || {};
 
     // Create a new VNode with merged props
