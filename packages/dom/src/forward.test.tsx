@@ -1,10 +1,10 @@
 /** @jsxImportSource @semajsx/dom */
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { signal } from "@semajsx/signal";
 import { render } from "@semajsx/dom";
 import { ForwardComponent } from "@semajsx/dom";
-import { Forward, Fragment, Context, context } from "@semajsx/core";
+import { Forward, Context, context } from "@semajsx/core";
 import type { ComponentAPI } from "@semajsx/core";
 
 describe("Forward functionality", () => {
