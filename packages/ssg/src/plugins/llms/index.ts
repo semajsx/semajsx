@@ -1,9 +1,9 @@
 import { writeFile, mkdir } from "fs/promises";
 import { join, dirname } from "path";
 import type { SSGConfig, SSGPlugin, SSGInstance, CollectionEntry } from "../../types";
-import type { AgentMarkdownOptions } from "./types";
+import type { LlmsOptions } from "./types";
 
-export type { AgentMarkdownOptions, AgentMarkdownSection, AgentMarkdownLink } from "./types";
+export type { LlmsOptions, LlmsSection, LlmsLink } from "./types";
 
 // =============================================================================
 // Helpers
@@ -48,7 +48,7 @@ function formatLink(title: string, url: string, description?: string): string {
  * @see https://llmstxt.org/
  */
 function generateLlmsTxt(
-  options: AgentMarkdownOptions,
+  options: LlmsOptions,
   sectionEntries: Map<string, CollectionEntry[]>,
 ): string {
   const lines: string[] = [];
@@ -100,7 +100,7 @@ function generateLlmsTxt(
  * Includes the full markdown body of every collection entry.
  */
 function generateLlmsFullTxt(
-  options: AgentMarkdownOptions,
+  options: LlmsOptions,
   sectionEntries: Map<string, CollectionEntry[]>,
 ): string {
   const lines: string[] = [];
@@ -174,7 +174,7 @@ function generateEntryMarkdown(entry: CollectionEntry): string {
 // =============================================================================
 
 /**
- * Agent-friendly markdown plugin for SSG.
+ * LLMs plugin for SSG.
  *
  * Generates `llms.txt`, `llms-full.txt`, and per-page `.md` files
  * following the llms.txt specification, making your site easily
@@ -185,12 +185,12 @@ function generateEntryMarkdown(entry: CollectionEntry): string {
  * @example
  * ```tsx
  * import { createSSG } from "@semajsx/ssg";
- * import { agentMarkdown } from "@semajsx/ssg/plugins/agent-markdown";
+ * import { llms } from "@semajsx/ssg/plugins/llms";
  *
  * const ssg = createSSG({
  *   outDir: "./dist",
  *   plugins: [
- *     agentMarkdown({
+ *     llms({
  *       title: "My Project",
  *       description: "Documentation for My Project",
  *       url: "https://docs.myproject.com",
@@ -202,11 +202,11 @@ function generateEntryMarkdown(entry: CollectionEntry): string {
  * });
  * ```
  */
-export function agentMarkdown(options: AgentMarkdownOptions): SSGPlugin {
+export function llms(options: LlmsOptions): SSGPlugin {
   let outDir = "";
 
   return {
-    name: "agent-markdown",
+    name: "llms",
     enforce: "post",
 
     configResolved(config: SSGConfig) {

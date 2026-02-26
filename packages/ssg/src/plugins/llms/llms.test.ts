@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { readFile, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
-import { agentMarkdown, _generateLlmsTxt, _generateLlmsFullTxt } from "./index";
+import { llms, _generateLlmsTxt, _generateLlmsFullTxt } from "./index";
 import type { CollectionEntry, SSGInstance, SSGConfig, BuildResult } from "../../types";
 
 // =============================================================================
@@ -295,11 +295,11 @@ describe("generateLlmsFullTxt", () => {
 // Plugin integration
 // =============================================================================
 
-describe("agentMarkdown plugin", () => {
+describe("llms plugin", () => {
   let outDir: string;
 
   beforeEach(async () => {
-    outDir = join(tmpdir(), `ssg-agent-md-test-${Date.now()}`);
+    outDir = join(tmpdir(), `ssg-llms-test-${Date.now()}`);
   });
 
   afterEach(async () => {
@@ -311,14 +311,14 @@ describe("agentMarkdown plugin", () => {
   });
 
   it("should have correct plugin metadata", () => {
-    const plugin = agentMarkdown({ title: "Test" });
+    const plugin = llms({ title: "Test" });
 
-    expect(plugin.name).toBe("agent-markdown");
+    expect(plugin.name).toBe("llms");
     expect(plugin.enforce).toBe("post");
   });
 
   it("should generate llms.txt and llms-full.txt", async () => {
-    const plugin = agentMarkdown({
+    const plugin = llms({
       title: "Test Project",
       description: "A test project",
       sections: [{ title: "Docs", collection: "docs", basePath: "/docs" }],
@@ -343,7 +343,7 @@ describe("agentMarkdown plugin", () => {
   });
 
   it("should generate per-entry .md files", async () => {
-    const plugin = agentMarkdown({
+    const plugin = llms({
       title: "Test Project",
       sections: [{ title: "Docs", collection: "docs", basePath: "/docs" }],
     });
@@ -361,7 +361,7 @@ describe("agentMarkdown plugin", () => {
   });
 
   it("should respect llmsTxt: false", async () => {
-    const plugin = agentMarkdown({
+    const plugin = llms({
       title: "Test",
       llmsTxt: false,
     });
@@ -376,7 +376,7 @@ describe("agentMarkdown plugin", () => {
   });
 
   it("should respect llmsFullTxt: false", async () => {
-    const plugin = agentMarkdown({
+    const plugin = llms({
       title: "Test",
       llmsFullTxt: false,
     });
@@ -391,7 +391,7 @@ describe("agentMarkdown plugin", () => {
   });
 
   it("should respect markdownPages: false", async () => {
-    const plugin = agentMarkdown({
+    const plugin = llms({
       title: "Test",
       sections: [{ title: "Docs", collection: "docs", basePath: "/docs" }],
       markdownPages: false,
@@ -407,7 +407,7 @@ describe("agentMarkdown plugin", () => {
   });
 
   it("should handle missing collections gracefully", async () => {
-    const plugin = agentMarkdown({
+    const plugin = llms({
       title: "Test",
       sections: [{ title: "Docs", collection: "nonexistent", basePath: "/docs" }],
     });
@@ -426,7 +426,7 @@ describe("agentMarkdown plugin", () => {
   });
 
   it("should generate files with absolute URLs when url is set", async () => {
-    const plugin = agentMarkdown({
+    const plugin = llms({
       title: "Test",
       url: "https://example.com",
       sections: [{ title: "Docs", collection: "docs", basePath: "/docs" }],
@@ -443,7 +443,7 @@ describe("agentMarkdown plugin", () => {
   });
 
   it("should generate multiple sections and optional links", async () => {
-    const plugin = agentMarkdown({
+    const plugin = llms({
       title: "Full Site",
       description: "Everything",
       sections: [
