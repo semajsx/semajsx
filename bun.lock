@@ -257,6 +257,28 @@
         "@semajsx/configs": "workspace:*",
       },
     },
+    "packages/ui": {
+      "name": "@semajsx/ui",
+      "version": "0.1.0",
+      "dependencies": {
+        "@semajsx/core": "workspace:*",
+        "@semajsx/signal": "workspace:*",
+        "@semajsx/style": "workspace:*",
+      },
+      "devDependencies": {
+        "@semajsx/configs": "workspace:*",
+        "@semajsx/dom": "workspace:*",
+        "tsdown": "^0.20.1",
+        "typescript": "^5.9.3",
+        "vitest": "^4.0.18",
+      },
+      "peerDependencies": {
+        "@semajsx/dom": "workspace:*",
+      },
+      "optionalPeers": [
+        "@semajsx/dom",
+      ],
+    },
     "packages/utils": {
       "name": "@semajsx/utils",
       "version": "0.1.0",
@@ -570,6 +592,8 @@
     "@semajsx/tailwind": ["@semajsx/tailwind@workspace:packages/tailwind"],
 
     "@semajsx/terminal": ["@semajsx/terminal@workspace:packages/terminal"],
+
+    "@semajsx/ui": ["@semajsx/ui@workspace:packages/ui"],
 
     "@semajsx/utils": ["@semajsx/utils@workspace:packages/utils"],
 
