@@ -1,7 +1,15 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  entry: ["src/index.ts", "src/theme/index.ts", "src/components/button/index.ts"],
+  entry: [
+    "src/index.ts",
+    "src/theme/index.ts",
+    "src/components/button/index.ts",
+    "src/components/card/index.ts",
+    "src/components/callout/index.ts",
+    "src/components/badge/index.ts",
+    "src/components/code-block/index.ts",
+  ],
   format: ["esm"],
   unbundle: true,
   dts: true,

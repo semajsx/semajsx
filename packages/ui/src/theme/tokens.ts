@@ -40,6 +40,7 @@ export const tokens = defineTokens({
     success: "#34c759",
     warning: "#ff9f0a",
     info: "#007aff",
+    tip: "#af52de",
 
     // Inverse (for solid buttons, etc.)
     onPrimary: "#ffffff",
