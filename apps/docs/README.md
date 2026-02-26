@@ -7,14 +7,9 @@ Official documentation site for SemaJSX, built with `semajsx/ssg`.
 ```
 apps/docs/
 ├── content/              # Documentation content
-│   ├── docs/            # API reference pages
+│   ├── reference/       # API reference pages
 │   └── guides/          # Tutorial guides
-├── components/          # Reusable doc site components
-│   ├── Layout.tsx       # Main layout
-│   ├── Callout.tsx      # Callout component
-│   └── CodeBlock.tsx    # Code syntax highlighting
 ├── build.tsx            # Build script
-├── styles.css           # Global styles
 └── package.json
 ```
 
@@ -51,9 +46,9 @@ Open `http://localhost:4173` to preview the built site.
 
 ## Adding Documentation
 
-### Add a Doc Page
+### Add a Reference Page
 
-Create a Markdown file in `content/docs/`:
+Create a Markdown file in `content/reference/`:
 
 ```markdown
 ---
@@ -99,6 +94,28 @@ Important information here
 
 Types: `info`, `warning`, `success`, `error`, `tip`
 
+### Tabs
+
+```markdown
+<Tabs defaultValue="bun">
+<TabList>
+<Tab value="bun">Bun</Tab>
+<Tab value="npm">npm</Tab>
+</TabList>
+<TabPanel value="bun">bun add semajsx</TabPanel>
+<TabPanel value="npm">npm install semajsx</TabPanel>
+</Tabs>
+```
+
+### Steps
+
+```markdown
+<Steps>
+<Step title="Install" number={1}>Run bun add semajsx</Step>
+<Step title="Create" number={2}>Write your first component</Step>
+</Steps>
+```
+
 ### CodeBlock
 
 Code blocks are automatically styled. Just use standard Markdown fenced code blocks:
@@ -114,7 +131,7 @@ function Example() {
 ## Features
 
 - **Collections** - Type-safe content management with schema validation
-- **MDX Support** - Write docs in MDX with custom components
+- **MDX Support** - Write docs in MDX with custom components (Callout, Tabs, Steps, CodeBlock)
 - **Static Generation** - Fast, SEO-friendly static HTML
 - **Hot Reload** - Auto-rebuild on content changes (in watch mode)
 - **Island Architecture** - Add interactive components that hydrate on the client
@@ -130,10 +147,18 @@ The build generates:
 ```
 dist/
 ├── index.html
-├── docs/
+├── reference/
 │   ├── index.html
-│   └── getting-started/
-│       └── index.html
+│   ├── getting-started/
+│   ├── signals/
+│   ├── components/
+│   ├── dom-rendering/
+│   ├── styling/
+│   ├── tailwind/
+│   ├── ssr/
+│   ├── terminal/
+│   ├── context/
+│   └── ssg/
 ├── guides/
 │   └── index.html
 └── _assets/

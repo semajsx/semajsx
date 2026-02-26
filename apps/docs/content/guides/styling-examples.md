@@ -682,4 +682,4 @@ When hydrating on the client, styles are already in the DOM. The registry detect
 
 - Explore the full [Style API](/packages/style/README.md)
 - Learn [Tailwind utilities](/packages/tailwind/README.md)
-- Read the [Style System RFC](/docs/rfcs/006-style-system.md) for architecture details
+- Read the [Style System RFC](/reference/rfcs/006-style-system.md) for architecture details

@@ -77,10 +77,10 @@ Add JSX configuration to your `tsconfig.json`:
 
 ## Next Steps
 
-- Learn about [Signals](/docs/signals) for reactive state management
-- Explore [Components](/docs/components) and how to build with JSX
-- Check out [SSR](/docs/ssr) for server-side rendering
-- Try [SSG](/docs/ssg) for static site generation
+- Learn about [Signals](/reference/signals) for reactive state management
+- Explore [Components](/reference/components) and how to build with JSX
+- Check out [SSR](/reference/ssr) for server-side rendering
+- Try [SSG](/reference/ssg) for static site generation
 
 <Callout type="success" title="Ready to build!">
 You're all set! Start building amazing applications with SemaJSX.

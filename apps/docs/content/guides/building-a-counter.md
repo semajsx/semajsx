@@ -179,7 +179,7 @@ function Counter() {
 
 ## Next Steps
 
-- Learn about [Computed Signals](/docs/signals#computed-signals)
+- Learn about [Computed Signals](/reference/signals#computed-signals)
 - Build a [Todo App](/guides/building-a-todo-app)
 - Explore [Component Patterns](/guides/component-patterns)
 
