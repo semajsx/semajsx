@@ -4,13 +4,13 @@ import { defineCollection } from "../../index";
 import type { DocsThemeOptions } from "./types";
 import { createComponents, Callout, CodeBlock } from "./components";
 import { lucide as lucidePlugin } from "../lucide/index";
-import { agentMarkdown as agentMarkdownPlugin } from "../agent-markdown/index";
-import type { AgentMarkdownSection } from "../agent-markdown/types";
+import { llms as llmsPlugin } from "../llms/index";
+import type { LlmsSection } from "../llms/types";
 import type { Component } from "@semajsx/core";
 
 export type {
   DocsThemeOptions,
-  AgentMarkdownThemeOptions,
+  LlmsThemeOptions,
   NavLink,
   HeroAction,
   FeatureItem,
@@ -231,13 +231,13 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
     plugins.push(lucidePlugin(lucideOpts));
   }
 
-  // Agent-friendly markdown (llms.txt) — enabled by default when docs or guides exist
+  // LLMs (llms.txt) — enabled by default when docs or guides exist
   const hasContent = options.docs || options.guides;
-  if (options.agentMarkdown !== false && hasContent) {
-    const agentOpts = typeof options.agentMarkdown === "object" ? options.agentMarkdown : {};
+  if (options.llms !== false && hasContent) {
+    const llmsOpts = typeof options.llms === "object" ? options.llms : {};
 
     // Auto-derive sections from configured collections
-    const sections: AgentMarkdownSection[] = [];
+    const sections: LlmsSection[] = [];
     if (options.docs) {
       sections.push({
         title: options.docs.heading ?? "Documentation",
@@ -254,15 +254,15 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
     }
 
     plugins.push(
-      agentMarkdownPlugin({
+      llmsPlugin({
         title: options.title,
         description: options.description,
-        url: agentOpts.url,
+        url: llmsOpts.url,
         sections,
-        links: agentOpts.links,
-        llmsTxt: agentOpts.llmsTxt,
-        llmsFullTxt: agentOpts.llmsFullTxt,
-        markdownPages: agentOpts.markdownPages,
+        links: llmsOpts.links,
+        llmsTxt: llmsOpts.llmsTxt,
+        llmsFullTxt: llmsOpts.llmsFullTxt,
+        markdownPages: llmsOpts.markdownPages,
       }),
     );
   }

@@ -1,7 +1,7 @@
 import type { Component } from "@semajsx/core";
 import type { CollectionSource } from "../../types";
 import type { LucidePluginOptions } from "../lucide/index";
-import type { AgentMarkdownLink } from "../agent-markdown/types";
+import type { LlmsLink } from "../llms/types";
 
 // =============================================================================
 // Navigation
@@ -148,24 +148,24 @@ export interface DocsThemeOptions {
   lucide?: LucidePluginOptions | false;
 
   /**
-   * Agent-friendly markdown (llms.txt) plugin options. Set to `false` to disable.
+   * LLMs plugin options (llms.txt). Set to `false` to disable.
    * Enabled by default when docs or guides are configured.
    *
    * Sections are auto-derived from docs/guides collections.
    * Pass an object to customize URL, additional links, or toggle individual outputs.
    */
-  agentMarkdown?: AgentMarkdownThemeOptions | false;
+  llms?: LlmsThemeOptions | false;
 }
 
 /**
- * Options specific to agent-markdown when used within docs-theme.
+ * Options for the llms plugin when used within docs-theme.
  * Title, description, and sections are auto-derived from the theme config.
  */
-export interface AgentMarkdownThemeOptions {
+export interface LlmsThemeOptions {
   /** Site base URL for absolute links (e.g., "https://docs.example.com") */
   url?: string;
   /** Additional links for the "Optional" section of llms.txt */
-  links?: AgentMarkdownLink[];
+  links?: LlmsLink[];
   /** Generate llms.txt (default: true) */
   llmsTxt?: boolean;
   /** Generate llms-full.txt (default: true) */

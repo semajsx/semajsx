@@ -377,52 +377,52 @@ describe("docsTheme — SSG integration", () => {
 // Agent Markdown integration
 // =============================================================================
 
-describe("docsTheme — agent-markdown integration", () => {
-  it("should include agent-markdown plugin when docs are configured", () => {
+describe("docsTheme — llms integration", () => {
+  it("should include llms plugin when docs are configured", () => {
     const plugins = docsTheme(
       createMinimalOptions({
         docs: { source: createMockSource([]) },
       }),
     );
-    expect(plugins.find((p) => p.name === "agent-markdown")).toBeDefined();
+    expect(plugins.find((p) => p.name === "llms")).toBeDefined();
   });
 
-  it("should include agent-markdown plugin when guides are configured", () => {
+  it("should include llms plugin when guides are configured", () => {
     const plugins = docsTheme(
       createMinimalOptions({
         guides: { source: createMockSource([]) },
       }),
     );
-    expect(plugins.find((p) => p.name === "agent-markdown")).toBeDefined();
+    expect(plugins.find((p) => p.name === "llms")).toBeDefined();
   });
 
-  it("should not include agent-markdown when no content collections", () => {
+  it("should not include llms when no content collections", () => {
     const plugins = docsTheme(createMinimalOptions());
-    expect(plugins.find((p) => p.name === "agent-markdown")).toBeUndefined();
+    expect(plugins.find((p) => p.name === "llms")).toBeUndefined();
   });
 
-  it("should not include agent-markdown when explicitly disabled", () => {
+  it("should not include llms when explicitly disabled", () => {
     const plugins = docsTheme(
       createMinimalOptions({
         docs: { source: createMockSource([]) },
-        agentMarkdown: false,
+        llms: false,
       }),
     );
-    expect(plugins.find((p) => p.name === "agent-markdown")).toBeUndefined();
+    expect(plugins.find((p) => p.name === "llms")).toBeUndefined();
   });
 
-  it("should pass custom agent-markdown options", () => {
+  it("should pass custom llms options", () => {
     const plugins = docsTheme(
       createMinimalOptions({
         docs: { source: createMockSource([]) },
-        agentMarkdown: {
+        llms: {
           url: "https://example.com",
           links: [{ title: "GitHub", url: "https://github.com/test" }],
         },
       }),
     );
     // Plugin exists — options are passed internally
-    expect(plugins.find((p) => p.name === "agent-markdown")).toBeDefined();
+    expect(plugins.find((p) => p.name === "llms")).toBeDefined();
   });
 });
 

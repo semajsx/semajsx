@@ -1,12 +1,12 @@
 // =============================================================================
-// Agent Markdown Plugin Types
+// LLMs Plugin Types
 // =============================================================================
 
 /**
  * A section in llms.txt that maps to a collection.
  * Each section becomes an H2 heading with links to collection entries.
  */
-export interface AgentMarkdownSection {
+export interface LlmsSection {
   /** Section heading in llms.txt (e.g., "Documentation", "Blog") */
   title: string;
   /** Collection name to pull entries from */
@@ -19,7 +19,7 @@ export interface AgentMarkdownSection {
  * An additional link to include in llms.txt.
  * Placed in the "Optional" section per the llms.txt spec.
  */
-export interface AgentMarkdownLink {
+export interface LlmsLink {
   /** Link title */
   title: string;
   /** Link URL (absolute or relative) */
@@ -29,11 +29,11 @@ export interface AgentMarkdownLink {
 }
 
 /**
- * Configuration options for the agent-markdown plugin.
+ * Configuration options for the llms plugin.
  *
  * @example
  * ```tsx
- * agentMarkdown({
+ * llms({
  *   title: "My Project",
  *   description: "Documentation for My Project",
  *   url: "https://docs.myproject.com",
@@ -44,7 +44,7 @@ export interface AgentMarkdownLink {
  * })
  * ```
  */
-export interface AgentMarkdownOptions {
+export interface LlmsOptions {
   /** Site title — used as H1 in llms.txt (required) */
   title: string;
   /** Site description — rendered as blockquote under the H1 */
@@ -52,9 +52,9 @@ export interface AgentMarkdownOptions {
   /** Site base URL for generating absolute links (e.g., "https://docs.example.com") */
   url?: string;
   /** Sections that map to collections */
-  sections?: AgentMarkdownSection[];
+  sections?: LlmsSection[];
   /** Additional links placed in the "Optional" section of llms.txt */
-  links?: AgentMarkdownLink[];
+  links?: LlmsLink[];
   /** Generate llms.txt index file (default: true) */
   llmsTxt?: boolean;
   /** Generate llms-full.txt with complete content (default: true) */

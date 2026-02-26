@@ -4,7 +4,7 @@ export type { IconProps, LucidePluginOptions } from "./lucide";
 export { docsTheme, Callout, CodeBlock } from "./docs-theme";
 export type {
   DocsThemeOptions,
-  AgentMarkdownThemeOptions,
+  LlmsThemeOptions,
   NavLink,
   HeroAction,
   FeatureItem,
@@ -13,9 +13,5 @@ export type {
   GuidesConfig,
 } from "./docs-theme";
 
-export { agentMarkdown } from "./agent-markdown";
-export type {
-  AgentMarkdownOptions,
-  AgentMarkdownSection,
-  AgentMarkdownLink,
-} from "./agent-markdown";
+export { llms } from "./llms";
+export type { LlmsOptions, LlmsSection, LlmsLink } from "./llms";
