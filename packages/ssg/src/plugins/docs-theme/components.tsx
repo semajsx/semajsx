@@ -721,32 +721,47 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
         );
       case "card":
         return (
-          <div style="font-size: 0.6875rem; color: #86868b; position: relative; z-index: 1;">
-            Card
+          <div style="transform: scale(0.55); transform-origin: center; position: relative; z-index: 1; width: 240px;">
+            <Card heading="Card Title" description="A brief description" />
           </div>
         );
       case "callout":
         return (
-          <div style="font-size: 0.6875rem; color: #86868b; position: relative; z-index: 1;">
-            Callout
+          <div style="transform: scale(0.6); transform-origin: center; position: relative; z-index: 1; width: 260px;">
+            <Callout type="info">Informational callout</Callout>
           </div>
         );
       case "tabs":
         return (
-          <div style="font-size: 0.6875rem; color: #86868b; position: relative; z-index: 1;">
-            Tabs
+          <div style="transform: scale(0.7); transform-origin: center; position: relative; z-index: 1; width: 200px;">
+            <Tabs defaultValue="one">
+              <TabList>
+                <Tab value="one">First</Tab>
+                <Tab value="two">Second</Tab>
+              </TabList>
+            </Tabs>
           </div>
         );
       case "steps":
         return (
-          <div style="font-size: 0.6875rem; color: #86868b; position: relative; z-index: 1;">
-            Steps
+          <div style="transform: scale(0.55); transform-origin: center; position: relative; z-index: 1; width: 200px;">
+            <Steps>
+              <Step title="Install" number={1}>
+                bun add semajsx
+              </Step>
+              <Step title="Build" number={2}>
+                Create app
+              </Step>
+            </Steps>
           </div>
         );
       case "code-block":
         return (
-          <div style="font-size: 0.6875rem; color: #86868b; position: relative; z-index: 1;">
-            CodeBlock
+          <div style="position: relative; z-index: 1; width: 160px;">
+            <div style="background: #1e1e1e; border-radius: 6px; padding: 8px 10px; font-family: ui-monospace, 'SF Mono', monospace; font-size: 0.625rem; color: #d4d4d4; line-height: 1.5; white-space: pre; overflow: hidden;">
+              <span style="color: #c586c0;">const</span> <span style="color: #9cdcfe;">x</span>{" "}
+              <span style="color: #d4d4d4;">=</span> <span style="color: #b5cea8;">42</span>;
+            </div>
           </div>
         );
       default:

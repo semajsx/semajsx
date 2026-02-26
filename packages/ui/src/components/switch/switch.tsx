@@ -41,16 +41,10 @@ export function Switch(props: SwitchProps): JSXNode {
       role="switch"
       aria-checked={checked ? "true" : "false"}
       aria-disabled={props.disabled ? "true" : undefined}
-      class={[
-        styles.root,
-        styles.rootDisabled,
-        checked && styles.trackChecked,
-        checked && styles.thumbChecked,
-        props.class,
-      ]}
+      class={[styles.root, styles.rootDisabled, props.class]}
     >
-      <div class={styles.track}>
-        <div class={styles.thumb} />
+      <div class={[styles.track, checked && styles.trackOn]}>
+        <div class={[styles.thumb, checked && styles.thumbOn]} />
       </div>
       {props.label && <span class={styles.label}>{props.label}</span>}
     </div>
