@@ -4,6 +4,7 @@ import type { VNode, JSXNode } from "@semajsx/core";
 import type { DocumentProps } from "../../types";
 import type { DocsThemeOptions, NavLink } from "./types";
 import { THEME_CSS } from "./styles";
+import { Icon } from "../lucide/component";
 
 /** Concatenate class names, filtering falsy values */
 function cx(...args: (string | false | null | undefined)[]): string {
@@ -300,7 +301,9 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
                     `dt-stagger-${Math.min(i + 2, 5)}`,
                   )}
                 >
-                  <div class="dt-feature-icon">{item.icon}</div>
+                  <div class="dt-feature-icon">
+                    <Icon name={item.icon} size={24} />
+                  </div>
                   <h3 class="dt-feature-heading">{item.title}</h3>
                   <p class="dt-feature-desc">{item.description}</p>
                 </div>

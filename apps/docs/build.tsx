@@ -36,19 +36,19 @@ const ssg = createSSG({
         subtitle: "Simple primitives. Powerful results.",
         items: [
           {
-            icon: "\u26A1",
+            icon: "zap",
             title: "Fine-Grained Reactivity",
             description:
               "Signals automatically track dependencies and update only what changed. No virtual DOM diffing overhead.",
           },
           {
-            icon: "\uD83D\uDCE6",
+            icon: "package",
             title: "Modular Architecture",
             description:
               "Choose what you need: DOM rendering, Terminal UI, SSR, or SSG. All sharing the same reactive core.",
           },
           {
-            icon: "\uD83C\uDFAF",
+            icon: "shield-check",
             title: "Type-Safe",
             description:
               "Full TypeScript support with comprehensive type inference and IDE autocompletion out of the box.",

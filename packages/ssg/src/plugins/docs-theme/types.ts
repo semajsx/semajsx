@@ -29,7 +29,7 @@ export interface HeroAction {
 }
 
 export interface FeatureItem {
-  /** Emoji or short text icon */
+  /** Lucide icon name in kebab-case (e.g., "zap", "package", "shield-check") */
   icon: string;
   /** Feature title */
   title: string;
