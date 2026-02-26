@@ -5,7 +5,7 @@
 import { classes, rule } from "@semajsx/style";
 import { tokens } from "../../theme/tokens";
 
-const c = classes(["root", "track", "thumb", "label", "checked"] as const);
+const c = classes(["root", "track", "trackOn", "thumb", "thumbOn", "label"] as const);
 
 export const root = rule`${c.root} {
   display: inline-flex;
@@ -31,7 +31,7 @@ export const track = rule`${c.track} {
   flex-shrink: 0;
 }`;
 
-export const trackChecked = rule`${c.checked} ${c.track} {
+export const trackOn = rule`${c.trackOn} {
   background: ${tokens.colors.primary};
 }`;
 
@@ -47,7 +47,7 @@ export const thumb = rule`${c.thumb} {
   transition: transform ${tokens.transitions.fast};
 }`;
 
-export const thumbChecked = rule`${c.checked} ${c.thumb} {
+export const thumbOn = rule`${c.thumbOn} {
   transform: translateX(20px);
 }`;
 
