@@ -713,5 +713,134 @@ body {
   .dt-code-block { border-radius: 10px; }
   .dt-code-header { padding: 0.375rem 1rem; }
 
+  .dt-ui-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dt-preview-box {
+    padding: 2rem 1rem !important;
+  }
+}
+
+/* ==============================================
+ * Component Preview (shadcn-style showcase)
+ * ============================================== */
+
+.dt-preview {
+  margin: 1.5rem 0;
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+}
+
+.dt-preview-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem 2rem;
+  min-height: 120px;
+  background: white;
+  position: relative;
+}
+
+.dt-preview-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-size: 20px 20px;
+  pointer-events: none;
+}
+
+.dt-preview-label {
+  position: absolute;
+  top: 0.75rem;
+  left: 1rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #86868b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  z-index: 1;
+}
+
+/* ==============================================
+ * UI Components Section
+ * ============================================== */
+
+.dt-ui-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.dt-ui-card {
+  display: block;
+  padding: 1.5rem;
+  background: white;
+  border: 0.5px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.dt-ui-card:hover {
+  border-color: rgba(0, 113, 227, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+.dt-ui-card-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+  margin-bottom: 1rem;
+  background: #f9f9fb;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.dt-ui-card-preview::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 16px 16px;
+  pointer-events: none;
+}
+
+.dt-ui-card-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 0.25rem;
+  letter-spacing: -0.01em;
+}
+
+.dt-ui-card-desc {
+  font-size: 0.8125rem;
+  color: #6e6e73;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.dt-ui-badge-new {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  background: rgba(0, 113, 227, 0.08);
+  color: #0071e3;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
 }
 `;

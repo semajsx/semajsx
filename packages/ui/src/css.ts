@@ -23,6 +23,11 @@ import * as badgeStyles from "./components/badge/badge.style";
 import * as codeBlockStyles from "./components/code-block/code-block.style";
 import * as tabsStyles from "./components/tabs/tabs.style";
 import * as stepsStyles from "./components/steps/steps.style";
+import * as separatorStyles from "./components/separator/separator.style";
+import * as inputStyles from "./components/input/input.style";
+import * as avatarStyles from "./components/avatar/avatar.style";
+import * as kbdStyles from "./components/kbd/kbd.style";
+import * as switchStyles from "./components/switch/switch.style";
 
 function collectCSS(styles: Record<string, unknown>): string {
   return Object.values(styles)
@@ -41,4 +46,9 @@ export const componentCSS: string = [
   collectCSS(codeBlockStyles),
   collectCSS(tabsStyles),
   collectCSS(stepsStyles),
+  collectCSS(separatorStyles),
+  collectCSS(inputStyles),
+  collectCSS(avatarStyles),
+  collectCSS(kbdStyles),
+  collectCSS(switchStyles),
 ].join("\n");

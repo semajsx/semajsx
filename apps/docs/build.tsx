@@ -19,6 +19,7 @@ const ssg = createSSG({
         links: [
           { label: "Reference", href: "/reference" },
           { label: "Guides", href: "/guides" },
+          { label: "Components", href: "/ui" },
           { label: "GitHub", href: "https://github.com/semajsx/semajsx", external: true },
         ],
       },
@@ -87,12 +88,18 @@ const ssg = createSSG({
             description: "Step-by-step tutorials and examples.",
             href: "/guides",
           },
+          {
+            title: "Components",
+            description: "Browse the UI component library.",
+            href: "/ui",
+          },
         ],
       },
       footer: {
         links: [
           { label: "Reference", href: "/reference" },
           { label: "Guides", href: "/guides" },
+          { label: "Components", href: "/ui" },
           { label: "GitHub", href: "https://github.com/semajsx/semajsx" },
         ],
         copyright: "SemaJSX",
@@ -107,6 +114,12 @@ const ssg = createSSG({
         source: fileSource({ directory: "content/guides" }, rootDir),
         heading: "Guides",
         description: "Practical tutorials to help you build with SemaJSX.",
+      },
+      ui: {
+        source: fileSource({ directory: "content/ui" }, rootDir),
+        basePath: "/ui",
+        heading: "Components",
+        description: "Browse, preview, and learn how to use each UI component.",
       },
       mdx: {
         remarkPlugins: [remarkGfm],
