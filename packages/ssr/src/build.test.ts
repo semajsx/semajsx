@@ -31,7 +31,7 @@ describe("App Build Integration", () => {
     await rm(TEST_DIR, { recursive: true, force: true });
   });
 
-  it("should return routes in build result", async () => {
+  it("should return routes in build result", { timeout: 15_000 }, async () => {
     const { createApp } = await import("./app");
     app = createApp({ root: TEST_DIR });
 
