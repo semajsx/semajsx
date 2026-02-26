@@ -33,13 +33,9 @@ export const title = rule`${c.title} {
 export const icon = rule`${c.icon} {
   width: 18px;
   height: 18px;
-  border-radius: 50%;
-  color: white;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
-  font-weight: ${tokens.fontWeights.bold};
   flex-shrink: 0;
 }`;
 
