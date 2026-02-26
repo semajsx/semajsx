@@ -1,5 +1,11 @@
 # semajsx
 
+## 0.3.0
+
+### Minor Changes
+
+- [#101](https://github.com/semajsx/semajsx/pull/101) [`ca745e8`](https://github.com/semajsx/semajsx/commit/ca745e8e9a856fb041eff7ad40269e053cb0258a) Thanks [@github-actions](https://github.com/apps/github-actions)! - Add Tabs and Steps UI components for documentation MDX usage
+
 ## 0.2.0
 
 ### Minor Changes
