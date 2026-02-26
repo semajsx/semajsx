@@ -4,10 +4,13 @@ import { defineCollection } from "../../index";
 import type { DocsThemeOptions } from "./types";
 import { createComponents, Callout, CodeBlock } from "./components";
 import { lucide as lucidePlugin } from "../lucide/index";
+import { agentMarkdown as agentMarkdownPlugin } from "../agent-markdown/index";
+import type { AgentMarkdownSection } from "../agent-markdown/types";
 import type { Component } from "@semajsx/core";
 
 export type {
   DocsThemeOptions,
+  AgentMarkdownThemeOptions,
   NavLink,
   HeroAction,
   FeatureItem,
@@ -226,6 +229,42 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
   if (options.lucide !== false) {
     const lucideOpts = typeof options.lucide === "object" ? options.lucide : {};
     plugins.push(lucidePlugin(lucideOpts));
+  }
+
+  // Agent-friendly markdown (llms.txt) — enabled by default when docs or guides exist
+  const hasContent = options.docs || options.guides;
+  if (options.agentMarkdown !== false && hasContent) {
+    const agentOpts = typeof options.agentMarkdown === "object" ? options.agentMarkdown : {};
+
+    // Auto-derive sections from configured collections
+    const sections: AgentMarkdownSection[] = [];
+    if (options.docs) {
+      sections.push({
+        title: options.docs.heading ?? "Documentation",
+        collection: "docs",
+        basePath: docsBasePath,
+      });
+    }
+    if (options.guides) {
+      sections.push({
+        title: options.guides.heading ?? "Guides",
+        collection: "guides",
+        basePath: guidesBasePath,
+      });
+    }
+
+    plugins.push(
+      agentMarkdownPlugin({
+        title: options.title,
+        description: options.description,
+        url: agentOpts.url,
+        sections,
+        links: agentOpts.links,
+        llmsTxt: agentOpts.llmsTxt,
+        llmsFullTxt: agentOpts.llmsFullTxt,
+        markdownPages: agentOpts.markdownPages,
+      }),
+    );
   }
 
   return plugins;

@@ -4,6 +4,7 @@ export type { IconProps, LucidePluginOptions } from "./lucide";
 export { docsTheme, Callout, CodeBlock } from "./docs-theme";
 export type {
   DocsThemeOptions,
+  AgentMarkdownThemeOptions,
   NavLink,
   HeroAction,
   FeatureItem,
