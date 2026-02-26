@@ -11,6 +11,9 @@ export type {
   QuickLinkItem,
   DocsConfig,
   GuidesConfig,
+  HomeOption,
+  HomePageProps,
+  LayoutComponent,
 } from "./docs-theme";
 
 export { llms } from "./llms";
