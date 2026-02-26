@@ -11,10 +11,16 @@ export const Fragment: symbol = Symbol.for("semajsx.fragment");
 export const Portal: symbol = Symbol.for("semajsx.portal");
 
 /**
+ * Special VNode type for forward support
+ * Forward merges its props onto its single child element without producing a DOM node
+ */
+export const Forward: symbol = Symbol.for("semajsx.forward");
+
+/**
  * VNode types
  * - The runtime VNode tree always resolves to these `type` values
  */
-export type VNodeType = string | Component<any> | typeof Fragment | typeof Portal;
+export type VNodeType = string | Component<any> | typeof Fragment | typeof Portal | typeof Forward;
 
 /**
  * VNode: The basic unit of the runtime render tree

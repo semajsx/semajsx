@@ -21,6 +21,9 @@ export type { DOMRenderResult } from "./render";
 export { createPortal, PortalComponent } from "./portal";
 export type { PortalProps } from "./portal";
 
+export { ForwardComponent } from "./forward";
+export type { ForwardProps } from "./forward";
+
 export {
   AppStyleAnchor,
   ComponentStyleAnchor,

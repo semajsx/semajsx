@@ -1,5 +1,5 @@
 import type { VNode, Ref } from "./types";
-import { Fragment, Portal } from "./types";
+import { Fragment, Forward, Portal } from "./types";
 import { isSignal } from "@semajsx/signal";
 import { isVNode } from "./vnode";
 import { resource, stream } from "./helpers";
@@ -182,6 +182,11 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
     // Portal
     if (type === Portal) {
       return renderPortal(vnode, parentContext);
+    }
+
+    // Forward
+    if (type === Forward) {
+      return renderForward(vnode, parentContext);
     }
 
     // Native node (pre-created element from external libraries)
@@ -369,6 +374,69 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
       subscriptions: [],
       children,
     };
+  }
+
+  /**
+   * Merge Forward's props into the child's props
+   * - class/className: concatenated (array)
+   * - style: merged objects (Forward overrides per-property)
+   * - on* events: chained (both handlers run)
+   * - other props: Forward overrides child
+   */
+  function mergeForwardProps(
+    childProps: Record<string, any>,
+    forwardProps: Record<string, any>,
+  ): Record<string, any> {
+    const merged = { ...childProps };
+
+    for (const [key, value] of Object.entries(forwardProps)) {
+      if (key === "key" || key === "children") continue;
+
+      if ((key === "class" || key === "className") && merged[key] != null) {
+        // Concatenate class values as array — renderers resolve arrays
+        merged[key] = [merged[key], value];
+      } else if (key === "style" && typeof merged[key] === "object" && typeof value === "object") {
+        // Merge style objects (Forward properties override)
+        merged[key] = { ...merged[key], ...value };
+      } else if (
+        key.startsWith("on") &&
+        typeof value === "function" &&
+        typeof merged[key] === "function"
+      ) {
+        // Chain event handlers: Forward's runs first, then child's
+        const existing = merged[key];
+        merged[key] = (...args: unknown[]) => {
+          value(...args);
+          existing(...args);
+        };
+      } else {
+        merged[key] = value;
+      }
+    }
+
+    return merged;
+  }
+
+  /**
+   * Render a Forward node
+   * Forward merges its props onto its single child and renders it directly
+   */
+  function renderForward(vnode: VNode, parentContext: ContextMap): RenderedNode<TNode> {
+    if (vnode.children.length !== 1) {
+      throw new Error("Forward must have exactly one child element");
+    }
+
+    const child = vnode.children[0]!;
+    const forwardProps = vnode.props || {};
+
+    // Create a new VNode with merged props
+    const mergedChild: VNode = {
+      ...child,
+      props: mergeForwardProps(child.props || {}, forwardProps),
+    };
+
+    // Render the merged child directly — Forward is completely transparent
+    return renderNode(mergedChild, parentContext);
   }
 
   /**

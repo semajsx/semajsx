@@ -11,6 +11,7 @@ export {
   createTextVNode,
   h,
   isVNode,
+  Forward,
   Fragment,
   Portal,
   ISLAND_MARKER,

@@ -3,12 +3,12 @@
  * Use with: @jsxImportSource @semajsx/dom
  */
 
-import { Fragment, jsx, jsxs } from "@semajsx/core";
+import { Forward, Fragment, jsx, jsxs } from "@semajsx/core";
 import type { ComponentAPI, JSXNode, Ref, VNode, WithKey, WithSignals } from "@semajsx/core";
 import type { Signal } from "@semajsx/signal";
 import type { StyleToken } from "@semajsx/style";
 
-export { jsx, jsxs, Fragment };
+export { jsx, jsxs, Forward, Fragment };
 
 /**
  * Class value type - supports strings, StyleTokens, arrays, and conditionals
