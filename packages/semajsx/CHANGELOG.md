@@ -1,5 +1,11 @@
 # semajsx
 
+## 0.1.2
+
+### Patch Changes
+
+- [#88](https://github.com/semajsx/semajsx/pull/88) [`84baaeb`](https://github.com/semajsx/semajsx/commit/84baaeb875d308afc5e90468de9e551c927cc9af) Thanks [@lidessen](https://github.com/lidessen)! - Configure tsdown to auto-generate publishConfig exports instead of manual maintenance
+
 ## 0.1.1
 
 ### Patch Changes
