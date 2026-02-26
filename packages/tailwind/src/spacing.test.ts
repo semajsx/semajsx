@@ -4,7 +4,6 @@ import {
   // Flat exports - padding
   p0,
   p4,
-  p8,
   ppx,
   px4,
   py4,
@@ -13,9 +12,7 @@ import {
   pb4,
   pl4,
   // Flat exports - margin
-  m0,
   m4,
-  m8,
   mx4,
   my4,
   mt4,

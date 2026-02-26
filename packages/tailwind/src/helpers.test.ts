@@ -64,7 +64,8 @@ describe("cx helper", () => {
   });
 
   it("handles mixed token types", () => {
-    expect(cx(p4, "custom", [m4, wFull], false && gap4)).toBe("p-4 custom m-4 w-full");
+    const condition = false;
+    expect(cx(p4, "custom", [m4, wFull], condition && gap4)).toBe("p-4 custom m-4 w-full");
   });
 });
 

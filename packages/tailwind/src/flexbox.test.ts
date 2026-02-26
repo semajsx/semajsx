@@ -2,13 +2,10 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { resetConfig } from "./config";
 import {
   // Display
-  block,
   inlineBlock,
-  inline,
   flex,
   inlineFlex,
   grid,
-  inlineGrid,
   hidden,
   // Flex direction
   flexRow,
@@ -38,7 +35,6 @@ import {
   // Justify content
   justifyCenter,
   justifyBetween,
-  justifyStart,
   // Justify items
   justifyItemsCenter,
   // Justify self
