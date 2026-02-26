@@ -9,6 +9,7 @@ import { Fragment } from "@semajsx/core";
 import { getIslandMetadata, isIslandVNode } from "./client/island";
 import { STYLE_MARKER, LINK_MARKER, ASSET_MARKER } from "./client/resource";
 import { isSignal, unwrap } from "@semajsx/signal";
+import { isStyleToken } from "@semajsx/style";
 
 /**
  * Render context for collecting islands during traversal
@@ -540,6 +541,33 @@ function extractRawText(vnode: JSXNode): string {
 }
 
 /**
+ * Resolve a class value to a string for SSR output.
+ *
+ * Handles strings, StyleToken objects, arrays, and falsy values.
+ * Unlike the DOM version, this does NOT call inject() since CSS is
+ * collected statically (via componentCSS) for SSG/SSR output.
+ */
+function resolveClass(value: unknown): string {
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (isStyleToken(value)) {
+    return value._ ?? "";
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(resolveClass).filter(Boolean).join(" ");
+  }
+
+  return String(value);
+}
+
+/**
  * Render element attributes
  */
 function renderAttributes(props: Record<string, any>): string {
@@ -593,6 +621,15 @@ function renderAttributes(props: Record<string, any>): string {
               : key === "httpEquiv"
                 ? "http-equiv"
                 : key;
+
+    // Handle class/className — resolve arrays and StyleToken objects
+    if (attrName === "class") {
+      const resolved = resolveClass(attrValue);
+      if (resolved) {
+        attrs.push(`class="${escapeHTML(resolved)}"`);
+      }
+      continue;
+    }
 
     // Handle style object
     if (attrName === "style" && typeof attrValue === "object") {
