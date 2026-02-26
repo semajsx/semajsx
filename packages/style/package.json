@@ -1,6 +1,6 @@
 {
   "name": "@semajsx/style",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Modular styling system for SemaJSX - tree-shakeable CSS with native syntax",
   "keywords": [

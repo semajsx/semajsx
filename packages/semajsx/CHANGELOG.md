@@ -1,5 +1,11 @@
 # semajsx
 
+## 0.2.0
+
+### Minor Changes
+
+- [#97](https://github.com/semajsx/semajsx/pull/97) [`07f3786`](https://github.com/semajsx/semajsx/commit/07f3786bb19a7a8de6d21db53bb35133a5ecb024) Thanks [@github-actions](https://github.com/apps/github-actions)! - Add Forward primitive, Native components, SVG support, SSG plugin system with llms plugin, UI component library, and various fixes
+
 ## 0.1.2
 
 ### Patch Changes
