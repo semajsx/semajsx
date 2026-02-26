@@ -746,6 +746,11 @@ body {
   position: relative;
 }
 
+.dt-preview-box > * {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 .dt-preview-box::before {
   content: "";
   position: absolute;
@@ -805,6 +810,11 @@ body {
   border-radius: 8px;
   overflow: hidden;
   position: relative;
+}
+
+.dt-ui-card-preview > * {
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .dt-ui-card-preview::before {
