@@ -28,7 +28,7 @@ SemaJSX is a lightweight, signal-based reactive JSX runtime for building modern 
 3. **Component Library** - 25+ accessible components (Button, Card, Modal, etc.)
 4. **Documentation Site** - Interactive playground, API reference
 
-See [docs/ROADMAP.md](./docs/ROADMAP.md) for full roadmap with phases and metrics.
+See [dev-docs/ROADMAP.md](./dev-docs/ROADMAP.md) for full roadmap with phases and metrics.
 
 ## Documentation Organization
 
@@ -47,9 +47,9 @@ See [docs/ROADMAP.md](./docs/ROADMAP.md) for full roadmap with phases and metric
 - `TESTING.md` - Testing strategy
 - `WORKFLOW.md` - Development workflow
 - `DOCUMENTING.md` - Documentation system design
-- `docs/rfcs/` - Feature proposals
-- `docs/designs/` - Technical design documents
-- `docs/adrs/` - Architecture decisions
+- `dev-docs/rfcs/` - Feature proposals
+- `dev-docs/designs/` - Technical design documents
+- `dev-docs/adrs/` - Architecture decisions
 - `tasks/` - Task workspaces (per-feature working documents)
 
 **Characteristics**:
@@ -57,7 +57,7 @@ See [docs/ROADMAP.md](./docs/ROADMAP.md) for full roadmap with phases and metric
 - Technical and detailed
 - Explains "why" and "how we built it"
 - Contains design rationale and trade-offs
-- Located in root or `docs/{rfcs,designs,adrs}`
+- Located in root or `dev-docs/{rfcs,designs,adrs}`
 
 ### 2. User-Facing Documentation
 
@@ -82,11 +82,11 @@ See [docs/ROADMAP.md](./docs/ROADMAP.md) for full roadmap with phases and metric
 
 ### When Writing Documentation
 
-- **Designing a feature?** → Create design doc in `docs/designs/`
+- **Designing a feature?** → Create design doc in `dev-docs/designs/`
 - **Teaching users?** → Add tutorial in `apps/docs/content/guides/`
 - **Documenting an API?** → Update package README or `apps/docs/content/reference/`
-- **Making architectural decision?** → Create ADR in `docs/adrs/`
-- **Proposing major feature?** → Create RFC in `docs/rfcs/`
+- **Making architectural decision?** → Create ADR in `dev-docs/adrs/`
+- **Proposing major feature?** → Create RFC in `dev-docs/rfcs/`
 
 ## Architecture
 
@@ -318,10 +318,10 @@ This project follows a structured development workflow for major features and ch
 
 ### Document Organization
 
-**Formal Documents** (`docs/`):
+**Formal Documents** (`dev-docs/`):
 
-- **RFC** (`docs/rfcs/`) - Feature proposals (permanent)
-- **ADR** (`docs/adrs/`) - Cross-cutting architecture decisions (permanent)
+- **RFC** (`dev-docs/rfcs/`) - Feature proposals (permanent)
+- **ADR** (`dev-docs/adrs/`) - Cross-cutting architecture decisions (permanent)
 
 **Task Workspaces** (`tasks/`):
 
@@ -355,7 +355,7 @@ This project follows a structured development workflow for major features and ch
 - Create `tasks/feature-name/` directory for any non-trivial work
 - Document evolution in `EVOLUTION.md` as you work
 - Finalize `README.md` when design is stable
-- Record cross-cutting decisions in `docs/adrs/`
+- Record cross-cutting decisions in `dev-docs/adrs/`
 
 See [WORKFLOW.md](./WORKFLOW.md) for detailed process.
 
@@ -529,7 +529,7 @@ npm publish
 
 ## Useful Resources
 
-- [docs/ROADMAP.md](./docs/ROADMAP.md) - Project roadmap with current status and priorities
+- [dev-docs/ROADMAP.md](./dev-docs/ROADMAP.md) - Project roadmap with current status and priorities
 - [TESTING.md](./TESTING.md) - Detailed testing guide with examples
 - [MONOREPO_ARCHITECTURE.md](./MONOREPO_ARCHITECTURE.md) - Detailed architecture and migration plan
 - [Bun Workspaces](https://bun.sh/docs/install/workspaces)

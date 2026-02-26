@@ -2428,7 +2428,7 @@ If accepted:
 
 ### 18.1 Phase 1: Core Implementation
 
-- [ ] Create design document: `docs/designs/style-system-design.md`
+- [ ] Create design document: `dev-docs/designs/style-system-design.md`
 - [ ] Implement `@semajsx/style` package (core runtime)
 - [ ] Integrate with `@semajsx/dom` class property handling
 - [ ] Add StyleAnchor components

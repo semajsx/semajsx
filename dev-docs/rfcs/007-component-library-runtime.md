@@ -1195,9 +1195,9 @@ SemaJSX is uniquely positioned to become the **de facto runtime for framework-ag
 
 ### C. Reference Links
 
-- RFC 006: Style System - `/docs/rfcs/006-style-system.md`
+- RFC 006: Style System - `/dev-docs/rfcs/006-style-system.md`
 - SemaJSX Signal Docs - `/packages/signal/README.md`
-- Component Architecture - `/docs/designs/`
+- Component Architecture - `/dev-docs/designs/`
 - Testing Guide - `/TESTING.md`
 
 ---

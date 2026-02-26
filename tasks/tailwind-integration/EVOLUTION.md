@@ -335,6 +335,6 @@ Tagged templates are:
 
 ## References
 
-- [RFC 006-style-system.md](../../docs/rfcs/006-style-system.md)
+- [RFC 006-style-system.md](../../dev-docs/rfcs/006-style-system.md)
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 - [Tailwind Default Configuration](https://github.com/tailwindlabs/tailwindcss/blob/main/stubs/config.full.js)
