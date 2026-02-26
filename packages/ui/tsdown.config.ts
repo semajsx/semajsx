@@ -9,6 +9,8 @@ export default defineConfig({
     "src/components/callout/index.ts",
     "src/components/badge/index.ts",
     "src/components/code-block/index.ts",
+    "src/components/tabs/index.ts",
+    "src/components/steps/index.ts",
     "src/css.ts",
   ],
   format: ["esm"],

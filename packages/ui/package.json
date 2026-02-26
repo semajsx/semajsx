@@ -23,8 +23,8 @@
     "./components/callout": "./src/components/callout/index.ts",
     "./components/card": "./src/components/card/index.ts",
     "./components/code-block": "./src/components/code-block/index.ts",
-    "./components/tabs": "./src/components/tabs/index.ts",
     "./components/steps": "./src/components/steps/index.ts",
+    "./components/tabs": "./src/components/tabs/index.ts",
     "./css": "./src/css.ts",
     "./theme": "./src/theme/index.ts",
     "./package.json": "./package.json"
@@ -37,8 +37,8 @@
       "./components/callout": "./dist/components/callout/index.mjs",
       "./components/card": "./dist/components/card/index.mjs",
       "./components/code-block": "./dist/components/code-block/index.mjs",
-      "./components/tabs": "./dist/components/tabs/index.mjs",
       "./components/steps": "./dist/components/steps/index.mjs",
+      "./components/tabs": "./dist/components/tabs/index.mjs",
       "./css": "./dist/css.mjs",
       "./theme": "./dist/theme/index.mjs",
       "./package.json": "./package.json"
