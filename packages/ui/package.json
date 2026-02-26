@@ -1,6 +1,6 @@
 {
   "name": "@semajsx/ui",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Accessible UI component library for SemaJSX with theme system",
   "keywords": [
