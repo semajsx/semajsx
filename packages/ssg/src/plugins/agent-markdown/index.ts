@@ -9,6 +9,10 @@ export type { AgentMarkdownOptions, AgentMarkdownSection, AgentMarkdownLink } fr
 // Helpers
 // =============================================================================
 
+function normalizePath(path: string): string {
+  return path.startsWith("/") ? path : `/${path}`;
+}
+
 function resolveUrl(base: string | undefined, path: string): string {
   if (!base) return path;
   return `${base.replace(/\/$/, "")}${path}`;
@@ -61,12 +65,13 @@ function generateLlmsTxt(
     const entries = sectionEntries.get(section.collection) ?? [];
     if (entries.length === 0) continue;
 
+    const basePath = normalizePath(section.basePath);
     lines.push(`## ${section.title}`);
     lines.push("");
 
     for (const entry of entries) {
       const title = getEntryTitle(entry);
-      const url = resolveUrl(options.url, `${section.basePath}/${entry.slug}`);
+      const url = resolveUrl(options.url, `${basePath}/${entry.slug}`);
       const desc = getEntryDescription(entry);
       lines.push(formatLink(title, url, desc));
     }
@@ -112,12 +117,13 @@ function generateLlmsFullTxt(
     const entries = sectionEntries.get(section.collection) ?? [];
     if (entries.length === 0) continue;
 
+    const basePath = normalizePath(section.basePath);
     lines.push(`## ${section.title}`);
     lines.push("");
 
     for (const entry of entries) {
       const title = getEntryTitle(entry);
-      const url = resolveUrl(options.url, `${section.basePath}/${entry.slug}`);
+      const url = resolveUrl(options.url, `${basePath}/${entry.slug}`);
       const desc = getEntryDescription(entry);
 
       lines.push(`### ${title}`);
@@ -242,9 +248,10 @@ export function agentMarkdown(options: AgentMarkdownOptions): SSGPlugin {
       // Generate per-entry .md files
       if (genMarkdownPages) {
         for (const section of options.sections ?? []) {
+          const basePath = normalizePath(section.basePath);
           const entries = sectionEntries.get(section.collection) ?? [];
           for (const entry of entries) {
-            const mdPath = `${section.basePath}/${entry.slug}.md`;
+            const mdPath = `${basePath}/${entry.slug}.md`;
             const fullPath = join(outDir, mdPath.slice(1)); // strip leading /
             const content = generateEntryMarkdown(entry);
 
