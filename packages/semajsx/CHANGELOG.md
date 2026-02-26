@@ -1,5 +1,15 @@
 # semajsx
 
+## 0.5.0
+
+### Minor Changes
+
+- [#110](https://github.com/semajsx/semajsx/pull/110) [`0313cb4`](https://github.com/semajsx/semajsx/commit/0313cb4bd011163863737e2cd7119857141fbbcf) Thanks [@github-actions](https://github.com/apps/github-actions)! - Add 5 new UI components (Avatar, Input, Kbd, Separator, Switch) and ComponentPreview for docs showcase
+
+### Patch Changes
+
+- [#107](https://github.com/semajsx/semajsx/pull/107) [`65e8e8c`](https://github.com/semajsx/semajsx/commit/65e8e8c864a8149c072608c3282087ab6401bd4a) Thanks [@github-actions](https://github.com/apps/github-actions)! - Fix missing tsdown build entries for tabs and steps components in @semajsx/ui
+
 ## 0.4.0
 
 ### Minor Changes
