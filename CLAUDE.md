@@ -84,7 +84,7 @@ See [docs/ROADMAP.md](./docs/ROADMAP.md) for full roadmap with phases and metric
 
 - **Designing a feature?** → Create design doc in `docs/designs/`
 - **Teaching users?** → Add tutorial in `apps/docs/content/guides/`
-- **Documenting an API?** → Update package README or `apps/docs/content/docs/`
+- **Documenting an API?** → Update package README or `apps/docs/content/reference/`
 - **Making architectural decision?** → Create ADR in `docs/adrs/`
 - **Proposing major feature?** → Create RFC in `docs/rfcs/`
 

@@ -247,6 +247,6 @@ dist/
 
 ## Next Steps
 
-- Learn about [Islands](/reference/islands) for interactivity
 - Explore [SSR](/reference/ssr) for server-side rendering
+- Learn about [Components](/reference/components) for building reusable UI
 - Check out the [SSG Example](https://github.com/semajsx/semajsx/tree/main/packages/ssg/examples)

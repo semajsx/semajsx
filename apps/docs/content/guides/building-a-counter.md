@@ -181,7 +181,7 @@ function Counter() {
 
 - Learn about [Computed Signals](/reference/signals#computed-signals)
 - Build a [Todo App](/guides/building-a-todo-app)
-- Explore [Component Patterns](/guides/component-patterns)
+- Explore the [Styling System](/guides/styling-examples)
 
 <Callout type="tip" title="Challenge">
 Try adding a history feature that tracks all previous values!

@@ -164,5 +164,5 @@ function ThemedButton(props: ButtonProps, ctx) {
 ## Next Steps
 
 - Learn about [Context API](/reference/context) for state management
-- Explore [Refs](/reference/refs) for DOM access
-- Check out [Component Patterns](/guides/component-patterns)
+- Explore [DOM Rendering](/reference/dom-rendering) for refs and portals
+- Check out the [Styling](/reference/styling) system

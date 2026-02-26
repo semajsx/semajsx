@@ -142,4 +142,4 @@ Use batching when updating multiple signals at once to minimize re-renders.
 
 - Learn about [Components](/reference/components)
 - Explore [DOM Rendering](/reference/dom-rendering)
-- Check out [Advanced Patterns](/guides/advanced-reactivity)
+- Try the [Counter App](/guides/building-a-counter) tutorial
