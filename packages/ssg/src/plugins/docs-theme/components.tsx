@@ -9,6 +9,8 @@ import { Icon } from "../lucide/component";
 import { Callout } from "@semajsx/ui/components/callout";
 import { Badge } from "@semajsx/ui/components/badge";
 import { Card } from "@semajsx/ui/components/card";
+import { Tabs, TabList, Tab, TabPanel } from "@semajsx/ui/components/tabs";
+import { Steps, Step } from "@semajsx/ui/components/steps";
 import { componentCSS } from "@semajsx/ui/css";
 
 import type { BadgeColor } from "@semajsx/ui/components/badge";
@@ -100,6 +102,12 @@ export interface DocsThemeComponents {
   NotFound: () => VNode;
   Callout: typeof Callout;
   CodeBlock: typeof CodeBlock;
+  Tabs: typeof Tabs;
+  TabList: typeof TabList;
+  Tab: typeof Tab;
+  TabPanel: typeof TabPanel;
+  Steps: typeof Steps;
+  Step: typeof Step;
 }
 
 export function createComponents(options: DocsThemeOptions): DocsThemeComponents {
@@ -507,8 +515,14 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
     NotFound,
     Callout,
     CodeBlock,
+    Tabs,
+    TabList,
+    Tab,
+    TabPanel,
+    Steps,
+    Step,
   };
 }
 
 // Re-export for plugin index
-export { Callout };
+export { Callout, Tabs, TabList, Tab, TabPanel, Steps, Step };

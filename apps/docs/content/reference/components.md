@@ -163,6 +163,6 @@ function ThemedButton(props: ButtonProps, ctx) {
 
 ## Next Steps
 
-- Learn about [Context API](/docs/context) for state management
-- Explore [Refs](/docs/refs) for DOM access
+- Learn about [Context API](/reference/context) for state management
+- Explore [Refs](/reference/refs) for DOM access
 - Check out [Component Patterns](/guides/component-patterns)

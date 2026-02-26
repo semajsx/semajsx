@@ -17,7 +17,7 @@ const ssg = createSSG({
       nav: {
         logo: "SemaJSX",
         links: [
-          { label: "Docs", href: "/docs" },
+          { label: "Reference", href: "/reference" },
           { label: "Guides", href: "/guides" },
           { label: "GitHub", href: "https://github.com/semajsx/semajsx", external: true },
         ],
@@ -27,7 +27,7 @@ const ssg = createSSG({
         subtitle:
           "A lightweight, signal-based reactive JSX runtime. Fine-grained updates. No virtual DOM.",
         actions: [
-          { label: "Get Started", href: "/docs/getting-started", primary: true },
+          { label: "Get Started", href: "/reference/getting-started", primary: true },
           { label: "View Guides", href: "/guides" },
         ],
       },
@@ -53,6 +53,24 @@ const ssg = createSSG({
             description:
               "Full TypeScript support with comprehensive type inference and IDE autocompletion out of the box.",
           },
+          {
+            icon: "palette",
+            title: "Flexible Styling",
+            description:
+              "Modular CSS with @semajsx/style, tree-shakeable Tailwind utilities, and signal-reactive themes.",
+          },
+          {
+            icon: "monitor",
+            title: "Multi-Target",
+            description:
+              "Render to the browser DOM or the terminal. Same JSX, same signals, different targets.",
+          },
+          {
+            icon: "globe",
+            title: "SSR & SSG",
+            description:
+              "Island architecture for SSR. Static site generation with MDX, collections, and incremental builds.",
+          },
         ],
       },
       quickLinks: {
@@ -60,9 +78,9 @@ const ssg = createSSG({
         subtitle: "Everything you need to build reactive applications.",
         items: [
           {
-            title: "Documentation",
+            title: "Reference",
             description: "API reference and core concepts.",
-            href: "/docs",
+            href: "/reference",
           },
           {
             title: "Guides",
@@ -73,15 +91,16 @@ const ssg = createSSG({
       },
       footer: {
         links: [
-          { label: "Documentation", href: "/docs" },
+          { label: "Reference", href: "/reference" },
           { label: "Guides", href: "/guides" },
           { label: "GitHub", href: "https://github.com/semajsx/semajsx" },
         ],
         copyright: "SemaJSX",
       },
       docs: {
-        source: fileSource({ directory: "content/docs" }, rootDir),
-        heading: "Documentation",
+        source: fileSource({ directory: "content/reference" }, rootDir),
+        basePath: "/reference",
+        heading: "Reference",
         description: "Learn the fundamentals and explore the API.",
       },
       guides: {

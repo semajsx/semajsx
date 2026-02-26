@@ -2,7 +2,17 @@ import { z } from "zod";
 import type { SSGPlugin, Collection, RouteConfig } from "../../types";
 import { defineCollection } from "../../index";
 import type { DocsThemeOptions } from "./types";
-import { createComponents, Callout, CodeBlock } from "./components";
+import {
+  createComponents,
+  Callout,
+  CodeBlock,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanel,
+  Steps,
+  Step,
+} from "./components";
 import { lucide as lucidePlugin } from "../lucide/index";
 import { llms as llmsPlugin } from "../llms/index";
 import type { LlmsSection } from "../llms/types";
@@ -19,7 +29,7 @@ export type {
   GuidesConfig,
 } from "./types";
 
-export { Callout, CodeBlock } from "./components";
+export { Callout, CodeBlock, Tabs, TabList, Tab, TabPanel, Steps, Step } from "./components";
 
 // =============================================================================
 // Schemas
@@ -207,6 +217,12 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
       const mdxComponents: Record<string, Component> = {
         Callout,
         CodeBlock,
+        Tabs,
+        TabList,
+        Tab,
+        TabPanel,
+        Steps,
+        Step,
         ...options.mdx?.components,
       };
 

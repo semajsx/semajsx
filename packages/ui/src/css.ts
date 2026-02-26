@@ -21,6 +21,8 @@ import * as cardStyles from "./components/card/card.style";
 import * as calloutStyles from "./components/callout/callout.style";
 import * as badgeStyles from "./components/badge/badge.style";
 import * as codeBlockStyles from "./components/code-block/code-block.style";
+import * as tabsStyles from "./components/tabs/tabs.style";
+import * as stepsStyles from "./components/steps/steps.style";
 
 function collectCSS(styles: Record<string, unknown>): string {
   return Object.values(styles)
@@ -37,4 +39,6 @@ export const componentCSS: string = [
   collectCSS(calloutStyles),
   collectCSS(badgeStyles),
   collectCSS(codeBlockStyles),
+  collectCSS(tabsStyles),
+  collectCSS(stepsStyles),
 ].join("\n");

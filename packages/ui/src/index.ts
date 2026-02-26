@@ -18,5 +18,11 @@ export type { BadgeProps, BadgeColor } from "./components/badge";
 export { CodeBlock, InlineCode } from "./components/code-block";
 export type { CodeBlockProps, InlineCodeProps } from "./components/code-block";
 
+export { Tabs, TabList, Tab, TabPanel } from "./components/tabs";
+export type { TabsProps, TabListProps, TabProps, TabPanelProps } from "./components/tabs";
+
+export { Steps, Step } from "./components/steps";
+export type { StepsProps, StepProps } from "./components/steps";
+
 // CSS (for SSG/SSR)
 export { componentCSS } from "./css";
