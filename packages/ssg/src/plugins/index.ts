@@ -11,3 +11,10 @@ export type {
   DocsConfig,
   GuidesConfig,
 } from "./docs-theme";
+
+export { agentMarkdown } from "./agent-markdown";
+export type {
+  AgentMarkdownOptions,
+  AgentMarkdownSection,
+  AgentMarkdownLink,
+} from "./agent-markdown";

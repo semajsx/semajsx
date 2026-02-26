@@ -15,6 +15,7 @@
     ".": "./src/index.ts",
     "./plugins/lucide": "./src/plugins/lucide/index.ts",
     "./plugins/docs-theme": "./src/plugins/docs-theme/index.ts",
+    "./plugins/agent-markdown": "./src/plugins/agent-markdown/index.ts",
     "./package.json": "./package.json"
   },
   "scripts": {
