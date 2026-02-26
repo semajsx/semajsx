@@ -1,7 +1,7 @@
 # Tailwind Integration Implementation
 
 **Task**: Implement `@semajsx/tailwind` package
-**RFC Reference**: [RFC 006-style-system.md](../../dev-docs/rfcs/006-style-system.md) Section 10
+**RFC Reference**: [RFC 006-style-system.md](../../design/rfcs/006-style-system.md) Section 10
 **Status**: Implemented
 
 ---

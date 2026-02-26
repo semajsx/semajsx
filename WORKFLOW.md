@@ -31,7 +31,7 @@ Requirement → Research → Design → Implementation → Test → Learn
 
 **Output**:
 
-- RFC document (`dev-docs/rfcs/YYYY-MM-feature.md`) for major features
+- RFC document (`design/rfcs/YYYY-MM-feature.md`) for major features
 - Task directory created (`tasks/feature-name/`)
 - Initial `EVOLUTION.md` with Requirement section
 
@@ -74,7 +74,7 @@ Requirement → Research → Design → Implementation → Test → Learn
 
 - Design iterations in `EVOLUTION.md` (Design Iterations section)
 - Final design in `tasks/feature-name/README.md`
-- ADRs for significant decisions (`dev-docs/adrs/` or `tasks/feature-name/adr-*.md`)
+- ADRs for significant decisions (`design/adrs/` or `tasks/feature-name/adr-*.md`)
 
 **When**: After research, or directly for smaller features.
 
@@ -242,7 +242,7 @@ This workflow is optimized for AI Agent-driven development.
 | -------------------- | -------------------------------------------------- |
 | Start new feature    | Create `tasks/feature-name/`, start `EVOLUTION.md` |
 | Record a decision    | Add to `EVOLUTION.md` or create ADR                |
-| Propose major change | Create RFC in `dev-docs/rfcs/`                     |
+| Propose major change | Create RFC in `design/rfcs/`                       |
 | See design rationale | Check `tasks/feature-name/EVOLUTION.md`            |
 | Find final design    | Check `tasks/feature-name/README.md`               |
 

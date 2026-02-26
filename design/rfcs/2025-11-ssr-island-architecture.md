@@ -2,7 +2,7 @@
 
 **Date**: 2025-11 (retroactive)
 **Status**: Implemented
-**Design Doc**: [dev-docs/designs/ssr-html-entry-build.md](../designs/ssr-html-entry-build.md)
+**Design Doc**: [design/designs/ssr-html-entry-build.md](../designs/ssr-html-entry-build.md)
 
 ---
 

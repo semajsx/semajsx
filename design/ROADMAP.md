@@ -182,7 +182,7 @@ Remaining:
 - ✅ Test coverage ≥ 80%
 - ⬜ Documentation complete
 
-**Implementation Details**: See `/dev-docs/implementation/001-style-system/` for detailed task breakdown and validation commands
+**Implementation Details**: See `/design/implementation/001-style-system/` for detailed task breakdown and validation commands
 
 ---
 
@@ -783,10 +783,10 @@ Deliverables:
 
 ## 📚 Reference Documentation
 
-- **RFC 006**: Style System Design - `/dev-docs/rfcs/006-style-system.md`
-- **RFC 007**: Component Library Runtime Vision - `/dev-docs/rfcs/007-component-library-runtime.md`
-- **RFC 008**: Cross-Framework Integration - `/dev-docs/rfcs/008-cross-framework-integration.md`
-- **Implementation Tracking**: `/dev-docs/implementation/` - Detailed plans, progress, and decisions
+- **RFC 006**: Style System Design - `/design/rfcs/006-style-system.md`
+- **RFC 007**: Component Library Runtime Vision - `/design/rfcs/007-component-library-runtime.md`
+- **RFC 008**: Cross-Framework Integration - `/design/rfcs/008-cross-framework-integration.md`
+- **Implementation Tracking**: `/design/implementation/` - Detailed plans, progress, and decisions
 
 ---
 
@@ -805,7 +805,7 @@ This roadmap provides **high-level strategic direction** for the SemaJSX project
 
 **For Implementation Details**:
 
-- **Active**: Stage 1 (Phase 1-3) - See `/dev-docs/implementation/001-style-system/` and future directories
+- **Active**: Stage 1 (Phase 1-3) - See `/design/implementation/001-style-system/` and future directories
 - **Future**: Stage 2 (Phase 4-6) - Create implementation directories when Stage 1 complete
 - **Future**: Stage 3 (Phase 7-8) - Create implementation directories when Stage 2 complete
 - Validation commands: See `plan.md` in each implementation directory

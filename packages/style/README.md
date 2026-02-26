@@ -581,4 +581,4 @@ inject(button.root); // No-op, already injected
 ## See Also
 
 - [@semajsx/tailwind](../tailwind/README.md) - Tailwind-style utilities built on @semajsx/style
-- [RFC: Style System](../../dev-docs/rfcs/006-style-system.md) - Design rationale and architecture
+- [RFC: Style System](../../design/rfcs/006-style-system.md) - Design rationale and architecture
