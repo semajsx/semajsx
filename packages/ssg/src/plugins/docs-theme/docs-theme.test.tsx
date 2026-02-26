@@ -277,6 +277,80 @@ describe("docsTheme — no hardcoded content", () => {
 });
 
 // =============================================================================
+// home option
+// =============================================================================
+
+describe("docsTheme config() — home option", () => {
+  it("should register home route by default (home undefined)", () => {
+    const [main] = docsTheme(createMinimalOptions());
+    const result = main.config!({} as never);
+    const paths = result!.routes!.map((r) => r.path);
+
+    expect(paths).toContain("/");
+  });
+
+  it("should not register home route when home: false", () => {
+    const [main] = docsTheme(createMinimalOptions({ home: false }));
+    const result = main.config!({} as never);
+    const paths = result!.routes!.map((r) => r.path);
+
+    expect(paths).not.toContain("/");
+    // Should still have 404
+    expect(paths).toContain("/404");
+  });
+
+  it("should register docs-index home route when home: 'docs-index'", () => {
+    const [main] = docsTheme(
+      createMinimalOptions({
+        home: "docs-index",
+        docs: { source: createMockSource([]) },
+      }),
+    );
+    const result = main.config!({} as never);
+    const homeRoute = result!.routes!.find((r) => r.path === "/");
+
+    expect(homeRoute).toBeDefined();
+    // Props should be a function (async) for fetching collections
+    expect(typeof homeRoute!.props).toBe("function");
+  });
+
+  it("should register custom component home route when home is a function", () => {
+    const CustomHome = ({ Layout }: { Layout: unknown }) => (
+      <div>
+        <h1>Custom Home</h1>
+      </div>
+    );
+
+    const [main] = docsTheme(createMinimalOptions({ home: CustomHome }));
+    const result = main.config!({} as never);
+    const homeRoute = result!.routes!.find((r) => r.path === "/");
+
+    expect(homeRoute).toBeDefined();
+    // Props should be a function (async) for passing Layout and collections
+    expect(typeof homeRoute!.props).toBe("function");
+  });
+
+  it("should still have all other routes when home: false", () => {
+    const [main] = docsTheme(
+      createMinimalOptions({
+        home: false,
+        docs: { source: createMockSource([]) },
+        guides: { source: createMockSource([]) },
+      }),
+    );
+    const result = main.config!({} as never);
+    const paths = result!.routes!.map((r) => r.path);
+
+    expect(paths).not.toContain("/");
+    expect(paths).toContain("/docs");
+    expect(paths).toContain("/docs/:slug");
+    expect(paths).toContain("/guides");
+    expect(paths).toContain("/guides/:slug");
+    expect(paths).toContain("/404");
+  });
+});
+
+// =============================================================================
 // Integration with SSG plugin system
 // =============================================================================
 

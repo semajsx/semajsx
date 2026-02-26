@@ -1,7 +1,33 @@
-import type { Component } from "@semajsx/core";
-import type { CollectionSource } from "../../types";
+import type { Component, VNode, JSXNode } from "@semajsx/core";
+import type { CollectionSource, CollectionEntry } from "../../types";
 import type { LucidePluginOptions } from "../lucide/index";
 import type { LlmsLink } from "../llms/types";
+
+// =============================================================================
+// Home Page Customization
+// =============================================================================
+
+/** Layout component exposed to custom home page functions */
+export type LayoutComponent = (props: { children: JSXNode }) => VNode;
+
+/** Props passed to a custom home page component */
+export interface HomePageProps {
+  /** Theme Layout component (nav + footer wrapper) */
+  Layout: LayoutComponent;
+  /** All docs entries (empty array if docs not configured) */
+  docs: CollectionEntry[];
+  /** All guides entries (empty array if guides not configured) */
+  guides: CollectionEntry[];
+}
+
+/**
+ * Home page configuration.
+ *
+ * - `false` — disable the homepage route entirely
+ * - `"docs-index"` — render a minimal document index instead of the marketing page
+ * - `(props: HomePageProps) => VNode` — custom component for full control
+ */
+export type HomeOption = false | "docs-index" | ((props: HomePageProps) => VNode);
 
 // =============================================================================
 // Navigation
@@ -91,6 +117,36 @@ export interface DocsThemeOptions {
     /** Navigation links */
     links: NavLink[];
   };
+
+  /**
+   * Home page configuration.
+   *
+   * - Omit or leave `undefined` for the default marketing homepage (hero, features, quickLinks)
+   * - `false` to disable the homepage route entirely
+   * - `"docs-index"` for a minimal document listing page
+   * - A component function `(props: HomePageProps) => VNode` for full control
+   *
+   * @example
+   * ```tsx
+   * // Disable homepage
+   * docsTheme({ home: false, ... })
+   *
+   * // Minimal docs index
+   * docsTheme({ home: "docs-index", ... })
+   *
+   * // Custom homepage
+   * docsTheme({
+   *   home: ({ Layout, docs }) => (
+   *     <Layout>
+   *       <h1>Welcome</h1>
+   *       <ul>{docs.map(d => <li>{d.data.title}</li>)}</ul>
+   *     </Layout>
+   *   ),
+   *   ...
+   * })
+   * ```
+   */
+  home?: HomeOption;
 
   /** Home page hero section (omit to skip hero) */
   hero?: {

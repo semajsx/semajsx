@@ -90,11 +90,24 @@ interface GuidePageProps {
   content: VNode;
 }
 
+/** Props for the DocsIndexHome preset */
+interface DocsIndexHomeProps {
+  docs: Array<{
+    slug: string;
+    data: { title: string; description?: string; category?: string; order: number };
+  }>;
+  guides: Array<{
+    slug: string;
+    data: { title: string; description?: string; difficulty: string; order: number };
+  }>;
+}
+
 /** Component map returned by createComponents */
 export interface DocsThemeComponents {
   Document: (props: DocumentProps) => VNode;
   Layout: (props: { children: JSXNode }) => VNode;
   HomePage: () => VNode;
+  DocsIndexHome: (props: DocsIndexHomeProps) => VNode;
   DocsIndex: (props: DocsIndexProps) => VNode;
   DocPage: (props: DocPageProps) => VNode;
   GuidesIndex: (props: GuidesIndexProps) => VNode;
@@ -308,6 +321,85 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
   }
 
   // --------------------------------------------------
+  // Docs Index Home (preset for home: "docs-index")
+  // --------------------------------------------------
+  function DocsIndexHome({ docs: docsList, guides: guidesList }: DocsIndexHomeProps): VNode {
+    const docsConf = options.docs;
+    const guidesConf = options.guides;
+    const docsBasePath = docsConf?.basePath ?? "/docs";
+    const guidesBasePath = guidesConf?.basePath ?? "/guides";
+
+    return (
+      <Layout>
+        <div style="max-width: 720px;">
+          <div style="margin-bottom: 3rem;">
+            <h1 class={cx("dt-page-title", "dt-anim-slide-up")}>{options.title}</h1>
+            {options.description && (
+              <p class={cx("dt-page-desc", "dt-anim-slide-up", "dt-stagger-1")}>
+                {options.description}
+              </p>
+            )}
+          </div>
+
+          {/* Docs listing */}
+          {docsList.length > 0 && (
+            <section class="dt-fade-in" style="margin-bottom: 2.5rem;">
+              <h2 class="dt-category-heading">{docsConf?.heading ?? "Documentation"}</h2>
+              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {docsList
+                  .sort((a, b) => a.data.order - b.data.order)
+                  .map((doc, i) => (
+                    <Card
+                      key={doc.slug}
+                      variant="link"
+                      href={`${docsBasePath}/${doc.slug}`}
+                      heading={doc.data.title}
+                      description={doc.data.description}
+                      class={cx("dt-anim-scale-in")}
+                      style={`animation-delay: ${0.1 + i * 0.08}s;`}
+                    />
+                  ))}
+              </div>
+            </section>
+          )}
+
+          {/* Guides listing */}
+          {guidesList.length > 0 && (
+            <section class="dt-fade-in" style="margin-bottom: 2.5rem;">
+              <h2 class="dt-category-heading">{guidesConf?.heading ?? "Guides"}</h2>
+              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {guidesList
+                  .sort((a, b) => a.data.order - b.data.order)
+                  .map((guide, i) => (
+                    <Card
+                      key={guide.slug}
+                      variant="link"
+                      href={`${guidesBasePath}/${guide.slug}`}
+                      class={cx("dt-anim-scale-in")}
+                      style={`animation-delay: ${0.1 + i * 0.08}s;`}
+                    >
+                      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.375rem;">
+                        <h3 class="dt-card-title" style="margin: 0;">
+                          {guide.data.title}
+                        </h3>
+                        <Badge color={DIFFICULTY_COLORS[guide.data.difficulty] ?? "default"}>
+                          {guide.data.difficulty}
+                        </Badge>
+                      </div>
+                      {guide.data.description && (
+                        <p class="dt-card-desc">{guide.data.description}</p>
+                      )}
+                    </Card>
+                  ))}
+              </div>
+            </section>
+          )}
+        </div>
+      </Layout>
+    );
+  }
+
+  // --------------------------------------------------
   // Docs Index
   // --------------------------------------------------
   function DocsIndex({ docs: docsList }: DocsIndexProps): VNode {
@@ -508,6 +600,7 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
     Document,
     Layout,
     HomePage,
+    DocsIndexHome,
     DocsIndex,
     DocPage,
     GuidesIndex,

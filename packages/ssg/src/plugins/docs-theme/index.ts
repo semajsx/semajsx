@@ -27,6 +27,9 @@ export type {
   QuickLinkItem,
   DocsConfig,
   GuidesConfig,
+  HomeOption,
+  HomePageProps,
+  LayoutComponent,
 } from "./types";
 
 export { Callout, CodeBlock, Tabs, TabList, Tab, TabPanel, Steps, Step } from "./components";
@@ -133,11 +136,40 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
       // --- Routes ---
 
       // Home page
-      routes.push({
-        path: "/",
-        component: components.HomePage,
-        props: { title: options.title },
-      });
+      if (options.home !== false) {
+        if (options.home === "docs-index") {
+          // Minimal document index preset
+          routes.push({
+            path: "/",
+            component: components.DocsIndexHome,
+            props: async (ssg) => ({
+              title: options.title,
+              docs: options.docs ? await ssg.getCollection("docs") : [],
+              guides: options.guides ? await ssg.getCollection("guides") : [],
+            }),
+          });
+        } else if (typeof options.home === "function") {
+          // Custom component — pass Layout and collection data
+          const CustomHome = options.home;
+          routes.push({
+            path: "/",
+            component: (props: Record<string, unknown>) => CustomHome(props as never),
+            props: async (ssg) => ({
+              title: options.title,
+              Layout: components.Layout,
+              docs: options.docs ? await ssg.getCollection("docs") : [],
+              guides: options.guides ? await ssg.getCollection("guides") : [],
+            }),
+          });
+        } else {
+          // Default marketing homepage
+          routes.push({
+            path: "/",
+            component: components.HomePage,
+            props: { title: options.title },
+          });
+        }
+      }
 
       // Docs routes
       if (options.docs) {
