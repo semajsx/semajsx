@@ -238,7 +238,7 @@ Rough timeline estimate:
 
 If accepted, what happens next?
 
-- [ ] Create design document: `apps/docs/designs/feature-design.md`
+- [ ] Create design document: `docs/designs/feature-design.md`
 - [ ] Create ADRs for key architectural decisions
 - [ ] Assign owner: [Name]
 - [ ] Create implementation tasks
