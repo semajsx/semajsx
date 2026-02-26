@@ -2,13 +2,18 @@
  * Class name generation for @semajsx/style
  */
 
-import { hashString } from "./hash";
 import type { ClassRef, ClassRefs } from "./types";
 
 /**
  * Symbol used to identify ClassRef objects
  */
 const CLASS_REF_BRAND = Symbol.for("@semajsx/style/classRef");
+
+/**
+ * Monotonic counter to ensure unique class names even when classes() is called
+ * multiple times in the same millisecond (e.g., multiple component modules).
+ */
+let classCounter = 0;
 
 /**
  * Create class name references with hashed values
@@ -25,8 +30,8 @@ export function classes<T extends readonly string[]>(names: T): ClassRefs<T> {
   const result = {} as Record<string, ClassRef>;
 
   for (const name of names) {
-    const hash = hashString(name + Date.now().toString(36));
-    const className = `${name}-${hash}`;
+    const id = (++classCounter).toString(36);
+    const className = `${name}-${id}`;
 
     const ref: ClassRef = {
       id: Symbol(className),

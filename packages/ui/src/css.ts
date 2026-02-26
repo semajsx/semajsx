@@ -30,7 +30,7 @@ function collectCSS(styles: Record<string, unknown>): string {
 }
 
 /** All @semajsx/ui component CSS (theme variables + component rules) */
-export const componentCSS = [
+export const componentCSS: string = [
   lightTheme.__cssTemplate,
   collectCSS(buttonStyles),
   collectCSS(cardStyles),

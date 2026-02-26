@@ -31,6 +31,17 @@ describe("classes", () => {
     // Different calls create different ClassRef objects
     expect(c1.root.id).not.toBe(c2.root.id);
   });
+
+  it("should generate unique class names across different calls with same names", () => {
+    const c1 = classes(["root", "icon"]);
+    const c2 = classes(["root", "icon"]);
+    const c3 = classes(["root", "icon"]);
+
+    // Different calls must produce different hashed class names
+    // even if called in the same millisecond
+    const names = [c1.root.toString(), c2.root.toString(), c3.root.toString()];
+    expect(new Set(names).size).toBe(3);
+  });
 });
 
 describe("isClassRef", () => {

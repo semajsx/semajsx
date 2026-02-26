@@ -91,7 +91,15 @@ class AppImpl implements App {
       appType: "custom",
       optimizeDeps: {
         // Disable optimization for semajsx to use source directly in development
-        exclude: ["semajsx", "@semajsx/core", "@semajsx/dom", "@semajsx/signal", "@semajsx/ssr"],
+        exclude: [
+          "semajsx",
+          "@semajsx/core",
+          "@semajsx/dom",
+          "@semajsx/signal",
+          "@semajsx/ssr",
+          "@semajsx/style",
+          "@semajsx/ui",
+        ],
       },
       resolve: {
         // Ensure Vite respects package.json "exports" field with conditions
@@ -104,7 +112,13 @@ class AppImpl implements App {
       plugins: [this._createVirtualIslandsPlugin()],
       // Exclude problematic native modules from SSR bundling
       ssr: {
-        noExternal: ["@semajsx/core", "@semajsx/dom", "@semajsx/signal"],
+        noExternal: [
+          "@semajsx/core",
+          "@semajsx/dom",
+          "@semajsx/signal",
+          "@semajsx/style",
+          "@semajsx/ui",
+        ],
         external: ["lightningcss", "fsevents"],
       },
     };
