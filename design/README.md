@@ -9,11 +9,11 @@ Documentation for **contributors, maintainers, and AI assistants** building Sema
 ## Structure
 
 ```
-docs/
-├── workflow.md          # Development workflow
+design/
 ├── rfcs/                # Feature proposals
 ├── designs/             # Technical designs
-└── adrs/                # Architecture decisions
+├── adrs/                # Architecture decisions
+└── ROADMAP.md           # Project roadmap
 ```
 
 ---
@@ -79,4 +79,4 @@ Use `.workspace/` for drafts and experiments (git-ignored):
 
 ---
 
-See [DOCS.md](../DOCS.md) for complete documentation index.
+See [DOCUMENTING.md](../DOCUMENTING.md) for complete documentation index.
