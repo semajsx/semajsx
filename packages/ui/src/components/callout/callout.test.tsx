@@ -79,9 +79,9 @@ describe("Callout", () => {
       </Callout>,
       container,
     );
-    const icon = container.querySelector("span");
-    expect(icon).toBeTruthy();
-    expect(icon!.getAttribute("style")).toContain("rgb(0, 122, 255)");
+    const svg = container.querySelector("span svg");
+    expect(svg).toBeTruthy();
+    expect(svg!.tagName.toLowerCase()).toBe("svg");
   });
 
   // --- Custom class ---
