@@ -15,9 +15,37 @@ import { componentCSS } from "@semajsx/ui/css";
 
 import type { BadgeColor } from "@semajsx/ui/components/badge";
 
+import { Button } from "@semajsx/ui/components/button";
+import { Separator } from "@semajsx/ui/components/separator";
+import { Input } from "@semajsx/ui/components/input";
+import { Avatar } from "@semajsx/ui/components/avatar";
+import { Kbd } from "@semajsx/ui/components/kbd";
+import { Switch } from "@semajsx/ui/components/switch";
+
 /** Concatenate class names, filtering falsy values */
 function cx(...args: (string | false | null | undefined)[]): string {
   return args.filter(Boolean).join(" ");
+}
+
+// =============================================================================
+// ComponentPreview — MDX component for showcasing UI components
+// =============================================================================
+
+interface ComponentPreviewProps {
+  /** Optional label shown above the preview */
+  label?: string;
+  children?: JSXNode;
+}
+
+export function ComponentPreview({ label, children }: ComponentPreviewProps): VNode {
+  return (
+    <div class="dt-preview">
+      <div class="dt-preview-box">
+        {label && <span class="dt-preview-label">{label}</span>}
+        {children}
+      </div>
+    </div>
+  );
 }
 
 // =============================================================================
@@ -90,6 +118,18 @@ interface GuidePageProps {
   content: VNode;
 }
 
+interface UIIndexProps {
+  components: Array<{
+    slug: string;
+    data: { title: string; description?: string; category?: string; order: number };
+  }>;
+}
+
+interface UIPageProps {
+  component: { data: { title: string; description?: string } };
+  content: VNode;
+}
+
 /** Props for the DocsIndexHome preset */
 interface DocsIndexHomeProps {
   docs: Array<{
@@ -112,7 +152,10 @@ export interface DocsThemeComponents {
   DocPage: (props: DocPageProps) => VNode;
   GuidesIndex: (props: GuidesIndexProps) => VNode;
   GuidePage: (props: GuidePageProps) => VNode;
+  UIIndex: (props: UIIndexProps) => VNode;
+  UIPage: (props: UIPageProps) => VNode;
   NotFound: () => VNode;
+  ComponentPreview: typeof ComponentPreview;
   Callout: typeof Callout;
   CodeBlock: typeof CodeBlock;
   Tabs: typeof Tabs;
@@ -121,6 +164,14 @@ export interface DocsThemeComponents {
   TabPanel: typeof TabPanel;
   Steps: typeof Steps;
   Step: typeof Step;
+  Button: typeof Button;
+  Badge: typeof Badge;
+  Card: typeof Card;
+  Separator: typeof Separator;
+  Input: typeof Input;
+  Avatar: typeof Avatar;
+  Kbd: typeof Kbd;
+  Switch: typeof Switch;
 }
 
 export function createComponents(options: DocsThemeOptions): DocsThemeComponents {
@@ -559,6 +610,176 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
   }
 
   // --------------------------------------------------
+  // UI Components Index
+  // --------------------------------------------------
+  function UIIndex({ components: componentsList }: UIIndexProps): VNode {
+    const uiConf = options.ui;
+    const heading = uiConf?.heading ?? "Components";
+    const desc = uiConf?.description ?? "";
+    const basePath = uiConf?.basePath ?? "/ui";
+
+    const byCategory = componentsList.reduce(
+      (acc, comp) => {
+        const category = comp.data.category || "General";
+        if (!acc[category]) acc[category] = [];
+        acc[category].push(comp);
+        return acc;
+      },
+      {} as Record<string, typeof componentsList>,
+    );
+    Object.values(byCategory).forEach((items) => items.sort((a, b) => a.data.order - b.data.order));
+
+    return (
+      <Layout>
+        <div style="max-width: 960px;">
+          <div style="margin-bottom: 3rem;">
+            <h1 class={cx("dt-page-title", "dt-anim-slide-up")}>{heading}</h1>
+            {desc && <p class={cx("dt-page-desc", "dt-anim-slide-up", "dt-stagger-1")}>{desc}</p>}
+          </div>
+          {Object.entries(byCategory).map(([category, items]) => (
+            <section key={category} class="dt-fade-in" style="margin-bottom: 2.5rem;">
+              <h2 class="dt-category-heading">{category}</h2>
+              <div class="dt-ui-grid">
+                {items.map((comp, i) => (
+                  <a
+                    key={comp.slug}
+                    href={`${basePath}/${comp.slug}`}
+                    class={cx("dt-ui-card", "dt-anim-scale-in")}
+                    style={`animation-delay: ${0.05 + i * 0.05}s;`}
+                  >
+                    <div class="dt-ui-card-preview">{renderMiniPreview(comp.slug)}</div>
+                    <h3 class="dt-ui-card-name">{comp.data.title}</h3>
+                    {comp.data.description && (
+                      <p class="dt-ui-card-desc">{comp.data.description}</p>
+                    )}
+                  </a>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </Layout>
+    );
+  }
+
+  /** Renders a small preview of the component for the index grid cards */
+  function renderMiniPreview(slug: string): JSXNode {
+    switch (slug) {
+      case "button":
+        return (
+          <div style="display: flex; gap: 0.5rem; position: relative; z-index: 1;">
+            <Button size="sm">Button</Button>
+            <Button size="sm" variant="outline">
+              Outline
+            </Button>
+          </div>
+        );
+      case "badge":
+        return (
+          <div style="display: flex; gap: 0.5rem; position: relative; z-index: 1;">
+            <Badge>Default</Badge>
+            <Badge color="success">Success</Badge>
+            <Badge color="warning">Warning</Badge>
+          </div>
+        );
+      case "input":
+        return (
+          <div style="width: 160px; position: relative; z-index: 1;">
+            <Input size="sm" placeholder="Type here..." />
+          </div>
+        );
+      case "switch":
+        return (
+          <div style="display: flex; gap: 1rem; position: relative; z-index: 1;">
+            <Switch />
+            <Switch checked />
+          </div>
+        );
+      case "avatar":
+        return (
+          <div style="display: flex; gap: 0.5rem; position: relative; z-index: 1;">
+            <Avatar initials="AB" size="sm" />
+            <Avatar initials="CD" size="md" />
+            <Avatar initials="EF" size="lg" />
+          </div>
+        );
+      case "separator":
+        return (
+          <div style="width: 120px; position: relative; z-index: 1;">
+            <div style="font-size: 0.75rem; color: #86868b; text-align: center;">Above</div>
+            <Separator />
+            <div style="font-size: 0.75rem; color: #86868b; text-align: center;">Below</div>
+          </div>
+        );
+      case "kbd":
+        return (
+          <div style="display: flex; gap: 0.25rem; align-items: center; position: relative; z-index: 1;">
+            <Kbd>Cmd</Kbd>
+            <span style="color: #86868b; font-size: 0.75rem;">+</span>
+            <Kbd>K</Kbd>
+          </div>
+        );
+      case "card":
+        return (
+          <div style="font-size: 0.6875rem; color: #86868b; position: relative; z-index: 1;">
+            Card
+          </div>
+        );
+      case "callout":
+        return (
+          <div style="font-size: 0.6875rem; color: #86868b; position: relative; z-index: 1;">
+            Callout
+          </div>
+        );
+      case "tabs":
+        return (
+          <div style="font-size: 0.6875rem; color: #86868b; position: relative; z-index: 1;">
+            Tabs
+          </div>
+        );
+      case "steps":
+        return (
+          <div style="font-size: 0.6875rem; color: #86868b; position: relative; z-index: 1;">
+            Steps
+          </div>
+        );
+      case "code-block":
+        return (
+          <div style="font-size: 0.6875rem; color: #86868b; position: relative; z-index: 1;">
+            CodeBlock
+          </div>
+        );
+      default:
+        return (
+          <div style="font-size: 0.6875rem; color: #86868b; position: relative; z-index: 1;">
+            {slug}
+          </div>
+        );
+    }
+  }
+
+  // --------------------------------------------------
+  // UI Component Page
+  // --------------------------------------------------
+  function UIPage({ component: comp, content }: UIPageProps): VNode {
+    return (
+      <Layout>
+        <article class="dt-page-container" style="max-width: 800px;">
+          <div style="margin-bottom: 2.5rem;">
+            <h1 class={cx("dt-page-title", "dt-anim-slide-up")}>{comp.data.title}</h1>
+            {comp.data.description && (
+              <p class={cx("dt-content-desc", "dt-anim-slide-up", "dt-stagger-1")}>
+                {comp.data.description}
+              </p>
+            )}
+          </div>
+          <div class={cx("dt-content", "dt-fade-in")}>{content}</div>
+        </article>
+      </Layout>
+    );
+  }
+
+  // --------------------------------------------------
   // 404 Not Found
   // --------------------------------------------------
   function NotFound(): VNode {
@@ -605,7 +826,10 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
     DocPage,
     GuidesIndex,
     GuidePage,
+    UIIndex,
+    UIPage,
     NotFound,
+    ComponentPreview,
     Callout,
     CodeBlock,
     Tabs,
@@ -614,8 +838,33 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
     TabPanel,
     Steps,
     Step,
+    Button,
+    Badge,
+    Card,
+    Separator,
+    Input,
+    Avatar,
+    Kbd,
+    Switch,
   };
 }
 
 // Re-export for plugin index
-export { Callout, Tabs, TabList, Tab, TabPanel, Steps, Step };
+export {
+  ComponentPreview,
+  Callout,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanel,
+  Steps,
+  Step,
+  Button,
+  Badge,
+  Card,
+  Separator,
+  Input,
+  Avatar,
+  Kbd,
+  Switch,
+};

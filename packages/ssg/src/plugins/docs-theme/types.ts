@@ -99,6 +99,17 @@ export interface GuidesConfig {
   description?: string;
 }
 
+export interface UIConfig {
+  /** Content source for UI component docs */
+  source: CollectionSource<unknown>;
+  /** URL base path (default: "/ui") */
+  basePath?: string;
+  /** Index page heading (default: "Components") */
+  heading?: string;
+  /** Index page description */
+  description?: string;
+}
+
 // =============================================================================
 // Theme Options
 // =============================================================================
@@ -191,6 +202,9 @@ export interface DocsThemeOptions {
 
   /** Guides collection (omit to disable guides section) */
   guides?: GuidesConfig;
+
+  /** UI components showcase (omit to disable UI section) */
+  ui?: UIConfig;
 
   /** Additional MDX plugins and components */
   mdx?: {

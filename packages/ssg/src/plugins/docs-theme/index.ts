@@ -4,6 +4,7 @@ import { defineCollection } from "../../index";
 import type { DocsThemeOptions } from "./types";
 import {
   createComponents,
+  ComponentPreview,
   Callout,
   CodeBlock,
   Tabs,
@@ -12,6 +13,14 @@ import {
   TabPanel,
   Steps,
   Step,
+  Button,
+  Badge,
+  Card,
+  Separator,
+  Input,
+  Avatar,
+  Kbd,
+  Switch,
 } from "./components";
 import { lucide as lucidePlugin } from "../lucide/index";
 import { llms as llmsPlugin } from "../llms/index";
@@ -27,12 +36,31 @@ export type {
   QuickLinkItem,
   DocsConfig,
   GuidesConfig,
+  UIConfig,
   HomeOption,
   HomePageProps,
   LayoutComponent,
 } from "./types";
 
-export { Callout, CodeBlock, Tabs, TabList, Tab, TabPanel, Steps, Step } from "./components";
+export {
+  ComponentPreview,
+  Callout,
+  CodeBlock,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanel,
+  Steps,
+  Step,
+  Button,
+  Badge,
+  Card,
+  Separator,
+  Input,
+  Avatar,
+  Kbd,
+  Switch,
+} from "./components";
 
 // =============================================================================
 // Schemas
@@ -50,6 +78,13 @@ const guidesSchema = z.object({
   description: z.string().optional(),
   order: z.number().default(999),
   difficulty: z.enum(["beginner", "intermediate", "advanced"]).default("beginner"),
+});
+
+const uiSchema = z.object({
+  title: z.string(),
+  description: z.string().optional(),
+  order: z.number().default(999),
+  category: z.string().optional(),
 });
 
 // =============================================================================
@@ -103,6 +138,7 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
   const components = createComponents(options);
   const docsBasePath = options.docs?.basePath ?? "/docs";
   const guidesBasePath = options.guides?.basePath ?? "/guides";
+  const uiBasePath = options.ui?.basePath ?? "/ui";
 
   const mainPlugin: SSGPlugin = {
     name: "docs-theme",
@@ -129,6 +165,16 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
             name: "guides",
             source: options.guides.source,
             schema: guidesSchema,
+          }),
+        );
+      }
+
+      if (options.ui) {
+        collections.push(
+          defineCollection({
+            name: "ui",
+            source: options.ui.source,
+            schema: uiSchema,
           }),
         );
       }
@@ -237,6 +283,39 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
         });
       }
 
+      // UI routes
+      if (options.ui) {
+        routes.push({
+          path: uiBasePath,
+          component: components.UIIndex,
+          props: async (ssg) => ({
+            title: options.ui?.heading ?? "Components",
+            components: await ssg.getCollection("ui"),
+          }),
+        });
+
+        routes.push({
+          path: `${uiBasePath}/:slug`,
+          component: components.UIPage,
+          getStaticPaths: async (ssg) => {
+            const allComponents = await ssg.getCollection("ui");
+            return Promise.all(
+              allComponents.map(async (comp) => {
+                const { Content } = await comp.render();
+                return {
+                  params: { slug: comp.slug },
+                  props: {
+                    component: comp,
+                    content: Content(),
+                    title: `${(comp.data as { title: string }).title} | ${options.title}`,
+                  },
+                };
+              }),
+            );
+          },
+        });
+      }
+
       // 404 page
       routes.push({
         path: "/404",
@@ -247,6 +326,7 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
       // --- MDX ---
 
       const mdxComponents: Record<string, Component> = {
+        ComponentPreview,
         Callout,
         CodeBlock,
         Tabs,
@@ -255,6 +335,14 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
         TabPanel,
         Steps,
         Step,
+        Button,
+        Badge,
+        Card,
+        Separator,
+        Input,
+        Avatar,
+        Kbd,
+        Switch,
         ...options.mdx?.components,
       };
 
@@ -279,8 +367,8 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
     plugins.push(lucidePlugin(lucideOpts));
   }
 
-  // LLMs (llms.txt) — enabled by default when docs or guides exist
-  const hasContent = options.docs || options.guides;
+  // LLMs (llms.txt) — enabled by default when docs, guides, or ui exist
+  const hasContent = options.docs || options.guides || options.ui;
   if (options.llms !== false && hasContent) {
     const llmsOpts = typeof options.llms === "object" ? options.llms : {};
 
@@ -298,6 +386,13 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
         title: options.guides.heading ?? "Guides",
         collection: "guides",
         basePath: guidesBasePath,
+      });
+    }
+    if (options.ui) {
+      sections.push({
+        title: options.ui.heading ?? "Components",
+        collection: "ui",
+        basePath: uiBasePath,
       });
     }
 

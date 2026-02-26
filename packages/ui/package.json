@@ -25,6 +25,11 @@
     "./components/code-block": "./src/components/code-block/index.ts",
     "./components/steps": "./src/components/steps/index.ts",
     "./components/tabs": "./src/components/tabs/index.ts",
+    "./components/separator": "./src/components/separator/index.ts",
+    "./components/input": "./src/components/input/index.ts",
+    "./components/avatar": "./src/components/avatar/index.ts",
+    "./components/kbd": "./src/components/kbd/index.ts",
+    "./components/switch": "./src/components/switch/index.ts",
     "./css": "./src/css.ts",
     "./theme": "./src/theme/index.ts",
     "./package.json": "./package.json"
@@ -39,6 +44,11 @@
       "./components/code-block": "./dist/components/code-block/index.mjs",
       "./components/steps": "./dist/components/steps/index.mjs",
       "./components/tabs": "./dist/components/tabs/index.mjs",
+      "./components/separator": "./dist/components/separator/index.mjs",
+      "./components/input": "./dist/components/input/index.mjs",
+      "./components/avatar": "./dist/components/avatar/index.mjs",
+      "./components/kbd": "./dist/components/kbd/index.mjs",
+      "./components/switch": "./dist/components/switch/index.mjs",
       "./css": "./dist/css.mjs",
       "./theme": "./dist/theme/index.mjs",
       "./package.json": "./package.json"

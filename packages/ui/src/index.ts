@@ -24,5 +24,20 @@ export type { TabsProps, TabListProps, TabProps, TabPanelProps } from "./compone
 export { Steps, Step } from "./components/steps";
 export type { StepsProps, StepProps } from "./components/steps";
 
+export { Separator } from "./components/separator";
+export type { SeparatorProps } from "./components/separator";
+
+export { Input } from "./components/input";
+export type { InputProps } from "./components/input";
+
+export { Avatar } from "./components/avatar";
+export type { AvatarProps } from "./components/avatar";
+
+export { Kbd } from "./components/kbd";
+export type { KbdProps } from "./components/kbd";
+
+export { Switch } from "./components/switch";
+export type { SwitchProps } from "./components/switch";
+
 // CSS (for SSG/SSR)
 export { componentCSS } from "./css";
