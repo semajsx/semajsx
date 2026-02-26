@@ -160,6 +160,75 @@ describe("docsTheme config() — routes", () => {
 });
 
 // =============================================================================
+// config() — home option
+// =============================================================================
+
+describe("docsTheme config() — home option", () => {
+  it("should include home route by default (home option not set)", () => {
+    const [main] = docsTheme(createMinimalOptions());
+    const result = main.config!({} as never);
+    const paths = result!.routes!.map((r) => r.path);
+
+    expect(paths).toContain("/");
+  });
+
+  it("should exclude home route when home: false", () => {
+    const [main] = docsTheme(createMinimalOptions({ home: false }));
+    const result = main.config!({} as never);
+    const paths = result!.routes!.map((r) => r.path);
+
+    expect(paths).not.toContain("/");
+    // 404 should still be present
+    expect(paths).toContain("/404");
+  });
+
+  it("should use docs-index preset when home: 'docs-index'", () => {
+    const [main] = docsTheme(
+      createMinimalOptions({
+        home: "docs-index",
+        docs: { source: createMockSource([]) },
+      }),
+    );
+    const result = main.config!({} as never);
+    const homeRoute = result!.routes!.find((r) => r.path === "/");
+
+    expect(homeRoute).toBeDefined();
+    // Component should be the DocsIndexHomePage, not the default HomePage
+    expect(homeRoute!.component).toBeDefined();
+    expect(typeof homeRoute!.component).toBe("function");
+  });
+
+  it("should use custom component when home is a function", () => {
+    const CustomHome = ({ Layout }: { Layout: unknown }) => <div>custom home</div>;
+
+    const [main] = docsTheme(createMinimalOptions({ home: CustomHome }));
+    const result = main.config!({} as never);
+    const homeRoute = result!.routes!.find((r) => r.path === "/");
+
+    expect(homeRoute).toBeDefined();
+    expect(typeof homeRoute!.component).toBe("function");
+  });
+
+  it("should pass Layout to custom home component", () => {
+    let receivedLayout: unknown = null;
+
+    const CustomHome = ({ Layout }: { Layout: unknown }) => {
+      receivedLayout = Layout;
+      return <div>custom</div>;
+    };
+
+    const [main] = docsTheme(createMinimalOptions({ home: CustomHome }));
+    const result = main.config!({} as never);
+    const homeRoute = result!.routes!.find((r) => r.path === "/");
+
+    // Call the component to trigger the custom home
+    homeRoute!.component({});
+    expect(receivedLayout).toBeDefined();
+    expect(typeof receivedLayout).toBe("function");
+  });
+});
+
+// =============================================================================
 // config() — Collections
 // =============================================================================
 

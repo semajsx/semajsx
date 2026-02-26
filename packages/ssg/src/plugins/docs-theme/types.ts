@@ -1,4 +1,4 @@
-import type { Component } from "@semajsx/core";
+import type { Component, VNode, JSXNode } from "@semajsx/core";
 import type { CollectionSource } from "../../types";
 import type { LucidePluginOptions } from "../lucide/index";
 import type { LlmsLink } from "../llms/types";
@@ -48,6 +48,24 @@ export interface QuickLinkItem {
 }
 
 // =============================================================================
+// Custom Home Page
+// =============================================================================
+
+/** Props passed to a custom home page component */
+export interface HomePageProps {
+  /** The theme Layout component (nav + main + footer) */
+  Layout: (props: { children: JSXNode }) => VNode;
+}
+
+/**
+ * Home page configuration.
+ * - `false` — disable the default home page route entirely
+ * - `"docs-index"` — replace with a minimal documentation index
+ * - `Component` — custom component receiving `{ Layout }`
+ */
+export type HomePageOption = false | "docs-index" | Component<HomePageProps>;
+
+// =============================================================================
 // Content Sections
 // =============================================================================
 
@@ -83,6 +101,14 @@ export interface DocsThemeOptions {
 
   /** Site description for meta tags */
   description?: string;
+
+  /**
+   * Home page configuration. By default, a hero/features/quickLinks page is rendered.
+   * - `false` — disable the home page route entirely
+   * - `"docs-index"` — replace with a minimal documentation index page
+   * - `Component` — custom component receiving `{ Layout }` for full control
+   */
+  home?: HomePageOption;
 
   /** Navigation bar configuration */
   nav: {

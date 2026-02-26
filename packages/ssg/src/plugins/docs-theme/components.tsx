@@ -95,6 +95,7 @@ export interface DocsThemeComponents {
   Document: (props: DocumentProps) => VNode;
   Layout: (props: { children: JSXNode }) => VNode;
   HomePage: () => VNode;
+  DocsIndexHomePage: () => VNode;
   DocsIndex: (props: DocsIndexProps) => VNode;
   DocPage: (props: DocPageProps) => VNode;
   GuidesIndex: (props: GuidesIndexProps) => VNode;
@@ -308,6 +309,51 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
   }
 
   // --------------------------------------------------
+  // Docs Index Home Page (preset: "docs-index")
+  // --------------------------------------------------
+  function DocsIndexHomePage(): VNode {
+    const docsConf = options.docs;
+    const guidesConf = options.guides;
+    const docsBasePath = docsConf?.basePath ?? "/docs";
+    const guidesBasePath = guidesConf?.basePath ?? "/guides";
+
+    return (
+      <Layout>
+        <div style="max-width: 720px;">
+          <div style="margin-bottom: 3rem;">
+            <h1 class={cx("dt-page-title", "dt-anim-slide-up")}>{options.title}</h1>
+            {options.description && (
+              <p class={cx("dt-page-desc", "dt-anim-slide-up", "dt-stagger-1")}>
+                {options.description}
+              </p>
+            )}
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            {docsConf && (
+              <Card
+                variant="link"
+                href={docsBasePath}
+                heading={docsConf.heading ?? "Documentation"}
+                description={docsConf.description}
+                class="dt-anim-scale-in"
+              />
+            )}
+            {guidesConf && (
+              <Card
+                variant="link"
+                href={guidesBasePath}
+                heading={guidesConf.heading ?? "Guides"}
+                description={guidesConf.description}
+                class="dt-anim-scale-in"
+              />
+            )}
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // --------------------------------------------------
   // Docs Index
   // --------------------------------------------------
   function DocsIndex({ docs: docsList }: DocsIndexProps): VNode {
@@ -508,6 +554,7 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
     Document,
     Layout,
     HomePage,
+    DocsIndexHomePage,
     DocsIndex,
     DocPage,
     GuidesIndex,

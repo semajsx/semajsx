@@ -16,7 +16,7 @@ import {
 import { lucide as lucidePlugin } from "../lucide/index";
 import { llms as llmsPlugin } from "../llms/index";
 import type { LlmsSection } from "../llms/types";
-import type { Component } from "@semajsx/core";
+import type { Component, VNode } from "@semajsx/core";
 
 export type {
   DocsThemeOptions,
@@ -27,9 +27,22 @@ export type {
   QuickLinkItem,
   DocsConfig,
   GuidesConfig,
+  HomePageOption,
+  HomePageProps,
 } from "./types";
 
-export { Callout, CodeBlock, Tabs, TabList, Tab, TabPanel, Steps, Step } from "./components";
+export {
+  Callout,
+  CodeBlock,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanel,
+  Steps,
+  Step,
+  createComponents,
+} from "./components";
+export type { DocsThemeComponents } from "./components";
 
 // =============================================================================
 // Schemas
@@ -133,11 +146,22 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
       // --- Routes ---
 
       // Home page
-      routes.push({
-        path: "/",
-        component: components.HomePage,
-        props: { title: options.title },
-      });
+      if (options.home !== false) {
+        let homeComponent: () => VNode = components.HomePage;
+
+        if (options.home === "docs-index") {
+          homeComponent = components.DocsIndexHomePage;
+        } else if (typeof options.home === "function") {
+          const CustomHome = options.home;
+          homeComponent = () => CustomHome({ Layout: components.Layout }) as VNode;
+        }
+
+        routes.push({
+          path: "/",
+          component: homeComponent,
+          props: { title: options.title },
+        });
+      }
 
       // Docs routes
       if (options.docs) {
