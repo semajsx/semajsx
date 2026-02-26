@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { readFile, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -486,6 +486,3 @@ describe("agentMarkdown plugin", () => {
     expect(blogMd).toContain("Hello world!");
   });
 });
-
-// Need afterEach import
-import { afterEach } from "vitest";
