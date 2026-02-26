@@ -1,5 +1,11 @@
 # semajsx
 
+## 0.4.0
+
+### Minor Changes
+
+- [#104](https://github.com/semajsx/semajsx/pull/104) [`849e59a`](https://github.com/semajsx/semajsx/commit/849e59ae6479c1377ef5e5be69a8b93bcc2f07b2) Thanks [@github-actions](https://github.com/apps/github-actions)! - feat(docs-theme): support custom homepage or disabling default HomePage
+
 ## 0.3.0
 
 ### Minor Changes

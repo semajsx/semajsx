@@ -1,5 +1,12 @@
 # @semajsx/docs
 
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies [[`849e59a`](https://github.com/semajsx/semajsx/commit/849e59ae6479c1377ef5e5be69a8b93bcc2f07b2)]:
+  - semajsx@0.4.0
+
 ## 0.1.4
 
 ### Patch Changes
