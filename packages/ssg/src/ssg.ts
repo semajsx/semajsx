@@ -319,7 +319,7 @@ export class SSG<
 
       // Plugin hook: buildEnd
       for (const plugin of this.plugins) {
-        await plugin.buildEnd?.(result);
+        await plugin.buildEnd?.(result, this);
       }
 
       return result;

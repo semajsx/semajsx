@@ -200,8 +200,8 @@ export interface SSGPlugin {
   /** Called before build starts */
   buildStart?(): void | Promise<void>;
 
-  /** Called after build completes */
-  buildEnd?(result: BuildResult): void | Promise<void>;
+  /** Called after build completes. Receives the SSG instance for post-build operations. */
+  buildEnd?(result: BuildResult, ssg: SSGInstance): void | Promise<void>;
 }
 
 // =============================================================================
