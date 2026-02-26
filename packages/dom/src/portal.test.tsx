@@ -1,10 +1,10 @@
 /** @jsxImportSource @semajsx/dom */
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { signal, computed } from "@semajsx/signal";
+import { signal } from "@semajsx/signal";
 import { render } from "@semajsx/dom";
 import { createPortal, PortalComponent } from "@semajsx/dom";
-import { Context, context, when, Fragment } from "@semajsx/core";
+import { Context, context, when } from "@semajsx/core";
 import type { ComponentAPI } from "@semajsx/core";
 
 describe("Portal functionality", () => {
