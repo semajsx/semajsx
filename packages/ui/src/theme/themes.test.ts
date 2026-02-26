@@ -10,7 +10,7 @@ describe("themes", () => {
   it("light theme targets :root selector", () => {
     expect(lightTheme.__cssTemplate).toContain(":root");
     expect(lightTheme.__cssTemplate).toContain("--colors-primary");
-    expect(lightTheme.__cssTemplate).toContain("#3b82f6");
+    expect(lightTheme.__cssTemplate).toContain("#0071e3");
   });
 
   it("light theme has no className (applies globally)", () => {
@@ -31,6 +31,6 @@ describe("themes", () => {
     const css = darkTheme.__cssTemplate;
     expect(css).toContain("--colors-primary");
     expect(css).toContain("--colors-background");
-    expect(css).toContain("#0f172a");
+    expect(css).toContain("#000000");
   });
 });

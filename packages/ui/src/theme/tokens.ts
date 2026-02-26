@@ -21,23 +21,25 @@ import { defineTokens } from "@semajsx/style";
 
 export const tokens = defineTokens({
   colors: {
-    // Brand
-    primary: "#3b82f6",
-    primaryHover: "#2563eb",
-    primaryActive: "#1d4ed8",
+    // Brand (Apple blue)
+    primary: "#0071e3",
+    primaryHover: "#0077ed",
+    primaryActive: "#0068d6",
 
     // Neutral
-    background: "#ffffff",
-    surface: "#f9fafb",
-    border: "#e5e7eb",
-    text: "#111827",
-    textMuted: "#6b7280",
+    background: "#fbfbfd",
+    surface: "#f5f5f7",
+    border: "rgba(0, 0, 0, 0.08)",
+    text: "#1d1d1f",
+    textMuted: "#6e6e73",
+    textTertiary: "#86868b",
 
     // Semantic
-    danger: "#ef4444",
-    dangerHover: "#dc2626",
-    success: "#22c55e",
-    warning: "#f59e0b",
+    danger: "#ff453a",
+    dangerHover: "#ff6961",
+    success: "#34c759",
+    warning: "#ff9f0a",
+    info: "#007aff",
 
     // Inverse (for solid buttons, etc.)
     onPrimary: "#ffffff",
@@ -50,25 +52,27 @@ export const tokens = defineTokens({
     md: "0.75rem",
     lg: "1rem",
     xl: "1.5rem",
+    xxl: "2rem",
   },
 
   radii: {
-    sm: "4px",
-    md: "6px",
-    lg: "8px",
-    full: "9999px",
+    sm: "10px",
+    md: "12px",
+    lg: "16px",
+    xl: "20px",
+    pill: "980px",
   },
 
   fonts: {
-    base: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    mono: '"SF Mono", SFMono-Regular, Menlo, Consolas, monospace',
+    base: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    mono: '"SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace',
   },
 
   fontSizes: {
-    xs: "0.75rem",
+    xs: "0.8125rem",
     sm: "0.875rem",
     md: "1rem",
-    lg: "1.125rem",
+    lg: "1.0625rem",
   },
 
   fontWeights: {
@@ -80,16 +84,18 @@ export const tokens = defineTokens({
 
   lineHeights: {
     tight: "1.25",
-    normal: "1.5",
+    normal: "1.6",
   },
 
   shadows: {
-    sm: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
-    md: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+    sm: "0 1px 3px rgba(0, 0, 0, 0.03)",
+    md: "0 1px 4px rgba(0, 0, 0, 0.04)",
+    lg: "0 8px 28px rgba(0, 0, 0, 0.08)",
+    primaryGlow: "0 4px 16px rgba(0, 113, 227, 0.3)",
   },
 
   transitions: {
-    fast: "150ms cubic-bezier(0.4, 0, 0.2, 1)",
-    normal: "200ms cubic-bezier(0.4, 0, 0.2, 1)",
+    fast: "0.2s ease",
+    normal: "0.3s cubic-bezier(0.25, 0.1, 0.25, 1)",
   },
 });

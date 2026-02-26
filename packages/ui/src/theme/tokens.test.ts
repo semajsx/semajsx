@@ -6,7 +6,7 @@ describe("tokens", () => {
   it("creates valid token refs for colors", () => {
     expect(isTokenRef(tokens.colors.primary)).toBe(true);
     expect(tokens.colors.primary.varName).toBe("--colors-primary");
-    expect(tokens.colors.primary.defaultValue).toBe("#3b82f6");
+    expect(tokens.colors.primary.defaultValue).toBe("#0071e3");
   });
 
   it("stringifies to var() expressions", () => {
