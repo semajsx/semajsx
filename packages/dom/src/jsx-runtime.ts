@@ -421,6 +421,13 @@ interface BaseMetaHTMLAttributes extends BaseHTMLAttributes<HTMLMetaElement> {
 export type MetaHTMLAttributes = WithKey<WithSignals<BaseMetaHTMLAttributes>>;
 
 /**
+ * SVG element attributes — permissive to cover SVG's large attribute set
+ */
+export type SVGAttributes = HTMLAttributes<SVGElement> & {
+  [key: string]: unknown;
+};
+
+/**
  * JSX namespace for DOM elements
  */
 export namespace JSX {
@@ -532,7 +539,25 @@ export namespace JSX {
     source: HTMLAttributes<HTMLSourceElement>;
     track: HTMLAttributes<HTMLTrackElement>;
     canvas: CanvasHTMLAttributes;
-    svg: HTMLAttributes<SVGElement>;
+    svg: SVGAttributes;
+
+    // SVG child elements
+    circle: SVGAttributes;
+    clipPath: SVGAttributes;
+    defs: SVGAttributes;
+    ellipse: SVGAttributes;
+    g: SVGAttributes;
+    line: SVGAttributes;
+    linearGradient: SVGAttributes;
+    mask: SVGAttributes;
+    path: SVGAttributes;
+    polygon: SVGAttributes;
+    polyline: SVGAttributes;
+    radialGradient: SVGAttributes;
+    rect: SVGAttributes;
+    stop: SVGAttributes;
+    text: SVGAttributes;
+    use: SVGAttributes;
 
     // Embedded content
     iframe: IframeHTMLAttributes;
