@@ -73,13 +73,16 @@ export function Pre({
 interface ComponentPreviewProps {
   /** Optional label shown above the preview */
   label?: string;
+  /** Allow pointer events inside the preview */
+  interactive?: boolean;
   children?: JSXNode;
 }
 
-export function ComponentPreview({ label, children }: ComponentPreviewProps): VNode {
+export function ComponentPreview({ label, interactive, children }: ComponentPreviewProps): VNode {
+  const boxClass = interactive ? "dt-preview-box dt-preview-interactive" : "dt-preview-box";
   return (
     <div class="dt-preview">
-      <div class="dt-preview-box">
+      <div class={boxClass}>
         {label && <span class="dt-preview-label">{label}</span>}
         {children}
       </div>

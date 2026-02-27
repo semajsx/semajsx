@@ -795,8 +795,7 @@ body {
   pointer-events: none;
 }
 
-.dt-preview-box > [data-island-id],
-.dt-preview-box > [data-island-id] * {
+.dt-preview-box.dt-preview-interactive > * {
   pointer-events: auto;
 }
 
