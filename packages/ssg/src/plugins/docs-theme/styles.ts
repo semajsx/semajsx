@@ -501,15 +501,18 @@ body {
 
 /* Tables */
 
+.dt-table-wrapper {
+  margin: 1.5rem 0;
+  border-radius: 10px;
+  border: 0.5px solid rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
 .dt-content table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1.5rem 0;
   font-size: 0.9375rem;
   line-height: 1.5;
-  border-radius: 10px;
-  overflow: hidden;
-  border: 0.5px solid rgba(0, 0, 0, 0.08);
 }
 
 .dt-content thead {
@@ -542,26 +545,26 @@ body {
 }
 
 /* Table scrollbar styling */
-.dt-content table {
+.dt-table-wrapper {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.12) rgba(0, 0, 0, 0.02);
 }
 
-.dt-content table::-webkit-scrollbar {
+.dt-table-wrapper::-webkit-scrollbar {
   height: 6px;
 }
 
-.dt-content table::-webkit-scrollbar-track {
+.dt-table-wrapper::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.02);
   border-radius: 3px;
 }
 
-.dt-content table::-webkit-scrollbar-thumb {
+.dt-table-wrapper::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.12);
   border-radius: 3px;
 }
 
-.dt-content table::-webkit-scrollbar-thumb:hover {
+.dt-table-wrapper::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 0, 0, 0.2);
 }
 
@@ -737,27 +740,28 @@ body {
   .dt-content pre { padding: 1rem; font-size: 0.8125rem; border-radius: 10px; }
   .dt-content ul, .dt-content ol { margin-left: 1.25rem; }
 
-  .dt-content table {
-    font-size: 0.8125rem;
-    overflow: auto;
+  .dt-table-wrapper {
+    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
   }
 
-  .dt-content thead {
-    position: sticky;
-    left: 0;
-    z-index: 1;
+  .dt-content table {
+    font-size: 0.8125rem;
+  }
+
+  .dt-content th,
+  .dt-content td {
+    white-space: nowrap;
   }
 
   .dt-content th {
     padding: 0.5rem 0.75rem;
     font-size: 0.75rem;
-    white-space: nowrap;
   }
 
   .dt-content td {
     padding: 0.5rem 0.75rem;
-    white-space: nowrap;
   }
 
   .dt-content td:first-child {
