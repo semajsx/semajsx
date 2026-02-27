@@ -11,6 +11,7 @@ import {
   ComponentPreview,
   Callout,
   CodeBlock,
+  Tabs,
   TabList,
   Tab,
   TabPanel,
@@ -27,11 +28,15 @@ import {
   Table,
   Pre,
 } from "./components";
-import { TabsIsland } from "./client/tabs-enhance";
+import { island } from "@semajsx/ssr/client";
 import { lucide as lucidePlugin } from "../lucide/index";
 import { llms as llmsPlugin } from "../llms/index";
 import type { LlmsSection } from "../llms/types";
 import type { Component } from "@semajsx/core";
+
+// Wrap Tabs as an island, pointing to the source module so the client
+// entry automatically has TabList/Tab/TabPanel in its component registry.
+const TabsIsland = island(Tabs, "@semajsx/ui/components/tabs");
 
 export type {
   DocsThemeOptions,
