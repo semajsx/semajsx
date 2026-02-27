@@ -739,8 +739,7 @@ body {
 
   .dt-content table {
     font-size: 0.8125rem;
-    display: block;
-    overflow-x: auto;
+    overflow: auto;
     -webkit-overflow-scrolling: touch;
     border-radius: 0;
     margin-left: -1rem;
