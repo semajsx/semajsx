@@ -587,6 +587,8 @@ body {
   padding: 0.625rem 1rem;
   z-index: 1;
   pointer-events: none;
+  background: linear-gradient(to left, rgba(34, 39, 46, 0.95) 70%, transparent);
+  padding-left: 2rem;
 }
 
 .dt-code-lang {
@@ -729,6 +731,8 @@ body {
 
   .dt-content table {
     font-size: 0.8125rem;
+    width: max-content;
+    min-width: 100%;
   }
 
   .dt-content th,
