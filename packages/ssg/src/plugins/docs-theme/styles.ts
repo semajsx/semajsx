@@ -573,6 +573,7 @@ body {
  * ============================================== */
 
 .dt-code-block {
+  position: relative;
   margin: 1.5rem 0;
   border-radius: 12px;
   overflow: hidden;
@@ -608,10 +609,10 @@ body {
 /* Shiki integration */
 
 .dt-content pre.shiki {
-  position: relative;
   padding: 2.25rem 1.5rem 1.25rem;
 }
 
+/* Language label positioned relative to .dt-code-block (non-scrolling) */
 .dt-content pre.shiki[data-language]::before {
   content: attr(data-language);
   position: absolute;
@@ -624,6 +625,11 @@ body {
   letter-spacing: 0.04em;
   pointer-events: none;
   user-select: none;
+}
+
+/* Hide ::before when .dt-code-header already shows the language */
+.dt-code-header + pre.shiki[data-language]::before {
+  display: none;
 }
 
 .dt-content pre.shiki code {
