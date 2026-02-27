@@ -27,6 +27,33 @@ function cx(...args: (string | false | null | undefined)[]): string {
   return args.filter(Boolean).join(" ");
 }
 
+/** Inline script for tab interactivity (no framework JS needed) */
+const TABS_SCRIPT = `
+document.querySelectorAll('[data-tabs]').forEach(function(root) {
+  var active = root.getAttribute('data-tabs');
+  root.querySelectorAll('[role=tab]').forEach(function(t) {
+    t.setAttribute('aria-selected', t.getAttribute('data-tab-value') === active);
+  });
+  root.querySelectorAll('[role=tabpanel]').forEach(function(p) {
+    if (p.getAttribute('data-tab-panel') !== active) p.hidden = true;
+  });
+});
+document.addEventListener('click', function(e) {
+  var tab = e.target.closest('[role=tab]');
+  if (!tab) return;
+  var root = tab.closest('[data-tabs]');
+  if (!root) return;
+  var value = tab.getAttribute('data-tab-value');
+  root.setAttribute('data-tabs', value);
+  root.querySelectorAll('[role=tab]').forEach(function(t) {
+    t.setAttribute('aria-selected', t.getAttribute('data-tab-value') === value);
+  });
+  root.querySelectorAll('[role=tabpanel]').forEach(function(p) {
+    p.hidden = p.getAttribute('data-tab-panel') !== value;
+  });
+});
+`;
+
 // =============================================================================
 // Table — Wraps <table> in a scrollable container for mobile overflow
 // =============================================================================
@@ -306,6 +333,8 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
             </p>
           </div>
         </footer>
+
+        <script dangerouslySetInnerHTML={{ __html: TABS_SCRIPT }} />
       </div>
     );
   }
