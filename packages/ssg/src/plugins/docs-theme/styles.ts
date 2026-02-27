@@ -742,19 +742,7 @@ body {
     display: block;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    /* Scroll shadow indicators */
-    background:
-      linear-gradient(to right, #fbfbfd 30%, rgba(251, 251, 253, 0)),
-      linear-gradient(to right, rgba(251, 251, 253, 0), #fbfbfd 70%) 0 100%,
-      linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0)),
-      linear-gradient(to left, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0)) 0 100%;
-    background-repeat: no-repeat;
-    background-size: 40px 100%, 40px 100%, 12px 100%, 12px 100%;
-    background-position: 0 0, 100% 0, 0 0, 100% 0;
-    background-attachment: local, local, scroll, scroll;
-    border: none;
     border-radius: 0;
-    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.08);
   }
 
   .dt-content thead {
