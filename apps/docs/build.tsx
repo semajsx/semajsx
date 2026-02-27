@@ -1,7 +1,7 @@
 import rehypeShiki from "@shikijs/rehype";
 import type { ShikiTransformer } from "@shikijs/types";
-import { createSSG, fileSource } from "semajsx/ssg";
-import { docsTheme } from "semajsx/ssg/plugins/docs-theme";
+import { createSSG, fileSource } from "@semajsx/ssg";
+import { docsTheme } from "@semajsx/ssg/plugins/docs-theme";
 
 const rootDir = import.meta.dir;
 
