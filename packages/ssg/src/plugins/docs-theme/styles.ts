@@ -573,6 +573,7 @@ body {
  * ============================================== */
 
 .dt-code-block {
+  position: relative;
   margin: 1.5rem 0;
   border-radius: 12px;
   overflow: hidden;
@@ -580,29 +581,28 @@ body {
 }
 
 .dt-code-header {
-  background: #161617;
-  padding: 0.5rem 1.25rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.625rem 1rem;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .dt-code-lang {
-  color: #86868b;
+  color: #636e7b;
   font-size: 0.6875rem;
   text-transform: uppercase;
   font-weight: 600;
   letter-spacing: 0.04em;
+  user-select: none;
 }
 
 .dt-code-block pre {
   margin: 0;
   border-radius: 0;
   border: none;
-}
-
-.dt-code-header + pre {
-  border-radius: 0;
+  padding-top: 2.25rem;
 }
 
 /* Shiki integration */
