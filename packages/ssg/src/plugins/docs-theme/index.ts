@@ -11,7 +11,6 @@ import {
   ComponentPreview,
   Callout,
   CodeBlock,
-  Tabs,
   TabList,
   Tab,
   TabPanel,

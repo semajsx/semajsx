@@ -346,7 +346,7 @@ const Component = ${componentName ? `ComponentModule['${componentName}'] || Comp
                   Object.values(ComponentModule).find(exp => typeof exp === 'function');
 
 if (Component) {
-  hydrateAllIslands('${componentKey}', Component);
+  hydrateAllIslands('${componentKey}', Component, ComponentModule);
 }
 `;
 
