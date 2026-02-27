@@ -1,5 +1,11 @@
 # semajsx
 
+## 0.5.2
+
+### Patch Changes
+
+- [#115](https://github.com/semajsx/semajsx/pull/115) [`b375d4b`](https://github.com/semajsx/semajsx/commit/b375d4b81a117366897a4d08672bd4d5cdf6f664) Thanks [@github-actions](https://github.com/apps/github-actions)! - Fix docs-theme plugin to include remark-gfm by default for GFM table support
+
 ## 0.5.1
 
 ### Patch Changes
