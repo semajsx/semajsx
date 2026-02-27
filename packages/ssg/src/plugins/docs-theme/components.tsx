@@ -199,10 +199,6 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
             rel="stylesheet"
           />
-          <link
-            rel="stylesheet"
-            href="https://chinese-fonts-cdn.deno.dev/packages/maple-mono-cn/dist/MapleMono-CN-Regular/result.css"
-          />
           {css?.map((href) => (
             <link key={href} rel="stylesheet" href={href} />
           ))}

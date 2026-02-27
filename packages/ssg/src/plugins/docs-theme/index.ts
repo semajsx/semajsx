@@ -1,6 +1,9 @@
+import { copyFile, mkdir } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import remarkGfm from "remark-gfm";
 import { z } from "zod";
-import type { SSGPlugin, Collection, RouteConfig } from "../../types";
+import type { SSGPlugin, SSGConfig, Collection, RouteConfig } from "../../types";
 import { defineCollection } from "../../index";
 import type { DocsThemeOptions } from "./types";
 import {
@@ -141,8 +144,23 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
   const guidesBasePath = options.guides?.basePath ?? "/guides";
   const uiBasePath = options.ui?.basePath ?? "/ui";
 
+  let outDir = "";
+
   const mainPlugin: SSGPlugin = {
     name: "docs-theme",
+
+    configResolved(config: SSGConfig) {
+      outDir = config.outDir ?? "./dist";
+    },
+
+    async buildEnd() {
+      // Copy bundled font to output directory
+      const thisDir = dirname(fileURLToPath(import.meta.url));
+      const fontSrc = join(thisDir, "fonts", "MapleMono-NF-CN-Regular.woff2");
+      const fontDest = join(outDir, "fonts", "MapleMono-NF-CN-Regular.woff2");
+      await mkdir(dirname(fontDest), { recursive: true });
+      await copyFile(fontSrc, fontDest);
+    },
 
     config() {
       const collections: Collection[] = [];
