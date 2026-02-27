@@ -11,8 +11,8 @@
     "serve": "bun run --bun vite preview --outDir dist"
   },
   "dependencies": {
-    "@shikijs/rehype": "^3.22.0",
-    "semajsx": "workspace:*"
+    "@semajsx/ssg": "workspace:*",
+    "@shikijs/rehype": "^3.22.0"
   },
   "devDependencies": {
     "@semajsx/configs": "workspace:*",
