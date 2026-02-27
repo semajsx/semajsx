@@ -80,7 +80,8 @@ export function Tabs(props: TabsProps): JSXNode {
         const value = tab.getAttribute("data-tab-value");
         if (value) active.value = value;
       }}
-      ref={(el: HTMLElement) => {
+      ref={(el: HTMLDivElement | null) => {
+        if (!el) return;
         // Sync child tab/panel states to the active signal
         const sync = (value: string) => {
           for (const t of el.querySelectorAll("[role=tab]")) {

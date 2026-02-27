@@ -157,6 +157,91 @@ function serializeProps(props: any): Record<string, any> {
 }
 
 /**
+ * Serialize VNode children for island hydration.
+ *
+ * Produces a JSON-serializable array that the client can reconstruct into
+ * real VNodes using a component registry.
+ *
+ * Format:
+ *  - string          → text node
+ *  - null            → skip
+ *  - [tag, props?, children?]   → HTML element (e.g. ["div", {"class":"x"}, [...]])
+ *  - ["$Name", props?, children?] → component reference ($ prefix)
+ */
+function serializeVNodeChildren(children: any): any[] | undefined {
+  if (children == null) return undefined;
+  const nodes = Array.isArray(children) ? children : [children];
+  const result: any[] = [];
+  for (const node of nodes) {
+    collectSerializedNode(node, result);
+  }
+  return result.length > 0 ? result : undefined;
+}
+
+function collectSerializedNode(node: any, result: any[]): void {
+  if (node == null || typeof node === "boolean") return;
+  if (typeof node === "string") {
+    result.push(node);
+    return;
+  }
+  if (typeof node === "number") {
+    result.push(String(node));
+    return;
+  }
+  if (isSignal(node)) {
+    collectSerializedNode(unwrap(node), result);
+    return;
+  }
+  if (Array.isArray(node)) {
+    for (const item of node) collectSerializedNode(item, result);
+    return;
+  }
+
+  if (typeof node !== "object" || !("type" in node)) return;
+  const vnode = node as VNode;
+
+  // Text node
+  if (vnode.type === "#text") {
+    result.push(String(vnode.props?.nodeValue ?? ""));
+    return;
+  }
+
+  // Signal node — unwrap
+  if (vnode.type === "#signal") {
+    const sig = vnode.props?.signal;
+    if (sig && isSignal(sig)) collectSerializedNode(unwrap(sig), result);
+    return;
+  }
+
+  // Fragment — flatten children
+  if (vnode.type === Fragment) {
+    for (const child of vnode.children) collectSerializedNode(child, result);
+    return;
+  }
+
+  // Nested island — skip (hydrates independently)
+  if (isIslandVNode(vnode as any)) return;
+
+  // Serialize child VNodes recursively
+  const childrenArr = vnode.children?.length ? serializeVNodeChildren(vnode.children) : undefined;
+
+  // Component
+  if (typeof vnode.type === "function") {
+    const name = "$" + (vnode.type.name || "Anonymous");
+    const props = serializeProps(vnode.props || {});
+    result.push([name, Object.keys(props).length > 0 ? props : null, childrenArr ?? null]);
+    return;
+  }
+
+  // HTML element
+  if (typeof vnode.type === "string") {
+    const props = serializeProps(vnode.props || {});
+    result.push([vnode.type, Object.keys(props).length > 0 ? props : null, childrenArr ?? null]);
+    return;
+  }
+}
+
+/**
  * Check if a value is an async iterator
  */
 function isAsyncIterator(value: any): value is AsyncIterableIterator<any> {
@@ -454,14 +539,20 @@ async function renderIsland(vnode: VNode, context: RenderContext): Promise<strin
 
   const propsJson = JSON.stringify(serializedProps);
 
+  // Serialize children VNodes so the client can reconstruct the full tree
+  const serializedChildren = serializeVNodeChildren(metadata.props?.children);
+  const childrenScript = serializedChildren
+    ? `<script type="application/json" data-island-children="${islandId}">${JSON.stringify(serializedChildren)}</script>`
+    : "";
+
   // Single DOM element: inject attrs directly (no wrapper div)
   if (isSingleElement(result)) {
-    return injectIslandAttrs(content, islandId, componentKey, propsJson);
+    return injectIslandAttrs(content, islandId, componentKey, propsJson) + childrenScript;
   }
 
   // Fragment or other: use comment markers + script tag
   // Use unique end marker to support nested islands
-  return `<!--island:${islandId}-->${content}<!--/island:${islandId}--><script type="application/json" data-island="${islandId}" data-island-src="${componentKey}">${propsJson}</script>`;
+  return `<!--island:${islandId}-->${content}<!--/island:${islandId}--><script type="application/json" data-island="${islandId}" data-island-src="${componentKey}">${propsJson}</script>${childrenScript}`;
 }
 
 /**

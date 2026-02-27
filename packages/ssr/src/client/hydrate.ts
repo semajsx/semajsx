@@ -4,7 +4,7 @@
  */
 
 import type { VNode } from "@semajsx/core";
-import { Fragment } from "@semajsx/core";
+import { Fragment, h } from "@semajsx/core";
 import { setProperty, render } from "@semajsx/dom";
 import { isSignal } from "@semajsx/signal";
 
@@ -147,7 +147,12 @@ function hydrateNode(vnode: VNode | any, domNode: Node, parentElement: Element):
 
   // Handle function components - render and hydrate result
   if (typeof vnodeTyped.type === "function") {
-    let result = vnodeTyped.type(vnodeTyped.props || {});
+    // Merge vnode.children into props.children (mirrors renderVNodeToHTML)
+    const props =
+      vnodeTyped.children && vnodeTyped.children.length > 0
+        ? { ...vnodeTyped.props, children: vnodeTyped.children }
+        : vnodeTyped.props || {};
+    let result = vnodeTyped.type(props);
 
     // Handle async component
     if (result instanceof Promise) {
@@ -820,21 +825,65 @@ export function markIslandHydrated(islandId: string): void {
 }
 
 /**
+ * Reconstruct VNode children from serialized JSON data.
+ *
+ * Uses the island module's exports as a registry to resolve component names
+ * (prefixed with "$") back to their actual functions.
+ *
+ * @param serialized - Serialized children array from SSR
+ * @param registry - Module exports mapping component names to functions
+ */
+function reconstructChildren(serialized: any[], registry: Record<string, any>): any[] {
+  const result: any[] = [];
+  for (const node of serialized) {
+    if (node === null) continue;
+    if (typeof node === "string") {
+      result.push(node);
+      continue;
+    }
+    if (Array.isArray(node) && node.length === 3 && typeof node[0] === "string") {
+      const [type, props, children] = node;
+      const resolvedChildren = children ? reconstructChildren(children, registry) : [];
+
+      if (type.startsWith("$")) {
+        // Component reference — look up in registry
+        const name = type.slice(1);
+        const component = registry[name];
+        if (!component || typeof component !== "function") {
+          console.warn(`[Hydrate] Unknown component "${name}" in island children`);
+          continue;
+        }
+        result.push(h(component, props || {}, ...resolvedChildren));
+      } else {
+        // HTML element
+        result.push(h(type, props || {}, ...resolvedChildren));
+      }
+    }
+  }
+  return result;
+}
+
+/**
  * Hydrate all islands with a given component source
  * Finds all elements with data-island-src and hydrates them
  *
  * @param componentSrc - The component source key (e.g., "components/Counter")
  * @param Component - The component function to render
+ * @param registry - Optional module exports for reconstructing island children
  *
  * @example
  * ```tsx
  * import { hydrateAllIslands } from '@semajsx/ssr/client';
- * import Counter from './Counter';
+ * import * as CounterModule from './Counter';
  *
- * hydrateAllIslands('components/Counter', Counter);
+ * hydrateAllIslands('components/Counter', CounterModule.Counter, CounterModule);
  * ```
  */
-export function hydrateAllIslands(componentSrc: string, Component: Function): void {
+export function hydrateAllIslands(
+  componentSrc: string,
+  Component: Function,
+  registry?: Record<string, any>,
+): void {
   // Find all elements with this component source
   const elements = document.querySelectorAll(`[data-island-src="${componentSrc}"]`);
 
@@ -852,6 +901,22 @@ export function hydrateAllIslands(componentSrc: string, Component: Function): vo
     if (element.hasAttribute("data-hydrated")) return;
 
     const props = JSON.parse(element.getAttribute("data-island-props") || "{}");
+
+    // Reconstruct children from serialized VNode data if available
+    if (registry) {
+      const childrenScript = document.querySelector(
+        `script[type="application/json"][data-island-children="${islandId}"]`,
+      );
+      if (childrenScript) {
+        try {
+          const serialized = JSON.parse(childrenScript.textContent || "[]");
+          props.children = reconstructChildren(serialized, registry);
+        } catch (e) {
+          console.warn("[Hydrate] Failed to reconstruct island children:", e);
+        }
+        childrenScript.remove();
+      }
+    }
 
     // Create VNode for the component
     const vnode: VNode = {
@@ -875,6 +940,22 @@ export function hydrateAllIslands(componentSrc: string, Component: Function): vo
     if (script.hasAttribute("data-island-hydrated")) return;
 
     const props = JSON.parse(script.textContent || "{}");
+
+    // Reconstruct children from serialized VNode data if available
+    if (registry) {
+      const childrenScript = document.querySelector(
+        `script[type="application/json"][data-island-children="${islandId}"]`,
+      );
+      if (childrenScript) {
+        try {
+          const serialized = JSON.parse(childrenScript.textContent || "[]");
+          props.children = reconstructChildren(serialized, registry);
+        } catch (e) {
+          console.warn("[Hydrate] Failed to reconstruct island children:", e);
+        }
+        childrenScript.remove();
+      }
+    }
 
     // Find the comment markers
     const startMarker = `island:${islandId}`;
