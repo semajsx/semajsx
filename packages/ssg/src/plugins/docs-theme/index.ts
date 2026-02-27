@@ -26,6 +26,7 @@ import {
   Kbd,
   Switch,
   Table,
+  Pre,
 } from "./components";
 import { lucide as lucidePlugin } from "../lucide/index";
 import { llms as llmsPlugin } from "../llms/index";
@@ -347,6 +348,7 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
 
       const mdxComponents: Record<string, Component> = {
         table: Table,
+        pre: Pre,
         ComponentPreview,
         Callout,
         CodeBlock,

@@ -43,6 +43,30 @@ export function Table({
 }
 
 // =============================================================================
+// Pre — Wraps <pre> in .dt-code-block so the language label stays outside
+//       the scrollable area
+// =============================================================================
+
+export function Pre({
+  children,
+  "data-language": lang,
+  ...props
+}: { children?: JSXNode; "data-language"?: string } & Record<string, unknown>): VNode {
+  return (
+    <div class="dt-code-block">
+      {lang && (
+        <div class="dt-code-header">
+          <span class="dt-code-lang">{lang}</span>
+        </div>
+      )}
+      <pre data-language={lang} {...props}>
+        {children}
+      </pre>
+    </div>
+  );
+}
+
+// =============================================================================
 // ComponentPreview — MDX component for showcasing UI components
 // =============================================================================
 

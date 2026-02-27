@@ -607,35 +607,6 @@ body {
 
 /* Shiki integration */
 
-.dt-content pre.shiki {
-  position: relative;
-  padding: 2.25rem 1.5rem 1.25rem;
-}
-
-.dt-content pre.shiki[data-language]::before {
-  content: attr(data-language);
-  position: absolute;
-  top: 0.625rem;
-  right: 1rem;
-  color: #636e7b;
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  pointer-events: none;
-  user-select: none;
-}
-
-/* Inside .dt-code-block, hide ::before — .dt-code-header already shows
-   the language outside the scrollable pre, so it won't scroll. */
-.dt-code-block pre.shiki[data-language]::before {
-  display: none;
-}
-
-.dt-code-block pre.shiki {
-  padding-top: 1.25rem;
-}
-
 .dt-content pre.shiki code {
   display: block;
 }
