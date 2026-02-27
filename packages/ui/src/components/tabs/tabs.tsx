@@ -4,8 +4,12 @@
  * Tabs component
  *
  * A tabbed interface for switching between content panels.
- * Designed for SSG (static) usage - all panels are rendered,
- * visibility is controlled via inline styles.
+ * Uses signal-based reactivity: a signal tracks the active tab,
+ * `onClick` handles switching, and a `ref` callback subscribes
+ * to the signal to update `aria-selected` / `hidden` on children.
+ *
+ * Works both standalone (client-side) and as an SSR island —
+ * wrap with `island()` for SSG hydration.
  *
  * @example
  * ```tsx
@@ -24,6 +28,7 @@
 
 import type { JSXNode } from "@semajsx/core";
 import type { StyleToken } from "@semajsx/style";
+import { signal } from "@semajsx/signal";
 import * as styles from "./tabs.style";
 
 type ClassValue = string | StyleToken | ClassValue[] | false | null | undefined;
@@ -63,8 +68,32 @@ export interface TabPanelProps {
 }
 
 export function Tabs(props: TabsProps): JSXNode {
+  const active = signal(props.defaultValue);
+
   return (
-    <div class={[styles.root, props.class]} data-tabs={props.defaultValue}>
+    <div
+      class={[styles.root, props.class]}
+      data-tabs={active}
+      onClick={(e: MouseEvent) => {
+        const tab = (e.target as HTMLElement).closest("[role=tab]");
+        if (!tab) return;
+        const value = tab.getAttribute("data-tab-value");
+        if (value) active.value = value;
+      }}
+      ref={(el: HTMLElement) => {
+        // Sync child tab/panel states to the active signal
+        const sync = (value: string) => {
+          for (const t of el.querySelectorAll("[role=tab]")) {
+            t.setAttribute("aria-selected", String(t.getAttribute("data-tab-value") === value));
+          }
+          for (const p of el.querySelectorAll("[role=tabpanel]")) {
+            (p as HTMLElement).hidden = p.getAttribute("data-tab-panel") !== value;
+          }
+        };
+        sync(active.value);
+        active.subscribe(sync);
+      }}
+    >
       {props.children}
     </div>
   );

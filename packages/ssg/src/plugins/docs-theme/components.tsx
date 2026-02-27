@@ -21,7 +21,6 @@ import { Input } from "@semajsx/ui/components/input";
 import { Avatar } from "@semajsx/ui/components/avatar";
 import { Kbd } from "@semajsx/ui/components/kbd";
 import { Switch } from "@semajsx/ui/components/switch";
-import { TabsEnhancer } from "./client/tabs-enhance";
 
 /** Concatenate class names, filtering falsy values */
 function cx(...args: (string | false | null | undefined)[]): string {
@@ -307,8 +306,6 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
             </p>
           </div>
         </footer>
-
-        <TabsEnhancer />
       </div>
     );
   }

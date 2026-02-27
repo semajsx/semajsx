@@ -852,8 +852,6 @@ export function hydrateAllIslands(componentSrc: string, Component: Function): vo
     if (element.hasAttribute("data-hydrated")) return;
 
     const props = JSON.parse(element.getAttribute("data-island-props") || "{}");
-    const parent = element.parentNode;
-    if (!parent) return;
 
     // Create VNode for the component
     const vnode: VNode = {
@@ -862,21 +860,10 @@ export function hydrateAllIslands(componentSrc: string, Component: Function): vo
       children: [],
     };
 
-    // Render into temp container
-    const temp = document.createElement("div");
-    render(vnode, temp);
-
-    // Replace original element with rendered content
-    const children = Array.from(temp.childNodes);
-    for (const child of children) {
-      parent.insertBefore(child, element);
-      // Copy island id to the first element for future reference
-      if (child instanceof Element && child === children[0]) {
-        child.setAttribute("data-island-id", islandId);
-        child.setAttribute("data-hydrated", "true");
-      }
-    }
-    element.remove();
+    // Hydrate in-place: attach event listeners, signal subscriptions,
+    // and refs while preserving existing DOM and SSR-rendered children.
+    hydrateNode(vnode, element, element.parentNode as Element);
+    element.setAttribute("data-hydrated", "true");
   });
 
   // Hydrate each fragment-based island

@@ -28,6 +28,7 @@ import {
   Table,
   Pre,
 } from "./components";
+import { TabsIsland } from "./client/tabs-enhance";
 import { lucide as lucidePlugin } from "../lucide/index";
 import { llms as llmsPlugin } from "../llms/index";
 import type { LlmsSection } from "../llms/types";
@@ -352,7 +353,7 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
         ComponentPreview,
         Callout,
         CodeBlock,
-        Tabs,
+        Tabs: TabsIsland,
         TabList,
         Tab,
         TabPanel,
