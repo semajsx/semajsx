@@ -1,5 +1,11 @@
 # semajsx
 
+## 0.5.1
+
+### Patch Changes
+
+- [#112](https://github.com/semajsx/semajsx/pull/112) [`3efe006`](https://github.com/semajsx/semajsx/commit/3efe00602c16e1f2583f3e303242c5bad1d96d26) Thanks [@github-actions](https://github.com/apps/github-actions)! - Fix missing component entry points in UI package build config
+
 ## 0.5.0
 
 ### Minor Changes
