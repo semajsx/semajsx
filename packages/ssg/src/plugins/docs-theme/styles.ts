@@ -22,6 +22,18 @@ export const THEME_CSS = /* css */ `
 }
 
 /* ==============================================
+ * Font Face
+ * ============================================== */
+
+@font-face {
+  font-family: "Maple Mono NF CN";
+  src: url("/fonts/MapleMono-NF-CN-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ==============================================
  * Global Reset & Base
  * ============================================== */
 
@@ -431,7 +443,7 @@ body {
   background: rgba(0, 0, 0, 0.04);
   padding: 0.15rem 0.4rem;
   border-radius: 5px;
-  font-family: "Maple Mono NF CN", "Maple Mono CN", "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+  font-family: "Maple Mono NF CN", "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
   font-size: 0.875em;
   color: #1d1d1f;
   border: 0.5px solid rgba(0, 0, 0, 0.06);
