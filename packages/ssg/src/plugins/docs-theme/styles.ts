@@ -573,7 +573,6 @@ body {
  * ============================================== */
 
 .dt-code-block {
-  position: relative;
   margin: 1.5rem 0;
   border-radius: 12px;
   overflow: hidden;
@@ -609,10 +608,10 @@ body {
 /* Shiki integration */
 
 .dt-content pre.shiki {
+  position: relative;
   padding: 2.25rem 1.5rem 1.25rem;
 }
 
-/* Language label positioned relative to .dt-code-block (non-scrolling) */
 .dt-content pre.shiki[data-language]::before {
   content: attr(data-language);
   position: absolute;
@@ -627,9 +626,14 @@ body {
   user-select: none;
 }
 
-/* Hide ::before when .dt-code-header already shows the language */
-.dt-code-header + pre.shiki[data-language]::before {
+/* Inside .dt-code-block, hide ::before — .dt-code-header already shows
+   the language outside the scrollable pre, so it won't scroll. */
+.dt-code-block pre.shiki[data-language]::before {
   display: none;
+}
+
+.dt-code-block pre.shiki {
+  padding-top: 1.25rem;
 }
 
 .dt-content pre.shiki code {
