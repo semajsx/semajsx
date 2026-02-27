@@ -431,7 +431,7 @@ body {
   background: rgba(0, 0, 0, 0.04);
   padding: 0.15rem 0.4rem;
   border-radius: 5px;
-  font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+  font-family: "Maple Mono NF CN", "Maple Mono CN", "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
   font-size: 0.875em;
   color: #1d1d1f;
   border: 0.5px solid rgba(0, 0, 0, 0.06);
@@ -527,6 +527,30 @@ body {
 
 .dt-content tbody tr:hover {
   background: rgba(0, 0, 0, 0.02);
+}
+
+/* Table scrollbar styling */
+.dt-content table {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.12) rgba(0, 0, 0, 0.02);
+}
+
+.dt-content table::-webkit-scrollbar {
+  height: 6px;
+}
+
+.dt-content table::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 3px;
+}
+
+.dt-content table::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
+}
+
+.dt-content table::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 /* ==============================================
@@ -706,9 +730,41 @@ body {
     display: block;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    /* Scroll shadow indicators */
+    background:
+      linear-gradient(to right, #fbfbfd 30%, rgba(251, 251, 253, 0)),
+      linear-gradient(to right, rgba(251, 251, 253, 0), #fbfbfd 70%) 0 100%,
+      linear-gradient(to right, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0)),
+      linear-gradient(to left, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0)) 0 100%;
+    background-repeat: no-repeat;
+    background-size: 40px 100%, 40px 100%, 12px 100%, 12px 100%;
+    background-position: 0 0, 100% 0, 0 0, 100% 0;
+    background-attachment: local, local, scroll, scroll;
+    border: none;
+    border-radius: 0;
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.08);
   }
 
-  .dt-content th, .dt-content td { padding: 0.625rem 0.75rem; }
+  .dt-content thead {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+  }
+
+  .dt-content th {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
+  .dt-content td {
+    padding: 0.5rem 0.75rem;
+    white-space: nowrap;
+  }
+
+  .dt-content td:first-child {
+    font-weight: 500;
+  }
 
   .dt-code-block { border-radius: 10px; }
   .dt-code-header { padding: 0.375rem 1rem; }
