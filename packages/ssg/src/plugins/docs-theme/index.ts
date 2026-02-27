@@ -1,3 +1,4 @@
+import remarkGfm from "remark-gfm";
 import { z } from "zod";
 import type { SSGPlugin, Collection, RouteConfig } from "../../types";
 import { defineCollection } from "../../index";
@@ -351,7 +352,7 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
         collections,
         routes,
         mdx: {
-          remarkPlugins: options.mdx?.remarkPlugins,
+          remarkPlugins: [remarkGfm, ...(options.mdx?.remarkPlugins ?? [])],
           rehypePlugins: options.mdx?.rehypePlugins,
           components: mdxComponents,
         },

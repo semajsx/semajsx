@@ -1,4 +1,3 @@
-import remarkGfm from "remark-gfm";
 import rehypeShiki from "@shikijs/rehype";
 import type { ShikiTransformer } from "@shikijs/types";
 import { createSSG, fileSource } from "semajsx/ssg";
@@ -122,7 +121,6 @@ const ssg = createSSG({
         description: "Browse, preview, and learn how to use each UI component.",
       },
       mdx: {
-        remarkPlugins: [remarkGfm],
         rehypePlugins: [
           [
             rehypeShiki,
