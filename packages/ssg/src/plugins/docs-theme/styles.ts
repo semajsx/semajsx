@@ -795,6 +795,11 @@ body {
   pointer-events: none;
 }
 
+.dt-preview-box > [data-island-id],
+.dt-preview-box > [data-island-id] * {
+  pointer-events: auto;
+}
+
 .dt-preview-box::before {
   content: "";
   position: absolute;
