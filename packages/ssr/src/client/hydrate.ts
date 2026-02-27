@@ -843,6 +843,14 @@ function reconstructChildren(serialized: any[], registry: Record<string, any>): 
     }
     if (Array.isArray(node) && node.length === 3 && typeof node[0] === "string") {
       const [type, props, children] = node;
+
+      // Nested island placeholder — these hydrate independently,
+      // push null to preserve children index positions.
+      if (type === "$island") {
+        result.push(null);
+        continue;
+      }
+
       const resolvedChildren = children ? reconstructChildren(children, registry) : [];
 
       if (type.startsWith("$")) {
@@ -900,35 +908,41 @@ export function hydrateAllIslands(
     // Skip if already hydrated
     if (element.hasAttribute("data-hydrated")) return;
 
-    const props = JSON.parse(element.getAttribute("data-island-props") || "{}");
+    try {
+      const props = JSON.parse(element.getAttribute("data-island-props") || "{}");
 
-    // Reconstruct children from serialized VNode data if available
-    if (registry) {
-      const childrenScript = document.querySelector(
-        `script[type="application/json"][data-island-children="${islandId}"]`,
-      );
-      if (childrenScript) {
-        try {
-          const serialized = JSON.parse(childrenScript.textContent || "[]");
-          props.children = reconstructChildren(serialized, registry);
-        } catch (e) {
-          console.warn("[Hydrate] Failed to reconstruct island children:", e);
+      // Reconstruct children from serialized VNode data if available
+      if (registry) {
+        const childrenScript = document.querySelector(
+          `script[type="application/json"][data-island-children="${islandId}"]`,
+        );
+        if (childrenScript) {
+          try {
+            const serialized = JSON.parse(childrenScript.textContent || "[]");
+            props.children = reconstructChildren(serialized, registry);
+          } catch (e) {
+            console.warn("[Hydrate] Failed to reconstruct island children:", e);
+          }
+          childrenScript.remove();
         }
-        childrenScript.remove();
       }
+
+      // Create VNode for the component
+      const vnode: VNode = {
+        type: Component as VNode["type"],
+        props,
+        children: [],
+      };
+
+      // Hydrate in-place: attach event listeners, signal subscriptions,
+      // and refs while preserving existing DOM and SSR-rendered children.
+      hydrateNode(vnode, element, element.parentNode as Element);
+      element.setAttribute("data-hydrated", "true");
+    } catch (error) {
+      // SSR content is preserved — the island stays as static HTML
+      console.error(`[Hydrate] Island "${islandId}" hydration failed:`, error);
+      element.setAttribute("data-hydration-error", "true");
     }
-
-    // Create VNode for the component
-    const vnode: VNode = {
-      type: Component as VNode["type"],
-      props,
-      children: [],
-    };
-
-    // Hydrate in-place: attach event listeners, signal subscriptions,
-    // and refs while preserving existing DOM and SSR-rendered children.
-    hydrateNode(vnode, element, element.parentNode as Element);
-    element.setAttribute("data-hydrated", "true");
   });
 
   // Hydrate each fragment-based island
@@ -939,80 +953,80 @@ export function hydrateAllIslands(
     // Skip if already hydrated
     if (script.hasAttribute("data-island-hydrated")) return;
 
-    const props = JSON.parse(script.textContent || "{}");
+    try {
+      const props = JSON.parse(script.textContent || "{}");
 
-    // Reconstruct children from serialized VNode data if available
-    if (registry) {
-      const childrenScript = document.querySelector(
-        `script[type="application/json"][data-island-children="${islandId}"]`,
-      );
-      if (childrenScript) {
-        try {
-          const serialized = JSON.parse(childrenScript.textContent || "[]");
-          props.children = reconstructChildren(serialized, registry);
-        } catch (e) {
-          console.warn("[Hydrate] Failed to reconstruct island children:", e);
+      // Reconstruct children from serialized VNode data if available
+      if (registry) {
+        const childrenScript = document.querySelector(
+          `script[type="application/json"][data-island-children="${islandId}"]`,
+        );
+        if (childrenScript) {
+          try {
+            const serialized = JSON.parse(childrenScript.textContent || "[]");
+            props.children = reconstructChildren(serialized, registry);
+          } catch (e) {
+            console.warn("[Hydrate] Failed to reconstruct island children:", e);
+          }
+          childrenScript.remove();
         }
-        childrenScript.remove();
-      }
-    }
-
-    // Find the comment markers
-    const startMarker = `island:${islandId}`;
-    const endMarker = `/island:${islandId}`;
-
-    // Find and process the fragment
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_COMMENT, null);
-
-    let startNode: Comment | null = null;
-    let endNode: Comment | null = null;
-    let node: Node | null;
-
-    while ((node = walker.nextNode())) {
-      if (node.nodeValue === startMarker) {
-        startNode = node as Comment;
-      } else if (node.nodeValue === endMarker) {
-        endNode = node as Comment;
-        break;
-      }
-    }
-
-    if (startNode && endNode && startNode.parentNode) {
-      // Collect all nodes between markers
-      const nodes: Node[] = [];
-      let current: Node | null = startNode.nextSibling;
-      while (current && current !== endNode) {
-        nodes.push(current);
-        current = current.nextSibling;
       }
 
-      // Remove old nodes
-      nodes.forEach((n) => {
-        if (n.parentNode) {
-          n.parentNode.removeChild(n);
+      // Find the comment markers
+      const startMarker = `island:${islandId}`;
+      const endMarker = `/island:${islandId}`;
+
+      // Find and process the fragment
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_COMMENT, null);
+
+      let startNode: Comment | null = null;
+      let endNode: Comment | null = null;
+      let node: Node | null;
+
+      while ((node = walker.nextNode())) {
+        if (node.nodeValue === startMarker) {
+          startNode = node as Comment;
+        } else if (node.nodeValue === endMarker) {
+          endNode = node as Comment;
+          break;
         }
-      });
-
-      // Render new content
-      const vnode: VNode = {
-        type: Component as VNode["type"],
-        props,
-        children: [],
-      };
-
-      // Render into temp container
-      const temp = document.createElement("div");
-      render(vnode, temp);
-
-      // Insert new content
-      const newChildren = Array.from(temp.childNodes);
-      for (const child of newChildren) {
-        startNode.parentNode.insertBefore(child, endNode);
       }
 
-      // Mark as hydrated
-      script.setAttribute("data-island-hydrated", islandId);
-      script.remove();
+      if (startNode && endNode && startNode.parentNode) {
+        const parent = startNode.parentNode;
+
+        // Non-destructive hydration: move existing nodes into a temp
+        // container, hydrate against the existing DOM, then move back.
+        // This preserves SSR content and only attaches event listeners
+        // and signal subscriptions — matching element-based island behavior.
+        const container = document.createElement("div");
+        let current: Node | null = startNode.nextSibling;
+        while (current && current !== endNode) {
+          const next = current.nextSibling;
+          container.appendChild(current); // moves node, doesn't clone
+          current = next;
+        }
+
+        // Create VNode and hydrate against existing DOM
+        const vnode: VNode = {
+          type: Component as VNode["type"],
+          props,
+          children: [],
+        };
+        hydrateNode(vnode, container, container);
+
+        // Move hydrated nodes back between markers
+        while (container.firstChild) {
+          parent.insertBefore(container.firstChild, endNode);
+        }
+
+        // Mark as hydrated
+        script.setAttribute("data-island-hydrated", islandId);
+        script.remove();
+      }
+    } catch (error) {
+      // SSR content is preserved — the fragment stays as static HTML
+      console.error(`[Hydrate] Fragment island "${islandId}" hydration failed:`, error);
     }
   });
 }

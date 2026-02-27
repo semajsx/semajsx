@@ -31,6 +31,44 @@ interface RenderContext {
 }
 
 /**
+ * Cache for module export name maps.
+ * Maps module path → (Function → export name) reverse lookup.
+ * Cached because the same module path always yields the same exports
+ * within a single server process.
+ */
+const moduleNameCache = new Map<string, Map<Function, string>>();
+
+/**
+ * Resolve a module's export names by dynamically importing it.
+ *
+ * Since the module was already statically imported (to call island()),
+ * import() hits the module cache — no I/O, and function references are
+ * identity-equal, so Map.get() works directly.
+ *
+ * Falls back to an empty map if the import fails (e.g. virtual modules
+ * only resolvable by Vite).
+ */
+async function resolveNameMap(modulePath: string): Promise<Map<Function, string>> {
+  const cached = moduleNameCache.get(modulePath);
+  if (cached) return cached;
+
+  const map = new Map<Function, string>();
+  try {
+    const mod = await import(modulePath);
+    for (const [exportName, value] of Object.entries(mod)) {
+      if (typeof value === "function") {
+        map.set(value as Function, exportName);
+      }
+    }
+  } catch {
+    // Module not resolvable at SSR time (e.g. Vite virtual module).
+    // Fall back to Function.name in collectSerializedNode.
+  }
+  moduleNameCache.set(modulePath, map);
+  return map;
+}
+
+/**
  * Render a VNode tree to an HTML string with island support
  *
  * @param vnode - The VNode tree to render
@@ -168,17 +206,17 @@ function serializeProps(props: any): Record<string, any> {
  *  - [tag, props?, children?]   → HTML element (e.g. ["div", {"class":"x"}, [...]])
  *  - ["$Name", props?, children?] → component reference ($ prefix)
  */
-function serializeVNodeChildren(children: any): any[] | undefined {
+function serializeVNodeChildren(children: any, nameMap?: Map<Function, string>): any[] | undefined {
   if (children == null) return undefined;
   const nodes = Array.isArray(children) ? children : [children];
   const result: any[] = [];
   for (const node of nodes) {
-    collectSerializedNode(node, result);
+    collectSerializedNode(node, result, nameMap);
   }
   return result.length > 0 ? result : undefined;
 }
 
-function collectSerializedNode(node: any, result: any[]): void {
+function collectSerializedNode(node: any, result: any[], nameMap?: Map<Function, string>): void {
   if (node == null || typeof node === "boolean") return;
   if (typeof node === "string") {
     result.push(node);
@@ -189,11 +227,11 @@ function collectSerializedNode(node: any, result: any[]): void {
     return;
   }
   if (isSignal(node)) {
-    collectSerializedNode(unwrap(node), result);
+    collectSerializedNode(unwrap(node), result, nameMap);
     return;
   }
   if (Array.isArray(node)) {
-    for (const item of node) collectSerializedNode(item, result);
+    for (const item of node) collectSerializedNode(item, result, nameMap);
     return;
   }
 
@@ -209,25 +247,30 @@ function collectSerializedNode(node: any, result: any[]): void {
   // Signal node — unwrap
   if (vnode.type === "#signal") {
     const sig = vnode.props?.signal;
-    if (sig && isSignal(sig)) collectSerializedNode(unwrap(sig), result);
+    if (sig && isSignal(sig)) collectSerializedNode(unwrap(sig), result, nameMap);
     return;
   }
 
   // Fragment — flatten children
   if (vnode.type === Fragment) {
-    for (const child of vnode.children) collectSerializedNode(child, result);
+    for (const child of vnode.children) collectSerializedNode(child, result, nameMap);
     return;
   }
 
-  // Nested island — skip (hydrates independently)
-  if (isIslandVNode(vnode as any)) return;
+  // Nested island — emit placeholder so parent children indices stay correct
+  if (isIslandVNode(vnode as any)) {
+    result.push(["$island", null, null]);
+    return;
+  }
 
   // Serialize child VNodes recursively
-  const childrenArr = vnode.children?.length ? serializeVNodeChildren(vnode.children) : undefined;
+  const childrenArr = vnode.children?.length
+    ? serializeVNodeChildren(vnode.children, nameMap)
+    : undefined;
 
-  // Component
+  // Component — use export name from nameMap, fall back to Function.name
   if (typeof vnode.type === "function") {
-    const name = "$" + (vnode.type.name || "Anonymous");
+    const name = "$" + (nameMap?.get(vnode.type) || vnode.type.name || "Anonymous");
     const props = serializeProps(vnode.props || {});
     result.push([name, Object.keys(props).length > 0 ? props : null, childrenArr ?? null]);
     return;
@@ -539,8 +582,14 @@ async function renderIsland(vnode: VNode, context: RenderContext): Promise<strin
 
   const propsJson = JSON.stringify(serializedProps);
 
+  // Resolve module export names for stable component identifiers.
+  // This maps Function references to their export names so serialized
+  // children use export names (matching the client registry) instead of
+  // potentially-fragile Function.name values.
+  const nameMap = await resolveNameMap(metadata.modulePath);
+
   // Serialize children VNodes so the client can reconstruct the full tree
-  const serializedChildren = serializeVNodeChildren(metadata.props?.children);
+  const serializedChildren = serializeVNodeChildren(metadata.props?.children, nameMap);
   const childrenScript = serializedChildren
     ? `<script type="application/json" data-island-children="${islandId}">${JSON.stringify(serializedChildren)}</script>`
     : "";
