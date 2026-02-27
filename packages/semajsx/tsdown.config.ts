@@ -25,33 +25,9 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   splitting: true,
-  // Bundle all @semajsx/* workspace packages into the output
+  // Bundle all @semajsx/* workspace packages into the output.
+  // Everything in dependencies/peerDependencies is auto-externalized by tsdown.
   noExternal: [/^@semajsx\//],
-  external: [
-    // Terminal
-    "yoga-layout-prebuilt",
-    "chalk",
-    "ansi-escapes",
-    "wrap-ansi",
-    "slice-ansi",
-    "string-width",
-    "cli-boxes",
-    // SSR
-    "glob",
-    "lightningcss",
-    "minimatch",
-    // SSG
-    "@mdx-js/mdx",
-    "gray-matter",
-    "lucide",
-    "zod",
-    // SSR/SSG optional
-    "vite",
-    // Style framework integrations
-    "react",
-    "react-dom",
-    "vue",
-  ],
   exports: {
     devExports: "source",
     customExports(pkg) {
