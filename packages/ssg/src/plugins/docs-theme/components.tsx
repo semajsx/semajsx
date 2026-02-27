@@ -28,6 +28,21 @@ function cx(...args: (string | false | null | undefined)[]): string {
 }
 
 // =============================================================================
+// Table — Wraps <table> in a scrollable container for mobile overflow
+// =============================================================================
+
+export function Table({
+  children,
+  ...props
+}: { children?: JSXNode } & Record<string, unknown>): VNode {
+  return (
+    <div class="dt-table-wrapper">
+      <table {...props}>{children}</table>
+    </div>
+  );
+}
+
+// =============================================================================
 // ComponentPreview — MDX component for showcasing UI components
 // =============================================================================
 

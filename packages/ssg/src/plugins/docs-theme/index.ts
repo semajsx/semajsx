@@ -25,6 +25,7 @@ import {
   Avatar,
   Kbd,
   Switch,
+  Table,
 } from "./components";
 import { lucide as lucidePlugin } from "../lucide/index";
 import { llms as llmsPlugin } from "../llms/index";
@@ -345,6 +346,7 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
       // --- MDX ---
 
       const mdxComponents: Record<string, Component> = {
+        table: Table,
         ComponentPreview,
         Callout,
         CodeBlock,
