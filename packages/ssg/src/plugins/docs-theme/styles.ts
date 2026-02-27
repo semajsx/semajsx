@@ -741,12 +741,6 @@ body {
     font-size: 0.8125rem;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
-    border-radius: 0;
-    margin-left: -1rem;
-    margin-right: -1rem;
-    width: calc(100% + 2rem);
-    border-left: none;
-    border-right: none;
   }
 
   .dt-content thead {
