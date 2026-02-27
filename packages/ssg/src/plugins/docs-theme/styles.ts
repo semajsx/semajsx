@@ -731,13 +731,6 @@ body {
 
   .dt-content table {
     font-size: 0.8125rem;
-    width: max-content;
-    min-width: 100%;
-  }
-
-  .dt-content th,
-  .dt-content td {
-    white-space: nowrap;
   }
 
   .dt-content th {
