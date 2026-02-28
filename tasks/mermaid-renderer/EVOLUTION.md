@@ -80,3 +80,38 @@ Redesigned to follow SemaJSX idioms. See [README.md](./README.md) for the full d
 2. SVG rendering
 3. Shape-specific granularity (`"node:rhombus"`)
 4. Flowchart + sequence diagram scope
+
+## Design v2 Review & Fixes (2026-02-28)
+
+Full review of v2 design found 13 issues. All fixed in single pass.
+
+**Structural fixes**:
+
+1. **Section numbering** — Sections 6-12 were misnumbered after Layout System (5) and Rendering Format (6) were inserted. Fixed to 1-15.
+2. **Duplicate MermaidProvider** — Two contradicting versions (4.4 renderers-only, 4.5 with theme). Merged into one authoritative version in 4.3 that handles renderers, theme, and layout.
+3. **Duplicate Flowchart** — Two versions (4.3 direct call, 6.7 context-based). Merged into one authoritative version in 6.9 using `ctx.inject(MermaidLayout)`.
+4. **Duplicate node.style.ts** — Two versions with different class names. Merged into one in 4.5 with complete class list.
+5. **Theme injection location** — `inject(lightTheme)` was inside `Flowchart` (missed `Sequence`). Moved to `MermaidProvider` only.
+
+**Missing definitions added**:
+
+6. **root.style.ts** — Was referenced but never defined. Added in 4.5.
+7. **Defs component** — Was referenced but only shown as raw SVG. Added JSX component in 6.6.
+8. **SubgraphBox component** — Was referenced but never defined. Added in 6.7.
+9. **defaultRenderers** — Was referenced everywhere but never assembled. Added in 6.8.
+
+**Design gaps filled**:
+
+10. **layout prop** — `MermaidProviderProps` now includes `layout?: LayoutEngine`.
+11. **Edge label sizing** — Hardcoded `width={60}` replaced with `labelSize` from layout output. `PositionedEdge` now carries `labelSize?: Size` computed during layout.
+12. **Bezier curves** — Edge routing now defaults to cubic Bézier (`C` command) instead of polyline (`M`/`L`). `LayoutOptions.edgeRouting: "polyline" | "bezier"` added. Bezier algorithm documented in 5.3 Phase 5.
+13. **Animated edge trigger** — Clarified as programmatic-only feature (Mermaid DSL has no "animated" type). Documented two approaches: explicit `type: "animated"` in IR, or CSS class injection via custom renderer. New Section 7 dedicated to this.
+14. **Sequence Note type** — Added `Note` interface to IR (`position`, `participants[]`, `text`), `notes: Note[]` to `SequenceDiagram`, `note` to `RendererMap`, `NoteRenderProps`, note layer in sequence SVG structure.
+
+**Minor fixes**:
+
+15. **viewBox** — Unified to use `positioned.viewBox` from layout output everywhere.
+16. **stroke-width units** — Standardized to unitless values (SVG convention). `stroke-width: 2` not `2px`. Token values are unitless numbers.
+17. **SVG rx** — Documented as attribute (not CSS) for browser compatibility. Set directly on `<rect rx={8}>`.
+18. **Unused imports** — Removed `rules` import that was never used.
+19. **PositionedEdge.path** — Changed from `points: Point[]` to `path: string` (SVG path data). Edge component receives ready-to-use path string from layout, supporting both polyline and bezier.

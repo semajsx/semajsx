@@ -156,53 +156,7 @@ function Mermaid(props: MermaidProps, ctx: ComponentAPI): JSXNode {
 
 When `code` is a `Signal<string>`, the component re-renders when the signal changes — standard SemaJSX behavior, no special handling needed.
 
-### 4.3 `<Flowchart>` — Layout Component
-
-```tsx
-interface FlowchartProps {
-  /** Diagram data (IR or Signal<IR>) */
-  graph: FlowchartDiagram | Signal<FlowchartDiagram>;
-  /** Additional class for root <svg> */
-  class?: ClassValue;
-  /** Padding around diagram */
-  padding?: number;
-}
-
-function Flowchart(props: FlowchartProps, ctx: ComponentAPI): JSXNode {
-  const renderers = ctx.inject(MermaidRenderers) ?? defaultRenderers;
-  const graphData = unwrap(props.graph);
-
-  // Layout: pure function, computes positions
-  const positioned = flowchartLayout(graphData);
-
-  const NodeComp = renderers.node;
-  const EdgeComp = renderers.edge;
-  const SubgraphComp = renderers.subgraph;
-
-  return (
-    <svg
-      class={[svgRoot, props.class]}
-      viewBox={`0 0 ${positioned.width} ${positioned.height}`}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <Defs />
-      {positioned.subgraphs?.map((s) => (
-        <SubgraphComp key={s.subgraph.id} positioned={s} />
-      ))}
-      {positioned.edges.map((e) => (
-        <EdgeComp key={`${e.edge.source}-${e.edge.target}`} positioned={e} />
-      ))}
-      {positioned.nodes.map((n) => (
-        <NodeComp key={n.node.id} positioned={n} />
-      ))}
-    </svg>
-  );
-}
-```
-
-Key: `ctx.inject(MermaidRenderers)` reads which components to use for nodes/edges. Same pattern as `ctx.inject(ThemeContext)` in `@semajsx/ui`.
-
-### 4.4 Context System — The SemaJSX Way
+### 4.3 Context System — The SemaJSX Way
 
 **Instead of `overrides` prop (React/MUI pattern):**
 
@@ -225,8 +179,12 @@ import { MermaidProvider } from "@semajsx/mermaid";
 **Implementation:**
 
 ```tsx
+// src/provider.tsx
+/** @jsxImportSource @semajsx/dom */
 import { context, Context } from "@semajsx/core";
 import type { Component, ComponentAPI, JSXNode } from "@semajsx/core";
+import { inject } from "@semajsx/style";
+import { lightTheme, darkTheme } from "./themes";
 
 // ── Contexts ───────────────────────────────────────────
 
@@ -248,25 +206,34 @@ export interface RendererMap {
   "edge:arrow"?: Component<EdgeRenderProps>;
   "edge:dotted"?: Component<EdgeRenderProps>;
   "edge:thick"?: Component<EdgeRenderProps>;
-  "edge:animated"?: Component<EdgeRenderProps>;
   // Sequence diagram
   participant?: Component<ParticipantRenderProps>;
   message?: Component<MessageRenderProps>;
   lifeline?: Component<LifelineRenderProps>;
   activation?: Component<ActivationRenderProps>;
   block?: Component<BlockRenderProps>;
+  note?: Component<NoteRenderProps>;
 }
 
-const MermaidRenderers = context<RendererMap>("mermaid-renderers");
+export const MermaidRenderers = context<RendererMap>("mermaid-renderers");
+export const MermaidLayout = context<LayoutEngine>("mermaid-layout");
 
 // ── Provider ───────────────────────────────────────────
 
 interface MermaidProviderProps extends Partial<RendererMap> {
   children?: JSXNode;
+  /** Theme preset: "light" (default) or "dark" */
+  theme?: "light" | "dark";
+  /** Custom layout engine (overrides built-in Sugiyama/column layout) */
+  layout?: LayoutEngine;
 }
 
-function MermaidProvider(props: MermaidProviderProps): JSXNode {
-  const { children, ...rendererOverrides } = props;
+function MermaidProvider(props: MermaidProviderProps, ctx: ComponentAPI): JSXNode {
+  const { children, theme = "light", layout, ...rendererOverrides } = props;
+
+  // Inject theme CSS (deduped — safe to call multiple times)
+  inject(lightTheme);
+  if (theme === "dark") inject(darkTheme);
 
   // Merge user overrides with defaults
   const renderers: RendererMap = {
@@ -274,7 +241,15 @@ function MermaidProvider(props: MermaidProviderProps): JSXNode {
     ...rendererOverrides,
   };
 
-  return <Context provide={[MermaidRenderers, renderers]}>{children}</Context>;
+  // Build Context providers
+  const contexts: [symbol, unknown][] = [[MermaidRenderers, renderers]];
+  if (layout) contexts.push([MermaidLayout, layout]);
+
+  return (
+    <Context provide={contexts}>
+      <div class={theme === "dark" ? darkTheme : undefined}>{children}</div>
+    </Context>
+  );
 }
 ```
 
@@ -301,7 +276,7 @@ function resolveNodeRenderer(shape: NodeShape, ctx: ComponentAPI): Component<Nod
 </MermaidProvider>
 ```
 
-### 4.5 Theme — Compose with `@semajsx/style`, not Parallel
+### 4.4 Theme — Compose with `@semajsx/style`, not Parallel
 
 **Tokens follow the exact same pattern as `@semajsx/ui`:**
 
@@ -314,10 +289,11 @@ const tokenDefinition = {
   nodeFill: "#e8f4f8",
   nodeStroke: "#23395d",
   nodeText: "#1d1d1f",
-  nodeRadius: "8px",
+  nodeRadius: "8",
 
   // Edge
   edgeStroke: "#666",
+  edgeWidth: "2",
   edgeLabelBg: "#fff",
   edgeLabelText: "#333",
 
@@ -346,7 +322,7 @@ const tokenDefinition = {
 
   // General
   fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', sans-serif",
-  fontSize: "14px",
+  fontSize: "14",
 } as const;
 
 export const tokens = defineTokens(tokenDefinition);
@@ -385,26 +361,21 @@ export const darkTheme = createTheme(tokens, {
 });
 ```
 
-**Apply theme via Context — same as `<ThemeProvider>`:**
+**Apply theme — all handled by `MermaidProvider`:**
 
 ```tsx
-import { inject } from "@semajsx/style";
-import { lightTheme, darkTheme } from "./themes";
+// Theme injection is centralized in MermaidProvider (see 4.3).
+// Users don't need to call inject() manually.
 
-function MermaidProvider(props: MermaidProviderProps): JSXNode {
-  const theme = props.theme ?? "light";
+// Default (light theme)
+<MermaidProvider>
+  <Mermaid code={code} />
+</MermaidProvider>
 
-  inject(lightTheme);
-  if (theme === "dark") inject(darkTheme);
-
-  const renderers = { ...defaultRenderers, ...pickRenderers(props) };
-
-  return (
-    <Context provide={[MermaidRenderers, renderers]}>
-      <div class={theme === "dark" ? darkTheme : undefined}>{props.children}</div>
-    </Context>
-  );
-}
+// Dark theme
+<MermaidProvider theme="dark">
+  <Mermaid code={code} />
+</MermaidProvider>
 ```
 
 **Or skip MermaidProvider entirely — just use `@semajsx/ui`'s ThemeProvider + inject:**
@@ -422,85 +393,137 @@ inject(lightTheme);
 </ThemeProvider>;
 ```
 
-### 4.6 Styles — `classes()` + `rule` for SVG
+### 4.5 Styles — `classes()` + `rule` for SVG
 
-SVG elements support CSS class selectors. We use the same pattern as `@semajsx/ui`'s Button:
+SVG elements support CSS class selectors. We use the same pattern as `@semajsx/ui`'s Button.
+
+> **Note**: SVG uses unitless values for most properties (`stroke-width: 2`, not `2px`). The `rx` attribute is set on SVG elements directly as an attribute (not via CSS) for browser compatibility.
+
+```tsx
+// src/root.style.ts
+import { classes, rule } from "@semajsx/style";
+
+const c = classes(["svgRoot"] as const);
+
+export const svgRoot = rule`${c.svgRoot} {
+  width: 100%;
+  height: auto;
+  font-family: inherit;
+}`;
+
+export { c };
+```
 
 ```tsx
 // src/node.style.ts
-import { classes, rule, rules } from "@semajsx/style";
+import { classes, rule } from "@semajsx/style";
 import { tokens } from "./tokens";
 
 const c = classes([
   "node",
+  "nodeShape",
   "nodeRect",
   "nodeRound",
   "nodeCircle",
   "nodeRhombus",
+  "nodeHexagon",
+  "nodeCylinder",
+  "nodeStadium",
   "nodeLabel",
 ] as const);
 
-export const node = rule`${c.node} {
+// ── Base shape ─────────────────────────────────────
+export const nodeShape = rule`${c.nodeShape} {
   fill: ${tokens.nodeFill};
   stroke: ${tokens.nodeStroke};
-  stroke-width: 2px;
-  transition: fill 0.2s ease, stroke 0.2s ease;
+  stroke-width: ${tokens.edgeWidth};
 }`;
 
-export const nodeHover = rule`${c.node}:hover {
+export const nodeShapeHover = rule`${c.nodeShape}:hover {
   filter: brightness(0.95);
   cursor: pointer;
 }`;
 
-export const nodeRect = rule`${c.nodeRect} {
-  rx: ${tokens.nodeRadius};
-}`;
-
+// ── Text ───────────────────────────────────────────
 export const nodeLabel = rule`${c.nodeLabel} {
   fill: ${tokens.nodeText};
   font-family: ${tokens.fontFamily};
-  font-size: ${tokens.fontSize};
+  font-size: ${tokens.fontSize}px;
   text-anchor: middle;
   dominant-baseline: central;
   pointer-events: none;
 }`;
 
-// Export class refs for use in components
 export { c };
 ```
 
-**Used in components — same as Button uses `styles.root`:**
-
 ```tsx
-// src/components/rect-node.tsx
-/** @jsxImportSource @semajsx/dom */
-import * as styles from "../node.style";
-import type { NodeRenderProps } from "../types";
+// src/edge.style.ts
+import { classes, rule } from "@semajsx/style";
+import { tokens } from "./tokens";
 
-export function RectNode(props: NodeRenderProps): JSXNode {
-  const { positioned, class: extraClass } = props;
-  const { node, x, y, width, height } = positioned;
+const c = classes([
+  "edgeLine",
+  "edgeArrow",
+  "edgeDotted",
+  "edgeThick",
+  "edgeAnimated",
+  "edgeLabel",
+  "edgeLabelBg",
+  "arrowHead",
+] as const);
 
-  return (
-    <g class={extraClass}>
-      <rect
-        class={[styles.node, styles.nodeRect, styles.nodeHover]}
-        x={x - width / 2}
-        y={y - height / 2}
-        width={width}
-        height={height}
-      />
-      <text class={styles.nodeLabel} x={x} y={y}>
-        {node.label}
-      </text>
-    </g>
-  );
+export const edgeLine = rule`${c.edgeLine} {
+  fill: none;
+  stroke: ${tokens.edgeStroke};
+  stroke-width: ${tokens.edgeWidth};
+}`;
+
+export const edgeDotted = rule`${c.edgeDotted} ${c.edgeLine} {
+  stroke-dasharray: 6, 4;
+}`;
+
+export const edgeAnimated = rule`
+${c.edgeAnimated} ${c.edgeLine} {
+  stroke-dasharray: ${tokens.animatedDashArray};
+  animation: mmd-dash-flow ${tokens.animatedDuration} linear infinite;
 }
+
+@keyframes mmd-dash-flow {
+  to {
+    stroke-dashoffset: ${tokens.animatedDashOffset};
+  }
+}
+`;
+
+export const edgeThick = rule`${c.edgeThick} ${c.edgeLine} {
+  stroke-width: 3;
+}`;
+
+export const edgeLabel = rule`${c.edgeLabel} {
+  fill: ${tokens.edgeLabelText};
+  font-family: ${tokens.fontFamily};
+  font-size: 12px;
+  text-anchor: middle;
+  dominant-baseline: central;
+}`;
+
+export const edgeLabelBg = rule`${c.edgeLabelBg} {
+  fill: ${tokens.edgeLabelBg};
+  stroke: none;
+}`;
+
+export const arrowHead = rule`${c.arrowHead} {
+  fill: ${tokens.arrowFill};
+  stroke: none;
+}`;
+
+export { c };
 ```
 
-No hardcoded colors. All values come from tokens → CSS custom properties → automatic theme switching.
+**Theme switching is automatic:** When tokens change (via `createTheme()` dark override), all SVG elements update via CSS custom property cascade. No re-render, no re-layout — just CSS.
 
-### 4.7 Signal Reactivity — Deep, Not Just `code`
+### 4.6 Signal Reactivity — Deep, Not Just `code`
 
 **Level 1: Code string as signal (basic)**
 
@@ -583,7 +606,7 @@ Layout is a **pure function**: IR in, positioned coordinates out. No DOM depende
 
 ### 5.2 Layout Engine Interface
 
-Layout is pluggable via Context, same as renderers:
+Layout is pluggable via Context (provided through `MermaidProvider`), same as renderers:
 
 ```typescript
 interface LayoutEngine {
@@ -604,38 +627,27 @@ interface LayoutOptions {
   nodePadding: number;
   /** Padding around entire diagram (default: 20) */
   diagramPadding: number;
+  /** Edge routing strategy (default: "bezier") */
+  edgeRouting: "polyline" | "bezier";
   /** Custom text measurement function */
   measureText?: (text: string, fontSize: number) => { width: number; height: number };
 }
-
-// Provided via Context — same pattern as MermaidRenderers
-const MermaidLayout = context<LayoutEngine>("mermaid-layout");
 ```
 
 Usage:
 
 ```tsx
 // Default layout (built-in)
-<Mermaid code={code} />;
+<MermaidProvider>
+  <Mermaid code={code} />
+</MermaidProvider>;
 
-// Custom layout engine via Context
-import { MermaidProvider } from "@semajsx/mermaid";
+// Custom layout engine via provider
 import { dagreLayout } from "@semajsx/mermaid/layout-dagre"; // optional
 
 <MermaidProvider layout={dagreLayout}>
   <Mermaid code={code} />
 </MermaidProvider>;
-```
-
-`<Flowchart>` reads layout engine from Context:
-
-```tsx
-function Flowchart(props: FlowchartProps, ctx: ComponentAPI): JSXNode {
-  const engine = ctx.inject(MermaidLayout) ?? builtinLayout;
-  const graphData = unwrap(props.graph);
-  const positioned = engine.flowchart(graphData, props.layoutOptions);
-  // ... render positioned data as SVG
-}
 ```
 
 ### 5.3 Built-in Flowchart Layout (Simplified Sugiyama)
@@ -673,11 +685,35 @@ Phase 4: Coordinate Assignment
             - Center each layer relative to widest layer
 
 Phase 5: Edge Routing
-    Input:  positioned nodes
-    Output: polyline points[] for each edge
-    Method: Source center → control points → target center
-            Edges spanning multiple layers get intermediate points
-            Avoids node overlap with simple offset
+    Input:  positioned nodes, edgeRouting option
+    Output: path data for each edge
+    Method:
+      polyline: Source center → control points → target center
+                Edges spanning multiple layers get intermediate points
+                Avoids node overlap with simple offset
+      bezier:   Cubic Bézier curves (C command)
+                Control points offset perpendicular to source/target direction
+                TB/TD: horizontal tangents at endpoints
+                LR:    vertical tangents at endpoints
+                Multi-layer edges use intermediate waypoints with smooth joins
+```
+
+**Bezier edge routing (default):**
+
+```
+TB/TD direction:
+  Source bottom center → Target top center
+  Control points extend vertically:
+
+    M sx sy                        ← source point
+    C sx (sy + offset)             ← control point 1 (below source)
+      tx (ty - offset)             ← control point 2 (above target)
+      tx ty                        ← target point
+
+  offset = |ty - sy| × 0.4        ← 40% of vertical distance
+
+LR direction:
+  Same logic, rotated 90° (control points extend horizontally)
 ```
 
 **Example walkthrough:**
@@ -693,10 +729,11 @@ Phase 4: (TD, nodeW=150, nodeH=50, nodeSpacing=60, rankSpacing=80)
          B:  x=75,  y=175
          C:  x=285, y=175
          D:  x=105, y=305   (centered over B,C)
-Phase 5: A→B: [(105,70), (75,150)]
-         A→C: [(105,70), (285,150)]
-         B→D: [(75,200), (105,280)]
-         C→D: [(285,200), (105,280)]
+Phase 5: (bezier)
+         A→B: M 105 70 C 105 112 75 133 75 150
+         A→C: M 105 70 C 105 112 285 133 285 150
+         B→D: M 75 200 C 75 242 105 263 105 280
+         C→D: M 285 200 C 285 242 105 263 105 280
 ```
 
 **Subgraph handling:**
@@ -851,13 +888,12 @@ SVG is the only format where our `classes()` + `rule` + `tokens` pattern works n
   <g class="mmd-edges">
     <g class="mmd-edge mmd-edgeArrow">
       <path class="mmd-edgeLine"
-            d="M 200 70 L 200 150"
+            d="M 200 70 C 200 112 200 138 200 150"
             marker-end="url(#mmd-arrow)" />
     </g>
     <g class="mmd-edge mmd-edgeDotted">
-      <path class="mmd-edgeLine"
-            d="M 100 200 L 300 200"
-            stroke-dasharray="6,4"
+      <path class="mmd-edgeLine mmd-edgeDotted"
+            d="M 100 200 C 140 200 260 200 300 200"
             marker-end="url(#mmd-arrow)" />
       <!-- Edge label -->
       <rect class="mmd-edgeLabelBg" x="170" y="188" width="60" height="20" rx="4" />
@@ -894,13 +930,14 @@ SVG is the only format where our `classes()` + `rule` + `tokens` pattern works n
 
 **Key structural decisions:**
 
-| Decision          | Choice                               | Why                                                                                            |
-| ----------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| Positioning       | `<g transform="translate(x,y)">`     | Local coordinates — custom renderers don't need offset math                                    |
-| Arrowheads        | SVG `<marker>` in `<defs>`           | Efficient, CSS-styleable, auto-rotates with path direction                                     |
-| Labels            | `<text>` with `text-anchor="middle"` | Simple, CSS-styleable. Future: `<foreignObject>` for HTML                                      |
-| Layer order       | Subgraphs → Edges → Nodes            | Nodes always on top of edges, subgraphs are backgrounds                                        |
-| Coordinate system | Center-origin per node               | `(0,0)` is node center. Rect: `x=-w/2, y=-h/2`. Circle: `cx=0, cy=0`. Simplest for all shapes. |
+| Decision          | Choice                               | Why                                                                                           |
+| ----------------- | ------------------------------------ | --------------------------------------------------------------------------------------------- |
+| Positioning       | `<g transform="translate(x,y)">`     | Local coordinates — custom renderers don't need offset math                                   |
+| Arrowheads        | SVG `<marker>` in `<defs>`           | Efficient, CSS-styleable, auto-rotates with path direction                                    |
+| Labels            | `<text>` with `text-anchor="middle"` | Simple, CSS-styleable. Future: `<foreignObject>` for HTML                                     |
+| Layer order       | Subgraphs → Edges → Nodes            | Nodes always on top of edges, subgraphs are backgrounds                                       |
+| Coordinate system | Center-origin per node               | `(0,0)` is node center. Rect: `x=-w/2, y=-h/2`. Circle: `cx=0, cy=0`. Simplest for all shapes |
+| Node `rx`         | SVG attribute, not CSS               | SVG2 allows CSS `rx` but older browsers require the attribute. Set on element directly        |
 
 ### 6.3 SVG Structure — Sequence Diagram
 
@@ -928,7 +965,15 @@ SVG is the only format where our `classes()` + `rule` + `tokens` pattern works n
     <rect class="mmd-activation" x="93" y="110" width="14" height="60" />
   </g>
 
-  <!-- Layer 4: Messages (horizontal arrows between lifelines) -->
+  <!-- Layer 4: Notes -->
+  <g class="mmd-notes">
+    <g class="mmd-note" transform="translate(100, 250)">
+      <rect class="mmd-noteBg" x="-60" y="-20" width="120" height="40" rx="4" />
+      <text class="mmd-noteText" x="0" y="0">Important</text>
+    </g>
+  </g>
+
+  <!-- Layer 5: Messages (horizontal arrows between lifelines) -->
   <g class="mmd-messages">
     <g class="mmd-message">
       <line class="mmd-messageLine"
@@ -937,15 +982,14 @@ SVG is the only format where our `classes()` + `rule` + `tokens` pattern works n
       <text class="mmd-messageText" x="225" y="112">Hello</text>
     </g>
     <g class="mmd-message mmd-messageDotted">
-      <line class="mmd-messageLine"
+      <line class="mmd-messageLine mmd-messageDotted"
             x1="350" y1="155" x2="100" y2="155"
-            stroke-dasharray="6,4"
             marker-end="url(#mmd-arrow)" />
       <text class="mmd-messageText" x="225" y="147">Hi back</text>
     </g>
   </g>
 
-  <!-- Layer 5: Participants (top, rendered last = on top) -->
+  <!-- Layer 6: Participants (top, rendered last = on top) -->
   <g class="mmd-participants">
     <g class="mmd-participant" transform="translate(100, 35)">
       <rect class="mmd-participantBox" x="-50" y="-25" width="100" height="50" rx="6" />
@@ -959,123 +1003,7 @@ SVG is the only format where our `classes()` + `rule` + `tokens` pattern works n
 </svg>
 ```
 
-### 6.4 CSS Styling of SVG Elements
-
-All SVG elements use CSS classes. Styled via `classes()` + `rule` + `tokens`:
-
-```tsx
-// src/node.style.ts
-import { classes, rule, rules } from "@semajsx/style";
-import { tokens } from "./tokens";
-
-const c = classes([
-  "nodeShape",
-  "nodeRect",
-  "nodeRound",
-  "nodeRhombus",
-  "nodeCircle",
-  "nodeHexagon",
-  "nodeCylinder",
-  "nodeStadium",
-  "nodeLabel",
-  "node",
-] as const);
-
-// ── Base shape ─────────────────────────────────────
-export const nodeShape = rule`${c.nodeShape} {
-  fill: ${tokens.nodeFill};
-  stroke: ${tokens.nodeStroke};
-  stroke-width: 2;
-}`;
-
-export const nodeShapeHover = rule`${c.nodeShape}:hover {
-  filter: brightness(0.95);
-  cursor: pointer;
-}`;
-
-// ── Shape variants (additional classes) ─────────────
-export const nodeRect = rule`${c.nodeRect} { rx: 8; }`;
-export const nodeRound = rule`${c.nodeRound} { rx: 20; }`;
-export const nodeStadium = rule`${c.nodeStadium} { rx: 999; }`;
-
-// ── Text ───────────────────────────────────────────
-export const nodeLabel = rule`${c.nodeLabel} {
-  fill: ${tokens.nodeText};
-  font-family: ${tokens.fontFamily};
-  font-size: ${tokens.fontSize};
-  text-anchor: middle;
-  dominant-baseline: central;
-  pointer-events: none;
-}`;
-
-export { c };
-
-// src/edge.style.ts
-import { classes, rule } from "@semajsx/style";
-import { tokens } from "./tokens";
-
-const c = classes([
-  "edgeLine",
-  "edgeArrow",
-  "edgeDotted",
-  "edgeThick",
-  "edgeAnimated",
-  "edgeLabel",
-  "edgeLabelBg",
-  "arrowHead",
-] as const);
-
-export const edgeLine = rule`${c.edgeLine} {
-  fill: none;
-  stroke: ${tokens.edgeStroke};
-  stroke-width: 2;
-}`;
-
-export const edgeDotted = rule`${c.edgeDotted} ${c.edgeLine} {
-  stroke-dasharray: 6, 4;
-}`;
-
-export const edgeAnimated = rule`
-${c.edgeAnimated} ${c.edgeLine} {
-  stroke-dasharray: ${tokens.animatedDashArray};
-  animation: mmd-dash-flow ${tokens.animatedDuration} linear infinite;
-}
-
-@keyframes mmd-dash-flow {
-  to {
-    stroke-dashoffset: ${tokens.animatedDashOffset};
-  }
-}
-`;
-
-export const edgeThick = rule`${c.edgeThick} ${c.edgeLine} {
-  stroke-width: 3;
-}`;
-
-export const edgeLabel = rule`${c.edgeLabel} {
-  fill: ${tokens.edgeLabelText};
-  font-family: ${tokens.fontFamily};
-  font-size: 12px;
-  text-anchor: middle;
-  dominant-baseline: central;
-}`;
-
-export const edgeLabelBg = rule`${c.edgeLabelBg} {
-  fill: ${tokens.edgeLabelBg};
-  stroke: none;
-}`;
-
-export const arrowHead = rule`${c.arrowHead} {
-  fill: ${tokens.arrowFill};
-  stroke: none;
-}`;
-
-export { c };
-```
-
-**Theme switching is automatic:** When tokens change (via `createTheme()` dark override), all SVG elements update via CSS custom property cascade. No re-render, no re-layout — just CSS.
-
-### 6.5 Node Shape Rendering
+### 6.4 Node Shape Rendering
 
 Each shape is a component that renders SVG in local coordinates (center at 0,0):
 
@@ -1090,11 +1018,12 @@ export function RectNode(props: NodeRenderProps): JSXNode {
   return (
     <g class={[styles.c.node, props.class]} transform={`translate(${x}, ${y})`}>
       <rect
-        class={[styles.nodeShape, styles.nodeRect, styles.nodeShapeHover]}
+        class={[styles.nodeShape, styles.nodeShapeHover]}
         x={-width / 2}
         y={-height / 2}
         width={width}
         height={height}
+        rx={8}
       />
       <text class={styles.nodeLabel}>{node.label}</text>
     </g>
@@ -1173,7 +1102,7 @@ const shapeMap: Record<NodeShape, Component<NodeRenderProps>> = {
 };
 ```
 
-### 6.6 Edge Rendering
+### 6.5 Edge Rendering
 
 ```tsx
 // src/components/edge.tsx
@@ -1182,10 +1111,7 @@ import * as styles from "../edge.style";
 import type { EdgeRenderProps } from "../types";
 
 export function Edge(props: EdgeRenderProps): JSXNode {
-  const { edge, points, labelPosition } = props.positioned;
-
-  // Build SVG path from points
-  const d = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+  const { edge, path, labelPosition, labelSize } = props.positioned;
 
   const edgeTypeClass = {
     arrow: styles.c.edgeArrow,
@@ -1201,15 +1127,15 @@ export function Edge(props: EdgeRenderProps): JSXNode {
 
   return (
     <g class={[edgeTypeClass, props.class]}>
-      <path class={styles.edgeLine} d={d} marker-end={markerId} />
-      {edge.label && labelPosition && (
+      <path class={styles.edgeLine} d={path} marker-end={markerId} />
+      {edge.label && labelPosition && labelSize && (
         <>
           <rect
             class={styles.edgeLabelBg}
-            x={labelPosition.x - 30}
-            y={labelPosition.y - 10}
-            width={60}
-            height={20}
+            x={labelPosition.x - labelSize.width / 2 - 4}
+            y={labelPosition.y - labelSize.height / 2 - 2}
+            width={labelSize.width + 8}
+            height={labelSize.height + 4}
             rx={4}
           />
           <text class={styles.edgeLabel} x={labelPosition.x} y={labelPosition.y}>
@@ -1222,28 +1148,104 @@ export function Edge(props: EdgeRenderProps): JSXNode {
 }
 ```
 
-### 6.7 How `<Flowchart>` Assembles Everything
+### 6.6 Defs Component
+
+```tsx
+// src/components/defs.tsx
+/** @jsxImportSource @semajsx/dom */
+import * as edgeStyles from "../edge.style";
+
+export function Defs(): JSXNode {
+  return (
+    <defs>
+      <marker
+        id="mmd-arrow"
+        viewBox="0 0 10 10"
+        refX={10}
+        refY={5}
+        markerWidth={8}
+        markerHeight={8}
+        orient="auto-start-reverse"
+      >
+        <path class={edgeStyles.arrowHead} d="M 0 0 L 10 5 L 0 10 z" />
+      </marker>
+      <marker id="mmd-dot" viewBox="0 0 10 10" refX={5} refY={5} markerWidth={6} markerHeight={6}>
+        <circle class={edgeStyles.arrowHead} cx={5} cy={5} r={4} />
+      </marker>
+    </defs>
+  );
+}
+```
+
+### 6.7 Subgraph Component
+
+```tsx
+// src/components/subgraph.tsx
+/** @jsxImportSource @semajsx/dom */
+import * as styles from "../subgraph.style";
+import type { SubgraphRenderProps } from "../types";
+
+export function SubgraphBox(props: SubgraphRenderProps): JSXNode {
+  const { subgraph, x, y, width, height } = props.positioned;
+  return (
+    <g class={props.class} transform={`translate(${x}, ${y})`}>
+      <rect class={styles.subgraphBg} width={width} height={height} rx={8} />
+      <text class={styles.subgraphTitle} x={16} y={24}>
+        {subgraph.label}
+      </text>
+    </g>
+  );
+}
+```
+
+### 6.8 Default Renderer Map
+
+```tsx
+// src/components/index.ts
+import { shapeMap } from "./nodes";
+import { Edge } from "./edge";
+import { SubgraphBox } from "./subgraph";
+import { Label } from "./label";
+import { Participant } from "./sequence/participant";
+import { Message } from "./sequence/message";
+import { Lifeline } from "./sequence/lifeline";
+import { Activation } from "./sequence/activation";
+import { Block } from "./sequence/block";
+import { Note } from "./sequence/note";
+import type { RendererMap } from "../provider";
+
+export const defaultRenderers: RendererMap = {
+  node: shapeMap.rect,
+  edge: Edge,
+  subgraph: SubgraphBox,
+  label: Label,
+  participant: Participant,
+  message: Message,
+  lifeline: Lifeline,
+  activation: Activation,
+  block: Block,
+  note: Note,
+};
+```
+
+### 6.9 How `<Flowchart>` Assembles Everything
 
 ```tsx
 // src/flowchart.tsx
 /** @jsxImportSource @semajsx/dom */
-import { context, Context } from "@semajsx/core";
 import type { ComponentAPI, JSXNode } from "@semajsx/core";
 import { isSignal, unwrap, computed } from "@semajsx/signal";
-import { inject } from "@semajsx/style";
 import * as rootStyles from "./root.style";
 import { Defs } from "./components/defs";
 import { shapeMap } from "./components/nodes";
 import { Edge } from "./components/edge";
 import { SubgraphBox } from "./components/subgraph";
 import { builtinLayout } from "./layout";
-import { lightTheme } from "./themes";
+import { MermaidLayout, MermaidRenderers } from "./provider";
+import { defaultRenderers } from "./components";
 import type { FlowchartDiagram, FlowchartProps } from "./types";
 
 export function Flowchart(props: FlowchartProps, ctx: ComponentAPI): JSXNode {
-  // Inject default theme CSS (deduped — safe to call multiple times)
-  inject(lightTheme);
-
   // Read layout engine from Context (or use built-in)
   const engine = ctx.inject(MermaidLayout) ?? builtinLayout;
   const renderers = ctx.inject(MermaidRenderers) ?? defaultRenderers;
@@ -1291,7 +1293,71 @@ export function Flowchart(props: FlowchartProps, ctx: ComponentAPI): JSXNode {
 
 ---
 
-## 7. Diagram IR Types
+## 7. Animated Edges
+
+### 7.1 Mechanism
+
+Animated edges use CSS `stroke-dasharray` + `stroke-dashoffset` animation (same technique as xyflow). The animation is purely CSS — no JavaScript animation loop.
+
+### 7.2 How to Trigger
+
+Animated edges are a **programmatic-only** feature. The Mermaid DSL doesn't define an "animated" edge type. There are two ways to use them:
+
+**Way 1: Programmatic IR (explicit type)**
+
+```tsx
+<Flowchart
+  graph={{
+    direction: "TD",
+    nodes: [
+      { id: "A", label: "Source", shape: "rect" },
+      { id: "B", label: "Target", shape: "rect" },
+    ],
+    edges: [{ source: "A", target: "B", type: "animated" }],
+  }}
+/>
+```
+
+**Way 2: CSS class on any edge (more flexible)**
+
+Any edge can be animated by adding the `edgeAnimated` class via a custom edge renderer:
+
+```tsx
+import * as styles from "@semajsx/mermaid/styles";
+
+const AnimatedEdge = (props: EdgeRenderProps) => {
+  // Delegate to default Edge but inject animated class
+  return <Edge {...props} class={styles.c.edgeAnimated} />;
+};
+
+// Animate all arrow edges
+<MermaidProvider "edge:arrow"={AnimatedEdge}>
+  <Mermaid code={code} />
+</MermaidProvider>
+```
+
+### 7.3 Customization via Tokens
+
+Animation parameters are design tokens, customizable per theme:
+
+| Token                | Default  | Effect               |
+| -------------------- | -------- | -------------------- |
+| `animatedDashArray`  | `"5, 5"` | Dash pattern density |
+| `animatedDuration`   | `"0.5s"` | Flow speed           |
+| `animatedDashOffset` | `"-10"`  | Per-frame offset     |
+
+```tsx
+// Slow, wide dashes
+const slowTheme = createTheme(tokens, {
+  animatedDashArray: "12, 8",
+  animatedDuration: "1.5s",
+  animatedDashOffset: "-20",
+});
+```
+
+---
+
+## 8. Diagram IR Types
 
 ```typescript
 // ── Common ─────────────────────────────────────────────
@@ -1354,6 +1420,7 @@ interface SequenceDiagram {
   participants: Participant[];
   messages: Message[];
   blocks: Block[];
+  notes: Note[];
 }
 
 interface Participant {
@@ -1382,11 +1449,25 @@ interface Block {
   sections?: { label: string; messages: Message[] }[];
 }
 
+type NotePosition = "left of" | "right of" | "over";
+
+interface Note {
+  position: NotePosition;
+  /** One participant for "left of"/"right of", one or two for "over" */
+  participants: string[];
+  text: string;
+}
+
 // ── Layout Output ──────────────────────────────────────
 
 interface Point {
   x: number;
   y: number;
+}
+
+interface Size {
+  width: number;
+  height: number;
 }
 
 interface PositionedNode {
@@ -1399,8 +1480,11 @@ interface PositionedNode {
 
 interface PositionedEdge {
   edge: FlowEdge;
-  points: Point[];
+  /** SVG path data string (e.g. "M 0 0 C 10 20 30 40 50 60") */
+  path: string;
   labelPosition?: Point;
+  /** Measured label size — used by Edge component for background rect */
+  labelSize?: Size;
 }
 
 interface PositionedSubgraph {
@@ -1423,7 +1507,7 @@ interface FlowchartLayout {
 
 ---
 
-## 6. Component Props (Render Layer)
+## 9. Component Props (Render Layer)
 
 ```typescript
 // Props for renderable components (what custom renderers receive)
@@ -1468,33 +1552,66 @@ interface MessageRenderProps {
   y: number;
   class?: ClassValue;
 }
+
+interface NoteRenderProps {
+  note: Note;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  class?: ClassValue;
+}
+
+interface LifelineRenderProps {
+  participant: Participant;
+  x: number;
+  y1: number;
+  y2: number;
+  class?: ClassValue;
+}
+
+interface ActivationRenderProps {
+  participant: Participant;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  class?: ClassValue;
+}
+
+interface BlockRenderProps {
+  block: Block;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  class?: ClassValue;
+}
 ```
 
 No `theme` prop — components read tokens through CSS custom properties (set by `inject()`), exactly like `@semajsx/ui` components.
 
 ---
 
-## 7. Usage Examples
+## 10. Usage Examples
 
 ### Basic
 
 ```tsx
 /** @jsxImportSource @semajsx/dom */
-import { Mermaid } from "@semajsx/mermaid";
-import { inject } from "@semajsx/style";
-import { lightTheme } from "@semajsx/mermaid";
-
-inject(lightTheme);
+import { Mermaid, MermaidProvider } from "@semajsx/mermaid";
 
 const App = () => (
-  <Mermaid
-    code={`
-    graph TD
-      A[Client] --> B[Load Balancer]
-      B --> C[Server 1]
-      B --> D[Server 2]
-  `}
-  />
+  <MermaidProvider>
+    <Mermaid
+      code={`
+      graph TD
+        A[Client] --> B[Load Balancer]
+        B --> C[Server 1]
+        B --> D[Server 2]
+    `}
+    />
+  </MermaidProvider>
 );
 ```
 
@@ -1521,16 +1638,17 @@ import * as styles from "@semajsx/mermaid/styles";
 const GlowNode = (props: NodeRenderProps) => {
   const { node, x, y, width, height } = props.positioned;
   return (
-    <g>
+    <g class={[styles.c.node, props.class]} transform={`translate(${x}, ${y})`}>
       <rect
-        class={[styles.node, styles.nodeRect]}
-        x={x - width / 2}
-        y={y - height / 2}
+        class={[styles.nodeShape, styles.nodeShapeHover]}
+        x={-width / 2}
+        y={-height / 2}
         width={width}
         height={height}
+        rx={8}
         filter="url(#glow)"
       />
-      <text class={styles.nodeLabel} x={x} y={y}>
+      <text class={styles.nodeLabel} x={0} y={0}>
         {node.label}
       </text>
     </g>
@@ -1589,6 +1707,24 @@ const App = () => (
 );
 ```
 
+### Animated Edges
+
+```tsx
+import { Flowchart } from "@semajsx/mermaid";
+
+<Flowchart
+  graph={{
+    direction: "LR",
+    nodes: [
+      { id: "src", label: "Source", shape: "rect" },
+      { id: "dst", label: "Destination", shape: "rect" },
+    ],
+    edges: [{ source: "src", target: "dst", type: "animated", label: "streaming" }],
+    subgraphs: [],
+  }}
+/>;
+```
+
 ### Standalone `parse()` (data only)
 
 ```tsx
@@ -1606,7 +1742,7 @@ if ("message" in result) {
 
 ---
 
-## 8. Package Structure
+## 11. Package Structure
 
 ```
 packages/mermaid/
@@ -1624,6 +1760,7 @@ packages/mermaid/
 │   ├── flowchart.tsx           # <Flowchart> layout + render
 │   ├── sequence.tsx            # <Sequence> layout + render
 │   │
+│   ├── root.style.ts           # classes() + rule for root SVG
 │   ├── node.style.ts           # classes() + rule for nodes
 │   ├── edge.style.ts           # classes() + rule for edges
 │   ├── subgraph.style.ts       # classes() + rule for subgraphs
@@ -1638,7 +1775,7 @@ packages/mermaid/
 │   │   │   ├── hexagon.tsx
 │   │   │   ├── cylinder.tsx
 │   │   │   ├── stadium.tsx
-│   │   │   └── index.ts        # defaultNodeRenderers map
+│   │   │   └── index.ts        # shapeMap + defaultNodeRenderers
 │   │   ├── edge.tsx
 │   │   ├── defs.tsx            # SVG <defs> (arrowheads, filters)
 │   │   ├── label.tsx
@@ -1649,6 +1786,7 @@ packages/mermaid/
 │   │   │   ├── message.tsx
 │   │   │   ├── activation.tsx
 │   │   │   ├── block.tsx
+│   │   │   ├── note.tsx
 │   │   │   └── index.ts
 │   │   └── index.ts            # defaultRenderers
 │   │
@@ -1666,18 +1804,21 @@ packages/mermaid/
 │       ├── flowchart.test.ts
 │       ├── sequence.ts
 │       ├── sequence.test.ts
+│       ├── edge-routing.ts     # polyline + bezier routing
+│       ├── edge-routing.test.ts
 │       └── index.ts
 │
 └── examples/
     ├── basic.tsx
     ├── themed.tsx
     ├── custom-nodes.tsx
+    ├── animated.tsx
     └── reactive.tsx
 ```
 
 ---
 
-## 9. How Each SemaJSX Pattern Maps
+## 12. How Each SemaJSX Pattern Maps
 
 | SemaJSX Pattern         | How Mermaid Uses It                                              |
 | ----------------------- | ---------------------------------------------------------------- |
@@ -1685,9 +1826,9 @@ packages/mermaid/
 | `createTheme()`         | `themes.ts` — light/dark presets, users create custom themes     |
 | `classes()` + `rule`    | `*.style.ts` — SVG element classes with token references         |
 | `inject()`              | `provider.tsx` — injects theme CSS on mount                      |
-| `context()`             | `MermaidRenderers` context — carries renderer components         |
+| `context()`             | `MermaidRenderers` + `MermaidLayout` contexts                    |
 | `ctx.inject()`          | Components read renderers: `ctx.inject(MermaidRenderers)`        |
-| `<Context provide={}>`  | `<MermaidProvider>` wraps with renderer + theme context          |
+| `<Context provide={}>`  | `<MermaidProvider>` wraps with renderer + layout + theme context |
 | `computed()`            | Layout derived from graph signal                                 |
 | `signal()` + `unwrap()` | Graph data can be signal or plain value                          |
 | `class` prop            | All components accept `class` for user styling                   |
@@ -1695,7 +1836,7 @@ packages/mermaid/
 
 ---
 
-## 10. Alternatives Considered
+## 13. Alternatives Considered
 
 ### Override Props vs Context
 
@@ -1715,9 +1856,20 @@ packages/mermaid/
 | Runtime switching              | Need manual re-render        | Toggle class, CSS does the rest             |
 | User customization             | Override object              | `createTheme(tokens, overrides)`            |
 
+### Edge Routing: Polyline vs Bezier
+
+| Criteria    | Polyline (M/L)          | Bezier (C) — default        |
+| ----------- | ----------------------- | --------------------------- |
+| Visual      | Straight lines, angular | Smooth curves, professional |
+| Complexity  | Simple point-to-point   | Control point computation   |
+| Crossings   | Hard to avoid overlap   | Curves route around nodes   |
+| Performance | Faster                  | Negligible difference       |
+
+**Decision**: Default to bezier. Expose `edgeRouting: "polyline" | "bezier"` in `LayoutOptions` for users who prefer straight lines.
+
 ---
 
-## 11. Implementation Plan
+## 14. Implementation Plan
 
 ### Phase 1: Foundation
 
@@ -1731,13 +1883,15 @@ packages/mermaid/
 
 - [ ] Tokenizer
 - [ ] Flowchart parser
-- [ ] Sequence parser
+- [ ] Sequence parser (including Note support)
 - [ ] Parser tests
 
 ### Phase 3: Layout
 
 - [ ] Flowchart layout (layered graph)
+- [ ] Bezier edge routing
 - [ ] Sequence layout (column-based)
+- [ ] Text measurement (character estimation + optional Canvas)
 - [ ] Layout tests
 
 ### Phase 4: Components
@@ -1745,7 +1899,7 @@ packages/mermaid/
 - [ ] Node shape components (rect, round, circle, rhombus, hexagon, cylinder, stadium)
 - [ ] Edge component + arrowhead defs
 - [ ] Label + subgraph
-- [ ] Sequence components (participant, lifeline, message, activation, block)
+- [ ] Sequence components (participant, lifeline, message, activation, block, note)
 - [ ] Default renderer map
 
 ### Phase 5: Integration
@@ -1754,11 +1908,12 @@ packages/mermaid/
 - [ ] `<Sequence>` layout component
 - [ ] `<Mermaid>` convenience wrapper
 - [ ] Signal reactivity (graph as signal)
+- [ ] Animated edge CSS
 - [ ] Integration tests + examples
 
 ---
 
-## 12. Open Questions
+## 15. Open Questions
 
 - [ ] **Q1**: Should mermaid tokens be namespaced under `@semajsx/ui` tokens (as `tokens.mermaid.xxx`) or standalone?
   - **Leaning**: Standalone — mermaid is an independent package, not coupled to `@semajsx/ui`
