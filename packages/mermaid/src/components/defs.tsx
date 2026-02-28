@@ -10,8 +10,8 @@ export function Defs(): JSXNode {
         viewBox="-2 -2 16 14"
         refX={10}
         refY={5}
-        markerWidth={12}
-        markerHeight={12}
+        markerWidth={16}
+        markerHeight={16}
         markerUnits="userSpaceOnUse"
         orient="auto"
         overflow="visible"
