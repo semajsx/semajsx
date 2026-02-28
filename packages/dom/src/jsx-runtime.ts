@@ -6,14 +6,14 @@
 import { Forward, Fragment, jsx, jsxs } from "@semajsx/core";
 import type { ComponentAPI, JSXNode, Ref, VNode, WithKey, WithSignals } from "@semajsx/core";
 import type { Signal } from "@semajsx/signal";
-import type { StyleToken } from "@semajsx/style";
+import type { StyleToken, ClassRef } from "@semajsx/style";
 
 export { jsx, jsxs, Forward, Fragment };
 
 /**
- * Class value type - supports strings, StyleTokens, arrays, and conditionals
+ * Class value type - supports strings, StyleTokens, ClassRefs, arrays, and conditionals
  */
-export type ClassValue = string | StyleToken | ClassValue[] | false | null | undefined;
+export type ClassValue = string | StyleToken | ClassRef | ClassValue[] | false | null | undefined;
 
 /**
  * HTML attribute types (base definitions without Signal support)
@@ -552,12 +552,16 @@ export namespace JSX {
     linearGradient: SVGAttributes;
     mask: SVGAttributes;
     path: SVGAttributes;
+    foreignObject: SVGAttributes;
+    marker: SVGAttributes;
     polygon: SVGAttributes;
     polyline: SVGAttributes;
     radialGradient: SVGAttributes;
     rect: SVGAttributes;
     stop: SVGAttributes;
+    symbol: SVGAttributes;
     text: SVGAttributes;
+    tspan: SVGAttributes;
     use: SVGAttributes;
 
     // Embedded content
