@@ -1,7 +1,7 @@
 # Mermaid Diagram Renderer - Design Document
 
 **Date**: 2026-02-28
-**Status**: Draft
+**Status**: Draft (v2 — redesigned for SemaJSX idioms)
 **Package**: `@semajsx/mermaid`
 
 ---
@@ -10,123 +10,558 @@
 
 ### 1.1 Quick Summary
 
-- **What**: A SemaJSX component library that parses Mermaid diagram code into structured data and renders it as composable, themeable JSX components (SVG-based)
-- **Why**: Mermaid diagrams are ubiquitous in documentation and technical content. Current solutions (mermaid.js) render to opaque SVG blobs that cannot be styled, themed, or customized at the component level. A SemaJSX-native renderer enables deep integration with the theme system, signal reactivity, and custom component overrides.
-- **How**: Self-contained parser (Mermaid DSL → AST) + layout engine (auto-positioning) + SVG component tree (themeable primitives)
+- **What**: Mermaid diagrams as composable SemaJSX components
+- **Why**: mermaid.js renders opaque SVG blobs. We want diagram elements that participate in SemaJSX's reactivity, theming, and composition — the same way `<Box>` and `<Text>` work in `@semajsx/terminal`
+- **How**: `parse()` pure function + `<Flowchart>` / `<Sequence>` layout components + `<Node>` / `<Edge>` SVG primitives, all wired through Context and design tokens
 
 ### 1.2 Scope
 
-- **In Scope**:
-  - Mermaid code parser → structured IR (intermediate representation)
-  - Flowchart diagram type (primary, covers ~70% of usage)
-  - Sequence diagram type (secondary)
-  - SVG-based rendering via SemaJSX JSX components
-  - Theme integration via `@semajsx/style` design tokens
-  - Component override system (replace any node/edge renderer)
-  - Signal-reactive updates (change data → diagram re-renders)
-
-- **Out of Scope** (future phases):
-  - Class diagrams, state diagrams, ER diagrams, Gantt, pie charts
-  - Animation/transition between states
-  - Interactive editing (drag-and-drop)
-  - Server-side rendering of diagrams
+- **In Scope**: Flowchart + Sequence diagram parsing, layout, and rendering
+- **Out of Scope**: Class/state/ER diagrams, interactive editing, animation
 
 ---
 
 ## 2. Design Principles
 
-1. **Parse, don't render opaquely** - Convert Mermaid code to structured data first, then render with JSX. The IR is the API boundary.
-2. **Composable primitives** - Every visual element (node, edge, label, arrowhead) is a standalone JSX component that can be overridden.
-3. **Theme-first** - All colors, spacing, typography use design tokens from `@semajsx/style`. Zero hardcoded visual values.
-4. **Self-contained parser** - No dependency on the mermaid.js library (~800KB). Write a focused parser for supported diagram types.
-5. **Reactive by default** - Signal inputs cause targeted SVG updates, not full re-renders.
+1. **Components are the API** — `<Flowchart>`, `<Node>`, `<Edge>` are first-class JSX components, just like `<Box>` and `<Text>` in terminal. The parser is a convenience that produces the same component tree.
+2. **Context for everything** — Theme, renderers, layout options flow through `ctx.inject()`, not props drilling. Follows `ThemeProvider` pattern exactly.
+3. **Same tokens, same rules** — Styles use `classes()` + `rule` + `defineTokens` from `@semajsx/style`, referencing `@semajsx/ui` tokens where sensible. No parallel theme system.
+4. **Signals all the way down** — Not just `code` as a signal. Individual node labels, edge connections, graph structure can be reactive.
+5. **`parse()` is just data** — Pure function, no side effects, no DOM. Returns typed IR that feeds into components. Users can also construct IR by hand.
 
 ---
 
 ## 3. Architecture
 
-### 3.1 System Structure
+### 3.1 Two Entry Points, One Component Tree
 
 ```
-Mermaid Code (string)
-      │
-      ▼
-┌─────────────┐
-│   Parser     │  Mermaid DSL → Diagram IR
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│   Layout     │  IR → Positioned IR (coordinates, sizes)
-└──────┬──────┘
-       │
-       ▼
-┌─────────────┐
-│  Renderer    │  Positioned IR → JSX/SVG component tree
-└─────────────┘
-       │
-       ▼
-  <svg> ... </svg>  (rendered by @semajsx/dom)
-```
-
-### 3.2 Module Breakdown
-
-| Module        | Responsibility                            | Location          |
-| ------------- | ----------------------------------------- | ----------------- |
-| `parser/`     | Tokenize + parse Mermaid DSL → Diagram IR | `src/parser/`     |
-| `ir/`         | Diagram IR type definitions               | `src/ir/`         |
-| `layout/`     | Auto-layout algorithms (Dagre-like)       | `src/layout/`     |
-| `components/` | SVG primitive components                  | `src/components/` |
-| `themes/`     | Design tokens and theme presets           | `src/themes/`     |
-| `overrides/`  | Override system for custom rendering      | `src/overrides/`  |
-| `Mermaid`     | Top-level `<Mermaid>` component           | `src/mermaid.tsx` |
-
-### 3.3 Data Flow
-
-```
-User provides: <Mermaid code={`graph TD; A-->B`} />
-                          │
-         1. Parse ────────┘
-                          │
+Entry A: Mermaid string               Entry B: Programmatic IR
+┌──────────────────────┐              ┌──────────────────────┐
+│ parse("graph TD;     │              │ { direction: "TD",   │
+│   A-->B")            │              │   nodes: [...],      │
+│                      │              │   edges: [...] }     │
+└──────────┬───────────┘              └──────────┬───────────┘
+           │                                     │
+           └──────────────┬──────────────────────┘
                           ▼
-              DiagramIR { type: "flowchart", nodes: [...], edges: [...] }
-                          │
-         2. Layout ───────┘
-                          │
-                          ▼
-              LayoutResult { nodes: [{x, y, w, h, ...}], edges: [{points, ...}] }
-                          │
-         3. Render ───────┘
-                          │
-                          ▼
-              <svg>
-                <FlowNode x={0} y={0} label="A" shape="rect" />
-                <FlowNode x={0} y={100} label="B" shape="rect" />
-                <Edge points={[...]} arrowHead="normal" />
-              </svg>
+                ┌──────────────────┐
+                │  <Flowchart>     │  layout component
+                │    graph={ir}    │  (collects data, runs layout,
+                └────────┬─────────┘   renders positioned children)
+                         │
+         ┌───────────────┼───────────────┐
+         ▼               ▼               ▼
+    <Node>          <Edge>          <Subgraph>
+    (SVG rect)      (SVG path)      (SVG rect + children)
+
+         all read theme from Context
+         all replaceable via Context
 ```
+
+### 3.2 Comparison with Existing SemaJSX Patterns
+
+| Pattern           | `@semajsx/terminal` | `@semajsx/ui`                  | `@semajsx/mermaid` (this)         |
+| ----------------- | ------------------- | ------------------------------ | --------------------------------- |
+| Layout primitives | `<Box>`, `<Text>`   | `<Tabs>`, `<TabList>`, `<Tab>` | `<Flowchart>`, `<Node>`, `<Edge>` |
+| Layout engine     | Yoga (flexbox)      | CSS (browser)                  | Sugiyama (layered graph)          |
+| Theme             | props (color, bold) | `ThemeProvider` + Context      | `MermaidProvider` + Context       |
+| Customization     | —                   | `class` prop + tokens          | Context renderers + `class` prop  |
+| Style system      | ANSI (chalk)        | `classes()` + `rule` + tokens  | `classes()` + `rule` + tokens     |
+
+### 3.3 Module Breakdown
+
+| Module     | Responsibility                    | Location           |
+| ---------- | --------------------------------- | ------------------ |
+| `types.ts` | Diagram IR type definitions       | `src/types.ts`     |
+| `parse()`  | Mermaid DSL → Diagram IR          | `src/parser/`      |
+| `layout()` | IR → positioned coordinates       | `src/layout/`      |
+| Components | SVG primitives (`<Node>`, etc.)   | `src/components/`  |
+| Provider   | Context setup (theme + renderers) | `src/provider.tsx` |
+| Tokens     | Design tokens + themes            | `src/tokens.ts`    |
+| Styles     | `classes()` + `rule` definitions  | `src/*.style.ts`   |
 
 ---
 
 ## 4. API Design
 
-### 4.1 Core Interfaces - Diagram IR
+### 4.1 Top-Level: Two Ways to Use
 
-```typescript
-// ── Diagram Types ──────────────────────────────────────
+**Way 1: Parse from Mermaid string (convenience)**
 
-type DiagramType = "flowchart" | "sequence";
+```tsx
+/** @jsxImportSource @semajsx/dom */
+import { Mermaid } from "@semajsx/mermaid";
 
-interface Diagram {
-  type: DiagramType;
-  direction?: Direction;
+<Mermaid
+  code={`
+  graph TD
+    A[Client] --> B[Load Balancer]
+    B --> C[Server 1]
+    B --> D[Server 2]
+`}
+/>;
+```
+
+**Way 2: Programmatic IR (full control)**
+
+```tsx
+import { Flowchart } from "@semajsx/mermaid";
+
+<Flowchart
+  graph={{
+    direction: "TD",
+    nodes: [
+      { id: "A", label: "Client", shape: "rect" },
+      { id: "B", label: "Load Balancer", shape: "round" },
+      { id: "C", label: "Server 1", shape: "rect" },
+      { id: "D", label: "Server 2", shape: "rect" },
+    ],
+    edges: [
+      { source: "A", target: "B", type: "arrow" },
+      { source: "B", target: "C", type: "arrow" },
+      { source: "B", target: "D", type: "arrow" },
+    ],
+  }}
+/>;
+```
+
+Both produce the same SVG. `<Mermaid>` is just `parse()` + `<Flowchart>` or `<Sequence>`.
+
+### 4.2 `<Mermaid>` — Convenience Wrapper
+
+```tsx
+import { parse } from "@semajsx/mermaid";
+
+function Mermaid(props: MermaidProps, ctx: ComponentAPI): JSXNode {
+  // parse() is pure — no side effects
+  const diagram = parse(props.code);
+
+  if ("message" in diagram) {
+    // ParseError — render error or call handler
+    props.onError?.(diagram);
+    return null;
+  }
+
+  if (diagram.type === "flowchart") {
+    return <Flowchart graph={diagram} class={props.class} />;
+  }
+  if (diagram.type === "sequence") {
+    return <Sequence graph={diagram} class={props.class} />;
+  }
+
+  return null;
+}
+```
+
+When `code` is a `Signal<string>`, the component re-renders when the signal changes — standard SemaJSX behavior, no special handling needed.
+
+### 4.3 `<Flowchart>` — Layout Component
+
+```tsx
+interface FlowchartProps {
+  /** Diagram data (IR or Signal<IR>) */
+  graph: FlowchartDiagram | Signal<FlowchartDiagram>;
+  /** Additional class for root <svg> */
+  class?: ClassValue;
+  /** Padding around diagram */
+  padding?: number;
 }
 
+function Flowchart(props: FlowchartProps, ctx: ComponentAPI): JSXNode {
+  const renderers = ctx.inject(MermaidRenderers) ?? defaultRenderers;
+  const graphData = unwrap(props.graph);
+
+  // Layout: pure function, computes positions
+  const positioned = flowchartLayout(graphData);
+
+  const NodeComp = renderers.node;
+  const EdgeComp = renderers.edge;
+  const SubgraphComp = renderers.subgraph;
+
+  return (
+    <svg
+      class={[svgRoot, props.class]}
+      viewBox={`0 0 ${positioned.width} ${positioned.height}`}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <Defs />
+      {positioned.subgraphs?.map((s) => (
+        <SubgraphComp key={s.subgraph.id} positioned={s} />
+      ))}
+      {positioned.edges.map((e) => (
+        <EdgeComp key={`${e.edge.source}-${e.edge.target}`} positioned={e} />
+      ))}
+      {positioned.nodes.map((n) => (
+        <NodeComp key={n.node.id} positioned={n} />
+      ))}
+    </svg>
+  );
+}
+```
+
+Key: `ctx.inject(MermaidRenderers)` reads which components to use for nodes/edges. Same pattern as `ctx.inject(ThemeContext)` in `@semajsx/ui`.
+
+### 4.4 Context System — The SemaJSX Way
+
+**Instead of `overrides` prop (React/MUI pattern):**
+
+```tsx
+// ❌ NOT this (props drilling, not SemaJSX)
+<Mermaid code={code} overrides={{ node: MyNode }} />
+```
+
+**Use Context (SemaJSX pattern):**
+
+```tsx
+// ✅ This — same pattern as ThemeProvider
+import { MermaidProvider } from "@semajsx/mermaid";
+
+<MermaidProvider node={GlowNode} "node:rhombus"={DiamondNode}>
+  <Mermaid code={code} />
+</MermaidProvider>
+```
+
+**Implementation:**
+
+```tsx
+import { context, Context } from "@semajsx/core";
+import type { Component, ComponentAPI, JSXNode } from "@semajsx/core";
+
+// ── Contexts ───────────────────────────────────────────
+
+/** Renderer map: which component renders each element type */
+export interface RendererMap {
+  node: Component<NodeRenderProps>;
+  edge: Component<EdgeRenderProps>;
+  subgraph: Component<SubgraphRenderProps>;
+  label: Component<LabelRenderProps>;
+  // Shape-specific overrides
+  "node:rect"?: Component<NodeRenderProps>;
+  "node:round"?: Component<NodeRenderProps>;
+  "node:rhombus"?: Component<NodeRenderProps>;
+  "node:circle"?: Component<NodeRenderProps>;
+  "node:stadium"?: Component<NodeRenderProps>;
+  "node:hexagon"?: Component<NodeRenderProps>;
+  "node:cylinder"?: Component<NodeRenderProps>;
+  // Edge-type-specific overrides
+  "edge:arrow"?: Component<EdgeRenderProps>;
+  "edge:dotted"?: Component<EdgeRenderProps>;
+  "edge:thick"?: Component<EdgeRenderProps>;
+  // Sequence diagram
+  participant?: Component<ParticipantRenderProps>;
+  message?: Component<MessageRenderProps>;
+  lifeline?: Component<LifelineRenderProps>;
+  activation?: Component<ActivationRenderProps>;
+  block?: Component<BlockRenderProps>;
+}
+
+const MermaidRenderers = context<RendererMap>("mermaid-renderers");
+
+// ── Provider ───────────────────────────────────────────
+
+interface MermaidProviderProps extends Partial<RendererMap> {
+  children?: JSXNode;
+}
+
+function MermaidProvider(props: MermaidProviderProps): JSXNode {
+  const { children, ...rendererOverrides } = props;
+
+  // Merge user overrides with defaults
+  const renderers: RendererMap = {
+    ...defaultRenderers,
+    ...rendererOverrides,
+  };
+
+  return <Context provide={[MermaidRenderers, renderers]}>{children}</Context>;
+}
+```
+
+**Resolver in components (uses context, not props):**
+
+```tsx
+function resolveNodeRenderer(shape: NodeShape, ctx: ComponentAPI): Component<NodeRenderProps> {
+  const renderers = ctx.inject(MermaidRenderers) ?? defaultRenderers;
+  // Specific shape override → generic node → built-in default
+  return renderers[`node:${shape}`] ?? renderers.node;
+}
+```
+
+**Nested overrides compose naturally with Context:**
+
+```tsx
+// Inner provider overrides only rhombus, outer provides everything else
+<MermaidProvider node={RoundedNode}>
+  <Mermaid code={diagram1} />
+
+  <MermaidProvider "node:rhombus"={SpecialDiamond}>
+    <Mermaid code={diagram2} />
+  </MermaidProvider>
+</MermaidProvider>
+```
+
+### 4.5 Theme — Compose with `@semajsx/style`, not Parallel
+
+**Tokens follow the exact same pattern as `@semajsx/ui`:**
+
+```tsx
+// src/tokens.ts
+import { defineTokens } from "@semajsx/style";
+
+const tokenDefinition = {
+  // Node
+  nodeFill: "#e8f4f8",
+  nodeStroke: "#23395d",
+  nodeText: "#1d1d1f",
+  nodeRadius: "8px",
+
+  // Edge
+  edgeStroke: "#666",
+  edgeLabelBg: "#fff",
+  edgeLabelText: "#333",
+
+  // Arrow
+  arrowFill: "#666",
+
+  // Subgraph
+  subgraphFill: "#f8f9fa",
+  subgraphStroke: "#ccc",
+  subgraphTitleBg: "#eee",
+  subgraphTitleText: "#333",
+
+  // Sequence
+  actorFill: "#e8f4f8",
+  actorStroke: "#23395d",
+  lifelineStroke: "#999",
+  activationFill: "#d4e6f1",
+  messageStroke: "#333",
+  blockFill: "rgba(200,200,200,0.1)",
+  blockStroke: "#aaa",
+
+  // General
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', sans-serif",
+  fontSize: "14px",
+} as const;
+
+export const tokens = defineTokens(tokenDefinition);
+// tokens.nodeFill.toString() === "var(--nodeFill)"
+// Used in rule`` templates to get automatic CSS custom property binding
+```
+
+**Themes use `createTheme()` — identical to `@semajsx/ui`:**
+
+```tsx
+// src/themes.ts
+import { createTheme } from "@semajsx/style";
+import { tokens } from "./tokens";
+
+export const lightTheme = createTheme(tokens);
+
+export const darkTheme = createTheme(tokens, {
+  nodeFill: "#2d3748",
+  nodeStroke: "#63b3ed",
+  nodeText: "#e2e8f0",
+  edgeStroke: "#a0aec0",
+  edgeLabelBg: "#1a202c",
+  edgeLabelText: "#e2e8f0",
+  arrowFill: "#a0aec0",
+  subgraphFill: "#1a202c",
+  subgraphStroke: "#4a5568",
+  subgraphTitleBg: "#2d3748",
+  subgraphTitleText: "#e2e8f0",
+  actorFill: "#2d3748",
+  actorStroke: "#63b3ed",
+  lifelineStroke: "#4a5568",
+  activationFill: "#2d3748",
+  messageStroke: "#a0aec0",
+  blockFill: "rgba(100,100,100,0.15)",
+  blockStroke: "#4a5568",
+});
+```
+
+**Apply theme via Context — same as `<ThemeProvider>`:**
+
+```tsx
+import { inject } from "@semajsx/style";
+import { lightTheme, darkTheme } from "./themes";
+
+function MermaidProvider(props: MermaidProviderProps): JSXNode {
+  const theme = props.theme ?? "light";
+
+  inject(lightTheme);
+  if (theme === "dark") inject(darkTheme);
+
+  const renderers = { ...defaultRenderers, ...pickRenderers(props) };
+
+  return (
+    <Context provide={[MermaidRenderers, renderers]}>
+      <div class={theme === "dark" ? darkTheme : undefined}>{props.children}</div>
+    </Context>
+  );
+}
+```
+
+**Or skip MermaidProvider entirely — just use `@semajsx/ui`'s ThemeProvider + inject:**
+
+```tsx
+import { ThemeProvider } from "@semajsx/ui";
+import { inject } from "@semajsx/style";
+import { lightTheme } from "@semajsx/mermaid";
+
+// Mermaid tokens are independent CSS vars — they just work alongside UI tokens
+inject(lightTheme);
+
+<ThemeProvider theme="dark">
+  <Mermaid code={code} />
+</ThemeProvider>;
+```
+
+### 4.6 Styles — `classes()` + `rule` for SVG
+
+SVG elements support CSS class selectors. We use the same pattern as `@semajsx/ui`'s Button:
+
+```tsx
+// src/node.style.ts
+import { classes, rule, rules } from "@semajsx/style";
+import { tokens } from "./tokens";
+
+const c = classes([
+  "node",
+  "nodeRect",
+  "nodeRound",
+  "nodeCircle",
+  "nodeRhombus",
+  "nodeLabel",
+] as const);
+
+export const node = rule`${c.node} {
+  fill: ${tokens.nodeFill};
+  stroke: ${tokens.nodeStroke};
+  stroke-width: 2px;
+  transition: fill 0.2s ease, stroke 0.2s ease;
+}`;
+
+export const nodeHover = rule`${c.node}:hover {
+  filter: brightness(0.95);
+  cursor: pointer;
+}`;
+
+export const nodeRect = rule`${c.nodeRect} {
+  rx: ${tokens.nodeRadius};
+}`;
+
+export const nodeLabel = rule`${c.nodeLabel} {
+  fill: ${tokens.nodeText};
+  font-family: ${tokens.fontFamily};
+  font-size: ${tokens.fontSize};
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}`;
+
+// Export class refs for use in components
+export { c };
+```
+
+**Used in components — same as Button uses `styles.root`:**
+
+```tsx
+// src/components/rect-node.tsx
+/** @jsxImportSource @semajsx/dom */
+import * as styles from "../node.style";
+import type { NodeRenderProps } from "../types";
+
+export function RectNode(props: NodeRenderProps): JSXNode {
+  const { positioned, class: extraClass } = props;
+  const { node, x, y, width, height } = positioned;
+
+  return (
+    <g class={extraClass}>
+      <rect
+        class={[styles.node, styles.nodeRect, styles.nodeHover]}
+        x={x - width / 2}
+        y={y - height / 2}
+        width={width}
+        height={height}
+      />
+      <text class={styles.nodeLabel} x={x} y={y}>
+        {node.label}
+      </text>
+    </g>
+  );
+}
+```
+
+No hardcoded colors. All values come from tokens → CSS custom properties → automatic theme switching.
+
+### 4.7 Signal Reactivity — Deep, Not Just `code`
+
+**Level 1: Code string as signal (basic)**
+
+```tsx
+const code = signal(`graph TD; A-->B`);
+<Mermaid code={code} />;
+// code.value = `graph TD; A-->B-->C`;  // full re-parse + re-render
+```
+
+**Level 2: Graph IR as signal (efficient)**
+
+```tsx
+const graph = signal<FlowchartDiagram>({
+  direction: "TD",
+  nodes: [
+    { id: "A", label: "Start", shape: "rect" },
+    { id: "B", label: "End", shape: "round" },
+  ],
+  edges: [{ source: "A", target: "B", type: "arrow" }],
+});
+
+<Flowchart graph={graph} />;
+
+// Add a node — only re-layouts, no re-parse
+graph.update((g) => ({
+  ...g,
+  nodes: [...g.nodes, { id: "C", label: "New", shape: "circle" }],
+  edges: [...g.edges, { source: "B", target: "C", type: "arrow" }],
+}));
+```
+
+**Level 3: Computed layout (derived)**
+
+```tsx
+// Inside <Flowchart>, layout is a computed value
+function Flowchart(props: FlowchartProps, ctx: ComponentAPI): JSXNode {
+  const graphSignal = isSignal(props.graph)
+    ? props.graph
+    : signal(props.graph);
+
+  const positioned = computed([graphSignal], (g) => flowchartLayout(g));
+
+  // SVG re-renders when positioned changes
+  return (
+    <svg class={[svgRoot, props.class]} viewBox={positioned.viewBox}>
+      {positioned.nodes.map((n) => /* ... */)}
+      {positioned.edges.map((e) => /* ... */)}
+    </svg>
+  );
+}
+```
+
+This is standard SemaJSX `computed()` — no special machinery.
+
+---
+
+## 5. Diagram IR Types
+
+```typescript
+// ── Common ─────────────────────────────────────────────
+
+type DiagramType = "flowchart" | "sequence";
 type Direction = "TB" | "TD" | "BT" | "LR" | "RL";
 
-// ── Flowchart IR ───────────────────────────────────────
+// ── Flowchart ──────────────────────────────────────────
 
-interface FlowchartDiagram extends Diagram {
+interface FlowchartDiagram {
   type: "flowchart";
   direction: Direction;
   nodes: FlowNode[];
@@ -135,53 +570,46 @@ interface FlowchartDiagram extends Diagram {
 }
 
 type NodeShape =
-  | "rect" // [text]
-  | "round" // (text)
-  | "stadium" // ([text])
-  | "subroutine" // [[text]]
-  | "cylinder" // [(text)]
-  | "circle" // ((text))
-  | "asymmetric" // >text]
-  | "rhombus" // {text}
-  | "hexagon" // {{text}}
-  | "parallelogram" // [/text/]
-  | "trapezoid" // [/text\]
-  | "double-circle"; // (((text)))
+  | "rect"
+  | "round"
+  | "stadium"
+  | "subroutine"
+  | "cylinder"
+  | "circle"
+  | "asymmetric"
+  | "rhombus"
+  | "hexagon"
+  | "parallelogram"
+  | "trapezoid"
+  | "double-circle";
 
 interface FlowNode {
   id: string;
   label: string;
   shape: NodeShape;
-  class?: string; // user-defined CSS class
-  style?: string; // inline style from Mermaid
-  url?: string; // click link
+  class?: string;
+  url?: string;
 }
 
-type EdgeType =
-  | "arrow" // -->
-  | "open" // ---
-  | "dotted" // -.->
-  | "thick" // ==>
-  | "invisible"; // ~~~
+type EdgeType = "arrow" | "open" | "dotted" | "thick" | "invisible";
 
 interface FlowEdge {
-  source: string; // node id
-  target: string; // node id
+  source: string;
+  target: string;
   label?: string;
   type: EdgeType;
-  animated?: boolean;
 }
 
 interface Subgraph {
   id: string;
   label: string;
-  nodes: string[]; // node ids contained in this subgraph
+  nodes: string[];
   direction?: Direction;
 }
 
-// ── Sequence Diagram IR ────────────────────────────────
+// ── Sequence ───────────────────────────────────────────
 
-interface SequenceDiagram extends Diagram {
+interface SequenceDiagram {
   type: "sequence";
   participants: Participant[];
   messages: Message[];
@@ -194,13 +622,7 @@ interface Participant {
   type: "participant" | "actor";
 }
 
-type ArrowType =
-  | "solid" // ->>
-  | "dotted" // -->>
-  | "solidCross" // -x
-  | "dottedCross" // --x
-  | "solidOpen" // -)
-  | "dottedOpen"; // --)
+type ArrowType = "solid" | "dotted" | "solidCross" | "dottedCross" | "solidOpen" | "dottedOpen";
 
 interface Message {
   from: string;
@@ -217,19 +639,14 @@ interface Block {
   type: BlockType;
   label: string;
   messages: Message[];
-  sections?: { label: string; messages: Message[] }[]; // for alt/par
+  sections?: { label: string; messages: Message[] }[];
 }
-```
 
-### 4.2 Layout Result Types
+// ── Layout Output ──────────────────────────────────────
 
-```typescript
-interface LayoutResult {
-  width: number;
-  height: number;
-  nodes: PositionedNode[];
-  edges: PositionedEdge[];
-  subgraphs?: PositionedSubgraph[];
+interface Point {
+  x: number;
+  y: number;
 }
 
 interface PositionedNode {
@@ -242,13 +659,8 @@ interface PositionedNode {
 
 interface PositionedEdge {
   edge: FlowEdge;
-  points: Point[]; // polyline path points
+  points: Point[];
   labelPosition?: Point;
-}
-
-interface Point {
-  x: number;
-  y: number;
 }
 
 interface PositionedSubgraph {
@@ -258,298 +670,177 @@ interface PositionedSubgraph {
   width: number;
   height: number;
 }
-```
 
-### 4.3 Public Component API
-
-```tsx
-// ── Top-level Component ────────────────────────────────
-
-import { Mermaid } from "@semajsx/mermaid";
-
-// Basic usage
-<Mermaid code={`
-  graph TD
-    A[Start] --> B{Decision}
-    B -->|Yes| C[OK]
-    B -->|No| D[Cancel]
-`} />
-
-// With theme
-import { darkTheme } from "@semajsx/mermaid/themes";
-
-<Mermaid
-  code={code}
-  theme={darkTheme}
-/>
-
-// With signal (reactive)
-const code = signal(`graph TD; A-->B`);
-
-<Mermaid code={code} />
-
-// code.value = `graph TD; A-->B-->C`;  // diagram updates
-
-// With component overrides
-<Mermaid
-  code={code}
-  overrides={{
-    node: MyCustomNode,
-    edge: MyCustomEdge,
-    "node:rhombus": MyDiamondNode,   // override specific shape
-    "edge:dotted": MyDottedEdge,     // override specific edge type
-    label: MyCustomLabel,
-    arrowHead: MyCustomArrowHead,
-    subgraph: MyCustomSubgraph,
-  }}
-/>
-
-// ── Props ──────────────────────────────────────────────
-
-interface MermaidProps {
-  /** Mermaid code string (or Signal<string>) */
-  code: string | Signal<string>;
-
-  /** Theme token overrides */
-  theme?: MermaidTheme;
-
-  /** Component overrides for custom rendering */
-  overrides?: MermaidOverrides;
-
-  /** Additional class for root SVG */
-  class?: ClassValue;
-
-  /** Explicit width (default: auto from layout) */
-  width?: number | string;
-
-  /** Explicit height (default: auto from layout) */
-  height?: number | string;
-
-  /** Padding around the diagram */
-  padding?: number;
-
-  /** Callback when parsing fails */
-  onError?: (error: ParseError) => void;
-}
-```
-
-### 4.4 Override System
-
-```typescript
-// ── Override Types ─────────────────────────────────────
-
-interface MermaidOverrides {
-  // Flowchart overrides
-  node?: Component<NodeProps>;
-  edge?: Component<EdgeProps>;
-  label?: Component<LabelProps>;
-  arrowHead?: Component<ArrowHeadProps>;
-  subgraph?: Component<SubgraphProps>;
-
-  // Shape-specific node overrides (take precedence over generic `node`)
-  "node:rect"?: Component<NodeProps>;
-  "node:round"?: Component<NodeProps>;
-  "node:rhombus"?: Component<NodeProps>;
-  "node:circle"?: Component<NodeProps>;
-  "node:stadium"?: Component<NodeProps>;
-  "node:hexagon"?: Component<NodeProps>;
-  "node:cylinder"?: Component<NodeProps>;
-  // ... other shapes
-
-  // Edge-type-specific overrides
-  "edge:arrow"?: Component<EdgeProps>;
-  "edge:dotted"?: Component<EdgeProps>;
-  "edge:thick"?: Component<EdgeProps>;
-  "edge:open"?: Component<EdgeProps>;
-
-  // Sequence diagram overrides
-  participant?: Component<ParticipantProps>;
-  message?: Component<MessageProps>;
-  lifeline?: Component<LifelineProps>;
-  activation?: Component<ActivationProps>;
-  block?: Component<BlockProps>;
-}
-
-// ── Primitive Component Props ──────────────────────────
-
-interface NodeProps {
-  node: FlowNode;
-  x: number;
-  y: number;
+interface FlowchartLayout {
   width: number;
   height: number;
-  theme: MermaidThemeTokens;
-  children?: JSXNode; // label content
+  viewBox: string;
+  nodes: PositionedNode[];
+  edges: PositionedEdge[];
+  subgraphs: PositionedSubgraph[];
+}
+```
+
+---
+
+## 6. Component Props (Render Layer)
+
+```typescript
+// Props for renderable components (what custom renderers receive)
+
+interface NodeRenderProps {
+  positioned: PositionedNode;
+  class?: ClassValue;
 }
 
-interface EdgeProps {
-  edge: FlowEdge;
-  points: Point[];
-  labelPosition?: Point;
-  theme: MermaidThemeTokens;
+interface EdgeRenderProps {
+  positioned: PositionedEdge;
+  class?: ClassValue;
 }
 
-interface LabelProps {
+interface SubgraphRenderProps {
+  positioned: PositionedSubgraph;
+  children?: JSXNode;
+  class?: ClassValue;
+}
+
+interface LabelRenderProps {
   text: string;
   x: number;
   y: number;
-  theme: MermaidThemeTokens;
+  class?: ClassValue;
 }
 
-interface ArrowHeadProps {
-  type: EdgeType;
-  position: Point;
-  angle: number; // rotation angle in degrees
-  theme: MermaidThemeTokens;
-}
-
-interface SubgraphProps {
-  subgraph: Subgraph;
+// Sequence diagram render props
+interface ParticipantRenderProps {
+  participant: Participant;
   x: number;
   y: number;
   width: number;
   height: number;
-  theme: MermaidThemeTokens;
-  children?: JSXNode;
+  class?: ClassValue;
+}
+
+interface MessageRenderProps {
+  message: Message;
+  fromX: number;
+  toX: number;
+  y: number;
+  class?: ClassValue;
 }
 ```
 
-### 4.5 Theme System
+No `theme` prop — components read tokens through CSS custom properties (set by `inject()`), exactly like `@semajsx/ui` components.
 
-```typescript
-// ── Theme Tokens ───────────────────────────────────────
+---
 
-import { defineTokens, createTheme } from "@semajsx/style";
+## 7. Usage Examples
 
-const mermaidTokens = defineTokens({
-  // Node styles
-  node: {
-    fill: "#e8f4f8",
-    stroke: "#23395d",
-    strokeWidth: "2px",
-    text: "#1d1d1f",
-    fontSize: "14px",
-    fontFamily: "'Inter', sans-serif",
-    borderRadius: "8px",
-    padding: "12px 16px",
-  },
-
-  // Edge styles
-  edge: {
-    stroke: "#666",
-    strokeWidth: "2px",
-    labelBg: "#fff",
-    labelText: "#333",
-    labelFontSize: "12px",
-  },
-
-  // Arrow head
-  arrow: {
-    fill: "#666",
-  },
-
-  // Subgraph
-  subgraph: {
-    fill: "#f8f9fa",
-    stroke: "#ccc",
-    strokeWidth: "1px",
-    titleBg: "#eee",
-    titleText: "#333",
-    borderRadius: "8px",
-  },
-
-  // Sequence diagram specific
-  sequence: {
-    actorFill: "#e8f4f8",
-    actorStroke: "#23395d",
-    actorText: "#1d1d1f",
-    lifelineStroke: "#999",
-    lifelineDash: "5,5",
-    activationFill: "#d4e6f1",
-    activationStroke: "#23395d",
-    messageFill: "none",
-    messageStroke: "#333",
-    messageText: "#333",
-    blockFill: "rgba(200,200,200,0.1)",
-    blockStroke: "#aaa",
-    blockText: "#555",
-  },
-
-  // General
-  background: "transparent",
-  fontFamily: "'Inter', sans-serif",
-});
-
-// Pre-built themes
-export const lightTheme = createTheme(mermaidTokens);
-
-export const darkTheme = createTheme(mermaidTokens, {
-  node: {
-    fill: "#2d3748",
-    stroke: "#63b3ed",
-    text: "#e2e8f0",
-  },
-  edge: {
-    stroke: "#a0aec0",
-    labelBg: "#1a202c",
-    labelText: "#e2e8f0",
-  },
-  arrow: { fill: "#a0aec0" },
-  subgraph: {
-    fill: "#1a202c",
-    stroke: "#4a5568",
-    titleBg: "#2d3748",
-    titleText: "#e2e8f0",
-  },
-  background: "transparent",
-});
-
-// Users can create custom themes
-const myTheme = createTheme(mermaidTokens, {
-  node: { fill: "#fef3c7", stroke: "#f59e0b" },
-  edge: { stroke: "#f59e0b" },
-});
-```
-
-### 4.6 Usage Examples
-
-**Basic Flowchart**:
+### Basic
 
 ```tsx
 /** @jsxImportSource @semajsx/dom */
 import { Mermaid } from "@semajsx/mermaid";
+import { inject } from "@semajsx/style";
+import { lightTheme } from "@semajsx/mermaid";
+
+inject(lightTheme);
 
 const App = () => (
-  <div>
-    <h1>System Architecture</h1>
-    <Mermaid
-      code={`
-      graph TD
-        A[Client] --> B[Load Balancer]
-        B --> C[Server 1]
-        B --> D[Server 2]
-        C --> E[(Database)]
-        D --> E
-    `}
-    />
-  </div>
+  <Mermaid
+    code={`
+    graph TD
+      A[Client] --> B[Load Balancer]
+      B --> C[Server 1]
+      B --> D[Server 2]
+  `}
+  />
 );
 ```
 
-**Reactive Diagram**:
+### Dark Theme (compose with `@semajsx/ui`)
 
 ```tsx
-import { signal } from "@semajsx/signal";
-import { Mermaid } from "@semajsx/mermaid";
+import { ThemeProvider } from "@semajsx/ui";
+import { MermaidProvider } from "@semajsx/mermaid";
 
-const diagram = signal(`graph LR; A-->B`);
+<ThemeProvider theme="dark">
+  <MermaidProvider theme="dark">
+    <Mermaid code={code} />
+  </MermaidProvider>
+</ThemeProvider>;
+```
+
+### Custom Node via Context
+
+```tsx
+import { MermaidProvider } from "@semajsx/mermaid";
+import type { NodeRenderProps } from "@semajsx/mermaid";
+import * as styles from "@semajsx/mermaid/styles";
+
+const GlowNode = (props: NodeRenderProps) => {
+  const { node, x, y, width, height } = props.positioned;
+  return (
+    <g>
+      <rect
+        class={[styles.node, styles.nodeRect]}
+        x={x - width / 2}
+        y={y - height / 2}
+        width={width}
+        height={height}
+        filter="url(#glow)"
+      />
+      <text class={styles.nodeLabel} x={x} y={y}>
+        {node.label}
+      </text>
+    </g>
+  );
+};
+
+// Context-based — wraps any number of <Mermaid> descendants
+<MermaidProvider node={GlowNode}>
+  <Mermaid code={code1} />
+  <Mermaid code={code2} />
+</MermaidProvider>;
+```
+
+### Override Only Rhombus (Nested Context)
+
+```tsx
+<MermaidProvider node={DefaultNode}>
+  <Mermaid code={flowchart1} />
+
+  <MermaidProvider "node:rhombus"={FancyDiamond}>
+    <Mermaid code={flowchart2} />
+  </MermaidProvider>
+</MermaidProvider>
+```
+
+### Reactive Diagram
+
+```tsx
+import { signal, computed } from "@semajsx/signal";
+import { Flowchart } from "@semajsx/mermaid";
+
+const nodes = signal([
+  { id: "A", label: "Start", shape: "rect" as const },
+  { id: "B", label: "End", shape: "round" as const },
+]);
+
+const graph = computed([nodes], (n) => ({
+  type: "flowchart" as const,
+  direction: "TD" as const,
+  nodes: n,
+  edges: [{ source: "A", target: "B", type: "arrow" as const }],
+  subgraphs: [],
+}));
 
 const App = () => (
   <div>
-    <Mermaid code={diagram} />
+    <Flowchart graph={graph} />
     <button
       onClick={() => {
-        diagram.value = `graph LR; A-->B-->C`;
+        nodes.update((n) => [...n, { id: "C", label: "New", shape: "circle" as const }]);
       }}
     >
       Add Node
@@ -558,268 +849,45 @@ const App = () => (
 );
 ```
 
-**Custom Node Renderer**:
+### Standalone `parse()` (data only)
 
 ```tsx
-import { Mermaid } from "@semajsx/mermaid";
-import type { NodeProps } from "@semajsx/mermaid";
+import { parse } from "@semajsx/mermaid";
 
-const GlowNode = (props: NodeProps) => (
-  <g>
-    <rect
-      x={props.x - props.width / 2}
-      y={props.y - props.height / 2}
-      width={props.width}
-      height={props.height}
-      rx={12}
-      fill={props.theme.node.fill}
-      stroke={props.theme.node.stroke}
-      filter="url(#glow)"
-    />
-    <text
-      x={props.x}
-      y={props.y}
-      text-anchor="middle"
-      dominant-baseline="central"
-      fill={props.theme.node.text}
-    >
-      {props.node.label}
-    </text>
-  </g>
-);
+const result = parse(`graph TD; A-->B{Decision}-->C`);
 
-<Mermaid code={code} overrides={{ node: GlowNode }} />;
-```
-
-**Integration with @semajsx/ui Theme**:
-
-```tsx
-import { ThemeProvider } from "@semajsx/ui";
-import { Mermaid } from "@semajsx/mermaid";
-import { darkTheme } from "@semajsx/mermaid/themes";
-
-// Mermaid respects the surrounding theme context
-<ThemeProvider theme="dark">
-  <Mermaid code={code} theme={darkTheme} />
-</ThemeProvider>;
-```
-
----
-
-## 5. Implementation Details
-
-### 5.1 Parser
-
-The parser converts Mermaid text into a Diagram IR. It's a hand-written recursive descent parser (no external dependencies).
-
-**Why self-contained?**
-
-- `mermaid` npm package is ~800KB (includes D3, dagre, rendering)
-- `@mermaid-js/parser` uses Langium (~200KB), heavy for our needs
-- Our scope is limited (flowchart + sequence), so a focused parser is small (~5KB)
-
-**Parser Architecture**:
-
-```
-Mermaid code string
-      │
-  1. Tokenizer ─── produces Token[]
-      │
-  2. Parser ─────── consumes tokens, produces DiagramIR
-      │
-      ▼
-  DiagramIR
-```
-
-**Tokenizer**:
-
-```typescript
-type TokenType =
-  | "keyword" // graph, subgraph, end, participant, loop, alt, etc.
-  | "direction" // TD, TB, BT, LR, RL
-  | "arrow" // -->, ---, -.-> , ==>, ~~~ , ->>, -->>
-  | "id" // node/participant identifiers
-  | "text" // text within delimiters [text], (text), {text}, "text"
-  | "pipe" // |text| (edge labels)
-  | "open" // [ ( { < delimiters
-  | "close" // ] ) } > delimiters
-  | "semicolon" // ;
-  | "newline" // \n
-  | "colon" // :
-  | "eof";
-
-interface Token {
-  type: TokenType;
-  value: string;
-  line: number;
-  column: number;
-}
-```
-
-**Parser Functions**:
-
-```typescript
-function parse(code: string): Diagram | ParseError;
-function parseFlowchart(tokens: Token[]): FlowchartDiagram;
-function parseSequence(tokens: Token[]): SequenceDiagram;
-```
-
-**Error Handling**:
-
-```typescript
-interface ParseError {
-  message: string;
-  line: number;
-  column: number;
-  source: string; // the problematic portion of code
-}
-```
-
-### 5.2 Layout Engine
-
-The layout engine computes x, y positions for all nodes and edges.
-
-**Flowchart Layout** (simplified Sugiyama/layered graph drawing):
-
-1. **Cycle removal** - Break cycles with back-edge detection (DFS)
-2. **Layer assignment** - Assign nodes to layers (longest path method)
-3. **Ordering** - Minimize edge crossings within layers (barycenter heuristic)
-4. **Coordinate assignment** - Compute x, y positions with minimum spacing
-5. **Edge routing** - Compute polyline paths between node positions
-
-**Parameters**:
-
-```typescript
-interface LayoutOptions {
-  nodeSpacing: number; // horizontal spacing between nodes (default: 60)
-  rankSpacing: number; // vertical spacing between layers (default: 80)
-  nodeWidth: number; // default node width (default: 150)
-  nodeHeight: number; // default node height (default: 50)
-  direction: Direction; // TB, LR, etc.
-}
-```
-
-**Sequence Diagram Layout** (simpler, column-based):
-
-1. **Column assignment** - Each participant gets a column at fixed spacing
-2. **Row assignment** - Each message gets a row at fixed spacing
-3. **Block layout** - Blocks (loop/alt) span columns and rows of their content
-4. **Activation tracking** - Track activation stack per participant
-
-### 5.3 SVG Component Primitives
-
-Each visual element is a JSX component rendering SVG elements:
-
-**Node shapes**:
-
-| Shape         | SVG Element            |
-| ------------- | ---------------------- |
-| rect          | `<rect>`               |
-| round         | `<rect rx="...">`      |
-| stadium       | `<rect rx="large">`    |
-| circle        | `<circle>`             |
-| rhombus       | `<polygon>` (diamond)  |
-| hexagon       | `<polygon>` (6 points) |
-| cylinder      | `<path>` (custom)      |
-| parallelogram | `<polygon>` (skewed)   |
-
-**Edge rendering**:
-
-```typescript
-// Compute SVG path from points
-function edgePath(points: Point[], type: EdgeType): string {
-  // Generates "M x0 y0 L x1 y1 L x2 y2 ..." for straight lines
-  // Or cubic bezier for smooth curves
-}
-
-// Arrowhead as SVG marker
-<defs>
-  <marker id="arrow-normal" ...>
-    <path d="M 0 0 L 10 5 L 0 10 z" />
-  </marker>
-</defs>
-```
-
-### 5.4 Override Resolution
-
-```typescript
-function resolveComponent(
-  elementType: string, // "node", "edge", etc.
-  specificType: string, // "rect", "dotted", etc.
-  overrides: MermaidOverrides,
-  defaults: MermaidOverrides,
-): Component {
-  // 1. Check specific override: overrides["node:rect"]
-  // 2. Check generic override: overrides["node"]
-  // 3. Check specific default: defaults["node:rect"]
-  // 4. Fall back to generic default: defaults["node"]
-  const specificKey = `${elementType}:${specificType}`;
-  return (
-    overrides[specificKey] ??
-    overrides[elementType] ??
-    defaults[specificKey] ??
-    defaults[elementType]
-  );
-}
-```
-
-### 5.5 Signal Reactivity
-
-When `code` is a Signal:
-
-```typescript
-function Mermaid(props: MermaidProps) {
-  const codeValue = isSignal(props.code) ? props.code : signal(props.code);
-
-  // computed: parse + layout whenever code changes
-  const layout = computed([codeValue], (code) => {
-    const parsed = parse(code);
-    if ("message" in parsed) {
-      props.onError?.(parsed);
-      return null;
-    }
-    return computeLayout(parsed);
-  });
-
-  // Render based on computed layout
-  return (
-    <svg class={[rootStyle, props.class]} viewBox={...}>
-      {when(layout, (l) => renderDiagram(l, props.overrides, props.theme))}
-    </svg>
-  );
+if ("message" in result) {
+  console.error(result); // ParseError
+} else {
+  console.log(result.nodes); // [{id: "A", ...}, {id: "B", shape: "rhombus", ...}, ...]
+  console.log(result.edges); // [{source: "A", target: "B", type: "arrow"}, ...]
 }
 ```
 
 ---
 
-## 6. Package Structure
+## 8. Package Structure
 
 ```
 packages/mermaid/
 ├── package.json
 ├── tsconfig.json
 ├── src/
-│   ├── index.ts              # Public API exports
-│   ├── mermaid.tsx            # <Mermaid> top-level component
+│   ├── index.ts                # Public exports
+│   ├── types.ts                # All IR + render prop types
 │   │
-│   ├── ir/
-│   │   └── types.ts           # Diagram IR type definitions
+│   ├── tokens.ts               # defineTokens() — design tokens
+│   ├── themes.ts               # createTheme() — light + dark
 │   │
-│   ├── parser/
-│   │   ├── tokenizer.ts       # Mermaid tokenizer
-│   │   ├── tokenizer.test.ts
-│   │   ├── flowchart.ts       # Flowchart parser
-│   │   ├── flowchart.test.ts
-│   │   ├── sequence.ts        # Sequence diagram parser
-│   │   ├── sequence.test.ts
-│   │   └── index.ts           # parse() entry point
+│   ├── provider.tsx            # MermaidProvider (Context + inject)
+│   ├── mermaid.tsx             # <Mermaid> convenience component
+│   ├── flowchart.tsx           # <Flowchart> layout + render
+│   ├── sequence.tsx            # <Sequence> layout + render
 │   │
-│   ├── layout/
-│   │   ├── flowchart.ts       # Layered graph layout
-│   │   ├── flowchart.test.ts
-│   │   ├── sequence.ts        # Column-based layout
-│   │   ├── sequence.test.ts
-│   │   └── index.ts
+│   ├── node.style.ts           # classes() + rule for nodes
+│   ├── edge.style.ts           # classes() + rule for edges
+│   ├── subgraph.style.ts       # classes() + rule for subgraphs
+│   ├── sequence.style.ts       # classes() + rule for sequence elements
 │   │
 │   ├── components/
 │   │   ├── nodes/
@@ -830,13 +898,10 @@ packages/mermaid/
 │   │   │   ├── hexagon.tsx
 │   │   │   ├── cylinder.tsx
 │   │   │   ├── stadium.tsx
-│   │   │   └── index.ts       # Shape registry
-│   │   ├── edges/
-│   │   │   ├── edge.tsx        # Generic edge with path
-│   │   │   ├── arrow-heads.tsx # Arrowhead markers
-│   │   │   └── index.ts
-│   │   ├── labels/
-│   │   │   └── label.tsx
+│   │   │   └── index.ts        # defaultNodeRenderers map
+│   │   ├── edge.tsx
+│   │   ├── defs.tsx            # SVG <defs> (arrowheads, filters)
+│   │   ├── label.tsx
 │   │   ├── subgraph.tsx
 │   │   ├── sequence/
 │   │   │   ├── participant.tsx
@@ -845,16 +910,23 @@ packages/mermaid/
 │   │   │   ├── activation.tsx
 │   │   │   ├── block.tsx
 │   │   │   └── index.ts
-│   │   └── index.ts
+│   │   └── index.ts            # defaultRenderers
 │   │
-│   ├── themes/
-│   │   ├── tokens.ts           # Design token definitions
-│   │   ├── light.ts            # Light theme
-│   │   ├── dark.ts             # Dark theme
-│   │   └── index.ts
+│   ├── parser/
+│   │   ├── tokenizer.ts
+│   │   ├── tokenizer.test.ts
+│   │   ├── flowchart.ts
+│   │   ├── flowchart.test.ts
+│   │   ├── sequence.ts
+│   │   ├── sequence.test.ts
+│   │   └── index.ts            # parse()
 │   │
-│   └── overrides/
-│       └── types.ts            # Override type definitions
+│   └── layout/
+│       ├── flowchart.ts
+│       ├── flowchart.test.ts
+│       ├── sequence.ts
+│       ├── sequence.test.ts
+│       └── index.ts
 │
 └── examples/
     ├── basic.tsx
@@ -865,108 +937,97 @@ packages/mermaid/
 
 ---
 
-## 7. Alternatives Considered
+## 9. How Each SemaJSX Pattern Maps
 
-### 7.1 Alternative A: Wrap mermaid.js and post-process SVG
-
-**Description**: Use mermaid.js to render, then parse the output SVG and replace elements.
-
-**Pros**:
-
-- Full Mermaid syntax support immediately
-- Battle-tested parsing and layout
-
-**Cons**:
-
-- ~800KB dependency
-- Fragile: mermaid.js SVG structure changes across versions
-- Cannot control layout algorithm
-- SSR-unfriendly (requires DOM/JSDOM)
-
-**Why not chosen**: Too heavy, too fragile, defeats the purpose of fine-grained control.
-
-### 7.2 Alternative B: Use @mermaid-js/parser + custom renderer
-
-**Description**: Use mermaid's official Langium-based parser, write custom layout + rendering.
-
-**Pros**:
-
-- Official parser, full syntax support
-- Maintained by mermaid team
-
-**Cons**:
-
-- Langium runtime is ~200KB
-- Parser produces Langium CST (not clean AST), requires significant transformation
-- Tight coupling to mermaid's internal grammar changes
-- Only covers parsing, still need layout + render
-
-**Why not chosen**: Langium dependency is too heavy. CST-to-IR transformation is complex enough that writing a focused parser for 2 diagram types is simpler.
-
-### 7.3 Comparison Matrix
-
-| Criteria          | Self-contained (chosen) | Wrap mermaid.js | @mermaid-js/parser |
-| ----------------- | ----------------------- | --------------- | ------------------ |
-| Bundle size       | ~15KB                   | ~800KB          | ~200KB             |
-| Diagram coverage  | 2 types initially       | All types       | All types          |
-| Customization     | Full control            | Limited         | Medium             |
-| Maintenance       | Own parser              | Dep on mermaid  | Dep on Langium     |
-| Theme integration | Native                  | Post-process    | Native             |
-| SSR-friendly      | Yes                     | No              | Yes                |
+| SemaJSX Pattern         | How Mermaid Uses It                                              |
+| ----------------------- | ---------------------------------------------------------------- |
+| `defineTokens()`        | `tokens.ts` — all diagram visual values as CSS custom properties |
+| `createTheme()`         | `themes.ts` — light/dark presets, users create custom themes     |
+| `classes()` + `rule`    | `*.style.ts` — SVG element classes with token references         |
+| `inject()`              | `provider.tsx` — injects theme CSS on mount                      |
+| `context()`             | `MermaidRenderers` context — carries renderer components         |
+| `ctx.inject()`          | Components read renderers: `ctx.inject(MermaidRenderers)`        |
+| `<Context provide={}>`  | `<MermaidProvider>` wraps with renderer + theme context          |
+| `computed()`            | Layout derived from graph signal                                 |
+| `signal()` + `unwrap()` | Graph data can be signal or plain value                          |
+| `class` prop            | All components accept `class` for user styling                   |
+| Collocated tests        | `*.test.ts` next to source files                                 |
 
 ---
 
-## 8. Implementation Plan
+## 10. Alternatives Considered
 
-### Phase 1: Parser + IR (Core)
+### Override Props vs Context
 
-- [ ] Define IR types for flowchart and sequence diagrams
-- [ ] Implement tokenizer
-- [ ] Implement flowchart parser
-- [ ] Implement sequence diagram parser
-- [ ] Tests for all parser paths
+| Criteria              | `overrides` prop (v1 design) | Context (v2, chosen)          |
+| --------------------- | ---------------------------- | ----------------------------- |
+| SemaJSX idiom         | No (React/MUI pattern)       | Yes (`ThemeProvider` pattern) |
+| Nested composition    | Manual prop merging          | Automatic (Context cascade)   |
+| Cross-component scope | Per-instance only            | Any descendant `<Mermaid>`    |
+| Type safety           | Same                         | Same                          |
 
-### Phase 2: Layout Engine
+### Separate Theme vs Token System
 
-- [ ] Implement flowchart layout (layered graph)
-- [ ] Implement sequence diagram layout (column-based)
-- [ ] Tests for layout algorithms
-
-### Phase 3: SVG Components
-
-- [ ] Implement node shape components (rect, round, circle, rhombus, etc.)
-- [ ] Implement edge component with path computation
-- [ ] Implement arrowhead markers
-- [ ] Implement label component
-- [ ] Implement subgraph component
-- [ ] Implement sequence diagram components (participant, lifeline, message, etc.)
-
-### Phase 4: Integration
-
-- [ ] Implement `<Mermaid>` top-level component
-- [ ] Implement theme tokens and presets (light/dark)
-- [ ] Implement override system
-- [ ] Implement signal reactivity for code input
-- [ ] Integration tests
-
-### Phase 5: Polish
-
-- [ ] Error boundary and error display
-- [ ] Examples
-- [ ] Package setup (package.json, tsconfig, exports)
+| Criteria                       | Separate `MermaidTheme` (v1) | `defineTokens` + `createTheme` (v2, chosen) |
+| ------------------------------ | ---------------------------- | ------------------------------------------- |
+| Integration with `@semajsx/ui` | None, parallel system        | Composes naturally                          |
+| CSS custom properties          | No, inline values            | Yes, automatic                              |
+| Runtime switching              | Need manual re-render        | Toggle class, CSS does the rest             |
+| User customization             | Override object              | `createTheme(tokens, overrides)`            |
 
 ---
 
-## 9. Open Questions
+## 11. Implementation Plan
 
-- [ ] **Q1**: Should we support Mermaid `classDef` and `style` inline directives in the first version?
-  - **Leaning**: Yes for `classDef`, skip `style` inline for now
+### Phase 1: Foundation
+
+- [ ] Package setup (package.json, tsconfig, workspace link)
+- [ ] IR types (`types.ts`)
+- [ ] Design tokens (`tokens.ts`) + themes (`themes.ts`)
+- [ ] Style definitions (`*.style.ts`)
+- [ ] MermaidProvider + Context setup (`provider.tsx`)
+
+### Phase 2: Parser
+
+- [ ] Tokenizer
+- [ ] Flowchart parser
+- [ ] Sequence parser
+- [ ] Parser tests
+
+### Phase 3: Layout
+
+- [ ] Flowchart layout (layered graph)
+- [ ] Sequence layout (column-based)
+- [ ] Layout tests
+
+### Phase 4: Components
+
+- [ ] Node shape components (rect, round, circle, rhombus, hexagon, cylinder, stadium)
+- [ ] Edge component + arrowhead defs
+- [ ] Label + subgraph
+- [ ] Sequence components (participant, lifeline, message, activation, block)
+- [ ] Default renderer map
+
+### Phase 5: Integration
+
+- [ ] `<Flowchart>` layout component
+- [ ] `<Sequence>` layout component
+- [ ] `<Mermaid>` convenience wrapper
+- [ ] Signal reactivity (graph as signal)
+- [ ] Integration tests + examples
+
+---
+
+## 12. Open Questions
+
+- [ ] **Q1**: Should mermaid tokens be namespaced under `@semajsx/ui` tokens (as `tokens.mermaid.xxx`) or standalone?
+  - **Leaning**: Standalone — mermaid is an independent package, not coupled to `@semajsx/ui`
   - **Blocker**: No
 
-- [ ] **Q2**: Should the layout engine be a separate package (`@semajsx/layout`) for reuse?
-  - **Leaning**: Start in `@semajsx/mermaid`, extract later if needed
+- [ ] **Q2**: Should `<Flowchart>` expose `ref` for accessing the root SVG element?
+  - **Leaning**: Yes, consistent with `@semajsx/dom` ref pattern
   - **Blocker**: No
 
-- [ ] **Q3**: Should we support `click` event bindings from Mermaid syntax?
-  - **Leaning**: Yes, map to onClick props
+- [ ] **Q3**: Tree-shakeable per-diagram exports (`@semajsx/mermaid/flowchart`)?
+  - **Leaning**: Yes, separate entry points — users who only need flowchart shouldn't bundle sequence parser/layout/components
   - **Blocker**: No

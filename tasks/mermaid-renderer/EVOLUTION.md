@@ -46,16 +46,37 @@
 - Sequence: Column-based layout (each participant = column, each message = row)
 - Start with a simple built-in layout, can integrate Dagre/ELK later if needed
 
-## Design (2026-02-28)
+## Design v1 (2026-02-28)
 
-See [README.md](./README.md) for the full design document.
+Initial design with monolithic `<Mermaid>` component, `overrides` prop, and separate theme system.
 
-**Architecture**: Parser → IR → Layout → SVG Components
+**Problems identified**:
 
-**Key decisions**:
+- `overrides` prop is React/MUI pattern, not SemaJSX (should use Context + `ctx.inject()`)
+- Separate theme system instead of composing with `@semajsx/style` `defineTokens` + `createTheme`
+- No declarative JSX API (SemaJSX's terminal has `<Box>`, `<Text>` as primitives)
+- Components receive theme as prop instead of reading from Context
+- Styles don't use `classes()` + `rule` pattern
+
+## Design v2 (2026-02-28)
+
+Redesigned to follow SemaJSX idioms. See [README.md](./README.md) for the full design document.
+
+**Architecture**: Same pipeline (Parser → IR → Layout → SVG Components), but with SemaJSX-native patterns.
+
+**Key changes from v1**:
+
+1. **Context-based customization** — `<MermaidProvider>` + `ctx.inject(MermaidRenderers)` instead of `overrides` prop. Same pattern as `<ThemeProvider>`.
+2. **`defineTokens()` + `createTheme()`** — Uses existing `@semajsx/style` primitives for all visual values. No parallel theme system.
+3. **`classes()` + `rule`** — SVG elements styled via CSS classes with token references, identical to `@semajsx/ui` Button/Card.
+4. **Components read theme from CSS vars** — No `theme` prop. Tokens are CSS custom properties, injected by provider.
+5. **Two entry points** — `<Mermaid code={}>` (convenience) and `<Flowchart graph={}>` (programmatic IR). Both produce same SVG.
+6. **Signal-reactive at IR level** — `graph` prop can be `Signal<FlowchartDiagram>`, not just `Signal<string>`.
+7. **Nested Context composition** — Override renderers at any tree depth, outer providers cascade to inner.
+
+**Decisions preserved from v1**:
 
 1. Self-contained parser (no mermaid.js dependency)
-2. SVG rendering (not HTML/Canvas)
-3. Override system with shape-specific granularity (`"node:rhombus"`)
-4. Theme via `@semajsx/style` design tokens
-5. Signal reactivity via computed parse+layout
+2. SVG rendering
+3. Shape-specific granularity (`"node:rhombus"`)
+4. Flowchart + sequence diagram scope
