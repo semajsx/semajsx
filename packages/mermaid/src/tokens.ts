@@ -1,5 +1,5 @@
-import { defineTokens } from "@semajsx/style";
-import type { TokenRefs } from "@semajsx/style";
+import { createTheme, defineTokens } from "@semajsx/style";
+import type { StyleToken, TokenRefs } from "@semajsx/style";
 
 const tokenDefinition = {
   // Node
@@ -46,3 +46,9 @@ const tokenDefinition = {
 } as const;
 
 export const tokens: TokenRefs<typeof tokenDefinition> = defineTokens(tokenDefinition);
+
+/**
+ * Default mermaid theme — sets CSS custom properties on :root.
+ * Embed its __cssTemplate in an SVG <style> for self-contained rendering.
+ */
+export const defaultTheme: StyleToken = createTheme(tokens);

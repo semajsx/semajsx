@@ -6,6 +6,7 @@ import { Defs } from "./components/defs";
 import { builtinLayout } from "./layout";
 import { MermaidLayout, MermaidRenderers } from "./provider";
 import { defaultRenderers } from "./components";
+import { defaultTheme } from "./tokens";
 import type {
   SequenceProps,
   LayoutEngine,
@@ -38,6 +39,7 @@ export function Sequence(props: SequenceProps, ctx?: ComponentAPI): JSXNode {
       viewBox={positioned.viewBox}
       xmlns="http://www.w3.org/2000/svg"
     >
+      <style>{defaultTheme.__cssTemplate}</style>
       <Defs />
 
       {positioned.lifelines.map((l: PositionedLifeline) => (
