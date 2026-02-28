@@ -1,5 +1,13 @@
 # semajsx
 
+## 0.6.0
+
+### Minor Changes
+
+- [#118](https://github.com/semajsx/semajsx/pull/118) [`e88000c`](https://github.com/semajsx/semajsx/commit/e88000c59b8d257ce3cdddbbd4ccfc9c1c920180) Thanks [@github-actions](https://github.com/apps/github-actions)! - feat(ssg): improve table mobile display and use Maple Mono font
+
+- [#121](https://github.com/semajsx/semajsx/pull/121) [`9c20841`](https://github.com/semajsx/semajsx/commit/9c20841b05173686427a1b740bef85a56f8c8501) Thanks [@github-actions](https://github.com/apps/github-actions)! - SSG documentation theme fixes, island hydration improvements, and Tabs component enhancements
+
 ## 0.5.2
 
 ### Patch Changes
