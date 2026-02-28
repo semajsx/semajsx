@@ -9,6 +9,7 @@ import { SubgraphBox } from "./components/subgraph";
 import { builtinLayout } from "./layout";
 import { MermaidLayout, MermaidRenderers } from "./provider";
 import { defaultRenderers } from "./components";
+import { defaultTheme } from "./tokens";
 import type {
   FlowchartProps,
   LayoutEngine,
@@ -32,6 +33,7 @@ export function Flowchart(props: FlowchartProps, ctx?: ComponentAPI): JSXNode {
       viewBox={positioned.viewBox}
       xmlns="http://www.w3.org/2000/svg"
     >
+      <style>{defaultTheme.__cssTemplate}</style>
       <Defs />
 
       {positioned.subgraphs.map((s: PositionedSubgraph) => {

@@ -16,7 +16,6 @@ export default defineConfig({
     "src/components/steps/index.ts",
     "src/components/switch/index.ts",
     "src/components/tabs/index.ts",
-    "src/css.ts",
   ],
   format: ["esm"],
   unbundle: true,

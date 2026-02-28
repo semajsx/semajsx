@@ -11,6 +11,7 @@ import { Badge } from "@semajsx/ui/components/badge";
 import { Card } from "@semajsx/ui/components/card";
 import { Tabs, TabList, Tab, TabPanel } from "@semajsx/ui/components/tabs";
 import { Steps, Step } from "@semajsx/ui/components/steps";
+import { lightTheme } from "@semajsx/ui/theme";
 
 import type { BadgeColor } from "@semajsx/ui/components/badge";
 
@@ -262,6 +263,7 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
 
     return (
       <div class="dt-root">
+        <style>{lightTheme.__cssTemplate}</style>
         <style>{THEME_CSS}</style>
 
         {/* Navigation */}
