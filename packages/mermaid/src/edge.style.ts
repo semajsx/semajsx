@@ -58,8 +58,11 @@ export const edgeLabelBg: StyleToken = rule`${c.edgeLabelBg} {
 }`;
 
 export const arrowHead: StyleToken = rule`${c.arrowHead} {
-  fill: ${tokens.arrowFill};
-  stroke: none;
+  fill: none;
+  stroke: ${tokens.arrowFill};
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }`;
 
 export { c };
