@@ -30,7 +30,6 @@
     "./components/steps": "./src/components/steps/index.ts",
     "./components/switch": "./src/components/switch/index.ts",
     "./components/tabs": "./src/components/tabs/index.ts",
-    "./css": "./src/css.ts",
     "./theme": "./src/theme/index.ts",
     "./package.json": "./package.json"
   },
@@ -49,7 +48,6 @@
       "./components/steps": "./dist/components/steps/index.mjs",
       "./components/switch": "./dist/components/switch/index.mjs",
       "./components/tabs": "./dist/components/tabs/index.mjs",
-      "./css": "./dist/css.mjs",
       "./theme": "./dist/theme/index.mjs",
       "./package.json": "./package.json"
     }

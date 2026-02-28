@@ -38,6 +38,3 @@ export type { KbdProps } from "./components/kbd";
 
 export { Switch } from "./components/switch";
 export type { SwitchProps } from "./components/switch";
-
-// CSS (for SSG/SSR)
-export { componentCSS } from "./css";
