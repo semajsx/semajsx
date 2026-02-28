@@ -7,14 +7,16 @@ export function Defs(): JSXNode {
     <defs>
       <marker
         id="mmd-arrow"
-        viewBox="0 0 10 10"
-        refX={9}
+        viewBox="-2 -2 16 14"
+        refX={10}
         refY={5}
-        markerWidth={8}
-        markerHeight={8}
+        markerWidth={12}
+        markerHeight={12}
+        markerUnits="userSpaceOnUse"
         orient="auto"
+        overflow="visible"
       >
-        <polyline class={arrowHead} points="1,1 9,5 1,9" />
+        <polyline class={arrowHead} points="0,0 10,5 0,10" />
       </marker>
       <marker id="mmd-dot" viewBox="0 0 10 10" refX={5} refY={5} markerWidth={6} markerHeight={6}>
         <circle class={arrowHead} cx={5} cy={5} r={4} />

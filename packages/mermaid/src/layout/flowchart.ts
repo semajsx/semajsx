@@ -226,16 +226,6 @@ export function flowchartLayout(
   });
 
   // Phase 7: Edge routing
-  // Count edges per source/target to spread anchors when multiple edges share a node
-  const sourceCount = new Map<string, number>();
-  const targetCount = new Map<string, number>();
-  for (const edge of edges) {
-    sourceCount.set(edge.source, (sourceCount.get(edge.source) ?? 0) + 1);
-    targetCount.set(edge.target, (targetCount.get(edge.target) ?? 0) + 1);
-  }
-  const sourceIndex = new Map<string, number>();
-  const targetIndex = new Map<string, number>();
-
   const positionedEdges: PositionedEdge[] = edges.map((edge) => {
     const sourcePos = positions.get(edge.source);
     const targetPos = positions.get(edge.target);
@@ -246,27 +236,7 @@ export function flowchartLayout(
     const sourceSize = nodeSizes.get(edge.source)!;
     const targetSize = nodeSizes.get(edge.target)!;
 
-    // Compute anchor offsets for fan-out / fan-in
-    const sTotal = sourceCount.get(edge.source) ?? 1;
-    const sIdx = sourceIndex.get(edge.source) ?? 0;
-    sourceIndex.set(edge.source, sIdx + 1);
-
-    const tTotal = targetCount.get(edge.target) ?? 1;
-    const tIdx = targetIndex.get(edge.target) ?? 0;
-    targetIndex.set(edge.target, tIdx + 1);
-
-    const path = buildEdgePath(
-      sourcePos,
-      targetPos,
-      sourceSize,
-      targetSize,
-      isVertical,
-      opts,
-      sIdx,
-      sTotal,
-      tIdx,
-      tTotal,
-    );
+    const path = buildEdgePath(sourcePos, targetPos, sourceSize, targetSize, isVertical, opts);
 
     // Label position at midpoint
     let labelPosition;
@@ -324,15 +294,6 @@ export function flowchartLayout(
   };
 }
 
-/** Evenly spread `count` anchors across `span`, returning offset for index `i`. */
-function anchorOffset(i: number, count: number, span: number): number {
-  if (count <= 1) return 0;
-  // Use at most 60% of the node width/height to keep anchors inside
-  const usable = span * 0.6;
-  const step = usable / (count - 1);
-  return -usable / 2 + step * i;
-}
-
 function buildEdgePath(
   source: { x: number; y: number },
   target: { x: number; y: number },
@@ -340,35 +301,26 @@ function buildEdgePath(
   targetSize: Size,
   isVertical: boolean,
   opts: LayoutOptions,
-  sIdx: number = 0,
-  sTotal: number = 1,
-  tIdx: number = 0,
-  tTotal: number = 1,
 ): string {
   // Connection points at node edges
   let sx: number, sy: number, tx: number, ty: number;
 
   if (isVertical) {
-    // Spread source anchors horizontally, target anchors horizontally
-    const sOff = anchorOffset(sIdx, sTotal, sourceSize.width);
-    const tOff = anchorOffset(tIdx, tTotal, targetSize.width);
-    sx = source.x + sOff;
+    sx = source.x;
     sy = source.y + sourceSize.height / 2;
-    tx = target.x + tOff;
+    tx = target.x;
     ty = target.y - targetSize.height / 2;
 
+    // If target is above source, flip
     if (source.y > target.y) {
       sy = source.y - sourceSize.height / 2;
       ty = target.y + targetSize.height / 2;
     }
   } else {
-    // Spread source anchors vertically, target anchors vertically
-    const sOff = anchorOffset(sIdx, sTotal, sourceSize.height);
-    const tOff = anchorOffset(tIdx, tTotal, targetSize.height);
     sx = source.x + sourceSize.width / 2;
-    sy = source.y + sOff;
+    sy = source.y;
     tx = target.x - targetSize.width / 2;
-    ty = target.y + tOff;
+    ty = target.y;
 
     if (source.x > target.x) {
       sx = source.x - sourceSize.width / 2;
@@ -379,17 +331,22 @@ function buildEdgePath(
   if (opts.edgeRouting === "bezier") {
     const dist = isVertical ? Math.abs(ty - sy) : Math.abs(tx - sx);
     const offset = dist * 0.4;
-    // Straight tail length so the last segment enters the node perpendicularly
-    const tail = Math.min(8, dist * 0.15);
+    // Blend both control points symmetrically toward the opposite endpoint
+    // so the curve forms a smooth arc with natural entry/exit angles
+    const blend = 0.25;
 
     if (isVertical) {
-      const dir = ty > sy ? 1 : -1;
-      const endY = ty - dir * tail;
-      return `M ${sx} ${sy} C ${sx} ${sy + offset * dir} ${tx} ${ty - offset * dir} ${tx} ${endY} L ${tx} ${ty}`;
+      const cx1 = sx + (tx - sx) * blend;
+      const cy1 = sy + offset;
+      const cx2 = tx + (sx - tx) * blend;
+      const cy2 = ty - offset;
+      return `M ${sx} ${sy} C ${cx1} ${cy1} ${cx2} ${cy2} ${tx} ${ty}`;
     } else {
-      const dir = tx > sx ? 1 : -1;
-      const endX = tx - dir * tail;
-      return `M ${sx} ${sy} C ${sx + offset * dir} ${sy} ${tx - offset * dir} ${ty} ${endX} ${ty} L ${tx} ${ty}`;
+      const cx1 = sx + offset;
+      const cy1 = sy + (ty - sy) * blend;
+      const cx2 = tx - offset;
+      const cy2 = ty + (sy - ty) * blend;
+      return `M ${sx} ${sy} C ${cx1} ${cy1} ${cx2} ${cy2} ${tx} ${ty}`;
     }
   }
 
