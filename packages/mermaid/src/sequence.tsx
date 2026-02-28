@@ -18,9 +18,9 @@ import type {
   PositionedParticipant,
 } from "./types";
 
-export function Sequence(props: SequenceProps, ctx: ComponentAPI): JSXNode {
-  const engine: LayoutEngine = ctx.inject(MermaidLayout) ?? builtinLayout;
-  const renderers: RendererMap = ctx.inject(MermaidRenderers) ?? defaultRenderers;
+export function Sequence(props: SequenceProps, ctx?: ComponentAPI): JSXNode {
+  const engine: LayoutEngine = ctx?.inject(MermaidLayout) ?? builtinLayout;
+  const renderers: RendererMap = ctx?.inject(MermaidRenderers) ?? defaultRenderers;
 
   const graphData = unwrap(props.graph);
   const positioned = engine.sequence(graphData);

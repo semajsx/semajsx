@@ -19,9 +19,9 @@ import type {
   NodeShape,
 } from "./types";
 
-export function Flowchart(props: FlowchartProps, ctx: ComponentAPI): JSXNode {
-  const engine: LayoutEngine = ctx.inject(MermaidLayout) ?? builtinLayout;
-  const renderers: RendererMap = ctx.inject(MermaidRenderers) ?? defaultRenderers;
+export function Flowchart(props: FlowchartProps, ctx?: ComponentAPI): JSXNode {
+  const engine: LayoutEngine = ctx?.inject(MermaidLayout) ?? builtinLayout;
+  const renderers: RendererMap = ctx?.inject(MermaidRenderers) ?? defaultRenderers;
 
   const graphData = unwrap(props.graph);
   const positioned = engine.flowchart(graphData);
