@@ -79,9 +79,31 @@
         "typescript": "^5.9.3",
       },
     },
+    "packages/mermaid": {
+      "name": "@semajsx/mermaid",
+      "version": "0.1.0",
+      "dependencies": {
+        "@semajsx/core": "workspace:*",
+        "@semajsx/signal": "workspace:*",
+        "@semajsx/style": "workspace:*",
+      },
+      "devDependencies": {
+        "@semajsx/configs": "workspace:*",
+        "@semajsx/dom": "workspace:*",
+        "tsdown": "^0.20.1",
+        "typescript": "^5.9.3",
+        "vitest": "^4.0.18",
+      },
+      "peerDependencies": {
+        "@semajsx/dom": "workspace:*",
+      },
+      "optionalPeers": [
+        "@semajsx/dom",
+      ],
+    },
     "packages/semajsx": {
       "name": "semajsx",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "dependencies": {
         "ansi-escapes": "^7.2.0",
         "chalk": "^5.6.2",
@@ -587,6 +609,8 @@
     "@semajsx/dom": ["@semajsx/dom@workspace:packages/dom"],
 
     "@semajsx/logger": ["@semajsx/logger@workspace:packages/logger"],
+
+    "@semajsx/mermaid": ["@semajsx/mermaid@workspace:packages/mermaid"],
 
     "@semajsx/signal": ["@semajsx/signal@workspace:packages/signal"],
 
