@@ -60,7 +60,7 @@ export const edgeLabelBg: StyleToken = rule`${c.edgeLabelBg} {
 export const arrowHead: StyleToken = rule`${c.arrowHead} {
   fill: none;
   stroke: ${tokens.arrowFill};
-  stroke-width: 1.5;
+  stroke-width: ${tokens.edgeWidth};
   stroke-linecap: round;
   stroke-linejoin: round;
 }`;
