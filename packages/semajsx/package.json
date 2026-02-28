@@ -117,7 +117,7 @@
     }
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown && mkdir -p dist/ssg/plugins/fonts && cp ../ssg/src/plugins/docs-theme/fonts/* dist/ssg/plugins/fonts/",
     "dev": "tsdown --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
