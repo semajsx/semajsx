@@ -10,6 +10,7 @@ export const DefaultDocument: DocumentTemplate = ({
   title = "SSG Page",
   scripts,
   css,
+  styles,
 }) => (
   <html lang="en">
     <head>
@@ -19,6 +20,7 @@ export const DefaultDocument: DocumentTemplate = ({
       {css?.map((href) => (
         <link rel="stylesheet" href={href} />
       ))}
+      {styles && styles.length > 0 && <style>{styles.join("\n")}</style>}
     </head>
     <body>
       {children}

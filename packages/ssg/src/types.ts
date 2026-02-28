@@ -157,6 +157,8 @@ export interface DocumentProps {
   scripts?: RawHTML;
   /** CSS stylesheet paths */
   css?: string[];
+  /** Inline CSS collected from StyleTokens */
+  styles?: string[];
 }
 
 export type DocumentTemplate = (props: DocumentProps) => VNode;

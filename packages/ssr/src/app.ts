@@ -302,6 +302,7 @@ class AppImpl implements App {
             ? customRenderHtml({
                 html: result.html,
                 css: cssRefs,
+                styles: result.styles,
                 scripts: islandScriptEntries,
                 title: pageTitle,
                 path,
@@ -313,6 +314,7 @@ class AppImpl implements App {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${pageTitle}</title>
   ${cssRefs.map((href) => `<link rel="stylesheet" href="${href}">`).join("\n  ")}
+  ${result.styles.length > 0 ? `<style>${result.styles.join("\n")}</style>` : ""}
 </head>
 <body>
   ${result.html}
