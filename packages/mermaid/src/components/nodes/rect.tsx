@@ -13,7 +13,7 @@ export function RectNode(props: NodeRenderProps): JSXNode {
         y={-height / 2}
         width={width}
         height={height}
-        rx={10}
+        rx={8}
       />
       <text class={nodeLabel}>{node.label}</text>
     </g>

@@ -25,11 +25,11 @@ export function Edge(props: EdgeRenderProps): JSXNode {
         <g>
           <rect
             class={edgeLabelBg}
-            x={labelPosition.x - labelSize.width / 2 - 6}
-            y={labelPosition.y - labelSize.height / 2 - 3}
-            width={labelSize.width + 12}
-            height={labelSize.height + 6}
-            rx={6}
+            x={labelPosition.x - labelSize.width / 2 - 4}
+            y={labelPosition.y - labelSize.height / 2 - 2}
+            width={labelSize.width + 8}
+            height={labelSize.height + 4}
+            rx={4}
           />
           <text class={edgeLabel} x={labelPosition.x} y={labelPosition.y}>
             {edge.label}
