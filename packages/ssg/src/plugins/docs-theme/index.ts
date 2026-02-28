@@ -2,6 +2,8 @@ import { copyFile, mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import remarkGfm from "remark-gfm";
+import { Mermaid } from "@semajsx/mermaid";
+import { remarkMermaid } from "@semajsx/mermaid/remark";
 import { z } from "zod";
 import type { SSGPlugin, SSGConfig, Collection, RouteConfig } from "../../types";
 import { defineCollection } from "../../index";
@@ -72,6 +74,9 @@ export {
   Kbd,
   Switch,
 } from "./components";
+
+export { Mermaid } from "@semajsx/mermaid";
+export { remarkMermaid } from "@semajsx/mermaid/remark";
 
 // =============================================================================
 // Schemas
@@ -371,6 +376,7 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
         Avatar,
         Kbd,
         Switch,
+        Mermaid,
         ...options.mdx?.components,
       };
 
@@ -379,7 +385,7 @@ export function docsTheme(options: DocsThemeOptions): SSGPlugin[] {
         collections,
         routes,
         mdx: {
-          remarkPlugins: [remarkGfm, ...(options.mdx?.remarkPlugins ?? [])],
+          remarkPlugins: [remarkGfm, remarkMermaid, ...(options.mdx?.remarkPlugins ?? [])],
           rehypePlugins: options.mdx?.rehypePlugins,
           components: mdxComponents,
         },

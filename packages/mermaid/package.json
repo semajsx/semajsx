@@ -21,6 +21,7 @@
   "types": "./dist/index.d.mts",
   "exports": {
     ".": "./src/index.ts",
+    "./remark": "./src/remark-mermaid.ts",
     "./package.json": "./package.json"
   },
   "publishConfig": {

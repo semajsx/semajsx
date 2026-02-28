@@ -18,6 +18,21 @@ SemaJSX is a modern JSX runtime that uses **fine-grained reactivity** with signa
 - **SSR** - Server-side rendering
 - **SSG** - Static site generation
 
+## Architecture
+
+```mermaid
+graph TD
+  A[semajsx] --> B[@semajsx/core]
+  A --> C[@semajsx/signal]
+  A --> D[@semajsx/dom]
+  A --> E[@semajsx/terminal]
+  B --> C
+  D --> B
+  E --> B
+  F[@semajsx/ssr] --> D
+  G[@semajsx/ssg] --> F
+```
+
 ## Installation
 
 Install SemaJSX using your favorite package manager:
