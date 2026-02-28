@@ -331,19 +331,22 @@ function buildEdgePath(
   if (opts.edgeRouting === "bezier") {
     const dist = isVertical ? Math.abs(ty - sy) : Math.abs(tx - sx);
     const offset = dist * 0.4;
-    // Blend CP2 toward source so the arrival tangent matches the approach angle
+    // Blend both control points symmetrically toward the opposite endpoint
+    // so the curve forms a smooth arc with natural entry/exit angles
     const blend = 0.25;
 
     if (isVertical) {
+      const cx1 = sx + (tx - sx) * blend;
       const cy1 = sy + offset;
       const cx2 = tx + (sx - tx) * blend;
       const cy2 = ty - offset;
-      return `M ${sx} ${sy} C ${sx} ${cy1} ${cx2} ${cy2} ${tx} ${ty}`;
+      return `M ${sx} ${sy} C ${cx1} ${cy1} ${cx2} ${cy2} ${tx} ${ty}`;
     } else {
       const cx1 = sx + offset;
+      const cy1 = sy + (ty - sy) * blend;
       const cx2 = tx - offset;
       const cy2 = ty + (sy - ty) * blend;
-      return `M ${sx} ${sy} C ${cx1} ${sy} ${cx2} ${cy2} ${tx} ${ty}`;
+      return `M ${sx} ${sy} C ${cx1} ${cy1} ${cx2} ${cy2} ${tx} ${ty}`;
     }
   }
 
