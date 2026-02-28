@@ -1,5 +1,11 @@
 # semajsx
 
+## 0.6.1
+
+### Patch Changes
+
+- [#123](https://github.com/semajsx/semajsx/pull/123) [`e300df7`](https://github.com/semajsx/semajsx/commit/e300df7be08077b2d6c0d2fb1b4b724df81a2677) Thanks [@github-actions](https://github.com/apps/github-actions)! - Fix: Include font assets in build output for docs-theme plugin
+
 ## 0.6.0
 
 ### Minor Changes
