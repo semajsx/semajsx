@@ -131,6 +131,16 @@ batch(() => {
 Use batching when updating multiple signals at once to minimize re-renders.
 </Callout>
 
+## Reactivity Flow
+
+```mermaid
+graph LR
+  A[signal] -->|subscribe| B[computed]
+  A -->|subscribe| C[JSX binding]
+  B -->|subscribe| C
+  C -->|update| D[DOM]
+```
+
 ## Best Practices
 
 1. **Keep signals simple** - Store primitive values or immutable data
