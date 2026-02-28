@@ -551,7 +551,726 @@ This is standard SemaJSX `computed()` — no special machinery.
 
 ---
 
-## 5. Diagram IR Types
+## 5. Layout System
+
+### 5.1 Design: Same Pattern as Terminal's Yoga
+
+`@semajsx/terminal` uses Yoga to compute positions, then renders to a text buffer. Mermaid follows the identical pattern:
+
+```
+@semajsx/terminal                    @semajsx/mermaid
+─────────────────                    ────────────────
+VNode tree                           Diagram IR
+    │                                    │
+    ▼                                    ▼
+Yoga.calculateLayout()               flowchartLayout() / sequenceLayout()
+    │                                    │
+    ▼                                    ▼
+TerminalNode with x, y, w, h        PositionedNode/Edge with x, y, w, h
+    │                                    │
+    ▼                                    ▼
+writeAt(x, y, text)                  <rect x={} y={} /> <path d={} />
+(ANSI buffer)                        (SVG elements)
+```
+
+Layout is a **pure function**: IR in, positioned coordinates out. No DOM dependency, no side effects.
+
+### 5.2 Layout Engine Interface
+
+Layout is pluggable via Context, same as renderers:
+
+```typescript
+interface LayoutEngine {
+  flowchart(diagram: FlowchartDiagram, options?: LayoutOptions): FlowchartLayout;
+  sequence(diagram: SequenceDiagram, options?: LayoutOptions): SequenceLayout;
+}
+
+interface LayoutOptions {
+  /** Horizontal spacing between nodes (default: 60) */
+  nodeSpacing: number;
+  /** Vertical spacing between layers/ranks (default: 80) */
+  rankSpacing: number;
+  /** Default node width — overridden by measureText if provided (default: 150) */
+  nodeWidth: number;
+  /** Default node height (default: 50) */
+  nodeHeight: number;
+  /** Padding inside nodes around text (default: 16) */
+  nodePadding: number;
+  /** Padding around entire diagram (default: 20) */
+  diagramPadding: number;
+  /** Custom text measurement function */
+  measureText?: (text: string, fontSize: number) => { width: number; height: number };
+}
+
+// Provided via Context — same pattern as MermaidRenderers
+const MermaidLayout = context<LayoutEngine>("mermaid-layout");
+```
+
+Usage:
+
+```tsx
+// Default layout (built-in)
+<Mermaid code={code} />;
+
+// Custom layout engine via Context
+import { MermaidProvider } from "@semajsx/mermaid";
+import { dagreLayout } from "@semajsx/mermaid/layout-dagre"; // optional
+
+<MermaidProvider layout={dagreLayout}>
+  <Mermaid code={code} />
+</MermaidProvider>;
+```
+
+`<Flowchart>` reads layout engine from Context:
+
+```tsx
+function Flowchart(props: FlowchartProps, ctx: ComponentAPI): JSXNode {
+  const engine = ctx.inject(MermaidLayout) ?? builtinLayout;
+  const graphData = unwrap(props.graph);
+  const positioned = engine.flowchart(graphData, props.layoutOptions);
+  // ... render positioned data as SVG
+}
+```
+
+### 5.3 Built-in Flowchart Layout (Simplified Sugiyama)
+
+Self-contained, ~400 lines, no external dependencies. Handles ~80% of real-world flowcharts.
+
+**Algorithm — 5 phases:**
+
+```
+Phase 1: Cycle Removal
+    Input:  nodes[], edges[]
+    Output: edges[] with back-edges reversed
+    Method: DFS, mark visited/in-stack, reverse back-edges
+
+Phase 2: Layer Assignment
+    Input:  DAG (acyclic after phase 1)
+    Output: nodes[] with layer numbers
+    Method: Longest-path from sources (BFS)
+            Subgraph nodes constrained to same range
+
+Phase 3: Node Ordering Within Layers
+    Input:  layered nodes
+    Output: nodes ordered within each layer (minimized crossings)
+    Method: Barycenter heuristic, 2 passes (down then up)
+            For each node, compute average position of neighbors in adjacent layer
+            Sort layer by barycenter values
+
+Phase 4: Coordinate Assignment
+    Input:  ordered layers
+    Output: x, y for each node
+    Method: Simple fixed-grid:
+            - TB/TD: x = column × (nodeWidth + nodeSpacing)
+                     y = layer × (nodeHeight + rankSpacing)
+            - LR:    swap x/y axes
+            - Center each layer relative to widest layer
+
+Phase 5: Edge Routing
+    Input:  positioned nodes
+    Output: polyline points[] for each edge
+    Method: Source center → control points → target center
+            Edges spanning multiple layers get intermediate points
+            Avoids node overlap with simple offset
+```
+
+**Example walkthrough:**
+
+```
+Input: graph TD; A-->B; A-->C; B-->D; C-->D
+
+Phase 1: No cycles
+Phase 2: Layer 0=[A], Layer 1=[B,C], Layer 2=[D]
+Phase 3: B before C (barycenter of A=0 for both, keep original order)
+Phase 4: (TD, nodeW=150, nodeH=50, nodeSpacing=60, rankSpacing=80)
+         A:  x=105, y=45    (centered over B,C)
+         B:  x=75,  y=175
+         C:  x=285, y=175
+         D:  x=105, y=305   (centered over B,C)
+Phase 5: A→B: [(105,70), (75,150)]
+         A→C: [(105,70), (285,150)]
+         B→D: [(75,200), (105,280)]
+         C→D: [(285,200), (105,280)]
+```
+
+**Subgraph handling:**
+
+```
+1. Collect nodes belonging to each subgraph
+2. After coordinate assignment, compute bounding box around subgraph's nodes
+3. Add padding around bounding box
+4. If subgraph has own direction, apply sub-layout to contained nodes
+```
+
+### 5.4 Built-in Sequence Layout (Column-Based)
+
+Simpler than flowchart — deterministic positioning, no graph theory needed.
+
+```
+Phase 1: Column Assignment
+    Each participant → column index
+    x = index × participantSpacing
+
+Phase 2: Row Assignment
+    Each message → row index (order of appearance)
+    y = headerHeight + index × messageSpacing
+
+Phase 3: Activation Tracking
+    Per-participant stack: track activate/deactivate
+    Activation rect: x = participant.x - halfWidth
+                     y = activate message y
+                     height = deactivate message y - activate message y
+
+Phase 4: Block Layout
+    loop/alt/opt/par blocks:
+    x = min(involved participant x) - padding
+    y = first message y - padding
+    width = max(involved participant x) - min + padding*2
+    height = last message y - first message y + padding*2
+    Nested blocks: indent by nesting level
+```
+
+**Example:**
+
+```
+Input: sequenceDiagram; A->>B: Hello; B-->>A: Hi
+
+Participants: A at x=100, B at x=300
+Messages:
+  "Hello": y=120, line from x=100 to x=300, solid arrow
+  "Hi":    y=170, line from x=300 to x=100, dotted arrow
+```
+
+### 5.5 Text Measurement
+
+The hardest sub-problem. Node width depends on label text, which depends on font metrics.
+
+**Three strategies (choose via `layoutOptions.measureText`):**
+
+| Strategy                       | Accuracy | Dependency         | When to Use          |
+| ------------------------------ | -------- | ------------------ | -------------------- |
+| Character estimation (default) | ~85%     | None               | SSR, quick preview   |
+| Canvas measureText             | ~99%     | Browser Canvas API | Client-side          |
+| User-provided function         | 100%     | User's choice      | Custom fonts, server |
+
+**Default: Character estimation**
+
+```typescript
+function estimateTextSize(text: string, fontSize: number): { width: number; height: number } {
+  // Average character width ≈ 0.6 × fontSize for proportional fonts
+  const avgCharWidth = fontSize * 0.6;
+  const width = text.length * avgCharWidth;
+  const height = fontSize * 1.4; // line height
+  return { width, height };
+}
+```
+
+Node dimensions computed from text:
+
+```typescript
+function computeNodeSize(
+  node: FlowNode,
+  options: LayoutOptions,
+): { width: number; height: number } {
+  const measure = options.measureText ?? estimateTextSize;
+  const textSize = measure(node.label, 14); // 14px default font size
+  return {
+    width: Math.max(textSize.width + options.nodePadding * 2, options.nodeWidth),
+    height: Math.max(textSize.height + options.nodePadding * 2, options.nodeHeight),
+  };
+}
+```
+
+**Canvas measurement (optional):**
+
+```typescript
+import { canvasMeasure } from "@semajsx/mermaid/measure";
+
+<MermaidProvider layoutOptions={{ measureText: canvasMeasure }}>
+  <Mermaid code={code} />
+</MermaidProvider>
+```
+
+### 5.6 Layout Alternatives
+
+| Approach                   | Bundle Size | Quality               | Dependency |
+| -------------------------- | ----------- | --------------------- | ---------- |
+| Built-in Sugiyama (chosen) | ~3KB        | Good (80% of cases)   | None       |
+| dagre (@dagrejs/dagre)     | ~30KB       | Excellent             | External   |
+| ELK (elkjs)                | ~200KB      | Best (complex graphs) | External   |
+
+**Decision**: Ship built-in as default, expose `LayoutEngine` interface so dagre/ELK can be plugged in via Context without changing any component code. Future: optional `@semajsx/mermaid/layout-dagre` entry point.
+
+---
+
+## 6. Rendering Format: SVG
+
+### 6.1 Why SVG
+
+| Format              | CSS Styling                      | Events                         | Scalable         | Accessible       | SemaJSX Integration   |
+| ------------------- | -------------------------------- | ------------------------------ | ---------------- | ---------------- | --------------------- |
+| **SVG**             | Yes (`classes()` + `rule` works) | Yes (click, hover per element) | Yes (vector)     | Yes (aria, role) | Full (JSX components) |
+| Canvas              | No                               | Manual hit-testing             | Re-render needed | No               | Poor                  |
+| HTML + absolute pos | Partial                          | Yes                            | CSS transforms   | Yes              | Partial               |
+
+SVG is the only format where our `classes()` + `rule` + `tokens` pattern works natively. SVG elements accept CSS class attributes and respond to CSS custom properties.
+
+### 6.2 SVG Structure — Flowchart
+
+```svg
+<svg class="mmd-root" viewBox="0 0 400 360" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Shared definitions: arrowheads, filters -->
+  <defs>
+    <marker id="mmd-arrow" viewBox="0 0 10 10" refX="10" refY="5"
+            markerWidth="8" markerHeight="8" orient="auto-start-reverse"
+            class="mmd-arrowHead">
+      <path d="M 0 0 L 10 5 L 0 10 z" />
+    </marker>
+    <marker id="mmd-dot" viewBox="0 0 10 10" refX="5" refY="5"
+            markerWidth="6" markerHeight="6" class="mmd-arrowDot">
+      <circle cx="5" cy="5" r="4" />
+    </marker>
+  </defs>
+
+  <!-- Layer 1: Subgraphs (background) -->
+  <g class="mmd-subgraphs">
+    <g class="mmd-subgraph" transform="translate(10, 10)">
+      <rect class="mmd-subgraphBg" width="380" height="200" rx="8" />
+      <text class="mmd-subgraphTitle" x="16" y="24">Backend</text>
+    </g>
+  </g>
+
+  <!-- Layer 2: Edges (middle) -->
+  <g class="mmd-edges">
+    <g class="mmd-edge mmd-edgeArrow">
+      <path class="mmd-edgeLine"
+            d="M 200 70 L 200 150"
+            marker-end="url(#mmd-arrow)" />
+    </g>
+    <g class="mmd-edge mmd-edgeDotted">
+      <path class="mmd-edgeLine"
+            d="M 100 200 L 300 200"
+            stroke-dasharray="6,4"
+            marker-end="url(#mmd-arrow)" />
+      <!-- Edge label -->
+      <rect class="mmd-edgeLabelBg" x="170" y="188" width="60" height="20" rx="4" />
+      <text class="mmd-edgeLabel" x="200" y="202">Yes</text>
+    </g>
+  </g>
+
+  <!-- Layer 3: Nodes (foreground) -->
+  <g class="mmd-nodes">
+
+    <!-- Rect node — positioned with translate, shape in local coords -->
+    <g class="mmd-node" transform="translate(200, 45)">
+      <rect class="mmd-nodeShape mmd-nodeRect"
+            x="-75" y="-25" width="150" height="50" rx="8" />
+      <text class="mmd-nodeLabel" x="0" y="0">Client</text>
+    </g>
+
+    <!-- Rhombus node -->
+    <g class="mmd-node" transform="translate(200, 175)">
+      <polygon class="mmd-nodeShape mmd-nodeRhombus"
+               points="0,-35 75,0 0,35 -75,0" />
+      <text class="mmd-nodeLabel" x="0" y="0">Decision?</text>
+    </g>
+
+    <!-- Circle node -->
+    <g class="mmd-node" transform="translate(100, 305)">
+      <circle class="mmd-nodeShape mmd-nodeCircle" cx="0" cy="0" r="30" />
+      <text class="mmd-nodeLabel" x="0" y="0">End</text>
+    </g>
+
+  </g>
+</svg>
+```
+
+**Key structural decisions:**
+
+| Decision          | Choice                               | Why                                                                                            |
+| ----------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| Positioning       | `<g transform="translate(x,y)">`     | Local coordinates — custom renderers don't need offset math                                    |
+| Arrowheads        | SVG `<marker>` in `<defs>`           | Efficient, CSS-styleable, auto-rotates with path direction                                     |
+| Labels            | `<text>` with `text-anchor="middle"` | Simple, CSS-styleable. Future: `<foreignObject>` for HTML                                      |
+| Layer order       | Subgraphs → Edges → Nodes            | Nodes always on top of edges, subgraphs are backgrounds                                        |
+| Coordinate system | Center-origin per node               | `(0,0)` is node center. Rect: `x=-w/2, y=-h/2`. Circle: `cx=0, cy=0`. Simplest for all shapes. |
+
+### 6.3 SVG Structure — Sequence Diagram
+
+```svg
+<svg class="mmd-root" viewBox="0 0 500 350" xmlns="http://www.w3.org/2000/svg">
+  <defs><!-- same markers --></defs>
+
+  <!-- Layer 1: Lifelines (dashed vertical lines, full height) -->
+  <g class="mmd-lifelines">
+    <line class="mmd-lifeline" x1="100" y1="70" x2="100" y2="320" />
+    <line class="mmd-lifeline" x1="350" y1="70" x2="350" y2="320" />
+  </g>
+
+  <!-- Layer 2: Blocks (loop, alt, etc.) -->
+  <g class="mmd-blocks">
+    <g class="mmd-block mmd-blockLoop">
+      <rect class="mmd-blockBg" x="60" y="180" width="330" height="100" rx="4" />
+      <rect class="mmd-blockLabel" x="60" y="180" width="50" height="20" rx="4" />
+      <text class="mmd-blockLabelText" x="65" y="194">loop</text>
+    </g>
+  </g>
+
+  <!-- Layer 3: Activations (narrow rects on lifelines) -->
+  <g class="mmd-activations">
+    <rect class="mmd-activation" x="93" y="110" width="14" height="60" />
+  </g>
+
+  <!-- Layer 4: Messages (horizontal arrows between lifelines) -->
+  <g class="mmd-messages">
+    <g class="mmd-message">
+      <line class="mmd-messageLine"
+            x1="100" y1="120" x2="350" y2="120"
+            marker-end="url(#mmd-arrow)" />
+      <text class="mmd-messageText" x="225" y="112">Hello</text>
+    </g>
+    <g class="mmd-message mmd-messageDotted">
+      <line class="mmd-messageLine"
+            x1="350" y1="155" x2="100" y2="155"
+            stroke-dasharray="6,4"
+            marker-end="url(#mmd-arrow)" />
+      <text class="mmd-messageText" x="225" y="147">Hi back</text>
+    </g>
+  </g>
+
+  <!-- Layer 5: Participants (top, rendered last = on top) -->
+  <g class="mmd-participants">
+    <g class="mmd-participant" transform="translate(100, 35)">
+      <rect class="mmd-participantBox" x="-50" y="-25" width="100" height="50" rx="6" />
+      <text class="mmd-participantLabel" x="0" y="0">Alice</text>
+    </g>
+    <g class="mmd-participant" transform="translate(350, 35)">
+      <rect class="mmd-participantBox" x="-50" y="-25" width="100" height="50" rx="6" />
+      <text class="mmd-participantLabel" x="0" y="0">Bob</text>
+    </g>
+  </g>
+</svg>
+```
+
+### 6.4 CSS Styling of SVG Elements
+
+All SVG elements use CSS classes. Styled via `classes()` + `rule` + `tokens`:
+
+```tsx
+// src/node.style.ts
+import { classes, rule, rules } from "@semajsx/style";
+import { tokens } from "./tokens";
+
+const c = classes([
+  "nodeShape",
+  "nodeRect",
+  "nodeRound",
+  "nodeRhombus",
+  "nodeCircle",
+  "nodeHexagon",
+  "nodeCylinder",
+  "nodeStadium",
+  "nodeLabel",
+  "node",
+] as const);
+
+// ── Base shape ─────────────────────────────────────
+export const nodeShape = rule`${c.nodeShape} {
+  fill: ${tokens.nodeFill};
+  stroke: ${tokens.nodeStroke};
+  stroke-width: 2;
+}`;
+
+export const nodeShapeHover = rule`${c.nodeShape}:hover {
+  filter: brightness(0.95);
+  cursor: pointer;
+}`;
+
+// ── Shape variants (additional classes) ─────────────
+export const nodeRect = rule`${c.nodeRect} { rx: 8; }`;
+export const nodeRound = rule`${c.nodeRound} { rx: 20; }`;
+export const nodeStadium = rule`${c.nodeStadium} { rx: 999; }`;
+
+// ── Text ───────────────────────────────────────────
+export const nodeLabel = rule`${c.nodeLabel} {
+  fill: ${tokens.nodeText};
+  font-family: ${tokens.fontFamily};
+  font-size: ${tokens.fontSize};
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+}`;
+
+export { c };
+
+// src/edge.style.ts
+import { classes, rule } from "@semajsx/style";
+import { tokens } from "./tokens";
+
+const c = classes([
+  "edgeLine",
+  "edgeArrow",
+  "edgeDotted",
+  "edgeThick",
+  "edgeLabel",
+  "edgeLabelBg",
+  "arrowHead",
+] as const);
+
+export const edgeLine = rule`${c.edgeLine} {
+  fill: none;
+  stroke: ${tokens.edgeStroke};
+  stroke-width: 2;
+}`;
+
+export const edgeDotted = rule`${c.edgeDotted} ${c.edgeLine} {
+  stroke-dasharray: 6, 4;
+}`;
+
+export const edgeThick = rule`${c.edgeThick} ${c.edgeLine} {
+  stroke-width: 3;
+}`;
+
+export const edgeLabel = rule`${c.edgeLabel} {
+  fill: ${tokens.edgeLabelText};
+  font-family: ${tokens.fontFamily};
+  font-size: 12px;
+  text-anchor: middle;
+  dominant-baseline: central;
+}`;
+
+export const edgeLabelBg = rule`${c.edgeLabelBg} {
+  fill: ${tokens.edgeLabelBg};
+  stroke: none;
+}`;
+
+export const arrowHead = rule`${c.arrowHead} {
+  fill: ${tokens.arrowFill};
+  stroke: none;
+}`;
+
+export { c };
+```
+
+**Theme switching is automatic:** When tokens change (via `createTheme()` dark override), all SVG elements update via CSS custom property cascade. No re-render, no re-layout — just CSS.
+
+### 6.5 Node Shape Rendering
+
+Each shape is a component that renders SVG in local coordinates (center at 0,0):
+
+```tsx
+// src/components/nodes/rect.tsx
+/** @jsxImportSource @semajsx/dom */
+import * as styles from "../../node.style";
+import type { NodeRenderProps } from "../../types";
+
+export function RectNode(props: NodeRenderProps): JSXNode {
+  const { node, x, y, width, height } = props.positioned;
+  return (
+    <g class={[styles.c.node, props.class]} transform={`translate(${x}, ${y})`}>
+      <rect
+        class={[styles.nodeShape, styles.nodeRect, styles.nodeShapeHover]}
+        x={-width / 2}
+        y={-height / 2}
+        width={width}
+        height={height}
+      />
+      <text class={styles.nodeLabel}>{node.label}</text>
+    </g>
+  );
+}
+
+// src/components/nodes/rhombus.tsx
+export function RhombusNode(props: NodeRenderProps): JSXNode {
+  const { node, x, y, width, height } = props.positioned;
+  const hw = width / 2,
+    hh = height / 2;
+  return (
+    <g class={[styles.c.node, props.class]} transform={`translate(${x}, ${y})`}>
+      <polygon
+        class={[styles.nodeShape, styles.nodeShapeHover]}
+        points={`0,${-hh} ${hw},0 0,${hh} ${-hw},0`}
+      />
+      <text class={styles.nodeLabel}>{node.label}</text>
+    </g>
+  );
+}
+
+// src/components/nodes/circle.tsx
+export function CircleNode(props: NodeRenderProps): JSXNode {
+  const { node, x, y, width } = props.positioned;
+  return (
+    <g class={[styles.c.node, props.class]} transform={`translate(${x}, ${y})`}>
+      <circle class={[styles.nodeShape, styles.nodeShapeHover]} r={width / 2} />
+      <text class={styles.nodeLabel}>{node.label}</text>
+    </g>
+  );
+}
+
+// src/components/nodes/cylinder.tsx
+export function CylinderNode(props: NodeRenderProps): JSXNode {
+  const { node, x, y, width, height } = props.positioned;
+  const hw = width / 2,
+    hh = height / 2;
+  const ry = 8; // ellipse radius for cylinder cap
+  return (
+    <g class={[styles.c.node, props.class]} transform={`translate(${x}, ${y})`}>
+      <path
+        class={[styles.nodeShape, styles.nodeShapeHover]}
+        d={`M ${-hw} ${-hh + ry}
+            A ${hw} ${ry} 0 0 1 ${hw} ${-hh + ry}
+            L ${hw} ${hh - ry}
+            A ${hw} ${ry} 0 0 1 ${-hw} ${hh - ry}
+            Z`}
+      />
+      <ellipse class={styles.nodeShape} cx={0} cy={-hh + ry} rx={hw} ry={ry} />
+      <text class={styles.nodeLabel} y={ry / 2}>
+        {node.label}
+      </text>
+    </g>
+  );
+}
+```
+
+**Shape registry maps NodeShape → Component:**
+
+```typescript
+// src/components/nodes/index.ts
+const shapeMap: Record<NodeShape, Component<NodeRenderProps>> = {
+  rect: RectNode,
+  round: RoundNode,
+  stadium: StadiumNode,
+  circle: CircleNode,
+  rhombus: RhombusNode,
+  hexagon: HexagonNode,
+  cylinder: CylinderNode,
+  subroutine: SubroutineNode,
+  asymmetric: AsymmetricNode,
+  parallelogram: ParallelogramNode,
+  trapezoid: TrapezoidNode,
+  "double-circle": DoubleCircleNode,
+};
+```
+
+### 6.6 Edge Rendering
+
+```tsx
+// src/components/edge.tsx
+/** @jsxImportSource @semajsx/dom */
+import * as styles from "../edge.style";
+import type { EdgeRenderProps } from "../types";
+
+export function Edge(props: EdgeRenderProps): JSXNode {
+  const { edge, points, labelPosition } = props.positioned;
+
+  // Build SVG path from points
+  const d = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
+
+  const edgeTypeClass = {
+    arrow: styles.c.edgeArrow,
+    dotted: styles.c.edgeDotted,
+    thick: styles.c.edgeThick,
+    open: null,
+    invisible: null,
+  }[edge.type];
+
+  const markerId =
+    edge.type === "open" || edge.type === "invisible" ? undefined : "url(#mmd-arrow)";
+
+  return (
+    <g class={[edgeTypeClass, props.class]}>
+      <path class={styles.edgeLine} d={d} marker-end={markerId} />
+      {edge.label && labelPosition && (
+        <>
+          <rect
+            class={styles.edgeLabelBg}
+            x={labelPosition.x - 30}
+            y={labelPosition.y - 10}
+            width={60}
+            height={20}
+            rx={4}
+          />
+          <text class={styles.edgeLabel} x={labelPosition.x} y={labelPosition.y}>
+            {edge.label}
+          </text>
+        </>
+      )}
+    </g>
+  );
+}
+```
+
+### 6.7 How `<Flowchart>` Assembles Everything
+
+```tsx
+// src/flowchart.tsx
+/** @jsxImportSource @semajsx/dom */
+import { context, Context } from "@semajsx/core";
+import type { ComponentAPI, JSXNode } from "@semajsx/core";
+import { isSignal, unwrap, computed } from "@semajsx/signal";
+import { inject } from "@semajsx/style";
+import * as rootStyles from "./root.style";
+import { Defs } from "./components/defs";
+import { shapeMap } from "./components/nodes";
+import { Edge } from "./components/edge";
+import { SubgraphBox } from "./components/subgraph";
+import { builtinLayout } from "./layout";
+import { lightTheme } from "./themes";
+import type { FlowchartDiagram, FlowchartProps } from "./types";
+
+export function Flowchart(props: FlowchartProps, ctx: ComponentAPI): JSXNode {
+  // Inject default theme CSS (deduped — safe to call multiple times)
+  inject(lightTheme);
+
+  // Read layout engine from Context (or use built-in)
+  const engine = ctx.inject(MermaidLayout) ?? builtinLayout;
+  const renderers = ctx.inject(MermaidRenderers) ?? defaultRenderers;
+
+  // Unwrap signal or use plain value
+  const graphData = unwrap(props.graph);
+
+  // Compute layout (pure function)
+  const positioned = engine.flowchart(graphData);
+
+  return (
+    <svg
+      class={[rootStyles.svgRoot, props.class]}
+      viewBox={positioned.viewBox}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <Defs />
+
+      {/* Layer 1: Subgraphs */}
+      {positioned.subgraphs.map((s) => {
+        const Comp = renderers.subgraph ?? SubgraphBox;
+        return <Comp key={s.subgraph.id} positioned={s} />;
+      })}
+
+      {/* Layer 2: Edges */}
+      {positioned.edges.map((e) => {
+        const edgeKey = `${e.edge.source}-${e.edge.target}`;
+        const Comp = renderers[`edge:${e.edge.type}`] ?? renderers.edge ?? Edge;
+        return <Comp key={edgeKey} positioned={e} />;
+      })}
+
+      {/* Layer 3: Nodes */}
+      {positioned.nodes.map((n) => {
+        const Comp =
+          renderers[`node:${n.node.shape}`] ??
+          renderers.node ??
+          shapeMap[n.node.shape] ??
+          shapeMap.rect;
+        return <Comp key={n.node.id} positioned={n} />;
+      })}
+    </svg>
+  );
+}
+```
+
+---
+
+## 7. Diagram IR Types
 
 ```typescript
 // ── Common ─────────────────────────────────────────────
