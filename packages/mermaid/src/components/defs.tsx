@@ -7,16 +7,16 @@ export function Defs(): JSXNode {
     <defs>
       <marker
         id="mmd-arrow"
-        viewBox="0 0 12 10"
-        refX={11}
+        viewBox="0 0 10 10"
+        refX={10}
         refY={5}
-        markerWidth={7}
-        markerHeight={7}
+        markerWidth={8}
+        markerHeight={8}
         orient="auto-start-reverse"
       >
-        <path class={arrowHead} d="M 1 1.5 L 11 5 L 1 8.5 Q 3 5 1 1.5 z" />
+        <path class={arrowHead} d="M 0 0 L 10 5 L 0 10 z" />
       </marker>
-      <marker id="mmd-dot" viewBox="0 0 10 10" refX={5} refY={5} markerWidth={5} markerHeight={5}>
+      <marker id="mmd-dot" viewBox="0 0 10 10" refX={5} refY={5} markerWidth={6} markerHeight={6}>
         <circle class={arrowHead} cx={5} cy={5} r={4} />
       </marker>
     </defs>
