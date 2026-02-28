@@ -331,15 +331,19 @@ function buildEdgePath(
   if (opts.edgeRouting === "bezier") {
     const dist = isVertical ? Math.abs(ty - sy) : Math.abs(tx - sx);
     const offset = dist * 0.4;
+    // Blend CP2 toward source so the arrival tangent matches the approach angle
+    const blend = 0.25;
 
     if (isVertical) {
       const cy1 = sy + offset;
+      const cx2 = tx + (sx - tx) * blend;
       const cy2 = ty - offset;
-      return `M ${sx} ${sy} C ${sx} ${cy1} ${tx} ${cy2} ${tx} ${ty}`;
+      return `M ${sx} ${sy} C ${sx} ${cy1} ${cx2} ${cy2} ${tx} ${ty}`;
     } else {
       const cx1 = sx + offset;
       const cx2 = tx - offset;
-      return `M ${sx} ${sy} C ${cx1} ${sy} ${cx2} ${ty} ${tx} ${ty}`;
+      const cy2 = ty + (sy - ty) * blend;
+      return `M ${sx} ${sy} C ${cx1} ${sy} ${cx2} ${cy2} ${tx} ${ty}`;
     }
   }
 
