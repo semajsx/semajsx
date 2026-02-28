@@ -2,46 +2,47 @@ import { createTheme, defineTokens } from "@semajsx/style";
 import type { StyleToken, TokenRefs } from "@semajsx/style";
 
 const tokenDefinition = {
-  // Node
-  nodeFill: "#e8f4f8",
-  nodeStroke: "#23395d",
+  // Node — light primary tint with primary blue stroke
+  nodeFill: "#f0f7ff",
+  nodeStroke: "#0071e3",
   nodeText: "#1d1d1f",
-  nodeRadius: "8",
+  nodeRadius: "10",
 
-  // Edge
-  edgeStroke: "#666",
-  edgeWidth: "2",
-  edgeLabelBg: "#fff",
-  edgeLabelText: "#333",
+  // Edge — soft tertiary tones for connectors
+  edgeStroke: "#86868b",
+  edgeWidth: "1.5",
+  edgeLabelBg: "#fbfbfd",
+  edgeLabelText: "#6e6e73",
 
   // Arrow
-  arrowFill: "#666",
+  arrowFill: "#86868b",
 
   // Animation
   animatedDashArray: "5, 5",
   animatedDuration: "0.5s",
   animatedDashOffset: "-10",
 
-  // Subgraph
-  subgraphFill: "#f8f9fa",
-  subgraphStroke: "#ccc",
-  subgraphTitleBg: "#eee",
-  subgraphTitleText: "#333",
+  // Subgraph — surface background with subtle border
+  subgraphFill: "#f5f5f7",
+  subgraphStroke: "rgba(0, 0, 0, 0.08)",
+  subgraphTitleBg: "#f0f0f2",
+  subgraphTitleText: "#6e6e73",
 
-  // Sequence
-  actorFill: "#e8f4f8",
-  actorStroke: "#23395d",
-  lifelineStroke: "#999",
-  activationFill: "#d4e6f1",
-  messageStroke: "#333",
-  blockFill: "rgba(200,200,200,0.1)",
-  blockStroke: "#aaa",
-  noteBg: "#fffacd",
-  noteStroke: "#e6d800",
-  noteText: "#333",
+  // Sequence — primary-tinted actors, amber notes
+  actorFill: "#f0f7ff",
+  actorStroke: "#0071e3",
+  lifelineStroke: "#d2d2d7",
+  activationFill: "rgba(0, 113, 227, 0.08)",
+  messageStroke: "#1d1d1f",
+  blockFill: "rgba(0, 0, 0, 0.02)",
+  blockStroke: "rgba(0, 0, 0, 0.08)",
+  noteBg: "#fffbeb",
+  noteStroke: "#ff9f0a",
+  noteText: "#1d1d1f",
 
-  // General
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', sans-serif",
+  // General — system font stack matching @semajsx/ui
+  fontFamily:
+    '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   fontSize: "14",
 } as const;
 

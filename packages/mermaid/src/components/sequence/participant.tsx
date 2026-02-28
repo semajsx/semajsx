@@ -13,7 +13,7 @@ export function Participant(props: ParticipantRenderProps): JSXNode {
         y={-height / 2}
         width={width}
         height={height}
-        rx={6}
+        rx={10}
       />
       <text class={participantLabel}>{participant.label}</text>
     </g>

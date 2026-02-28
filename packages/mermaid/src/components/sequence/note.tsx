@@ -7,7 +7,7 @@ export function Note(props: NoteRenderProps): JSXNode {
   const { note, x, y, width, height } = props;
   return (
     <g class={props.class} transform={`translate(${x}, ${y})`}>
-      <rect class={noteBg} x={-width / 2} y={-height / 2} width={width} height={height} rx={4} />
+      <rect class={noteBg} x={-width / 2} y={-height / 2} width={width} height={height} rx={8} />
       <text class={noteText}>{note.text}</text>
     </g>
   );
