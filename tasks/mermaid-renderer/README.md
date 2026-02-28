@@ -17,7 +17,7 @@
 ### 1.2 Scope
 
 - **In Scope**: Flowchart + Sequence diagram parsing, layout, and rendering
-- **Out of Scope**: Class/state/ER diagrams, interactive editing, animation
+- **Out of Scope**: Class/state/ER diagrams, interactive editing
 
 ---
 
@@ -248,6 +248,7 @@ export interface RendererMap {
   "edge:arrow"?: Component<EdgeRenderProps>;
   "edge:dotted"?: Component<EdgeRenderProps>;
   "edge:thick"?: Component<EdgeRenderProps>;
+  "edge:animated"?: Component<EdgeRenderProps>;
   // Sequence diagram
   participant?: Component<ParticipantRenderProps>;
   message?: Component<MessageRenderProps>;
@@ -322,6 +323,11 @@ const tokenDefinition = {
 
   // Arrow
   arrowFill: "#666",
+
+  // Animation
+  animatedDashArray: "5, 5",
+  animatedDuration: "0.5s",
+  animatedDashOffset: "-10",
 
   // Subgraph
   subgraphFill: "#f8f9fa",
@@ -1013,6 +1019,7 @@ const c = classes([
   "edgeArrow",
   "edgeDotted",
   "edgeThick",
+  "edgeAnimated",
   "edgeLabel",
   "edgeLabelBg",
   "arrowHead",
@@ -1027,6 +1034,19 @@ export const edgeLine = rule`${c.edgeLine} {
 export const edgeDotted = rule`${c.edgeDotted} ${c.edgeLine} {
   stroke-dasharray: 6, 4;
 }`;
+
+export const edgeAnimated = rule`
+${c.edgeAnimated} ${c.edgeLine} {
+  stroke-dasharray: ${tokens.animatedDashArray};
+  animation: mmd-dash-flow ${tokens.animatedDuration} linear infinite;
+}
+
+@keyframes mmd-dash-flow {
+  to {
+    stroke-dashoffset: ${tokens.animatedDashOffset};
+  }
+}
+`;
 
 export const edgeThick = rule`${c.edgeThick} ${c.edgeLine} {
   stroke-width: 3;
@@ -1171,6 +1191,7 @@ export function Edge(props: EdgeRenderProps): JSXNode {
     arrow: styles.c.edgeArrow,
     dotted: styles.c.edgeDotted,
     thick: styles.c.edgeThick,
+    animated: styles.c.edgeAnimated,
     open: null,
     invisible: null,
   }[edge.type];
@@ -1310,7 +1331,7 @@ interface FlowNode {
   url?: string;
 }
 
-type EdgeType = "arrow" | "open" | "dotted" | "thick" | "invisible";
+type EdgeType = "arrow" | "open" | "dotted" | "thick" | "invisible" | "animated";
 
 interface FlowEdge {
   source: string;
