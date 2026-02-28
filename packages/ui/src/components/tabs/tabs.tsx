@@ -33,6 +33,19 @@ import * as styles from "./tabs.style";
 
 type ClassValue = string | StyleToken | ClassValue[] | false | null | undefined;
 
+/**
+ * Module-level state for SSR initial rendering.
+ *
+ * Set by `Tabs` before returning JSX; read by `Tab` / `TabPanel` when they
+ * render during the same synchronous (or awaited) SSR pass.  This lets the
+ * server output include the correct `aria-selected` and `hidden` attributes
+ * so the page is styled correctly before any JS loads.
+ *
+ * On the client the `ref` callback in `Tabs` immediately overwrites these
+ * attributes once the component mounts, so the initial values are harmless.
+ */
+let _ssrDefaultTab: string | undefined;
+
 export interface TabsProps {
   /** The initially active tab value */
   defaultValue: string;
@@ -69,6 +82,7 @@ export interface TabPanelProps {
 
 export function Tabs(props: TabsProps): JSXNode {
   const active = signal(props.defaultValue);
+  _ssrDefaultTab = props.defaultValue;
 
   return (
     <div
@@ -114,6 +128,13 @@ export function Tab(props: TabProps): JSXNode {
       class={[styles.trigger, styles.triggerStates, props.class]}
       role="tab"
       data-tab-value={props.value}
+      aria-selected={
+        _ssrDefaultTab !== undefined
+          ? props.value === _ssrDefaultTab
+            ? "true"
+            : "false"
+          : undefined
+      }
     >
       {props.children}
     </button>
@@ -121,8 +142,14 @@ export function Tab(props: TabProps): JSXNode {
 }
 
 export function TabPanel(props: TabPanelProps): JSXNode {
+  const hidden = _ssrDefaultTab !== undefined ? props.value !== _ssrDefaultTab : undefined;
   return (
-    <div class={[styles.panel, props.class]} role="tabpanel" data-tab-panel={props.value}>
+    <div
+      class={[styles.panel, props.class]}
+      role="tabpanel"
+      data-tab-panel={props.value}
+      hidden={hidden || undefined}
+    >
       {props.children}
     </div>
   );
