@@ -11,7 +11,6 @@ import { Badge } from "@semajsx/ui/components/badge";
 import { Card } from "@semajsx/ui/components/card";
 import { Tabs, TabList, Tab, TabPanel } from "@semajsx/ui/components/tabs";
 import { Steps, Step } from "@semajsx/ui/components/steps";
-import { componentCSS } from "@semajsx/ui/css";
 
 import type { BadgeColor } from "@semajsx/ui/components/badge";
 
@@ -221,7 +220,7 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
   // Document
   // --------------------------------------------------
   function Document(props: DocumentProps): VNode {
-    const { children, title, scripts, css } = props;
+    const { children, title, scripts, css, styles } = props;
     const defaultTitle = options.title;
     const pageTitle = title ?? defaultTitle;
     const desc = options.description ?? "";
@@ -244,6 +243,7 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
           {css?.map((href) => (
             <link key={href} rel="stylesheet" href={href} />
           ))}
+          {styles && styles.length > 0 && <style>{styles.join("\n")}</style>}
         </head>
         <body>
           {children}
@@ -262,7 +262,6 @@ export function createComponents(options: DocsThemeOptions): DocsThemeComponents
 
     return (
       <div class="dt-root">
-        <style>{componentCSS}</style>
         <style>{THEME_CSS}</style>
 
         {/* Navigation */}

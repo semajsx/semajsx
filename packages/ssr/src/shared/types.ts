@@ -68,6 +68,8 @@ export interface SSRResult {
   document?: string;
   /** Collected CSS file paths */
   css: string[];
+  /** Collected inline CSS from StyleTokens */
+  styles: string[];
   /** Collected asset file paths */
   assets: string[];
 }
@@ -282,6 +284,8 @@ export interface BuildOptions {
     html: string;
     /** CSS stylesheet paths */
     css: string[];
+    /** Inline CSS collected from StyleTokens */
+    styles: string[];
     /** Island script entries to include */
     scripts: BuildScriptEntry[];
     /** Page title */

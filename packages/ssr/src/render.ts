@@ -24,6 +24,8 @@ interface RenderContext {
   renderCache: WeakMap<VNode, string>;
   // Collected CSS file paths
   css: Set<string>;
+  // Collected inline CSS from StyleTokens
+  styles: Set<string>;
   // Collected asset file paths
   assets: Set<string>;
   // Root directory for computing component keys
@@ -109,6 +111,7 @@ export async function renderToString(
     enableHydration: !!transformIslandScript,
     renderCache: new WeakMap(),
     css: new Set(),
+    styles: new Set(),
     assets: new Set(),
     rootDir,
   };
@@ -124,6 +127,7 @@ export async function renderToString(
     islands: context.islands,
     scripts,
     css: Array.from(context.css),
+    styles: Array.from(context.styles),
     assets: Array.from(context.assets),
   };
 }
@@ -613,7 +617,7 @@ async function renderElement(vnode: VNode, context: RenderContext): Promise<stri
 
   // Handle dangerouslySetInnerHTML
   if (props.dangerouslySetInnerHTML?.__html != null) {
-    const attrs = renderAttributes(props);
+    const attrs = renderAttributes(props, context);
     return `<${tag}${attrs}>${props.dangerouslySetInnerHTML.__html}</${tag}>`;
   }
 
@@ -636,7 +640,7 @@ async function renderElement(vnode: VNode, context: RenderContext): Promise<stri
   ];
 
   // Build attributes
-  const attrs = renderAttributes(props);
+  const attrs = renderAttributes(props, context);
 
   // Self-closing tag
   if (selfClosing.includes(tag)) {
@@ -684,10 +688,10 @@ function extractRawText(vnode: JSXNode): string {
  * Resolve a class value to a string for SSR output.
  *
  * Handles strings, StyleToken objects, arrays, and falsy values.
- * Unlike the DOM version, this does NOT call inject() since CSS is
- * collected statically (via componentCSS) for SSG/SSR output.
+ * When a StyleToken is encountered, its CSS rule is collected into
+ * the render context for inclusion in the output.
  */
-function resolveClass(value: unknown): string {
+function resolveClass(value: unknown, context?: RenderContext): string {
   if (!value) {
     return "";
   }
@@ -697,11 +701,17 @@ function resolveClass(value: unknown): string {
   }
 
   if (isStyleToken(value)) {
+    if (context && value.__cssTemplate) {
+      context.styles.add(value.__cssTemplate);
+    }
     return value._ ?? "";
   }
 
   if (Array.isArray(value)) {
-    return value.map(resolveClass).filter(Boolean).join(" ");
+    return value
+      .map((v) => resolveClass(v, context))
+      .filter(Boolean)
+      .join(" ");
   }
 
   return String(value);
@@ -710,7 +720,7 @@ function resolveClass(value: unknown): string {
 /**
  * Render element attributes
  */
-function renderAttributes(props: Record<string, any>): string {
+function renderAttributes(props: Record<string, any>, context?: RenderContext): string {
   const attrs: string[] = [];
 
   for (const [key, value] of Object.entries(props)) {
@@ -764,7 +774,7 @@ function renderAttributes(props: Record<string, any>): string {
 
     // Handle class/className — resolve arrays and StyleToken objects
     if (attrName === "class") {
-      const resolved = resolveClass(attrValue);
+      const resolved = resolveClass(attrValue, context);
       if (resolved) {
         attrs.push(`class="${escapeHTML(resolved)}"`);
       }

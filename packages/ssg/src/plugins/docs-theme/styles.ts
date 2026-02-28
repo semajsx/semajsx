@@ -2,7 +2,8 @@
  * Apple-inspired theme CSS for the docs-theme plugin.
  *
  * All class names are prefixed with `dt-` to avoid collisions.
- * Component styles (Card, Callout, Badge) come from @semajsx/ui via componentCSS.
+ * Component styles (Card, Callout, Badge) from @semajsx/ui are collected automatically
+ * by the SSR renderer from StyleTokens.
  * This file contains layout, navigation, hero, typography, animations, and responsive styles.
  */
 
