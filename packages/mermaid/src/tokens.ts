@@ -9,13 +9,13 @@ const tokenDefinition = {
   nodeRadius: "8",
 
   // Edge
-  edgeStroke: "#666",
-  edgeWidth: "2",
+  edgeStroke: "#8e8e93",
+  edgeWidth: "1.5",
   edgeLabelBg: "#fff",
   edgeLabelText: "#333",
 
   // Arrow
-  arrowFill: "#666",
+  arrowFill: "#8e8e93",
 
   // Animation
   animatedDashArray: "5, 5",

@@ -19,6 +19,8 @@ export const edgeLine: StyleToken = rule`${c.edgeLine} {
   fill: none;
   stroke: ${tokens.edgeStroke};
   stroke-width: ${tokens.edgeWidth};
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }`;
 
 export const edgeDotted: StyleToken = rule`${c.edgeDotted} ${c.edgeLine} {
