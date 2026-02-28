@@ -19,8 +19,6 @@ export const edgeLine: StyleToken = rule`${c.edgeLine} {
   fill: none;
   stroke: ${tokens.edgeStroke};
   stroke-width: ${tokens.edgeWidth};
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }`;
 
 export const edgeDotted: StyleToken = rule`${c.edgeDotted} ${c.edgeLine} {
@@ -50,7 +48,6 @@ export const edgeLabel: StyleToken = rule`${c.edgeLabel} {
   fill: ${tokens.edgeLabelText};
   font-family: ${tokens.fontFamily};
   font-size: 12px;
-  font-weight: 500;
   text-anchor: middle;
   dominant-baseline: central;
 }`;
