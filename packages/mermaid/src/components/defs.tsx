@@ -4,12 +4,18 @@ import { arrowHeadClosed, dotMarker } from "../edge.style";
 import { tokens } from "../tokens";
 
 /**
- * Triangle arrow: tip at (4,0), base at (-2,+/-4), centroid at (0,0).
- * refX=4 (tip) so the arrow tip touches the node border.
- * The filled triangle covers the line behind it, so visually the edge
- * ends at the centroid. Tip angle: 2*atan(4/6) = 67 deg.
+ * Arrow markers follow xyflow conventions:
+ * - viewBox "-10 -10 20 20", tip at origin (0,0)
+ * - refX=0 so the arrow tip aligns with the path endpoint
+ * - markerUnits="strokeWidth" for automatic scaling
+ *
+ * Closed arrow: polyline "-5,-4 0,0 -5,4 -5,-4" (filled triangle)
+ * Open arrow:   polyline "-5,-4 0,0 -5,4"        (chevron)
  */
-const ARROW_PATH = "M 4 0 L -2 -4 L -2 4 Z";
+const ARROW_CLOSED_POINTS = "-5,-4 0,0 -5,4 -5,-4";
+
+/** Dot marker radius in marker coordinate space. */
+const DOT_RADIUS = 4;
 
 export function Defs(): JSXNode {
   return (
@@ -31,46 +37,56 @@ export function Defs(): JSXNode {
         />
       </pattern>
 
-      {/* Arrow — filled triangle with rounded corners */}
+      {/* Arrow — filled triangle, tip at origin */}
       <marker
         id="mmd-arrow"
         viewBox="-10 -10 20 20"
-        refX={4}
+        refX={0}
         refY={0}
         markerWidth={12.5}
         markerHeight={12.5}
         markerUnits="strokeWidth"
         orient="auto-start-reverse"
       >
-        <path class={arrowHeadClosed} d={ARROW_PATH} />
+        <polyline
+          class={arrowHeadClosed}
+          points={ARROW_CLOSED_POINTS}
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
       </marker>
 
       {/* Arrow filled — identical, kept for edge-type mapping */}
       <marker
         id="mmd-arrow-filled"
         viewBox="-10 -10 20 20"
-        refX={4}
+        refX={0}
         refY={0}
         markerWidth={12.5}
         markerHeight={12.5}
         markerUnits="strokeWidth"
         orient="auto-start-reverse"
       >
-        <path class={arrowHeadClosed} d={ARROW_PATH} />
+        <polyline
+          class={arrowHeadClosed}
+          points={ARROW_CLOSED_POINTS}
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
       </marker>
 
-      {/* Dot endpoint — hollow circle, stays at geometric boundary */}
+      {/* Dot endpoint — hollow circle, center at origin, refX pushes it out */}
       <marker
         id="mmd-dot"
         viewBox="-10 -10 20 20"
-        refX={2.5}
+        refX={0}
         refY={0}
         markerWidth={8}
         markerHeight={8}
         markerUnits="strokeWidth"
         orient="auto"
       >
-        <circle class={dotMarker} cx={0} cy={0} r={4} />
+        <circle class={dotMarker} cx={0} cy={0} r={DOT_RADIUS} />
       </marker>
     </defs>
   );
