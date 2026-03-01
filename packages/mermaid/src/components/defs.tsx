@@ -1,10 +1,29 @@
 /** @jsxImportSource @semajsx/dom */
 import type { JSXNode } from "@semajsx/core";
-import { arrowHead, arrowHeadClosed } from "../edge.style";
+import { arrowHead, arrowHeadClosed, dotMarker } from "../edge.style";
+import { tokens } from "../tokens";
 
 export function Defs(): JSXNode {
   return (
     <defs>
+      {/* Grid dot background pattern */}
+      <pattern
+        id="mmd-grid"
+        x={0}
+        y={0}
+        width={tokens.gridDotGap}
+        height={tokens.gridDotGap}
+        patternUnits="userSpaceOnUse"
+      >
+        <circle
+          cx={tokens.gridDotGap}
+          cy={tokens.gridDotGap}
+          r={tokens.gridDotRadius}
+          fill={tokens.gridDotColor}
+        />
+      </pattern>
+
+      {/* Open arrow — outline triangle with rounded corners */}
       <marker
         id="mmd-arrow"
         viewBox="-10 -10 20 20"
@@ -15,8 +34,10 @@ export function Defs(): JSXNode {
         markerUnits="strokeWidth"
         orient="auto-start-reverse"
       >
-        <polyline class={arrowHead} points="-5,-4 0,0 -5,4" />
+        <path class={arrowHead} d="M -5 -4 L 0 0 L -5 4 Z" />
       </marker>
+
+      {/* Filled arrow — solid triangle with rounded corners */}
       <marker
         id="mmd-arrow-filled"
         viewBox="-10 -10 20 20"
@@ -27,8 +48,10 @@ export function Defs(): JSXNode {
         markerUnits="strokeWidth"
         orient="auto-start-reverse"
       >
-        <polyline class={arrowHeadClosed} points="-5,-4 0,0 -5,4 -5,-4" />
+        <path class={arrowHeadClosed} d="M -5 -4 L 0 0 L -5 4 Z" />
       </marker>
+
+      {/* Dot endpoint — hollow circle */}
       <marker
         id="mmd-dot"
         viewBox="-10 -10 20 20"
@@ -39,7 +62,7 @@ export function Defs(): JSXNode {
         markerUnits="strokeWidth"
         orient="auto"
       >
-        <circle class={arrowHeadClosed} cx={0} cy={0} r={4} />
+        <circle class={dotMarker} cx={0} cy={0} r={4} />
       </marker>
     </defs>
   );

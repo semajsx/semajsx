@@ -26,4 +26,6 @@ export const darkTheme: StyleToken = createTheme(tokens, {
   noteBg: "#4a4528",
   noteStroke: "#b8a900",
   noteText: "#e2e8f0",
+  bgColor: "#1a202c",
+  gridDotColor: "rgba(255, 255, 255, 0.08)",
 });

@@ -13,6 +13,7 @@ const EDGE_CLASSES = [
   "edgeLabelBg",
   "arrowHead",
   "arrowHeadClosed",
+  "dotMarker",
 ] as const;
 
 const c: ClassRefs<typeof EDGE_CLASSES> = classes(EDGE_CLASSES);
@@ -21,6 +22,8 @@ export const edgeLine: StyleToken = rule`${c.edgeLine} {
   fill: none;
   stroke: ${tokens.edgeStroke};
   stroke-width: ${tokens.edgeWidth};
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }`;
 
 export const edgeInteraction: StyleToken = rule`${c.edgeInteraction} {
@@ -76,9 +79,15 @@ export const arrowHead: StyleToken = rule`${c.arrowHead} {
 export const arrowHeadClosed: StyleToken = rule`${c.arrowHeadClosed} {
   fill: ${tokens.arrowFill};
   stroke: ${tokens.arrowFill};
-  stroke-width: 1;
+  stroke-width: 1.5;
   stroke-linecap: round;
   stroke-linejoin: round;
+}`;
+
+export const dotMarker: StyleToken = rule`${c.dotMarker} {
+  fill: ${tokens.bgColor};
+  stroke: ${tokens.edgeStroke};
+  stroke-width: 1.5;
 }`;
 
 export { c };

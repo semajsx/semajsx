@@ -23,9 +23,12 @@ export const nodeShape: StyleToken = rule`${c.nodeShape} {
   stroke-width: ${tokens.edgeWidth};
 }`;
 
-export const nodeShapeHover: StyleToken = rule`${c.nodeShape}:hover {
-  filter: brightness(0.95);
+export const nodeShapeHover: StyleToken = rule`${c.nodeShape} {
+  transition: filter 0.15s ease;
   cursor: pointer;
+}
+${c.nodeShape}:hover {
+  filter: brightness(0.93);
 }`;
 
 export const nodeLabel: StyleToken = rule`${c.nodeLabel} {
