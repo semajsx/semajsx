@@ -18,9 +18,9 @@ const tokenDefinition = {
   arrowFill: "#666",
 
   // Animation
-  animatedDashArray: "5, 5",
+  animatedDashArray: "5",
   animatedDuration: "0.5s",
-  animatedDashOffset: "-10",
+  animatedDashOffset: "10",
 
   // Subgraph
   subgraphFill: "#f8f9fa",

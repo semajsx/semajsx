@@ -1,6 +1,6 @@
 /** @jsxImportSource @semajsx/dom */
 import type { JSXNode } from "@semajsx/core";
-import { c, edgeLine, edgeLabel, edgeLabelBg } from "../edge.style";
+import { c, edgeLine, edgeInteraction, edgeLabel, edgeLabelBg } from "../edge.style";
 import type { EdgeRenderProps } from "../types";
 
 export function Edge(props: EdgeRenderProps): JSXNode {
@@ -16,11 +16,16 @@ export function Edge(props: EdgeRenderProps): JSXNode {
   }[edge.type];
 
   const markerId =
-    edge.type === "open" || edge.type === "invisible" ? undefined : "url(#mmd-arrow)";
+    edge.type === "open" || edge.type === "invisible"
+      ? undefined
+      : edge.type === "thick"
+        ? "url(#mmd-arrow-filled)"
+        : "url(#mmd-arrow)";
 
   return (
     <g class={[edgeTypeClass, props.class]}>
       <path class={edgeLine} d={path} marker-end={markerId} />
+      <path class={edgeInteraction} d={path} />
       {edge.label && labelPosition && labelSize ? (
         <g>
           <rect
