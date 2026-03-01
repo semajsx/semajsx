@@ -118,9 +118,9 @@ import { Flowchart } from "@semajsx/mermaid";
       { id: "D", label: "Server 2", shape: "rect" },
     ],
     edges: [
-      { source: "A", target: "B", type: "arrow" },
-      { source: "B", target: "C", type: "arrow" },
-      { source: "B", target: "D", type: "arrow" },
+      { source: "A", target: "B", lineStyle: "solid", sourceMarker: "none", targetMarker: "arrow" },
+      { source: "B", target: "C", lineStyle: "solid", sourceMarker: "none", targetMarker: "arrow" },
+      { source: "B", target: "D", lineStyle: "solid", sourceMarker: "none", targetMarker: "arrow" },
     ],
   }}
 />;
@@ -202,8 +202,8 @@ export interface RendererMap {
   "node:stadium"?: Component<NodeRenderProps>;
   "node:hexagon"?: Component<NodeRenderProps>;
   "node:cylinder"?: Component<NodeRenderProps>;
-  // Edge-type-specific overrides
-  "edge:arrow"?: Component<EdgeRenderProps>;
+  // Edge-line-style-specific overrides
+  "edge:solid"?: Component<EdgeRenderProps>;
   "edge:dotted"?: Component<EdgeRenderProps>;
   "edge:thick"?: Component<EdgeRenderProps>;
   // Sequence diagram
@@ -473,6 +473,8 @@ const c = classes([
   "edgeLabelBg",
   "arrowHead",
   "arrowHeadClosed",
+  "dotMarker",
+  "crossMarker",
 ] as const);
 
 export const edgeLine = rule`${c.edgeLine} {
@@ -533,13 +535,28 @@ export const arrowHead = rule`${c.arrowHead} {
   stroke-linejoin: round;
 }`;
 
-// Closed/filled arrow — used for thick edges and dot marker
+// Closed/filled arrow — used for thick edges
 export const arrowHeadClosed = rule`${c.arrowHeadClosed} {
   fill: ${tokens.arrowFill};
   stroke: ${tokens.arrowFill};
-  stroke-width: 1;
+  stroke-width: 1.5;
   stroke-linecap: round;
   stroke-linejoin: round;
+}`;
+
+// Dot marker — hollow circle
+export const dotMarker = rule`${c.dotMarker} {
+  fill: ${tokens.bgColor};
+  stroke: ${tokens.edgeStroke};
+  stroke-width: 1.5;
+}`;
+
+// Cross marker — X mark
+export const crossMarker = rule`${c.crossMarker} {
+  fill: none;
+  stroke: ${tokens.edgeStroke};
+  stroke-width: 2;
+  stroke-linecap: round;
 }`;
 
 export { c };
@@ -566,7 +583,9 @@ const graph = signal<FlowchartDiagram>({
     { id: "A", label: "Start", shape: "rect" },
     { id: "B", label: "End", shape: "round" },
   ],
-  edges: [{ source: "A", target: "B", type: "arrow" }],
+  edges: [
+    { source: "A", target: "B", lineStyle: "solid", sourceMarker: "none", targetMarker: "arrow" },
+  ],
 });
 
 <Flowchart graph={graph} />;
@@ -575,7 +594,10 @@ const graph = signal<FlowchartDiagram>({
 graph.update((g) => ({
   ...g,
   nodes: [...g.nodes, { id: "C", label: "New", shape: "circle" }],
-  edges: [...g.edges, { source: "B", target: "C", type: "arrow" }],
+  edges: [
+    ...g.edges,
+    { source: "B", target: "C", lineStyle: "solid", sourceMarker: "none", targetMarker: "arrow" },
+  ],
 }));
 ```
 
@@ -910,12 +932,19 @@ SVG is the only format where our `classes()` + `rule` + `tokens` pattern works n
             class="mmd-arrowHeadClosed">
       <polyline points="-5,-4 0,0 -5,4 -5,-4" />
     </marker>
-    <!-- Dot marker: for open edges (no arrow) -->
+    <!-- Dot marker: hollow circle endpoint -->
     <marker id="mmd-dot" viewBox="-10 -10 20 20" refX="0" refY="0"
             markerWidth="8" markerHeight="8"
-            markerUnits="strokeWidth" orient="auto"
-            class="mmd-arrowHeadClosed">
+            markerUnits="strokeWidth" orient="auto-start-reverse"
+            class="mmd-dotMarker">
       <circle cx="0" cy="0" r="4" />
+    </marker>
+    <!-- Cross marker: X mark endpoint -->
+    <marker id="mmd-cross" viewBox="-10 -10 20 20" refX="0" refY="0"
+            markerWidth="10" markerHeight="10"
+            markerUnits="strokeWidth" orient="auto-start-reverse"
+            class="mmd-crossMarker">
+      <path d="M -4,-4 L 4,4 M -4,4 L 4,-4" />
     </marker>
   </defs>
 
@@ -1154,38 +1183,44 @@ const shapeMap: Record<NodeShape, Component<NodeRenderProps>> = {
 ```tsx
 // src/components/edge.tsx
 /** @jsxImportSource @semajsx/dom */
-import * as styles from "../edge.style";
-import type { EdgeRenderProps } from "../types";
+import { c, edgeLine, edgeInteraction, edgeLabel, edgeLabelBg } from "../edge.style";
+import type { EdgeRenderProps, EdgeMarker, EdgeLineStyle } from "../types";
+
+const LINE_STYLE_CLASS: Record<EdgeLineStyle, string | undefined> = {
+  solid: c.edgeArrow,
+  dotted: c.edgeDotted,
+  thick: c.edgeThick,
+};
+
+const MARKER_URL: Record<EdgeMarker, string | undefined> = {
+  arrow: "url(#mmd-arrow)",
+  dot: "url(#mmd-dot)",
+  cross: "url(#mmd-cross)",
+  none: undefined,
+};
 
 export function Edge(props: EdgeRenderProps): JSXNode {
   const { edge, path, labelPosition, labelSize } = props.positioned;
 
-  const edgeTypeClass = {
-    arrow: styles.c.edgeArrow,
-    dotted: styles.c.edgeDotted,
-    thick: styles.c.edgeThick,
-    animated: styles.c.edgeAnimated,
-    open: null,
-    invisible: null,
-  }[edge.type];
-
-  const markerId =
-    edge.type === "open" || edge.type === "invisible" ? undefined : "url(#mmd-arrow)";
+  const lineClass = LINE_STYLE_CLASS[edge.lineStyle];
+  const markerEnd = MARKER_URL[edge.targetMarker];
+  const markerStart = MARKER_URL[edge.sourceMarker];
 
   return (
-    <g class={[edgeTypeClass, props.class]}>
-      <path class={styles.edgeLine} d={path} marker-end={markerId} />
+    <g class={[lineClass, props.class]}>
+      <path class={edgeLine} d={path} marker-start={markerStart} marker-end={markerEnd} />
+      <path class={edgeInteraction} d={path} />
       {edge.label && labelPosition && labelSize && (
         <>
           <rect
-            class={styles.edgeLabelBg}
+            class={edgeLabelBg}
             x={labelPosition.x - labelSize.width / 2 - 4}
             y={labelPosition.y - labelSize.height / 2 - 2}
             width={labelSize.width + 8}
             height={labelSize.height + 4}
             rx={4}
           />
-          <text class={styles.edgeLabel} x={labelPosition.x} y={labelPosition.y}>
+          <text class={edgeLabel} x={labelPosition.x} y={labelPosition.y}>
             {edge.label}
           </text>
         </>
@@ -1200,24 +1235,65 @@ export function Edge(props: EdgeRenderProps): JSXNode {
 ```tsx
 // src/components/defs.tsx
 /** @jsxImportSource @semajsx/dom */
-import * as edgeStyles from "../edge.style";
+import { arrowHeadClosed, dotMarker, crossMarker } from "../edge.style";
+import { tokens } from "../tokens";
+
+/**
+ * Arrow markers follow xyflow conventions:
+ * - viewBox "-10 -10 20 20", tip at origin (0,0)
+ * - refX=0 so the arrow tip aligns with the path endpoint
+ * - markerUnits="strokeWidth" for automatic scaling
+ * - orient="auto-start-reverse" enables dual-end usage via marker-start
+ */
 
 export function Defs(): JSXNode {
   return (
     <defs>
+      {/* Arrow — filled triangle, tip at origin */}
       <marker
         id="mmd-arrow"
-        viewBox="0 0 10 10"
-        refX={10}
-        refY={5}
-        markerWidth={8}
-        markerHeight={8}
+        viewBox="-10 -10 20 20"
+        refX={0}
+        refY={0}
+        markerWidth={12.5}
+        markerHeight={12.5}
+        markerUnits="strokeWidth"
         orient="auto-start-reverse"
       >
-        <path class={edgeStyles.arrowHead} d="M 0 0 L 10 5 L 0 10 z" />
+        <polyline
+          class={arrowHeadClosed}
+          points="-5,-4 0,0 -5,4 -5,-4"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
       </marker>
-      <marker id="mmd-dot" viewBox="0 0 10 10" refX={5} refY={5} markerWidth={6} markerHeight={6}>
-        <circle class={edgeStyles.arrowHead} cx={5} cy={5} r={4} />
+
+      {/* Dot endpoint — hollow circle */}
+      <marker
+        id="mmd-dot"
+        viewBox="-10 -10 20 20"
+        refX={0}
+        refY={0}
+        markerWidth={8}
+        markerHeight={8}
+        markerUnits="strokeWidth"
+        orient="auto-start-reverse"
+      >
+        <circle class={dotMarker} cx={0} cy={0} r={4} />
+      </marker>
+
+      {/* Cross endpoint — X mark */}
+      <marker
+        id="mmd-cross"
+        viewBox="-10 -10 20 20"
+        refX={0}
+        refY={0}
+        markerWidth={10}
+        markerHeight={10}
+        markerUnits="strokeWidth"
+        orient="auto-start-reverse"
+      >
+        <path class={crossMarker} d="M -4,-4 L 4,4 M -4,4 L 4,-4" />
       </marker>
     </defs>
   );
@@ -1320,7 +1396,7 @@ export function Flowchart(props: FlowchartProps, ctx: ComponentAPI): JSXNode {
       {/* Layer 2: Edges */}
       {positioned.edges.map((e) => {
         const edgeKey = `${e.edge.source}-${e.edge.target}`;
-        const Comp = renderers[`edge:${e.edge.type}`] ?? renderers.edge ?? Edge;
+        const Comp = renderers[`edge:${e.edge.lineStyle}`] ?? renderers.edge ?? Edge;
         return <Comp key={edgeKey} positioned={e} />;
       })}
 
@@ -1348,37 +1424,19 @@ Animated edges use CSS `stroke-dasharray` + `stroke-dashoffset` animation (same 
 
 ### 7.2 How to Trigger
 
-Animated edges are a **programmatic-only** feature. The Mermaid DSL doesn't define an "animated" edge type. There are two ways to use them:
-
-**Way 1: Programmatic IR (explicit type)**
-
-```tsx
-<Flowchart
-  graph={{
-    direction: "TD",
-    nodes: [
-      { id: "A", label: "Source", shape: "rect" },
-      { id: "B", label: "Target", shape: "rect" },
-    ],
-    edges: [{ source: "A", target: "B", type: "animated" }],
-  }}
-/>
-```
-
-**Way 2: CSS class on any edge (more flexible)**
-
-Any edge can be animated by adding the `edgeAnimated` class via a custom edge renderer:
+Animated edges are a **styling concern**, not a semantic edge type. Apply the `edgeAnimated` class via a custom edge renderer:
 
 ```tsx
 import * as styles from "@semajsx/mermaid/styles";
+import { Edge } from "@semajsx/mermaid";
 
 const AnimatedEdge = (props: EdgeRenderProps) => {
   // Delegate to default Edge but inject animated class
   return <Edge {...props} class={styles.c.edgeAnimated} />;
 };
 
-// Animate all arrow edges
-<MermaidProvider "edge:arrow"={AnimatedEdge}>
+// Animate all solid-line edges
+<MermaidProvider "edge:solid"={AnimatedEdge}>
   <Mermaid code={code} />
 </MermaidProvider>
 ```
@@ -1444,14 +1502,42 @@ interface FlowNode {
   url?: string;
 }
 
-type EdgeType = "arrow" | "open" | "dotted" | "thick" | "invisible" | "animated";
+type EdgeLineStyle = "solid" | "dotted" | "thick";
+type EdgeMarker = "arrow" | "dot" | "cross" | "none";
 
 interface FlowEdge {
   source: string;
   target: string;
   label?: string;
-  type: EdgeType;
+  lineStyle: EdgeLineStyle;
+  sourceMarker: EdgeMarker;
+  targetMarker: EdgeMarker;
 }
+
+// Edge syntax → IR mapping:
+//
+// | Syntax   | lineStyle | sourceMarker | targetMarker |
+// |----------|-----------|--------------|--------------|
+// | -->      | solid     | none         | arrow        |
+// | ---      | solid     | none         | none         |
+// | --o      | solid     | none         | dot          |
+// | --x      | solid     | none         | cross        |
+// | <-->     | solid     | arrow        | arrow        |
+// | o--o     | solid     | dot          | dot          |
+// | x--x     | solid     | cross        | cross        |
+// | o-->     | solid     | dot          | arrow        |
+// | -.->     | dotted    | none         | arrow        |
+// | -.-      | dotted    | none         | none         |
+// | -.-o     | dotted    | none         | dot          |
+// | -.-x     | dotted    | none         | cross        |
+// | <-.->    | dotted    | arrow        | arrow        |
+// | o-.-o    | dotted    | dot          | dot          |
+// | ==>      | thick     | none         | arrow        |
+// | ===      | thick     | none         | none         |
+// | ==o      | thick     | none         | dot          |
+// | ==x      | thick     | none         | cross        |
+// | <==>     | thick     | arrow        | arrow        |
+// | o==o     | thick     | dot          | dot          |
 
 interface Subgraph {
   id: string;
@@ -1736,7 +1822,15 @@ const graph = computed([nodes], (n) => ({
   type: "flowchart" as const,
   direction: "TD" as const,
   nodes: n,
-  edges: [{ source: "A", target: "B", type: "arrow" as const }],
+  edges: [
+    {
+      source: "A",
+      target: "B",
+      lineStyle: "solid" as const,
+      sourceMarker: "none" as const,
+      targetMarker: "arrow" as const,
+    },
+  ],
   subgraphs: [],
 }));
 
@@ -1754,7 +1848,7 @@ const App = () => (
 );
 ```
 
-### Animated Edges
+### Dual-End Markers
 
 ```tsx
 import { Flowchart } from "@semajsx/mermaid";
@@ -1763,10 +1857,21 @@ import { Flowchart } from "@semajsx/mermaid";
   graph={{
     direction: "LR",
     nodes: [
-      { id: "src", label: "Source", shape: "rect" },
-      { id: "dst", label: "Destination", shape: "rect" },
+      { id: "A", label: "Service A", shape: "rect" },
+      { id: "B", label: "Service B", shape: "rect" },
+      { id: "C", label: "Database", shape: "rect" },
     ],
-    edges: [{ source: "src", target: "dst", type: "animated", label: "streaming" }],
+    edges: [
+      {
+        source: "A",
+        target: "B",
+        lineStyle: "solid",
+        sourceMarker: "arrow",
+        targetMarker: "arrow",
+        label: "bidirectional",
+      },
+      { source: "B", target: "C", lineStyle: "dotted", sourceMarker: "none", targetMarker: "dot" },
+    ],
     subgraphs: [],
   }}
 />;
@@ -1783,7 +1888,7 @@ if ("message" in result) {
   console.error(result); // ParseError
 } else {
   console.log(result.nodes); // [{id: "A", ...}, {id: "B", shape: "rhombus", ...}, ...]
-  console.log(result.edges); // [{source: "A", target: "B", type: "arrow"}, ...]
+  console.log(result.edges); // [{source: "A", target: "B", lineStyle: "solid", sourceMarker: "none", targetMarker: "arrow"}, ...]
 }
 ```
 
