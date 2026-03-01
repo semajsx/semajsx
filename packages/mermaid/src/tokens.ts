@@ -40,6 +40,12 @@ const tokenDefinition = {
   noteStroke: "#e6d800",
   noteText: "#333",
 
+  // Background
+  bgColor: "#ffffff",
+  gridDotColor: "rgba(0, 0, 0, 0.1)",
+  gridDotGap: "20",
+  gridDotRadius: "1",
+
   // General
   fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', sans-serif",
   fontSize: "14",

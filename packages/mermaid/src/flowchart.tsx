@@ -36,6 +36,9 @@ export function Flowchart(props: FlowchartProps, ctx?: ComponentAPI): JSXNode {
       <style>{defaultTheme.__cssTemplate}</style>
       <Defs />
 
+      {/* Grid dot background */}
+      <rect x={0} y={0} width={positioned.width} height={positioned.height} fill="url(#mmd-grid)" />
+
       {positioned.subgraphs.map((s: PositionedSubgraph) => {
         const Comp = renderers.subgraph ?? SubgraphBox;
         return <Comp positioned={s} />;
