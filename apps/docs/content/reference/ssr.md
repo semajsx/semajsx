@@ -53,8 +53,8 @@ console.log(result.css); // Collected CSS
 
 ```mermaid
 graph TD
-  A[SSR render] --> B[Static HTML]
-  A --> C[Island metadata]
+  A[SSR render] --- B[Static HTML]
+  A --- C[Island metadata]
   B --> D[Send to client]
   C --> E[Bundle island JS]
   D --> F[Browser]
