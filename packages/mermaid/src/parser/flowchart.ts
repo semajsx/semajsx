@@ -205,12 +205,12 @@ function parseNodeShape(state: ParserState, id: string): FlowNode | undefined {
     advance(state);
     const next = peek(state);
 
-    // [( → stadium
+    // [( → cylinder
     if (next.type === "openParen") {
       advance(state);
       const label = readUntil(state, "closeParen");
       expect(state, "closeBracket");
-      return { id, label, shape: "stadium" };
+      return { id, label, shape: "cylinder" };
     }
 
     // [[ → subroutine
@@ -334,6 +334,7 @@ function parseSubgraph(state: ParserState): { ok: true } | ParseError {
   }
 
   // Collect node IDs until "end"
+  const nodesBefore = new Set(state.nodes.keys());
   const nodeIds: string[] = [];
   while (!isEof(state)) {
     skipNewlines(state);
@@ -349,9 +350,9 @@ function parseSubgraph(state: ParserState): { ok: true } | ParseError {
     const result = parseStatement(state);
     if (result && "message" in result) return result;
 
-    // Track new nodes added during this statement
+    // Track only nodes added inside this subgraph
     for (const [nodeId] of state.nodes) {
-      if (!nodeIds.includes(nodeId)) {
+      if (!nodesBefore.has(nodeId) && !nodeIds.includes(nodeId)) {
         nodeIds.push(nodeId);
       }
     }

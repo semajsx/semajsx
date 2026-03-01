@@ -73,6 +73,18 @@ describe("flowchart parser", () => {
       const result = expectFlowchart("graph TD\n  A>Async]");
       expect(result.nodes[0].shape).toBe("asymmetric");
     });
+
+    it("parses cylinder node [(text)]", () => {
+      const result = expectFlowchart("graph TD\n  A[(Database)]");
+      expect(result.nodes[0].shape).toBe("cylinder");
+      expect(result.nodes[0].label).toBe("Database");
+    });
+
+    it("parses subroutine node [[text]]", () => {
+      const result = expectFlowchart("graph TD\n  A[[Sub]]");
+      expect(result.nodes[0].shape).toBe("subroutine");
+      expect(result.nodes[0].label).toBe("Sub");
+    });
   });
 
   describe("edges", () => {
@@ -249,7 +261,27 @@ describe("flowchart parser", () => {
       `);
       expect(result.subgraphs).toHaveLength(1);
       expect(result.subgraphs[0].label).toBe("Backend");
-      expect(result.subgraphs[0].nodes.length).toBeGreaterThanOrEqual(2);
+      expect(result.subgraphs[0].nodes).toHaveLength(2);
+      expect(result.subgraphs[0].nodes).toContain("B1");
+      expect(result.subgraphs[0].nodes).toContain("B2");
+    });
+
+    it("does not include nodes defined outside", () => {
+      const result = expectFlowchart(`
+        graph TD
+          A[Outside] --> B[Also Outside]
+          subgraph Inner
+            C[Inside]
+            D[Also Inside]
+          end
+          C --> A
+      `);
+      expect(result.subgraphs).toHaveLength(1);
+      expect(result.subgraphs[0].nodes).toHaveLength(2);
+      expect(result.subgraphs[0].nodes).toContain("C");
+      expect(result.subgraphs[0].nodes).toContain("D");
+      expect(result.subgraphs[0].nodes).not.toContain("A");
+      expect(result.subgraphs[0].nodes).not.toContain("B");
     });
   });
 
