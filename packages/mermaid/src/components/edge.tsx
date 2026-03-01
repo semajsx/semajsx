@@ -1,32 +1,31 @@
 /** @jsxImportSource @semajsx/dom */
 import type { JSXNode } from "@semajsx/core";
 import { c, edgeLine, edgeInteraction, edgeLabel, edgeLabelBg } from "../edge.style";
-import type { EdgeRenderProps } from "../types";
+import type { EdgeRenderProps, EdgeMarker, EdgeLineStyle } from "../types";
+
+const LINE_STYLE_CLASS: Record<EdgeLineStyle, string | undefined> = {
+  solid: c.edgeArrow,
+  dotted: c.edgeDotted,
+  thick: c.edgeThick,
+};
+
+const MARKER_URL: Record<EdgeMarker, string | undefined> = {
+  arrow: "url(#mmd-arrow)",
+  dot: "url(#mmd-dot)",
+  cross: "url(#mmd-cross)",
+  none: undefined,
+};
 
 export function Edge(props: EdgeRenderProps): JSXNode {
   const { edge, path, labelPosition, labelSize } = props.positioned;
 
-  const edgeTypeClass = {
-    arrow: c.edgeArrow,
-    dotted: c.edgeDotted,
-    thick: c.edgeThick,
-    animated: c.edgeAnimated,
-    open: undefined,
-    invisible: undefined,
-  }[edge.type];
-
-  const markerId = {
-    arrow: "url(#mmd-arrow)",
-    dotted: "url(#mmd-arrow)",
-    thick: "url(#mmd-arrow-filled)",
-    animated: "url(#mmd-arrow)",
-    open: "url(#mmd-dot)",
-    invisible: undefined,
-  }[edge.type];
+  const lineClass = LINE_STYLE_CLASS[edge.lineStyle];
+  const markerEnd = MARKER_URL[edge.targetMarker];
+  const markerStart = MARKER_URL[edge.sourceMarker];
 
   return (
-    <g class={[edgeTypeClass, props.class]}>
-      <path class={edgeLine} d={path} marker-end={markerId} />
+    <g class={[lineClass, props.class]}>
+      <path class={edgeLine} d={path} marker-start={markerStart} marker-end={markerEnd} />
       <path class={edgeInteraction} d={path} />
       {edge.label && labelPosition && labelSize ? (
         <g>

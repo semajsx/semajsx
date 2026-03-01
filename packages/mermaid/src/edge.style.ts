@@ -14,6 +14,7 @@ const EDGE_CLASSES = [
   "arrowHead",
   "arrowHeadClosed",
   "dotMarker",
+  "crossMarker",
 ] as const;
 
 const c: ClassRefs<typeof EDGE_CLASSES> = classes(EDGE_CLASSES);
@@ -88,6 +89,13 @@ export const dotMarker: StyleToken = rule`${c.dotMarker} {
   fill: ${tokens.bgColor};
   stroke: ${tokens.edgeStroke};
   stroke-width: 1.5;
+}`;
+
+export const crossMarker: StyleToken = rule`${c.crossMarker} {
+  fill: none;
+  stroke: ${tokens.edgeStroke};
+  stroke-width: 2;
+  stroke-linecap: round;
 }`;
 
 export { c };

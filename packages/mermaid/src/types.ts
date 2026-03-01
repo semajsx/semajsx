@@ -39,13 +39,19 @@ export interface FlowNode {
   url?: string;
 }
 
+export type EdgeLineStyle = "solid" | "dotted" | "thick";
+export type EdgeMarker = "arrow" | "dot" | "cross" | "none";
+
+/** @deprecated Use EdgeLineStyle + EdgeMarker instead */
 export type EdgeType = "arrow" | "open" | "dotted" | "thick" | "invisible" | "animated";
 
 export interface FlowEdge {
   source: string;
   target: string;
   label?: string;
-  type: EdgeType;
+  lineStyle: EdgeLineStyle;
+  sourceMarker: EdgeMarker;
+  targetMarker: EdgeMarker;
 }
 
 export interface Subgraph {
@@ -320,10 +326,9 @@ export interface RendererMap {
   "node:stadium"?: Component<NodeRenderProps>;
   "node:hexagon"?: Component<NodeRenderProps>;
   "node:cylinder"?: Component<NodeRenderProps>;
-  "edge:arrow"?: Component<EdgeRenderProps>;
+  "edge:solid"?: Component<EdgeRenderProps>;
   "edge:dotted"?: Component<EdgeRenderProps>;
   "edge:thick"?: Component<EdgeRenderProps>;
-  "edge:animated"?: Component<EdgeRenderProps>;
   participant?: Component<ParticipantRenderProps>;
   message?: Component<MessageRenderProps>;
   lifeline?: Component<LifelineRenderProps>;
