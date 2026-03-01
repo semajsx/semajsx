@@ -1,7 +1,14 @@
 /** @jsxImportSource @semajsx/dom */
 import type { JSXNode } from "@semajsx/core";
-import { arrowHead, arrowHeadClosed, dotMarker } from "../edge.style";
+import { arrowHeadClosed, dotMarker } from "../edge.style";
 import { tokens } from "../tokens";
+
+/**
+ * Triangle arrow: tip at (4,0), base at (-2,±4).
+ * Centroid at (0,0) so refX=0 places the line endpoint at the triangle center.
+ * Tip angle ≈ 67°. stroke-linejoin:round on arrowHeadClosed rounds all corners.
+ */
+const ARROW_PATH = "M 4 0 L -2 -4 L -2 4 Z";
 
 export function Defs(): JSXNode {
   return (
@@ -23,7 +30,7 @@ export function Defs(): JSXNode {
         />
       </pattern>
 
-      {/* Open arrow — outline triangle with rounded corners */}
+      {/* Arrow — filled triangle with rounded corners */}
       <marker
         id="mmd-arrow"
         viewBox="-10 -10 20 20"
@@ -34,10 +41,10 @@ export function Defs(): JSXNode {
         markerUnits="strokeWidth"
         orient="auto-start-reverse"
       >
-        <path class={arrowHead} d="M -5 -4 L 0 0 L -5 4 Z" />
+        <path class={arrowHeadClosed} d={ARROW_PATH} />
       </marker>
 
-      {/* Filled arrow — solid triangle with rounded corners */}
+      {/* Arrow filled — identical, kept for edge-type mapping */}
       <marker
         id="mmd-arrow-filled"
         viewBox="-10 -10 20 20"
@@ -48,7 +55,7 @@ export function Defs(): JSXNode {
         markerUnits="strokeWidth"
         orient="auto-start-reverse"
       >
-        <path class={arrowHeadClosed} d="M -5 -4 L 0 0 L -5 4 Z" />
+        <path class={arrowHeadClosed} d={ARROW_PATH} />
       </marker>
 
       {/* Dot endpoint — hollow circle */}
