@@ -32,7 +32,7 @@ export function Defs(): JSXNode {
       <marker
         id="mmd-dot"
         viewBox="-10 -10 20 20"
-        refX={4}
+        refX={0}
         refY={0}
         markerWidth={8}
         markerHeight={8}
