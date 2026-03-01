@@ -327,6 +327,9 @@ export function bezierMidpoint(
   };
 }
 
+/** Half of node stroke-width (2px). Edges connect at the outer border. */
+const NODE_STROKE_HALF = 1;
+
 function buildEdgePath(
   source: { x: number; y: number },
   target: { x: number; y: number },
@@ -335,29 +338,29 @@ function buildEdgePath(
   isVertical: boolean,
   opts: LayoutOptions,
 ): { path: string; labelMid: { x: number; y: number } } {
-  // Connection points at node edges
+  // Connection points at outer edge of node border
   let sx: number, sy: number, tx: number, ty: number;
 
   if (isVertical) {
     sx = source.x;
-    sy = source.y + sourceSize.height / 2;
+    sy = source.y + sourceSize.height / 2 + NODE_STROKE_HALF;
     tx = target.x;
-    ty = target.y - targetSize.height / 2;
+    ty = target.y - targetSize.height / 2 - NODE_STROKE_HALF;
 
     // If target is above source, flip
     if (source.y > target.y) {
-      sy = source.y - sourceSize.height / 2;
-      ty = target.y + targetSize.height / 2;
+      sy = source.y - sourceSize.height / 2 - NODE_STROKE_HALF;
+      ty = target.y + targetSize.height / 2 + NODE_STROKE_HALF;
     }
   } else {
-    sx = source.x + sourceSize.width / 2;
+    sx = source.x + sourceSize.width / 2 + NODE_STROKE_HALF;
     sy = source.y;
-    tx = target.x - targetSize.width / 2;
+    tx = target.x - targetSize.width / 2 - NODE_STROKE_HALF;
     ty = target.y;
 
     if (source.x > target.x) {
-      sx = source.x - sourceSize.width / 2;
-      tx = target.x + targetSize.width / 2;
+      sx = source.x - sourceSize.width / 2 - NODE_STROKE_HALF;
+      tx = target.x + targetSize.width / 2 + NODE_STROKE_HALF;
     }
   }
 

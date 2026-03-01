@@ -59,11 +59,11 @@ export function Defs(): JSXNode {
         <path class={arrowHeadClosed} d={ARROW_PATH} />
       </marker>
 
-      {/* Dot endpoint — hollow circle */}
+      {/* Dot endpoint — hollow circle, stays at geometric boundary */}
       <marker
         id="mmd-dot"
         viewBox="-10 -10 20 20"
-        refX={0}
+        refX={1.25}
         refY={0}
         markerWidth={8}
         markerHeight={8}
