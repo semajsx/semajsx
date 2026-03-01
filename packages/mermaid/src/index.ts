@@ -61,6 +61,8 @@ export type {
   FlowEdge,
   NodeShape,
   EdgeType,
+  EdgeLineStyle,
+  EdgeMarker,
   Subgraph,
   SequenceDiagram,
   Participant as ParticipantType,

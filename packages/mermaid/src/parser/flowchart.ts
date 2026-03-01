@@ -6,7 +6,8 @@ import type {
   FlowEdge,
   Subgraph,
   Direction,
-  EdgeType,
+  EdgeLineStyle,
+  EdgeMarker,
   ParseError,
 } from "../types";
 
@@ -115,7 +116,7 @@ function parseStatement(state: ParserState): ParseError | undefined {
   // Check if followed by arrow (edge chain: A --> B --> C)
   while (!isEof(state) && peek(state).type === "arrow") {
     const arrowToken = advance(state);
-    const edgeType = arrowToEdgeType(arrowToken.value);
+    const { lineStyle, sourceMarker, targetMarker } = parseArrow(arrowToken.value);
 
     // Check for edge label: -->|label| or arrow ending with |
     let edgeLabel: string | undefined;
@@ -139,7 +140,9 @@ function parseStatement(state: ParserState): ParseError | undefined {
     state.edges.push({
       source: currentNode,
       target: targetNode,
-      type: edgeType,
+      lineStyle,
+      sourceMarker,
+      targetMarker,
       label: edgeLabel,
     });
 
@@ -363,11 +366,53 @@ function parseSubgraph(state: ParserState): { ok: true } | ParseError {
   return { ok: true };
 }
 
-function arrowToEdgeType(arrow: string): EdgeType {
-  if (arrow.startsWith("-.")) return "dotted";
-  if (arrow.startsWith("==")) return "thick";
-  if (arrow === "--" || arrow === "---") return "open";
-  return "arrow";
+interface ParsedArrow {
+  lineStyle: EdgeLineStyle;
+  sourceMarker: EdgeMarker;
+  targetMarker: EdgeMarker;
+}
+
+function parseArrow(arrow: string): ParsedArrow {
+  // Strip trailing | (label syntax)
+  const raw = arrow.endsWith("|") ? arrow.slice(0, -1) : arrow;
+
+  // Determine source marker from prefix
+  let sourceMarker: EdgeMarker = "none";
+  let rest = raw;
+
+  if (rest.startsWith("o")) {
+    sourceMarker = "dot";
+    rest = rest.slice(1);
+  } else if (rest.startsWith("x")) {
+    sourceMarker = "cross";
+    rest = rest.slice(1);
+  } else if (rest.startsWith("<")) {
+    sourceMarker = "arrow";
+    rest = rest.slice(1);
+  }
+
+  // Determine target marker from suffix
+  let targetMarker: EdgeMarker = "none";
+  if (rest.endsWith(">")) {
+    targetMarker = "arrow";
+    rest = rest.slice(0, -1);
+  } else if (rest.endsWith("o")) {
+    targetMarker = "dot";
+    rest = rest.slice(0, -1);
+  } else if (rest.endsWith("x")) {
+    targetMarker = "cross";
+    rest = rest.slice(0, -1);
+  }
+
+  // Determine line style from the stem
+  let lineStyle: EdgeLineStyle = "solid";
+  if (rest.includes("-.") || rest.includes(".-")) {
+    lineStyle = "dotted";
+  } else if (rest.startsWith("==") || rest.startsWith("=")) {
+    lineStyle = "thick";
+  }
+
+  return { lineStyle, sourceMarker, targetMarker };
 }
 
 // ── Helpers ────────────────────────────────────────────

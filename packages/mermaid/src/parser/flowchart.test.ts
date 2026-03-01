@@ -82,24 +82,30 @@ describe("flowchart parser", () => {
       expect(result.edges[0]).toEqual({
         source: "A",
         target: "B",
-        type: "arrow",
+        lineStyle: "solid",
+        sourceMarker: "none",
+        targetMarker: "arrow",
         label: undefined,
       });
     });
 
     it("parses dotted edge -.->", () => {
       const result = expectFlowchart("graph TD\n  A -.-> B");
-      expect(result.edges[0].type).toBe("dotted");
+      expect(result.edges[0].lineStyle).toBe("dotted");
+      expect(result.edges[0].targetMarker).toBe("arrow");
     });
 
     it("parses thick edge ==>", () => {
       const result = expectFlowchart("graph TD\n  A ==> B");
-      expect(result.edges[0].type).toBe("thick");
+      expect(result.edges[0].lineStyle).toBe("thick");
+      expect(result.edges[0].targetMarker).toBe("arrow");
     });
 
     it("parses open edge ---", () => {
       const result = expectFlowchart("graph TD\n  A --- B");
-      expect(result.edges[0].type).toBe("open");
+      expect(result.edges[0].lineStyle).toBe("solid");
+      expect(result.edges[0].sourceMarker).toBe("none");
+      expect(result.edges[0].targetMarker).toBe("none");
     });
 
     it("parses edge with label -->|text|", () => {
@@ -112,6 +118,123 @@ describe("flowchart parser", () => {
       expect(result.edges).toHaveLength(2);
       expect(result.edges[0]).toMatchObject({ source: "A", target: "B" });
       expect(result.edges[1]).toMatchObject({ source: "B", target: "C" });
+    });
+  });
+
+  describe("dual-end markers", () => {
+    it("parses bidirectional arrow <-->", () => {
+      const result = expectFlowchart("graph TD\n  A <--> B");
+      expect(result.edges[0].sourceMarker).toBe("arrow");
+      expect(result.edges[0].targetMarker).toBe("arrow");
+      expect(result.edges[0].lineStyle).toBe("solid");
+    });
+
+    it("parses dot target --o", () => {
+      const result = expectFlowchart("graph TD\n  A --o B");
+      expect(result.edges[0].sourceMarker).toBe("none");
+      expect(result.edges[0].targetMarker).toBe("dot");
+      expect(result.edges[0].lineStyle).toBe("solid");
+    });
+
+    it("parses cross target --x", () => {
+      const result = expectFlowchart("graph TD\n  A --x B");
+      expect(result.edges[0].sourceMarker).toBe("none");
+      expect(result.edges[0].targetMarker).toBe("cross");
+      expect(result.edges[0].lineStyle).toBe("solid");
+    });
+
+    it("parses bidirectional dot o--o", () => {
+      const result = expectFlowchart("graph TD\n  A o--o B");
+      expect(result.edges[0].sourceMarker).toBe("dot");
+      expect(result.edges[0].targetMarker).toBe("dot");
+      expect(result.edges[0].lineStyle).toBe("solid");
+    });
+
+    it("parses bidirectional cross x--x", () => {
+      const result = expectFlowchart("graph TD\n  A x--x B");
+      expect(result.edges[0].sourceMarker).toBe("cross");
+      expect(result.edges[0].targetMarker).toBe("cross");
+      expect(result.edges[0].lineStyle).toBe("solid");
+    });
+
+    it("parses dot source + arrow target o-->", () => {
+      const result = expectFlowchart("graph TD\n  A o--> B");
+      expect(result.edges[0].sourceMarker).toBe("dot");
+      expect(result.edges[0].targetMarker).toBe("arrow");
+      expect(result.edges[0].lineStyle).toBe("solid");
+    });
+
+    it("parses dotted bidirectional <-.->", () => {
+      const result = expectFlowchart("graph TD\n  A <-.-> B");
+      expect(result.edges[0].sourceMarker).toBe("arrow");
+      expect(result.edges[0].targetMarker).toBe("arrow");
+      expect(result.edges[0].lineStyle).toBe("dotted");
+    });
+
+    it("parses dotted dot -.-o", () => {
+      const result = expectFlowchart("graph TD\n  A -.-o B");
+      expect(result.edges[0].targetMarker).toBe("dot");
+      expect(result.edges[0].lineStyle).toBe("dotted");
+    });
+
+    it("parses dotted cross -.-x", () => {
+      const result = expectFlowchart("graph TD\n  A -.-x B");
+      expect(result.edges[0].targetMarker).toBe("cross");
+      expect(result.edges[0].lineStyle).toBe("dotted");
+    });
+
+    it("parses thick bidirectional <==>", () => {
+      const result = expectFlowchart("graph TD\n  A <==> B");
+      expect(result.edges[0].sourceMarker).toBe("arrow");
+      expect(result.edges[0].targetMarker).toBe("arrow");
+      expect(result.edges[0].lineStyle).toBe("thick");
+    });
+
+    it("parses thick dot ==o", () => {
+      const result = expectFlowchart("graph TD\n  A ==o B");
+      expect(result.edges[0].targetMarker).toBe("dot");
+      expect(result.edges[0].lineStyle).toBe("thick");
+    });
+
+    it("parses thick cross ==x", () => {
+      const result = expectFlowchart("graph TD\n  A ==x B");
+      expect(result.edges[0].targetMarker).toBe("cross");
+      expect(result.edges[0].lineStyle).toBe("thick");
+    });
+
+    it("parses dotted bidirectional dot o-.-o", () => {
+      const result = expectFlowchart("graph TD\n  A o-.-o B");
+      expect(result.edges[0].sourceMarker).toBe("dot");
+      expect(result.edges[0].targetMarker).toBe("dot");
+      expect(result.edges[0].lineStyle).toBe("dotted");
+    });
+
+    it("parses thick bidirectional cross x==x", () => {
+      const result = expectFlowchart("graph TD\n  A x==x B");
+      expect(result.edges[0].sourceMarker).toBe("cross");
+      expect(result.edges[0].targetMarker).toBe("cross");
+      expect(result.edges[0].lineStyle).toBe("thick");
+    });
+
+    it("parses dot source + thick arrow o==>", () => {
+      const result = expectFlowchart("graph TD\n  A o==> B");
+      expect(result.edges[0].sourceMarker).toBe("dot");
+      expect(result.edges[0].targetMarker).toBe("arrow");
+      expect(result.edges[0].lineStyle).toBe("thick");
+    });
+
+    it("parses dot source + dotted arrow o-.->", () => {
+      const result = expectFlowchart("graph TD\n  A o-.-> B");
+      expect(result.edges[0].sourceMarker).toBe("dot");
+      expect(result.edges[0].targetMarker).toBe("arrow");
+      expect(result.edges[0].lineStyle).toBe("dotted");
+    });
+
+    it("parses thick bidirectional dot o==o", () => {
+      const result = expectFlowchart("graph TD\n  A o==o B");
+      expect(result.edges[0].sourceMarker).toBe("dot");
+      expect(result.edges[0].targetMarker).toBe("dot");
+      expect(result.edges[0].lineStyle).toBe("thick");
     });
   });
 

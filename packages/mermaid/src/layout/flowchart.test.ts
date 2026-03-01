@@ -10,7 +10,9 @@ function simpleDiagram(direction = "TD" as const): FlowchartDiagram {
       { id: "A", label: "Start", shape: "rect" },
       { id: "B", label: "End", shape: "rect" },
     ],
-    edges: [{ source: "A", target: "B", type: "arrow" }],
+    edges: [
+      { source: "A", target: "B", lineStyle: "solid", sourceMarker: "none", targetMarker: "arrow" },
+    ],
     subgraphs: [],
   };
 }
@@ -73,7 +75,16 @@ describe("flowchart layout", () => {
         { id: "A", label: "Start", shape: "rect" },
         { id: "B", label: "End", shape: "rect" },
       ],
-      edges: [{ source: "A", target: "B", type: "arrow", label: "Yes" }],
+      edges: [
+        {
+          source: "A",
+          target: "B",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+          label: "Yes",
+        },
+      ],
       subgraphs: [],
     };
     const result = flowchartLayout(diagram);
@@ -104,10 +115,34 @@ describe("flowchart layout", () => {
         { id: "D", label: "D", shape: "rect" },
       ],
       edges: [
-        { source: "A", target: "B", type: "arrow" },
-        { source: "A", target: "C", type: "arrow" },
-        { source: "B", target: "D", type: "arrow" },
-        { source: "C", target: "D", type: "arrow" },
+        {
+          source: "A",
+          target: "B",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "A",
+          target: "C",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "B",
+          target: "D",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "C",
+          target: "D",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
       ],
       subgraphs: [],
     });
@@ -126,7 +161,15 @@ describe("flowchart layout", () => {
         { id: "A", label: "A", shape: "rect" },
         { id: "B", label: "B", shape: "rect" },
       ],
-      edges: [{ source: "A", target: "B", type: "arrow" }],
+      edges: [
+        {
+          source: "A",
+          target: "B",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+      ],
       subgraphs: [{ id: "sg1", label: "Group", nodes: ["A", "B"] }],
     });
     expect(result.subgraphs).toHaveLength(1);

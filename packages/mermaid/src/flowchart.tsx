@@ -55,7 +55,7 @@ export function Flowchart(props: FlowchartProps, ctx?: ComponentAPI): JSXNode {
       })}
 
       {positioned.edges.map((e: PositionedEdge) => {
-        const key = `edge:${e.edge.type}` as keyof RendererMap;
+        const key = `edge:${e.edge.lineStyle}` as keyof RendererMap;
         const Comp = (renderers[key] as typeof Edge) ?? renderers.edge ?? Edge;
         return <Comp positioned={e} />;
       })}

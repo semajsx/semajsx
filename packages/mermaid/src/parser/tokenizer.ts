@@ -53,22 +53,45 @@ const KEYWORDS = new Set([
 const ARROW_PATTERNS = [
   // Dotted arrows (sequence)
   "-->>",
-  "--x",
   "--))",
   // Solid arrows (sequence)
   "->>",
-  "-x",
   "-))",
-  // Flowchart arrows
+  // Flowchart: bidirectional (longest first)
+  "x-.-x",
+  "o-.-o",
+  "<-.->",
+  "x==x",
+  "o==o",
+  "<==>",
+  "x--x",
+  "o--o",
+  "<-->",
+  // Flowchart: source-marker + target-marker combos
+  "o-.->",
+  "o==>",
+  "o-->",
+  // Flowchart: dotted with markers
+  "-.-o",
+  "-.-x",
+  "-.->|",
   "-.->",
   "-.-",
+  // Flowchart: thick with markers
+  "==o",
+  "==x",
+  "==>|",
   "==>",
   "===",
+  // Flowchart: solid with markers
+  "--o",
+  "--x",
+  "-->|",
   "-->",
   "---",
-  "-->|",
-  "-.->|",
-  "==>|",
+  // Sequence
+  "-x",
+  // Short forms
   "->",
   "--",
 ];

@@ -1,6 +1,6 @@
 /** @jsxImportSource @semajsx/dom */
 import type { JSXNode } from "@semajsx/core";
-import { arrowHeadClosed, dotMarker } from "../edge.style";
+import { arrowHeadClosed, dotMarker, crossMarker } from "../edge.style";
 import { tokens } from "../tokens";
 
 /**
@@ -75,7 +75,7 @@ export function Defs(): JSXNode {
         />
       </marker>
 
-      {/* Dot endpoint — hollow circle, center at origin, refX pushes it out */}
+      {/* Dot endpoint — hollow circle, center at origin */}
       <marker
         id="mmd-dot"
         viewBox="-10 -10 20 20"
@@ -84,9 +84,23 @@ export function Defs(): JSXNode {
         markerWidth={8}
         markerHeight={8}
         markerUnits="strokeWidth"
-        orient="auto"
+        orient="auto-start-reverse"
       >
         <circle class={dotMarker} cx={0} cy={0} r={DOT_RADIUS} />
+      </marker>
+
+      {/* Cross endpoint — X mark, center at origin */}
+      <marker
+        id="mmd-cross"
+        viewBox="-10 -10 20 20"
+        refX={0}
+        refY={0}
+        markerWidth={10}
+        markerHeight={10}
+        markerUnits="strokeWidth"
+        orient="auto-start-reverse"
+      >
+        <path class={crossMarker} d="M -4,-4 L 4,4 M -4,4 L 4,-4" />
       </marker>
     </defs>
   );
