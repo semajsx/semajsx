@@ -301,9 +301,9 @@ const tokenDefinition = {
   arrowFill: "#666",
 
   // Animation
-  animatedDashArray: "5, 5",
+  animatedDashArray: "5",
   animatedDuration: "0.5s",
-  animatedDashOffset: "-10",
+  animatedDashOffset: "10",
 
   // Subgraph
   subgraphFill: "#f8f9fa",
@@ -464,6 +464,7 @@ import { tokens } from "./tokens";
 
 const c = classes([
   "edgeLine",
+  "edgeInteraction",
   "edgeArrow",
   "edgeDotted",
   "edgeThick",
@@ -471,12 +472,20 @@ const c = classes([
   "edgeLabel",
   "edgeLabelBg",
   "arrowHead",
+  "arrowHeadClosed",
 ] as const);
 
 export const edgeLine = rule`${c.edgeLine} {
   fill: none;
   stroke: ${tokens.edgeStroke};
   stroke-width: ${tokens.edgeWidth};
+}`;
+
+// Invisible wide path for better click/hover targets (xyflow pattern)
+export const edgeInteraction = rule`${c.edgeInteraction} {
+  fill: none;
+  stroke-opacity: 0;
+  stroke-width: 20;
 }`;
 
 export const edgeDotted = rule`${c.edgeDotted} ${c.edgeLine} {
@@ -488,9 +497,11 @@ ${c.edgeAnimated} ${c.edgeLine} {
   stroke-dasharray: ${tokens.animatedDashArray};
   animation: mmd-dash-flow ${tokens.animatedDuration} linear infinite;
 }
+`;
 
+export const edgeAnimatedKeyframes = rule`
 @keyframes mmd-dash-flow {
-  to {
+  from {
     stroke-dashoffset: ${tokens.animatedDashOffset};
   }
 }
@@ -513,9 +524,22 @@ export const edgeLabelBg = rule`${c.edgeLabelBg} {
   stroke: none;
 }`;
 
+// Open arrow — stroke only, no fill (chevron shape)
 export const arrowHead = rule`${c.arrowHead} {
+  fill: none;
+  stroke: ${tokens.arrowFill};
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}`;
+
+// Closed/filled arrow — used for thick edges and dot marker
+export const arrowHeadClosed = rule`${c.arrowHeadClosed} {
   fill: ${tokens.arrowFill};
-  stroke: none;
+  stroke: ${tokens.arrowFill};
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }`;
 
 export { c };
@@ -698,7 +722,7 @@ Phase 5: Edge Routing
                 Multi-layer edges use intermediate waypoints with smooth joins
 ```
 
-**Bezier edge routing (default):**
+**Bezier edge routing (default, xyflow-inspired curvature):**
 
 ```
 TB/TD direction:
@@ -710,7 +734,14 @@ TB/TD direction:
       tx (ty - offset)             ← control point 2 (above target)
       tx ty                        ← target point
 
-  offset = |ty - sy| × 0.4        ← 40% of vertical distance
+  offset calculation (adaptive curvature):
+    distance = ty - sy
+    if distance >= 0:  offset = 0.5 × distance       ← half the vertical distance
+    if distance <  0:  offset = 0.25 × 25 × √(-dist) ← wider curve for backward edges
+
+  Label position uses cubic bezier midpoint at t=0.5:
+    labelX = sx×0.125 + cx1×0.375 + cx2×0.375 + tx×0.125
+    labelY = sy×0.125 + cy1×0.375 + cy2×0.375 + ty×0.125
 
 LR direction:
   Same logic, rotated 90° (control points extend horizontally)
@@ -729,11 +760,11 @@ Phase 4: (TD, nodeW=150, nodeH=50, nodeSpacing=60, rankSpacing=80)
          B:  x=75,  y=175
          C:  x=285, y=175
          D:  x=105, y=305   (centered over B,C)
-Phase 5: (bezier)
-         A→B: M 105 70 C 105 112 75 133 75 150
-         A→C: M 105 70 C 105 112 285 133 285 150
-         B→D: M 75 200 C 75 242 105 263 105 280
-         C→D: M 285 200 C 285 242 105 263 105 280
+Phase 5: (bezier, offset = 0.5 × distance)
+         A→B: M 105 70 C 105 110 75 135 75 150
+         A→C: M 105 70 C 105 110 285 135 285 150
+         B→D: M 75 200 C 75 240 105 265 105 280
+         C→D: M 285 200 C 285 240 105 265 105 280
 ```
 
 **Subgraph handling:**
@@ -863,16 +894,28 @@ SVG is the only format where our `classes()` + `rule` + `tokens` pattern works n
 ```svg
 <svg class="mmd-root" viewBox="0 0 400 360" xmlns="http://www.w3.org/2000/svg">
 
-  <!-- Shared definitions: arrowheads, filters -->
+  <!-- Shared definitions: arrowheads, dot markers (xyflow-inspired) -->
   <defs>
-    <marker id="mmd-arrow" viewBox="0 0 10 10" refX="10" refY="5"
-            markerWidth="8" markerHeight="8" orient="auto-start-reverse"
+    <!-- Open arrow: chevron shape, stroke only -->
+    <marker id="mmd-arrow" viewBox="-10 -10 20 20" refX="0" refY="0"
+            markerWidth="12.5" markerHeight="12.5"
+            markerUnits="strokeWidth" orient="auto-start-reverse"
             class="mmd-arrowHead">
-      <path d="M 0 0 L 10 5 L 0 10 z" />
+      <polyline points="-5,-4 0,0 -5,4" />
     </marker>
-    <marker id="mmd-dot" viewBox="0 0 10 10" refX="5" refY="5"
-            markerWidth="6" markerHeight="6" class="mmd-arrowDot">
-      <circle cx="5" cy="5" r="4" />
+    <!-- Filled arrow: closed triangle, for thick edges -->
+    <marker id="mmd-arrow-filled" viewBox="-10 -10 20 20" refX="0" refY="0"
+            markerWidth="12.5" markerHeight="12.5"
+            markerUnits="strokeWidth" orient="auto-start-reverse"
+            class="mmd-arrowHeadClosed">
+      <polyline points="-5,-4 0,0 -5,4 -5,-4" />
+    </marker>
+    <!-- Dot marker: for open edges (no arrow) -->
+    <marker id="mmd-dot" viewBox="-10 -10 20 20" refX="0" refY="0"
+            markerWidth="8" markerHeight="8"
+            markerUnits="strokeWidth" orient="auto"
+            class="mmd-arrowHeadClosed">
+      <circle cx="0" cy="0" r="4" />
     </marker>
   </defs>
 
@@ -890,11 +933,15 @@ SVG is the only format where our `classes()` + `rule` + `tokens` pattern works n
       <path class="mmd-edgeLine"
             d="M 200 70 C 200 112 200 138 200 150"
             marker-end="url(#mmd-arrow)" />
+      <path class="mmd-edgeInteraction"
+            d="M 200 70 C 200 112 200 138 200 150" />
     </g>
     <g class="mmd-edge mmd-edgeDotted">
       <path class="mmd-edgeLine mmd-edgeDotted"
             d="M 100 200 C 140 200 260 200 300 200"
             marker-end="url(#mmd-arrow)" />
+      <path class="mmd-edgeInteraction"
+            d="M 100 200 C 140 200 260 200 300 200" />
       <!-- Edge label -->
       <rect class="mmd-edgeLabelBg" x="170" y="188" width="60" height="20" rx="4" />
       <text class="mmd-edgeLabel" x="200" y="202">Yes</text>
@@ -930,14 +977,14 @@ SVG is the only format where our `classes()` + `rule` + `tokens` pattern works n
 
 **Key structural decisions:**
 
-| Decision          | Choice                               | Why                                                                                           |
-| ----------------- | ------------------------------------ | --------------------------------------------------------------------------------------------- |
-| Positioning       | `<g transform="translate(x,y)">`     | Local coordinates — custom renderers don't need offset math                                   |
-| Arrowheads        | SVG `<marker>` in `<defs>`           | Efficient, CSS-styleable, auto-rotates with path direction                                    |
-| Labels            | `<text>` with `text-anchor="middle"` | Simple, CSS-styleable. Future: `<foreignObject>` for HTML                                     |
-| Layer order       | Subgraphs → Edges → Nodes            | Nodes always on top of edges, subgraphs are backgrounds                                       |
-| Coordinate system | Center-origin per node               | `(0,0)` is node center. Rect: `x=-w/2, y=-h/2`. Circle: `cx=0, cy=0`. Simplest for all shapes |
-| Node `rx`         | SVG attribute, not CSS               | SVG2 allows CSS `rx` but older browsers require the attribute. Set on element directly        |
+| Decision          | Choice                                   | Why                                                                                                                       |
+| ----------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Positioning       | `<g transform="translate(x,y)">`         | Local coordinates — custom renderers don't need offset math                                                               |
+| Arrowheads        | SVG `<marker>` in `<defs>`, xyflow-style | Origin-centered viewBox, `markerUnits="strokeWidth"` (scales with stroke), 3 variants: open chevron, filled triangle, dot |
+| Labels            | `<text>` with `text-anchor="middle"`     | Simple, CSS-styleable. Future: `<foreignObject>` for HTML                                                                 |
+| Layer order       | Subgraphs → Edges → Nodes                | Nodes always on top of edges, subgraphs are backgrounds                                                                   |
+| Coordinate system | Center-origin per node                   | `(0,0)` is node center. Rect: `x=-w/2, y=-h/2`. Circle: `cx=0, cy=0`. Simplest for all shapes                             |
+| Node `rx`         | SVG attribute, not CSS                   | SVG2 allows CSS `rx` but older browsers require the attribute. Set on element directly                                    |
 
 ### 6.3 SVG Structure — Sequence Diagram
 
