@@ -33,16 +33,14 @@ export const edgeInteraction: StyleToken = rule`${c.edgeInteraction} {
   stroke-width: 20;
 }`;
 
-export const edgeDotted: StyleToken = rule`${c.edgeDotted} ${c.edgeLine} {
+export const edgeDotted: StyleToken = rule`${c.edgeDotted} {
   stroke-dasharray: 6, 4;
 }`;
 
-export const edgeAnimated: StyleToken = rule`
-${c.edgeAnimated} ${c.edgeLine} {
+export const edgeAnimated: StyleToken = rule`${c.edgeAnimated} {
   stroke-dasharray: ${tokens.animatedDashArray};
   animation: mmd-dash-flow ${tokens.animatedDuration} linear infinite;
-}
-`;
+}`;
 
 export const edgeAnimatedKeyframes: StyleToken = rule`
 @keyframes mmd-dash-flow {
@@ -52,7 +50,7 @@ export const edgeAnimatedKeyframes: StyleToken = rule`
 }
 `;
 
-export const edgeThick: StyleToken = rule`${c.edgeThick} ${c.edgeLine} {
+export const edgeThick: StyleToken = rule`${c.edgeThick} {
   stroke-width: 3;
 }`;
 

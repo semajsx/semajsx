@@ -50,6 +50,18 @@ describe("sequence parser", () => {
       `);
       expect(result.participants).toHaveLength(2);
     });
+
+    it("parses participant alias with 'as'", () => {
+      const result = expectSequence(`
+        sequenceDiagram
+          participant A as Alice
+          participant B as Bob
+          A->>B: Hello
+      `);
+      expect(result.participants).toHaveLength(2);
+      expect(result.participants[0]).toEqual({ id: "A", label: "Alice", type: "participant" });
+      expect(result.participants[1]).toEqual({ id: "B", label: "Bob", type: "participant" });
+    });
   });
 
   describe("messages", () => {

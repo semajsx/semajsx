@@ -1,6 +1,6 @@
 /** @jsxImportSource @semajsx/dom */
 import type { JSXNode } from "@semajsx/core";
-import { arrowHeadClosed, dotMarker, crossMarker } from "../edge.style";
+import { arrowHead, arrowHeadClosed, dotMarker, crossMarker } from "../edge.style";
 import { tokens } from "../tokens";
 
 /**
@@ -13,6 +13,7 @@ import { tokens } from "../tokens";
  * Open arrow:   polyline "-5,-4 0,0 -5,4"        (chevron)
  */
 const ARROW_CLOSED_POINTS = "-5,-4 0,0 -5,4 -5,-4";
+const ARROW_OPEN_POINTS = "-5,-4 0,0 -5,4";
 
 /** Dot marker radius in marker coordinate space. */
 const DOT_RADIUS = 4;
@@ -70,6 +71,25 @@ export function Defs(): JSXNode {
         <polyline
           class={arrowHeadClosed}
           points={ARROW_CLOSED_POINTS}
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </marker>
+
+      {/* Open arrow — chevron (unfilled), tip at origin */}
+      <marker
+        id="mmd-arrow-open"
+        viewBox="-10 -10 20 20"
+        refX={0}
+        refY={0}
+        markerWidth={12.5}
+        markerHeight={12.5}
+        markerUnits="strokeWidth"
+        orient="auto-start-reverse"
+      >
+        <polyline
+          class={arrowHead}
+          points={ARROW_OPEN_POINTS}
           stroke-linecap="round"
           stroke-linejoin="round"
         />

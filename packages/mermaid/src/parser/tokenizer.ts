@@ -32,6 +32,7 @@ const KEYWORDS = new Set([
   "direction",
   "participant",
   "actor",
+  "as",
   "activate",
   "deactivate",
   "loop",
