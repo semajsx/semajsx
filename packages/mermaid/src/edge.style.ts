@@ -4,6 +4,7 @@ import { tokens } from "./tokens";
 
 const EDGE_CLASSES = [
   "edgeLine",
+  "edgeInteraction",
   "edgeArrow",
   "edgeDotted",
   "edgeThick",
@@ -11,6 +12,7 @@ const EDGE_CLASSES = [
   "edgeLabel",
   "edgeLabelBg",
   "arrowHead",
+  "arrowHeadClosed",
 ] as const;
 
 const c: ClassRefs<typeof EDGE_CLASSES> = classes(EDGE_CLASSES);
@@ -19,6 +21,12 @@ export const edgeLine: StyleToken = rule`${c.edgeLine} {
   fill: none;
   stroke: ${tokens.edgeStroke};
   stroke-width: ${tokens.edgeWidth};
+}`;
+
+export const edgeInteraction: StyleToken = rule`${c.edgeInteraction} {
+  fill: none;
+  stroke-opacity: 0;
+  stroke-width: 20;
 }`;
 
 export const edgeDotted: StyleToken = rule`${c.edgeDotted} ${c.edgeLine} {
@@ -34,7 +42,7 @@ ${c.edgeAnimated} ${c.edgeLine} {
 
 export const edgeAnimatedKeyframes: StyleToken = rule`
 @keyframes mmd-dash-flow {
-  to {
+  from {
     stroke-dashoffset: ${tokens.animatedDashOffset};
   }
 }
@@ -60,7 +68,15 @@ export const edgeLabelBg: StyleToken = rule`${c.edgeLabelBg} {
 export const arrowHead: StyleToken = rule`${c.arrowHead} {
   fill: none;
   stroke: ${tokens.arrowFill};
-  stroke-width: 2;
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}`;
+
+export const arrowHeadClosed: StyleToken = rule`${c.arrowHeadClosed} {
+  fill: ${tokens.arrowFill};
+  stroke: ${tokens.arrowFill};
+  stroke-width: 1;
   stroke-linecap: round;
   stroke-linejoin: round;
 }`;

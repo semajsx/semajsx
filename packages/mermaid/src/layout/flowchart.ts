@@ -236,20 +236,17 @@ export function flowchartLayout(
     const sourceSize = nodeSizes.get(edge.source)!;
     const targetSize = nodeSizes.get(edge.target)!;
 
-    const path = buildEdgePath(sourcePos, targetPos, sourceSize, targetSize, isVertical, opts);
+    const result = buildEdgePath(sourcePos, targetPos, sourceSize, targetSize, isVertical, opts);
 
-    // Label position at midpoint
+    // Label position from bezier midpoint formula
     let labelPosition;
     let labelSize;
     if (edge.label) {
-      labelPosition = {
-        x: (sourcePos.x + targetPos.x) / 2,
-        y: (sourcePos.y + targetPos.y) / 2,
-      };
+      labelPosition = result.labelMid;
       labelSize = measureLabel(edge.label, opts);
     }
 
-    return { edge, path, labelPosition, labelSize };
+    return { edge, path: result.path, labelPosition, labelSize };
   });
 
   // Phase 8: Subgraph bounding boxes
@@ -294,6 +291,42 @@ export function flowchartLayout(
   };
 }
 
+/** Default curvature factor (matches xyflow) */
+const DEFAULT_CURVATURE = 0.25;
+
+/**
+ * Calculate control-point offset along the primary axis.
+ * When distance >= 0 (normal flow), the offset is half the distance.
+ * When distance < 0 (backward edge), use a wider curve via sqrt scaling.
+ */
+function controlOffset(distance: number, curvature: number): number {
+  if (distance >= 0) {
+    return 0.5 * distance;
+  }
+  return curvature * 25 * Math.sqrt(-distance);
+}
+
+/**
+ * Compute the label position on a cubic bezier at t=0.5.
+ * Uses the exact bezier midpoint formula instead of a simple linear midpoint.
+ */
+export function bezierMidpoint(
+  sx: number,
+  sy: number,
+  cx1: number,
+  cy1: number,
+  cx2: number,
+  cy2: number,
+  tx: number,
+  ty: number,
+): { x: number; y: number } {
+  // Cubic bezier at t=0.5: B(0.5) = (1/8)P0 + (3/8)P1 + (3/8)P2 + (1/8)P3
+  return {
+    x: sx * 0.125 + cx1 * 0.375 + cx2 * 0.375 + tx * 0.125,
+    y: sy * 0.125 + cy1 * 0.375 + cy2 * 0.375 + ty * 0.125,
+  };
+}
+
 function buildEdgePath(
   source: { x: number; y: number },
   target: { x: number; y: number },
@@ -301,7 +334,7 @@ function buildEdgePath(
   targetSize: Size,
   isVertical: boolean,
   opts: LayoutOptions,
-): string {
+): { path: string; labelMid: { x: number; y: number } } {
   // Connection points at node edges
   let sx: number, sy: number, tx: number, ty: number;
 
@@ -329,22 +362,34 @@ function buildEdgePath(
   }
 
   if (opts.edgeRouting === "bezier") {
-    const dist = isVertical ? Math.abs(ty - sy) : Math.abs(tx - sx);
-    const offset = dist * 0.4;
-
     if (isVertical) {
+      const dist = ty - sy;
+      const offset = controlOffset(dist, DEFAULT_CURVATURE);
       const cy1 = sy + offset;
       const cy2 = ty - offset;
-      return `M ${sx} ${sy} C ${sx} ${cy1} ${tx} ${cy2} ${tx} ${ty}`;
+      const mid = bezierMidpoint(sx, sy, sx, cy1, tx, cy2, tx, ty);
+      return {
+        path: `M ${sx} ${sy} C ${sx} ${cy1} ${tx} ${cy2} ${tx} ${ty}`,
+        labelMid: mid,
+      };
     } else {
+      const dist = tx - sx;
+      const offset = controlOffset(dist, DEFAULT_CURVATURE);
       const cx1 = sx + offset;
       const cx2 = tx - offset;
-      return `M ${sx} ${sy} C ${cx1} ${sy} ${cx2} ${ty} ${tx} ${ty}`;
+      const mid = bezierMidpoint(sx, sy, cx1, sy, cx2, ty, tx, ty);
+      return {
+        path: `M ${sx} ${sy} C ${cx1} ${sy} ${cx2} ${ty} ${tx} ${ty}`,
+        labelMid: mid,
+      };
     }
   }
 
   // Polyline fallback
-  return `M ${sx} ${sy} L ${tx} ${ty}`;
+  return {
+    path: `M ${sx} ${sy} L ${tx} ${ty}`,
+    labelMid: { x: (sx + tx) / 2, y: (sy + ty) / 2 },
+  };
 }
 
 function measureNode(node: FlowNode, opts: LayoutOptions): Size {
