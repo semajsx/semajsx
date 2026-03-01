@@ -4,9 +4,10 @@ import { arrowHeadClosed, dotMarker } from "../edge.style";
 import { tokens } from "../tokens";
 
 /**
- * Triangle arrow: tip at (4,0), base at (-2,±4).
- * Centroid at (0,0) so refX=0 places the line endpoint at the triangle center.
- * Tip angle ≈ 67°. stroke-linejoin:round on arrowHeadClosed rounds all corners.
+ * Triangle arrow: tip at (4,0), base at (-2,+/-4), centroid at (0,0).
+ * refX=4 (tip) so the arrow tip touches the node border.
+ * The filled triangle covers the line behind it, so visually the edge
+ * ends at the centroid. Tip angle: 2*atan(4/6) = 67 deg.
  */
 const ARROW_PATH = "M 4 0 L -2 -4 L -2 4 Z";
 
@@ -34,7 +35,7 @@ export function Defs(): JSXNode {
       <marker
         id="mmd-arrow"
         viewBox="-10 -10 20 20"
-        refX={0}
+        refX={4}
         refY={0}
         markerWidth={12.5}
         markerHeight={12.5}
@@ -48,7 +49,7 @@ export function Defs(): JSXNode {
       <marker
         id="mmd-arrow-filled"
         viewBox="-10 -10 20 20"
-        refX={0}
+        refX={4}
         refY={0}
         markerWidth={12.5}
         markerHeight={12.5}
