@@ -63,7 +63,7 @@ export function Defs(): JSXNode {
       <marker
         id="mmd-dot"
         viewBox="-10 -10 20 20"
-        refX={1.25}
+        refX={2.5}
         refY={0}
         markerWidth={8}
         markerHeight={8}
