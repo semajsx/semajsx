@@ -15,12 +15,14 @@ export function Edge(props: EdgeRenderProps): JSXNode {
     invisible: undefined,
   }[edge.type];
 
-  const markerId =
-    edge.type === "open" || edge.type === "invisible"
-      ? undefined
-      : edge.type === "thick"
-        ? "url(#mmd-arrow-filled)"
-        : "url(#mmd-arrow)";
+  const markerId = {
+    arrow: "url(#mmd-arrow)",
+    dotted: "url(#mmd-arrow)",
+    thick: "url(#mmd-arrow-filled)",
+    animated: "url(#mmd-arrow)",
+    open: "url(#mmd-dot)",
+    invisible: undefined,
+  }[edge.type];
 
   return (
     <g class={[edgeTypeClass, props.class]}>

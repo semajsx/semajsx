@@ -29,8 +29,17 @@ export function Defs(): JSXNode {
       >
         <polyline class={arrowHeadClosed} points="-5,-4 0,0 -5,4 -5,-4" />
       </marker>
-      <marker id="mmd-dot" viewBox="0 0 10 10" refX={5} refY={5} markerWidth={6} markerHeight={6}>
-        <circle class={arrowHeadClosed} cx={5} cy={5} r={4} />
+      <marker
+        id="mmd-dot"
+        viewBox="-10 -10 20 20"
+        refX={0}
+        refY={0}
+        markerWidth={8}
+        markerHeight={8}
+        markerUnits="strokeWidth"
+        orient="auto"
+      >
+        <circle class={arrowHeadClosed} cx={0} cy={0} r={4} />
       </marker>
     </defs>
   );
