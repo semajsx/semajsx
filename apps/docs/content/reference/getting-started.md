@@ -22,15 +22,17 @@ SemaJSX is a modern JSX runtime that uses **fine-grained reactivity** with signa
 
 ```mermaid
 graph TD
-  A[semajsx] --- B[@semajsx/core]
-  A --- C[@semajsx/signal]
-  A --- D[@semajsx/dom]
-  A --- E[@semajsx/terminal]
+  A[semajsx] <--> B[@semajsx/core]
+  A <--> C[@semajsx/signal]
+  A <--> D[@semajsx/dom]
+  A <--> E[@semajsx/terminal]
   B --> C
   D --> B
   E --> B
   F[@semajsx/ssr] --> D
   G[@semajsx/ssg] --> F
+  H[@semajsx/mermaid] --> B
+  H --> C
 ```
 
 ## Installation
@@ -96,6 +98,7 @@ Add JSX configuration to your `tsconfig.json`:
 - Explore [Components](/reference/components) and how to build with JSX
 - Check out [SSR](/reference/ssr) for server-side rendering
 - Try [SSG](/reference/ssg) for static site generation
+- Render [Mermaid Diagrams](/reference/mermaid) as reactive SVG
 
 <Callout type="success" title="Ready to build!">
 You're all set! Start building amazing applications with SemaJSX.

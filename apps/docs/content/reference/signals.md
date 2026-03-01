@@ -135,10 +135,11 @@ Use batching when updating multiple signals at once to minimize re-renders.
 
 ```mermaid
 graph LR
-  A[signal] -->|subscribe| B[computed]
-  A -->|subscribe| C[JSX binding]
-  B -->|subscribe| C
+  A[signal] o-->|notify| B[computed]
+  A o-->|notify| C[JSX binding]
+  B o-->|notify| C
   C -->|update| D[DOM]
+  D -.->|event| A
 ```
 
 ## Best Practices
