@@ -142,6 +142,15 @@ graph LR
   D -.->|event| A
 ```
 
+```mermaid raw
+graph LR
+  A[signal] o-->|notify| B[computed]
+  A o-->|notify| C[JSX binding]
+  B o-->|notify| C
+  C -->|update| D[DOM]
+  D -.->|event| A
+```
+
 ## Best Practices
 
 1. **Keep signals simple** - Store primitive values or immutable data

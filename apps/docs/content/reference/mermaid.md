@@ -63,6 +63,18 @@ graph LR
   H --> I{{Hexagon}}
 ```
 
+```mermaid raw
+graph LR
+  A[Rectangle] --> B(Rounded)
+  B --> C([Stadium])
+  C --> D{Diamond}
+  D --> E[[Subroutine]]
+  E --> F[(Cylinder)]
+  F --> G((Circle))
+  G --> H>Asymmetric]
+  H --> I{{Hexagon}}
+```
+
 ### Edge Syntax
 
 Edges connect nodes with different line styles and endpoint markers:
@@ -104,11 +116,31 @@ graph LR
   Service[Service] x--x Legacy[Legacy]
 ```
 
+```mermaid raw
+graph LR
+  DB[(Database)] o--o Cache[(Cache)]
+  API[API Server] <--> Gateway[Gateway]
+  Client[Client] -->|request| API
+  API -->|response| Client
+  Service[Service] x--x Legacy[Legacy]
+```
+
 ### Subgraphs
 
 Group related nodes:
 
 ```mermaid
+graph TD
+  subgraph Frontend
+    A[React App] --> B[API Client]
+  end
+  subgraph Backend
+    C[Server] --> D[(Database)]
+  end
+  B --> C
+```
+
+```mermaid raw
 graph TD
   subgraph Frontend
     A[React App] --> B[API Client]
@@ -150,11 +182,48 @@ graph TD
   end
 ```
 
+```mermaid raw
+graph TD
+  LB[Load Balancer] --> API1[API Server 1]
+  LB --> API2[API Server 2]
+  API1 --> Cache[(Redis)]
+  API2 --> Cache
+  API1 --> Queue[(Queue)]
+  Queue --> Worker[Worker]
+  Worker --> DB[(PostgreSQL)]
+
+  subgraph Web Tier
+    LB
+  end
+  subgraph App Tier
+    API1
+    API2
+  end
+  subgraph Data Tier
+    Cache
+    DB
+    subgraph Async Processing
+      Queue
+      Worker
+    end
+  end
+```
+
 ## Sequence Diagrams
 
 ### Basic Syntax
 
 ```mermaid
+sequenceDiagram
+  participant A as Alice
+  participant B as Bob
+  A->>B: Hello Bob!
+  B-->>A: Hi Alice!
+  A->>B: How are you?
+  B->>A: Great, thanks!
+```
+
+```mermaid raw
 sequenceDiagram
   participant A as Alice
   participant B as Bob
@@ -180,6 +249,16 @@ sequenceDiagram
 A participant can send a message to itself. The layout renders these as a loopback arrow with extra vertical space:
 
 ```mermaid
+sequenceDiagram
+  participant C as Client
+  participant S as Server
+  C->>S: POST /login
+  S->>S: Validate credentials
+  S->>S: Generate JWT
+  S-->>C: 200 OK + token
+```
+
+```mermaid raw
 sequenceDiagram
   participant C as Client
   participant S as Server
@@ -217,11 +296,45 @@ sequenceDiagram
   end
 ```
 
+```mermaid raw
+sequenceDiagram
+  participant C as Client
+  participant S as Server
+  participant DB as Database
+
+  C->>S: POST /login
+  S->>DB: Query user
+
+  alt User found
+    DB-->>S: User record
+    S->>S: Verify password
+
+    opt Remember me
+      S->>DB: Store session
+    end
+
+    S-->>C: 200 OK + token
+  else Not found
+    DB-->>S: null
+    S-->>C: 401 Unauthorized
+  end
+```
+
 ### Notes
 
 Attach notes to participants:
 
 ```mermaid
+sequenceDiagram
+  participant A as Alice
+  participant B as Bob
+  Note right of A: Alice starts
+  A->>B: Request
+  Note over A,B: Handshake complete
+  B-->>A: Response
+```
+
+```mermaid raw
 sequenceDiagram
   participant A as Alice
   participant B as Bob

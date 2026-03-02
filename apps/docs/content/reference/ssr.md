@@ -62,6 +62,17 @@ graph TD
   F ==> G[Hydrate islands only]
 ```
 
+```mermaid raw
+graph TD
+  A[SSR render] --o B[Static HTML]
+  A --o C[Island metadata]
+  B --> D[Send to client]
+  C --> E[Bundle island JS]
+  D --> F[Browser]
+  E --> F
+  F ==> G[Hydrate islands only]
+```
+
 Mark interactive components as islands. They render as static HTML on the server and hydrate on the client:
 
 ```tsx
