@@ -119,6 +119,37 @@ graph TD
   B --> C
 ```
 
+### Nested Subgraphs
+
+Subgraphs can be nested to represent hierarchical grouping. The layout engine automatically adds extra spacing between layers so that nested bounding boxes don't overlap:
+
+```mermaid
+graph TD
+  LB[Load Balancer] --> API1[API Server 1]
+  LB --> API2[API Server 2]
+  API1 --> Cache[(Redis)]
+  API2 --> Cache
+  API1 --> Queue[(Queue)]
+  Queue --> Worker[Worker]
+  Worker --> DB[(PostgreSQL)]
+
+  subgraph Web Tier
+    LB
+  end
+  subgraph App Tier
+    API1
+    API2
+  end
+  subgraph Data Tier
+    Cache
+    DB
+    subgraph Async Processing
+      Queue
+      Worker
+    end
+  end
+```
+
 ## Sequence Diagrams
 
 ### Basic Syntax
@@ -143,6 +174,20 @@ sequenceDiagram
 | `--x`  | dotted with cross      | Lost async message    |
 | `-)`   | solid with open arrow  | Async fire-and-forget |
 | `--)`  | dotted with open arrow | Async reply           |
+
+### Self-Messages
+
+A participant can send a message to itself. The layout renders these as a loopback arrow with extra vertical space:
+
+```mermaid
+sequenceDiagram
+  participant C as Client
+  participant S as Server
+  C->>S: POST /login
+  S->>S: Validate credentials
+  S->>S: Generate JWT
+  S-->>C: 200 OK + token
+```
 
 ### Control Flow Blocks
 
@@ -287,6 +332,63 @@ const renderers = {
 
 render(<Mermaid code={code} renderers={renderers} />, document.getElementById("app"));
 ```
+
+## Layout Options
+
+Customize the layout engine by passing options to the `<Flowchart>` or `<Sequence>` component, or through `flowchartLayout()` / `sequenceLayout()` directly:
+
+```tsx
+import { flowchartLayout } from "@semajsx/mermaid";
+
+const layout = flowchartLayout(diagram, {
+  edgeRouting: "orthogonal", // "bezier" | "polyline" | "orthogonal"
+  nodeSpacing: 60, // horizontal gap between nodes in the same layer
+  rankSpacing: 80, // vertical gap between layers
+  nodeWidth: 150, // default node width
+  nodeHeight: 50, // default node height
+  nodePadding: 16, // padding inside subgraph boxes
+  diagramPadding: 20, // padding around the entire diagram
+});
+```
+
+### Edge Routing Modes
+
+| Mode         | Description                                                |
+| ------------ | ---------------------------------------------------------- |
+| `bezier`     | Smooth cubic bezier curves (default)                       |
+| `polyline`   | Straight diagonal lines                                    |
+| `orthogonal` | Manhattan-style routing — horizontal and vertical segments |
+
+Orthogonal routing works well for architecture diagrams where clean right-angle connectors improve readability.
+
+## MDX Integration
+
+The `remarkMermaid` plugin transforms fenced ` ```mermaid ` code blocks into rendered `<Mermaid>` components inside MDX files:
+
+```tsx
+import { remarkMermaid } from "@semajsx/mermaid/remark";
+
+// In your MDX / SSG config:
+mdx: {
+  remarkPlugins: [remarkMermaid],
+  components: { Mermaid },
+}
+```
+
+With this plugin enabled, writing a mermaid code fence in your markdown automatically renders a live diagram.
+
+### Showing Raw Mermaid Code
+
+To display mermaid source code as a literal code block (without rendering it as a diagram), add the `raw` meta flag:
+
+````md
+```mermaid raw
+graph TD
+  A --> B
+```
+````
+
+This is useful for documentation that needs to show both the syntax and the rendered output side by side.
 
 ## Next Steps
 
