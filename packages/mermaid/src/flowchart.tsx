@@ -44,6 +44,12 @@ export function Flowchart(props: FlowchartProps, ctx?: ComponentAPI): JSXNode {
         return <Comp positioned={s} />;
       })}
 
+      {positioned.edges.map((e: PositionedEdge) => {
+        const key = `edge:${e.edge.lineStyle}` as keyof RendererMap;
+        const Comp = (renderers[key] as typeof Edge) ?? renderers.edge ?? Edge;
+        return <Comp positioned={e} />;
+      })}
+
       {positioned.nodes.map((n: PositionedNode) => {
         const key = `node:${n.node.shape}` as keyof RendererMap;
         const Comp =
@@ -52,12 +58,6 @@ export function Flowchart(props: FlowchartProps, ctx?: ComponentAPI): JSXNode {
           shapeMap[n.node.shape as NodeShape] ??
           shapeMap.rect;
         return <Comp positioned={n} />;
-      })}
-
-      {positioned.edges.map((e: PositionedEdge) => {
-        const key = `edge:${e.edge.lineStyle}` as keyof RendererMap;
-        const Comp = (renderers[key] as typeof Edge) ?? renderers.edge ?? Edge;
-        return <Comp positioned={e} />;
       })}
     </svg>
   );

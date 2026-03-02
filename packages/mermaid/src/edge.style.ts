@@ -56,6 +56,7 @@ export const edgeThick: StyleToken = rule`${c.edgeThick} {
 
 export const edgeLabel: StyleToken = rule`${c.edgeLabel} {
   fill: ${tokens.edgeLabelText};
+  stroke: none;
   font-family: ${tokens.fontFamily};
   font-size: 12px;
   text-anchor: middle;

@@ -27,6 +27,7 @@ export const participantBox: StyleToken = rule`${c.participantBox} {
 
 export const participantLabel: StyleToken = rule`${c.participantLabel} {
   fill: ${tokens.nodeText};
+  stroke: none;
   font-family: ${tokens.fontFamily};
   font-size: ${tokens.fontSize}px;
   text-anchor: middle;
@@ -57,6 +58,7 @@ export const messageDotted: StyleToken = rule`${c.messageDotted} {
 
 export const messageText: StyleToken = rule`${c.messageText} {
   fill: ${tokens.nodeText};
+  stroke: none;
   font-family: ${tokens.fontFamily};
   font-size: 12px;
   text-anchor: middle;
@@ -74,6 +76,7 @@ export const blockLabel: StyleToken = rule`${c.blockLabel} {
 
 export const blockLabelText: StyleToken = rule`${c.blockLabelText} {
   fill: ${tokens.nodeText};
+  stroke: none;
   font-family: ${tokens.fontFamily};
   font-size: 11px;
   font-weight: 600;
@@ -87,6 +90,7 @@ export const noteBg: StyleToken = rule`${c.noteBg} {
 
 export const noteText: StyleToken = rule`${c.noteText} {
   fill: ${tokens.noteText};
+  stroke: none;
   font-family: ${tokens.fontFamily};
   font-size: 12px;
   text-anchor: middle;
