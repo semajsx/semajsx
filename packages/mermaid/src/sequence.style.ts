@@ -1,6 +1,7 @@
 import { classes, rule } from "@semajsx/style";
 import type { StyleToken, ClassRefs } from "@semajsx/style";
 import { tokens } from "./tokens";
+import { textLabel, boxShape } from "./base.style";
 
 const SEQUENCE_CLASSES = [
   "participantBox",
@@ -20,18 +21,11 @@ const SEQUENCE_CLASSES = [
 const c: ClassRefs<typeof SEQUENCE_CLASSES> = classes(SEQUENCE_CLASSES);
 
 export const participantBox: StyleToken = rule`${c.participantBox} {
-  fill: ${tokens.actorFill};
-  stroke: ${tokens.actorStroke};
-  stroke-width: 2;
+  ${boxShape(tokens.actorFill, tokens.actorStroke, 2)}
 }`;
 
 export const participantLabel: StyleToken = rule`${c.participantLabel} {
-  fill: ${tokens.nodeText};
-  stroke: none;
-  font-family: ${tokens.fontFamily};
-  font-size: ${tokens.fontSize}px;
-  text-anchor: middle;
-  dominant-baseline: central;
+  ${textLabel(tokens.nodeText, `${tokens.fontSize}px`)}
 }`;
 
 export const lifeline: StyleToken = rule`${c.lifeline} {
@@ -41,9 +35,7 @@ export const lifeline: StyleToken = rule`${c.lifeline} {
 }`;
 
 export const activation: StyleToken = rule`${c.activation} {
-  fill: ${tokens.activationFill};
-  stroke: ${tokens.actorStroke};
-  stroke-width: 1;
+  ${boxShape(tokens.activationFill, tokens.actorStroke, 1)}
 }`;
 
 export const messageLine: StyleToken = rule`${c.messageLine} {
@@ -57,17 +49,11 @@ export const messageDotted: StyleToken = rule`${c.messageDotted} {
 }`;
 
 export const messageText: StyleToken = rule`${c.messageText} {
-  fill: ${tokens.nodeText};
-  stroke: none;
-  font-family: ${tokens.fontFamily};
-  font-size: 12px;
-  text-anchor: middle;
+  ${textLabel(tokens.nodeText, "12px")}
 }`;
 
 export const blockBg: StyleToken = rule`${c.blockBg} {
-  fill: ${tokens.blockFill};
-  stroke: ${tokens.blockStroke};
-  stroke-width: 1;
+  ${boxShape(tokens.blockFill, tokens.blockStroke, 1)}
 }`;
 
 export const blockLabel: StyleToken = rule`${c.blockLabel} {
@@ -75,26 +61,16 @@ export const blockLabel: StyleToken = rule`${c.blockLabel} {
 }`;
 
 export const blockLabelText: StyleToken = rule`${c.blockLabelText} {
-  fill: ${tokens.nodeText};
-  stroke: none;
-  font-family: ${tokens.fontFamily};
-  font-size: 11px;
+  ${textLabel(tokens.nodeText, "11px")}
   font-weight: 600;
 }`;
 
 export const noteBg: StyleToken = rule`${c.noteBg} {
-  fill: ${tokens.noteBg};
-  stroke: ${tokens.noteStroke};
-  stroke-width: 1;
+  ${boxShape(tokens.noteBg, tokens.noteStroke, 1)}
 }`;
 
 export const noteText: StyleToken = rule`${c.noteText} {
-  fill: ${tokens.noteText};
-  stroke: none;
-  font-family: ${tokens.fontFamily};
-  font-size: 12px;
-  text-anchor: middle;
-  dominant-baseline: central;
+  ${textLabel(tokens.noteText, "12px")}
 }`;
 
 export { c };

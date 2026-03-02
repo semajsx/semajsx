@@ -13,6 +13,7 @@ export { parseSequence } from "./parser/sequence";
 
 // ── Layout ────────────────────────────────────────────
 export { builtinLayout, flowchartLayout, sequenceLayout } from "./layout";
+export { estimateTextSize, measureNode, measureLabel } from "./layout/measure";
 
 // ── Tokens & Themes ───────────────────────────────────
 export { tokens } from "./tokens";
@@ -43,6 +44,10 @@ export {
 
 // ── Sequence Components ───────────────────────────────
 export { Participant, Lifeline, Message, Activation, Block, Note } from "./components/sequence";
+
+// ── Shared Primitives ────────────────────────────────
+export { MARKER_URL, sequenceMarker, isDottedArrow } from "./components/markers";
+export { textLabel, boxShape } from "./base.style";
 
 // ── Styles (for custom renderers) ─────────────────────
 export * as nodeStyles from "./node.style";
