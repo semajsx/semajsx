@@ -1,6 +1,7 @@
 import type {
   SequenceDiagram,
   SequenceLayout,
+  Note,
   PositionedParticipant,
   PositionedMessage,
   PositionedLifeline,
@@ -99,13 +100,35 @@ export function sequenceLayout(
   const headerY = opts.diagramPadding + opts.nodeHeight / 2;
   const headerBottom = headerY + opts.nodeHeight / 2 + 20;
 
-  // Phase 2: Row assignment with variable row heights
+  // Phase 2: Unified row assignment — interleave messages and notes in parsing order
   const selfMessageWidth = 40; // horizontal extension for self-messages
   const selfMessageHeight = 30; // vertical height for self-message loop
   const positionedMessages: PositionedMessage[] = [];
+  const positionedNotes: PositionedNote[] = [];
   let currentY = headerBottom;
 
-  for (const msg of messages) {
+  // noteMessageCounts[i] = number of messages parsed before note[i]
+  const noteMessageCounts = diagram._noteMessageCounts ?? notes.map(() => messages.length);
+  let nextNoteIdx = 0;
+
+  for (let msgIdx = 0; msgIdx < messages.length; msgIdx++) {
+    // Insert any notes that appear before this message in the parsing order
+    while (
+      nextNoteIdx < notes.length &&
+      (noteMessageCounts[nextNoteIdx] ?? messages.length) <= msgIdx
+    ) {
+      currentY = positionNote(
+        notes[nextNoteIdx]!,
+        nextNoteIdx,
+        currentY,
+        positionedNotes,
+        participantX,
+        opts,
+      );
+      nextNoteIdx++;
+    }
+
+    const msg = messages[msgIdx]!;
     const fromX = participantX.get(msg.from) ?? 0;
     const toX = participantX.get(msg.to) ?? 0;
     const isSelf = msg.from === msg.to;
@@ -119,6 +142,19 @@ export function sequenceLayout(
 
     // Self-messages need extra vertical space for the loop
     currentY += isSelf ? selfMessageHeight + opts.rankSpacing * 0.5 : opts.rankSpacing;
+  }
+
+  // Any remaining notes after the last message
+  while (nextNoteIdx < notes.length) {
+    currentY = positionNote(
+      notes[nextNoteIdx]!,
+      nextNoteIdx,
+      currentY,
+      positionedNotes,
+      participantX,
+      opts,
+    );
+    nextNoteIdx++;
   }
 
   // Phase 3: Activation tracking
@@ -149,10 +185,12 @@ export function sequenceLayout(
     }
   }
 
-  // Calculate diagram height
+  // Calculate diagram height (consider both messages and notes)
   const lastMsg = positionedMessages[positionedMessages.length - 1];
+  const lastNote = positionedNotes[positionedNotes.length - 1];
   const lastMessageY = lastMsg ? lastMsg.y : headerBottom;
-  const diagramBottom = lastMessageY + opts.rankSpacing;
+  const lastNoteY = lastNote ? lastNote.y + lastNote.height : headerBottom;
+  const diagramBottom = Math.max(lastMessageY, lastNoteY) + opts.rankSpacing;
 
   // Phase 4: Lifelines
   const positionedLifelines: PositionedLifeline[] = participants.map((p) => {
@@ -199,33 +237,6 @@ export function sequenceLayout(
     };
   });
 
-  // Phase 6: Notes
-  const positionedNotes: PositionedNote[] = notes.map((note, i) => {
-    const pIds = note.participants;
-    const xs = pIds.map((id) => participantX.get(id) ?? 0).filter((x) => x > 0);
-
-    let x: number;
-    if (note.position === "left of") {
-      x = (xs[0] ?? opts.diagramPadding) - opts.nodeWidth;
-    } else if (note.position === "right of") {
-      x = (xs[0] ?? opts.diagramPadding) + opts.nodeWidth;
-    } else {
-      // "over" — centered between participants
-      x = xs.length > 0 ? xs.reduce((a, b) => a + b, 0) / xs.length : opts.diagramPadding;
-    }
-
-    const y = headerBottom + (messages.length + i) * opts.rankSpacing * 0.5;
-
-    const size = estimateTextSize(note.text, 12);
-    return {
-      note,
-      x,
-      y,
-      width: Math.max(size.width + opts.nodePadding * 2, 80),
-      height: Math.max(size.height + opts.nodePadding, 30),
-    };
-  });
-
   // Positioned participants (use measured sizes)
   const positionedParticipants: PositionedParticipant[] = participants.map((p) => {
     const x = participantX.get(p.id) ?? 0;
@@ -254,4 +265,40 @@ export function sequenceLayout(
     blocks: positionedBlocks,
     notes: positionedNotes,
   };
+}
+
+/** Position a single note and advance currentY, returning the new currentY */
+function positionNote(
+  note: Note,
+  _index: number,
+  currentY: number,
+  out: PositionedNote[],
+  participantX: Map<string, number>,
+  opts: LayoutOptions,
+): number {
+  const pIds = note.participants;
+  const xs = pIds.map((id) => participantX.get(id) ?? 0).filter((x) => x > 0);
+
+  let x: number;
+  if (note.position === "left of") {
+    x = (xs[0] ?? opts.diagramPadding) - opts.nodeWidth;
+  } else if (note.position === "right of") {
+    x = (xs[0] ?? opts.diagramPadding) + opts.nodeWidth;
+  } else {
+    // "over" — centered between participants
+    x = xs.length > 0 ? xs.reduce((a, b) => a + b, 0) / xs.length : opts.diagramPadding;
+  }
+
+  const size = estimateTextSize(note.text, 12);
+  const noteHeight = Math.max(size.height + opts.nodePadding, 30);
+
+  out.push({
+    note,
+    x,
+    y: currentY,
+    width: Math.max(size.width + opts.nodePadding * 2, 80),
+    height: noteHeight,
+  });
+
+  return currentY + noteHeight + opts.rankSpacing * 0.3;
 }

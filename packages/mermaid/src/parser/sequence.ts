@@ -19,6 +19,7 @@ interface ParserState {
   messages: Message[];
   blocks: Block[];
   notes: Note[];
+  noteMessageCounts: number[];
 }
 
 export function parseSequence(input: string): SequenceDiagram | ParseError {
@@ -32,6 +33,7 @@ export function parseSequence(input: string): SequenceDiagram | ParseError {
     messages: [],
     blocks: [],
     notes: [],
+    noteMessageCounts: [],
   };
 
   // Parse header
@@ -106,6 +108,7 @@ export function parseSequence(input: string): SequenceDiagram | ParseError {
     messages: state.messages,
     blocks: state.blocks,
     notes: state.notes,
+    _noteMessageCounts: state.noteMessageCounts,
   };
 }
 
@@ -219,6 +222,7 @@ function parseNote(state: ParserState): ParseError | undefined {
     text = readRestOfLine(state);
   }
 
+  state.noteMessageCounts.push(state.messages.length);
   state.notes.push({ position, participants, text });
   skipNewlines(state);
 }
@@ -276,13 +280,20 @@ function parseBlock(state: ParserState): { ok: true } | ParseError {
       continue;
     }
 
+    // Nested blocks (opt, loop, alt, etc.)
+    if (token.type === "keyword" && isBlockKeyword(token.value)) {
+      const result = parseBlock(state);
+      if ("message" in result) return result;
+      continue;
+    }
+
     // Parse message inside block
     if (token.type === "identifier" || token.type === "keyword") {
       const beforeLen = state.messages.length;
       parseMessage(state);
-      // Move the message from state.messages to block messages
+      // Reference the message in block messages (keep it in state.messages too for layout)
       if (state.messages.length > beforeLen) {
-        const msg = state.messages.pop()!;
+        const msg = state.messages[state.messages.length - 1]!;
         if (currentSection) {
           currentSection.messages.push(msg);
         } else {

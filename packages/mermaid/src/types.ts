@@ -70,6 +70,8 @@ export interface SequenceDiagram {
   messages: Message[];
   blocks: Block[];
   notes: Note[];
+  /** @internal Message count before each note, for interleaved layout positioning */
+  _noteMessageCounts?: number[];
 }
 
 export interface Participant {

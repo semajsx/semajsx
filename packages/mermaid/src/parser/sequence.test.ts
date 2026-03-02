@@ -156,6 +156,78 @@ describe("sequence parser", () => {
     });
   });
 
+  describe("nested blocks", () => {
+    it("parses opt inside alt without leaking keywords as participants", () => {
+      const result = expectSequence(`
+        sequenceDiagram
+          participant C as Client
+          participant S as Server
+          participant DB as Database
+
+          C->>S: POST /login
+          S->>DB: Query user
+
+          alt User found
+            DB-->>S: User record
+            S->>S: Verify password
+
+            opt Remember me
+              S->>DB: Store session
+            end
+
+            S-->>C: 200 OK + token
+          else Not found
+            DB-->>S: null
+            S-->>C: 401 Unauthorized
+          end
+      `);
+
+      // Only declared participants — no "opt" or "else" leaking
+      const ids = result.participants.map((p) => p.id);
+      expect(ids).toEqual(["C", "S", "DB"]);
+
+      // Two blocks: the nested opt and the outer alt
+      expect(result.blocks).toHaveLength(2);
+      expect(result.blocks.find((b) => b.type === "opt")?.label).toBe("Remember me");
+      expect(result.blocks.find((b) => b.type === "alt")?.label).toBe("User found");
+    });
+
+    it("parses loop inside alt", () => {
+      const result = expectSequence(`
+        sequenceDiagram
+          A->>B: Start
+          alt Success
+            loop Retry
+              A->>B: Ping
+            end
+            A->>B: Done
+          end
+      `);
+      const ids = result.participants.map((p) => p.id);
+      expect(ids).toEqual(["A", "B"]);
+      expect(result.blocks).toHaveLength(2);
+      expect(result.blocks.find((b) => b.type === "loop")).toBeDefined();
+      expect(result.blocks.find((b) => b.type === "alt")).toBeDefined();
+    });
+  });
+
+  describe("note message counts", () => {
+    it("tracks _noteMessageCounts for interleaved layout", () => {
+      const result = expectSequence(`
+        sequenceDiagram
+          participant A as Alice
+          participant B as Bob
+          Note right of A: Before any messages
+          A->>B: First
+          Note over A,B: After first
+          B-->>A: Second
+      `);
+      expect(result._noteMessageCounts).toEqual([0, 1]);
+      expect(result.notes).toHaveLength(2);
+      expect(result.messages).toHaveLength(2);
+    });
+  });
+
   describe("complex diagrams", () => {
     it("parses a real-world sequence diagram", () => {
       const result = expectSequence(`
