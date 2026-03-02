@@ -552,6 +552,7 @@ export namespace JSX {
     linearGradient: SVGAttributes;
     mask: SVGAttributes;
     path: SVGAttributes;
+    pattern: SVGAttributes;
     foreignObject: SVGAttributes;
     marker: SVGAttributes;
     polygon: SVGAttributes;
