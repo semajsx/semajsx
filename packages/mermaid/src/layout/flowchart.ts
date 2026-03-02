@@ -38,27 +38,24 @@ export function flowchartLayout(
     nodeSizes.set(node.id, measureNode(node.label, opts));
   }
 
-  // Phase 2: Build adjacency + reverse edges for cycle removal
+  // Phase 2: Cycle removal via DFS — mark back edges, then reverse them
+  const backEdgeSet = new Set<FlowEdge>();
   const adj = new Map<string, string[]>();
-  const safeEdges: FlowEdge[] = [];
   const visited = new Set<string>();
   const inStack = new Set<string>();
 
   for (const node of nodes) adj.set(node.id, []);
   for (const edge of edges) {
-    const targets = adj.get(edge.source);
-    if (targets) targets.push(edge.target);
+    adj.get(edge.source)?.push(edge.target);
   }
 
-  // DFS cycle removal
   function dfs(node: string): void {
     visited.add(node);
     inStack.add(node);
     for (const neighbor of adj.get(node) ?? []) {
       if (inStack.has(neighbor)) {
-        // Back edge — reverse it
         const edge = edges.find((e) => e.source === node && e.target === neighbor);
-        if (edge) safeEdges.push({ ...edge, source: neighbor, target: node });
+        if (edge) backEdgeSet.add(edge);
       } else if (!visited.has(neighbor)) {
         dfs(neighbor);
       }
@@ -70,14 +67,12 @@ export function flowchartLayout(
     if (!visited.has(node.id)) dfs(node.id);
   }
 
-  // Add non-back edges
-  for (const edge of edges) {
-    if (!safeEdges.some((e) => e.source === edge.target && e.target === edge.source)) {
-      safeEdges.push(edge);
-    }
-  }
+  // Every edge is either kept or reversed — no edges are lost
+  const safeEdges: FlowEdge[] = edges.map((edge) =>
+    backEdgeSet.has(edge) ? { ...edge, source: edge.target, target: edge.source } : edge,
+  );
 
-  // Phase 3: Layer assignment (longest path from sources)
+  // Phase 3: Layer assignment (longest path from sources via topological BFS)
   const layers = new Map<string, number>();
   const safeAdj = new Map<string, string[]>();
   const inDegree = new Map<string, number>();
@@ -91,7 +86,6 @@ export function flowchartLayout(
     inDegree.set(edge.target, (inDegree.get(edge.target) ?? 0) + 1);
   }
 
-  // BFS topological order
   const queue: string[] = [];
   for (const node of nodes) {
     if ((inDegree.get(node.id) ?? 0) === 0) {
@@ -113,7 +107,6 @@ export function flowchartLayout(
     }
   }
 
-  // Handle disconnected nodes
   for (const node of nodes) {
     if (!layers.has(node.id)) layers.set(node.id, 0);
   }
@@ -126,86 +119,90 @@ export function flowchartLayout(
     layerGroups[layer]!.push(node.id);
   }
 
-  // Phase 5: Subgraph-aware barycenter ordering
-  // Build nodeId → immediate subgraph mapping so same-group nodes stay adjacent
+  // Phase 5: Subgraph-aware barycenter ordering — 4-pass bidirectional
   const nodeSubgraph = new Map<string, string>();
   for (const sg of subgraphs) {
     mapNodesToSubgraph(sg, nodeSubgraph);
   }
 
-  for (let pass = 0; pass < 2; pass++) {
-    for (let l = 1; l <= maxLayer; l++) {
-      const layer = layerGroups[l]!;
-      const barycenters = new Map<string, number>();
+  // Build parent/child adjacency from safe edges
+  const parents = new Map<string, string[]>();
+  const children = new Map<string, string[]>();
+  for (const node of nodes) {
+    parents.set(node.id, []);
+    children.set(node.id, []);
+  }
+  for (const edge of safeEdges) {
+    children.get(edge.source)?.push(edge.target);
+    parents.get(edge.target)?.push(edge.source);
+  }
 
-      for (const nodeId of layer) {
-        // Find positions of connected nodes in previous layer
-        const prevLayer = layerGroups[l - 1]!;
-        let sum = 0;
-        let count = 0;
-        for (const edge of safeEdges) {
-          if (edge.target === nodeId && prevLayer.includes(edge.source)) {
-            sum += prevLayer.indexOf(edge.source);
-            count++;
-          }
-        }
-        barycenters.set(nodeId, count > 0 ? sum / count : prevLayer.length / 2);
+  for (let pass = 0; pass < 4; pass++) {
+    if (pass % 2 === 0) {
+      // Top-down sweep
+      for (let l = 1; l <= maxLayer; l++) {
+        orderLayerByBarycenter(layerGroups[l]!, layerGroups[l - 1]!, parents, nodeSubgraph);
       }
-
-      // Sort: primary key = subgraph group barycenter, secondary = individual barycenter.
-      // This keeps same-subgraph nodes clustered together.
-      const groupBarycenter = new Map<string, number>();
-      for (const nodeId of layer) {
-        const sgId = nodeSubgraph.get(nodeId) ?? "";
-        if (!groupBarycenter.has(sgId)) {
-          // Average barycenter of all nodes in this subgraph within this layer
-          const members = layer.filter((n) => (nodeSubgraph.get(n) ?? "") === sgId);
-          const avg = members.reduce((s, n) => s + (barycenters.get(n) ?? 0), 0) / members.length;
-          groupBarycenter.set(sgId, avg);
-        }
+    } else {
+      // Bottom-up sweep
+      for (let l = maxLayer - 1; l >= 0; l--) {
+        orderLayerByBarycenter(layerGroups[l]!, layerGroups[l + 1]!, children, nodeSubgraph);
       }
-
-      layer.sort((a, b) => {
-        const sgA = nodeSubgraph.get(a) ?? "";
-        const sgB = nodeSubgraph.get(b) ?? "";
-        if (sgA !== sgB) {
-          return (groupBarycenter.get(sgA) ?? 0) - (groupBarycenter.get(sgB) ?? 0);
-        }
-        return (barycenters.get(a) ?? 0) - (barycenters.get(b) ?? 0);
-      });
     }
   }
 
-  // Phase 6: Coordinate assignment
+  // Phase 6: Coordinate assignment with cross-layer median alignment
   const isVertical = direction === "TB" || direction === "TD" || direction === "BT";
-  const positions = new Map<string, { x: number; y: number }>();
 
+  // Primary-axis dimension of a node
+  const dim = (id: string): number => {
+    const size = nodeSizes.get(id)!;
+    return isVertical ? size.width : size.height;
+  };
+
+  // Spacing between adjacent nodes — extra gap at subgraph boundaries
+  const gap = (a: string, b: string): number => {
+    const sgA = nodeSubgraph.get(a);
+    const sgB = nodeSubgraph.get(b);
+    if (sgA !== sgB) {
+      return opts.nodeSpacing + opts.nodePadding * 2;
+    }
+    return opts.nodeSpacing;
+  };
+
+  // Initial placement: pack each layer centered at 0
+  const pos = new Map<string, number>();
   for (let l = 0; l <= maxLayer; l++) {
-    const layer = layerGroups[l]!;
-    const layerWidth = layer.reduce((sum, id) => {
-      const size = nodeSizes.get(id)!;
-      return sum + (isVertical ? size.width : size.height) + opts.nodeSpacing;
-    }, -opts.nodeSpacing);
+    packLayerCentered(layerGroups[l]!, pos, dim, gap);
+  }
 
-    let offset = -layerWidth / 2;
-
-    for (const nodeId of layer) {
-      const size = nodeSizes.get(nodeId)!;
-      const primaryDim = isVertical ? size.width : size.height;
-
-      if (isVertical) {
-        positions.set(nodeId, {
-          x: offset + primaryDim / 2,
-          y: l * (opts.nodeHeight + opts.rankSpacing),
-        });
-      } else {
-        positions.set(nodeId, {
-          x: l * (opts.nodeWidth + opts.rankSpacing),
-          y: offset + primaryDim / 2,
-        });
+  // Median alignment passes — 4 alternating top-down/bottom-up sweeps
+  for (let pass = 0; pass < 4; pass++) {
+    if (pass % 2 === 0) {
+      for (let l = 1; l <= maxLayer; l++) {
+        alignLayerToMedian(layerGroups[l]!, parents, pos, dim, gap);
       }
+    } else {
+      for (let l = maxLayer - 1; l >= 0; l--) {
+        alignLayerToMedian(layerGroups[l]!, children, pos, dim, gap);
+      }
+    }
+  }
 
-      offset += primaryDim + opts.nodeSpacing;
+  // Convert 1D primary-axis positions to 2D coordinates
+  const nodeLayer = new Map<string, number>();
+  for (let l = 0; l <= maxLayer; l++) {
+    for (const id of layerGroups[l]!) nodeLayer.set(id, l);
+  }
+
+  const positions = new Map<string, { x: number; y: number }>();
+  for (const node of nodes) {
+    const p = pos.get(node.id) ?? 0;
+    const l = nodeLayer.get(node.id) ?? 0;
+    if (isVertical) {
+      positions.set(node.id, { x: p, y: l * (opts.nodeHeight + opts.rankSpacing) });
+    } else {
+      positions.set(node.id, { x: l * (opts.nodeWidth + opts.rankSpacing), y: p });
     }
   }
 
@@ -214,42 +211,39 @@ export function flowchartLayout(
     minY = Infinity,
     maxX = -Infinity,
     maxY = -Infinity;
-  for (const [id, pos] of positions) {
+  for (const [id, p] of positions) {
     const size = nodeSizes.get(id)!;
-    minX = Math.min(minX, pos.x - size.width / 2);
-    minY = Math.min(minY, pos.y - size.height / 2);
-    maxX = Math.max(maxX, pos.x + size.width / 2);
-    maxY = Math.max(maxY, pos.y + size.height / 2);
+    minX = Math.min(minX, p.x - size.width / 2);
+    minY = Math.min(minY, p.y - size.height / 2);
+    maxX = Math.max(maxX, p.x + size.width / 2);
+    maxY = Math.max(maxY, p.y + size.height / 2);
   }
 
-  // Shift positions so diagram starts at (padding, padding)
   const offsetX = opts.diagramPadding - minX;
   const offsetY = opts.diagramPadding - minY;
-  for (const [, pos] of positions) {
-    pos.x += offsetX;
-    pos.y += offsetY;
+  for (const [, p] of positions) {
+    p.x += offsetX;
+    p.y += offsetY;
   }
 
   if (direction === "BT") {
-    // Flip vertically
     const totalHeight = maxY - minY;
-    for (const [, pos] of positions) {
-      pos.y = totalHeight - (pos.y - opts.diagramPadding) + opts.diagramPadding;
+    for (const [, p] of positions) {
+      p.y = totalHeight - (p.y - opts.diagramPadding) + opts.diagramPadding;
     }
   }
   if (direction === "RL") {
-    // Flip horizontally
     const totalWidth = maxX - minX;
-    for (const [, pos] of positions) {
-      pos.x = totalWidth - (pos.x - opts.diagramPadding) + opts.diagramPadding;
+    for (const [, p] of positions) {
+      p.x = totalWidth - (p.x - opts.diagramPadding) + opts.diagramPadding;
     }
   }
 
   // Build positioned nodes
   const positionedNodes: PositionedNode[] = nodes.map((node) => {
-    const pos = positions.get(node.id)!;
+    const p = positions.get(node.id)!;
     const size = nodeSizes.get(node.id)!;
-    return { node, x: pos.x, y: pos.y, width: size.width, height: size.height };
+    return { node, x: p.x, y: p.y, width: size.width, height: size.height };
   });
 
   // Phase 7: Edge routing
@@ -265,7 +259,6 @@ export function flowchartLayout(
 
     const result = buildEdgePath(sourcePos, targetPos, sourceSize, targetSize, isVertical, opts);
 
-    // Label position from bezier midpoint formula
     let labelPosition;
     let labelSize;
     if (edge.label) {
@@ -281,30 +274,27 @@ export function flowchartLayout(
   const sgBounds = new Map<string, { x: number; y: number; width: number; height: number }>();
 
   function layoutSubgraph(sg: Subgraph): PositionedSubgraph {
-    // Layout children first so their bounds are available
     const childPositioned: PositionedSubgraph[] = [];
     for (const child of sg.subgraphs ?? []) {
       childPositioned.push(layoutSubgraph(child));
     }
 
-    // Compute bounding box from direct nodes
     let sgMinX = Infinity,
       sgMinY = Infinity,
       sgMaxX = -Infinity,
       sgMaxY = -Infinity;
 
     for (const nodeId of sg.nodes) {
-      const pos = positions.get(nodeId);
+      const p = positions.get(nodeId);
       const size = nodeSizes.get(nodeId);
-      if (pos && size) {
-        sgMinX = Math.min(sgMinX, pos.x - size.width / 2);
-        sgMinY = Math.min(sgMinY, pos.y - size.height / 2);
-        sgMaxX = Math.max(sgMaxX, pos.x + size.width / 2);
-        sgMaxY = Math.max(sgMaxY, pos.y + size.height / 2);
+      if (p && size) {
+        sgMinX = Math.min(sgMinX, p.x - size.width / 2);
+        sgMinY = Math.min(sgMinY, p.y - size.height / 2);
+        sgMaxX = Math.max(sgMaxX, p.x + size.width / 2);
+        sgMaxY = Math.max(sgMaxY, p.y + size.height / 2);
       }
     }
 
-    // Expand to include child subgraph boxes
     for (const child of childPositioned) {
       sgMinX = Math.min(sgMinX, child.x);
       sgMinY = Math.min(sgMinY, child.y);
@@ -316,7 +306,7 @@ export function flowchartLayout(
     const positioned: PositionedSubgraph = {
       subgraph: sg,
       x: sgMinX - padding,
-      y: sgMinY - padding - 20, // Extra for title
+      y: sgMinY - padding - 20,
       width: sgMaxX - sgMinX + padding * 2,
       height: sgMaxY - sgMinY + padding * 2 + 20,
     };
@@ -361,16 +351,154 @@ export function flowchartLayout(
   };
 }
 
+// ── Helpers ────────────────────────────────────────────────
+
 /** Map each node to its most immediate (deepest) containing subgraph. */
 function mapNodesToSubgraph(sg: Subgraph, out: Map<string, string>): void {
   for (const nodeId of sg.nodes) {
-    // Deeper subgraphs override shallower ones
     out.set(nodeId, sg.id);
   }
   for (const child of sg.subgraphs ?? []) {
     mapNodesToSubgraph(child, out);
   }
 }
+
+/**
+ * Order a layer using barycenter heuristic with subgraph clustering.
+ * `neighbors` maps each node to its connected nodes in the reference layer.
+ * Nodes in the same subgraph are kept adjacent.
+ */
+function orderLayerByBarycenter(
+  layer: string[],
+  refLayer: string[],
+  neighborMap: Map<string, string[]>,
+  nodeSubgraph: Map<string, string>,
+): void {
+  const barycenters = new Map<string, number>();
+
+  for (const nodeId of layer) {
+    const nbrs = (neighborMap.get(nodeId) ?? []).filter((n) => refLayer.includes(n));
+    if (nbrs.length > 0) {
+      const sum = nbrs.reduce((s, n) => s + refLayer.indexOf(n), 0);
+      barycenters.set(nodeId, sum / nbrs.length);
+    }
+  }
+
+  // Compute group barycenters for subgraph clustering
+  const groupBary = new Map<string, number>();
+  for (const nodeId of layer) {
+    const sgId = nodeSubgraph.get(nodeId) ?? "";
+    if (!groupBary.has(sgId)) {
+      const members = layer.filter((n) => (nodeSubgraph.get(n) ?? "") === sgId);
+      const connected = members.filter((n) => barycenters.has(n));
+      if (connected.length > 0) {
+        const avg = connected.reduce((s, n) => s + barycenters.get(n)!, 0) / connected.length;
+        groupBary.set(sgId, avg);
+      }
+    }
+  }
+
+  // Stable sort: group barycenter → individual barycenter → original order
+  const original = [...layer];
+  layer.sort((a, b) => {
+    const sgA = nodeSubgraph.get(a) ?? "";
+    const sgB = nodeSubgraph.get(b) ?? "";
+    if (sgA !== sgB) {
+      const ga = groupBary.get(sgA);
+      const gb = groupBary.get(sgB);
+      if (ga !== undefined && gb !== undefined && ga !== gb) return ga - gb;
+      if (ga !== undefined && gb === undefined) return -1;
+      if (ga === undefined && gb !== undefined) return 1;
+    }
+    const ba = barycenters.get(a);
+    const bb = barycenters.get(b);
+    if (ba !== undefined && bb !== undefined && ba !== bb) return ba - bb;
+    if (ba !== undefined && bb === undefined) return -1;
+    if (ba === undefined && bb !== undefined) return 1;
+    return original.indexOf(a) - original.indexOf(b);
+  });
+}
+
+/** Pack a layer centered at x=0 with minimum spacing. */
+function packLayerCentered(
+  layer: string[],
+  pos: Map<string, number>,
+  dim: (id: string) => number,
+  gap: (a: string, b: string) => number,
+): void {
+  if (layer.length === 0) return;
+
+  let totalWidth = dim(layer[0]!);
+  for (let i = 1; i < layer.length; i++) {
+    totalWidth += gap(layer[i - 1]!, layer[i]!) + dim(layer[i]!);
+  }
+
+  let offset = -totalWidth / 2;
+  for (let i = 0; i < layer.length; i++) {
+    const id = layer[i]!;
+    const d = dim(id);
+    if (i > 0) offset += gap(layer[i - 1]!, id);
+    pos.set(id, offset + d / 2);
+    offset += d;
+  }
+}
+
+/**
+ * Align a layer toward median positions of connected nodes in the reference layer.
+ *
+ * Conservative approach: each node shifts toward its ideal only within the
+ * available slack between its current left and right neighbors. This avoids
+ * cascading pushes that break symmetric centering.
+ */
+function alignLayerToMedian(
+  layer: string[],
+  neighborMap: Map<string, string[]>,
+  pos: Map<string, number>,
+  dim: (id: string) => number,
+  gap: (a: string, b: string) => number,
+): void {
+  if (layer.length === 0) return;
+
+  // Compute ideal positions (median of neighbor positions)
+  const ideal = new Map<string, number>();
+  for (const id of layer) {
+    const nbrs = neighborMap.get(id) ?? [];
+    if (nbrs.length > 0) {
+      const xs = nbrs.map((n) => pos.get(n)!).sort((a, b) => a - b);
+      const mid = Math.floor(xs.length / 2);
+      ideal.set(id, xs.length % 2 === 1 ? xs[mid]! : (xs[mid - 1]! + xs[mid]!) / 2);
+    }
+  }
+
+  if (ideal.size === 0) return;
+
+  // Shift each node toward its ideal within the slack between neighbors
+  for (let i = 0; i < layer.length; i++) {
+    const id = layer[i]!;
+    const target = ideal.get(id);
+    if (target === undefined) continue;
+
+    const halfDim = dim(id) / 2;
+
+    // Left boundary (don't overlap left neighbor)
+    let minPos = -Infinity;
+    if (i > 0) {
+      const leftId = layer[i - 1]!;
+      minPos = pos.get(leftId)! + dim(leftId) / 2 + gap(leftId, id) + halfDim;
+    }
+
+    // Right boundary (don't overlap right neighbor)
+    let maxPos = Infinity;
+    if (i < layer.length - 1) {
+      const rightId = layer[i + 1]!;
+      maxPos = pos.get(rightId)! - dim(rightId) / 2 - gap(id, rightId) - halfDim;
+    }
+
+    pos.set(id, Math.max(minPos, Math.min(maxPos, target)));
+  }
+}
+
+// ── Edge routing ──────────────────────────────────────────
 
 /** Default curvature factor (matches xyflow) */
 const DEFAULT_CURVATURE = 0.25;
@@ -401,7 +529,6 @@ export function bezierMidpoint(
   tx: number,
   ty: number,
 ): { x: number; y: number } {
-  // Cubic bezier at t=0.5: B(0.5) = (1/8)P0 + (3/8)P1 + (3/8)P2 + (1/8)P3
   return {
     x: sx * 0.125 + cx1 * 0.375 + cx2 * 0.375 + tx * 0.125,
     y: sy * 0.125 + cy1 * 0.375 + cy2 * 0.375 + ty * 0.125,
@@ -416,7 +543,6 @@ function buildEdgePath(
   isVertical: boolean,
   opts: LayoutOptions,
 ): { path: string; labelMid: { x: number; y: number } } {
-  // Connection points at node geometric boundary (no stroke offset, following xyflow)
   let sx: number, sy: number, tx: number, ty: number;
 
   if (isVertical) {
@@ -425,7 +551,6 @@ function buildEdgePath(
     tx = target.x;
     ty = target.y - targetSize.height / 2;
 
-    // If target is above source, flip
     if (source.y > target.y) {
       sy = source.y - sourceSize.height / 2;
       ty = target.y + targetSize.height / 2;
@@ -462,6 +587,23 @@ function buildEdgePath(
       return {
         path: `M ${sx} ${sy} C ${cx1} ${sy} ${cx2} ${ty} ${tx} ${ty}`,
         labelMid: mid,
+      };
+    }
+  }
+
+  if (opts.edgeRouting === "orthogonal") {
+    // Manhattan-style routing: horizontal and vertical segments only
+    if (isVertical) {
+      const midY = (sy + ty) / 2;
+      return {
+        path: `M ${sx} ${sy} L ${sx} ${midY} L ${tx} ${midY} L ${tx} ${ty}`,
+        labelMid: { x: (sx + tx) / 2, y: midY },
+      };
+    } else {
+      const midX = (sx + tx) / 2;
+      return {
+        path: `M ${sx} ${sy} L ${midX} ${sy} L ${midX} ${ty} L ${tx} ${ty}`,
+        labelMid: { x: midX, y: (sy + ty) / 2 },
       };
     }
   }

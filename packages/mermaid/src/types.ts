@@ -225,7 +225,7 @@ export interface LayoutOptions {
   nodeHeight: number;
   nodePadding: number;
   diagramPadding: number;
-  edgeRouting: "polyline" | "bezier";
+  edgeRouting: "polyline" | "bezier" | "orthogonal";
   measureText?: (text: string, fontSize: number) => Size;
 }
 

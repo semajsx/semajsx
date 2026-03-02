@@ -9,7 +9,7 @@ import type {
   PositionedNote,
   LayoutOptions,
 } from "../types";
-import { estimateTextSize, measureNode } from "./measure";
+import { estimateTextSize, measureNode, measureLabel } from "./measure";
 
 const DEFAULT_OPTIONS: LayoutOptions = {
   nodeSpacing: 200,
@@ -42,22 +42,84 @@ export function sequenceLayout(
     };
   }
 
-  // Phase 1: Column assignment
+  // Phase 1: Measure participants and compute label-aware column spacing
+  const participantIndex = new Map<string, number>();
+  const participantSizes = new Map<string, { width: number; height: number }>();
+  for (let i = 0; i < participants.length; i++) {
+    const p = participants[i]!;
+    participantIndex.set(p.id, i);
+    participantSizes.set(p.id, measureNode(p.label, opts));
+  }
+
+  // Compute minimum spacing between each pair of adjacent participants
+  // based on participant label widths and message label widths between them
+  const pairSpacing: number[] = []; // spacing[i] = gap between participant i and i+1
+  for (let i = 0; i < participants.length - 1; i++) {
+    const left = participants[i]!;
+    const right = participants[i + 1]!;
+    const leftSize = participantSizes.get(left.id)!;
+    const rightSize = participantSizes.get(right.id)!;
+
+    // Minimum distance: half of left + half of right + gap
+    let minDist = leftSize.width / 2 + rightSize.width / 2 + opts.nodePadding * 2;
+
+    // Check message labels between this pair for wider required spacing
+    for (const msg of messages) {
+      const fi = participantIndex.get(msg.from);
+      const ti = participantIndex.get(msg.to);
+      if (fi === undefined || ti === undefined) continue;
+
+      // Only consider messages that span exactly between these two columns
+      // (or pass through them)
+      const lo = Math.min(fi, ti);
+      const hi = Math.max(fi, ti);
+      if (lo <= i && hi >= i + 1 && msg.text) {
+        // The label needs to fit between the two participants
+        const labelSize = measureLabel(msg.text, opts);
+        const spanCols = hi - lo;
+        // Distribute label width across the spanned column gaps
+        const perGap = (labelSize.width + opts.nodePadding * 2) / spanCols;
+        minDist = Math.max(minDist, perGap);
+      }
+    }
+
+    pairSpacing.push(Math.max(minDist, opts.nodeSpacing));
+  }
+
+  // Assign x positions based on computed spacing
   const participantX = new Map<string, number>();
-  participants.forEach((p, i) => {
-    participantX.set(p.id, opts.diagramPadding + opts.nodeWidth / 2 + i * opts.nodeSpacing);
-  });
+  let currentX =
+    opts.diagramPadding + (participantSizes.get(participants[0]!.id)?.width ?? opts.nodeWidth) / 2;
+  participantX.set(participants[0]!.id, currentX);
+  for (let i = 1; i < participants.length; i++) {
+    currentX += pairSpacing[i - 1]!;
+    participantX.set(participants[i]!.id, currentX);
+  }
 
   const headerY = opts.diagramPadding + opts.nodeHeight / 2;
   const headerBottom = headerY + opts.nodeHeight / 2 + 20;
 
-  // Phase 2: Row assignment
-  const positionedMessages: PositionedMessage[] = messages.map((msg, i) => {
+  // Phase 2: Row assignment with variable row heights
+  const selfMessageWidth = 40; // horizontal extension for self-messages
+  const selfMessageHeight = 30; // vertical height for self-message loop
+  const positionedMessages: PositionedMessage[] = [];
+  let currentY = headerBottom;
+
+  for (const msg of messages) {
     const fromX = participantX.get(msg.from) ?? 0;
     const toX = participantX.get(msg.to) ?? 0;
-    const y = headerBottom + i * opts.rankSpacing;
-    return { message: msg, fromX, toX, y };
-  });
+    const isSelf = msg.from === msg.to;
+
+    positionedMessages.push({
+      message: msg,
+      fromX,
+      toX: isSelf ? fromX + selfMessageWidth : toX,
+      y: currentY,
+    });
+
+    // Self-messages need extra vertical space for the loop
+    currentY += isSelf ? selfMessageHeight + opts.rankSpacing * 0.5 : opts.rankSpacing;
+  }
 
   // Phase 3: Activation tracking
   const activationStarts = new Map<string, number>();
@@ -98,9 +160,13 @@ export function sequenceLayout(
     return { participant: p, x, y1: headerY + opts.nodeHeight / 2, y2: diagramBottom };
   });
 
-  // Phase 5: Blocks
+  // Phase 5: Blocks — use message index for reliable y-lookup
+  const msgIndexMap = new Map<number, PositionedMessage>();
+  for (let i = 0; i < messages.length; i++) {
+    msgIndexMap.set(i, positionedMessages[i]!);
+  }
+
   const positionedBlocks: PositionedBlock[] = blocks.map((block) => {
-    // Find messages that belong to this block
     const blockMsgs = block.messages;
     const allMsgs = [...blockMsgs, ...(block.sections?.flatMap((s) => s.messages) ?? [])];
 
@@ -153,8 +219,6 @@ export function sequenceLayout(
       x = xs.length > 0 ? xs.reduce((a, b) => a + b, 0) / xs.length : opts.diagramPadding;
     }
 
-    // Put note at a y position based on its index in notes array
-    // In real usage, notes are interleaved with messages, but for now approximate
     const y = headerBottom + (messages.length + i) * opts.rankSpacing * 0.5;
 
     const size = estimateTextSize(note.text, 12);
@@ -167,16 +231,21 @@ export function sequenceLayout(
     };
   });
 
-  // Positioned participants
+  // Positioned participants (use measured sizes)
   const positionedParticipants: PositionedParticipant[] = participants.map((p) => {
     const x = participantX.get(p.id) ?? 0;
-    const size = measureNode(p.label, opts);
+    const size = participantSizes.get(p.id)!;
     return { participant: p, x, y: headerY, width: size.width, height: opts.nodeHeight };
   });
 
-  // Final dimensions
+  // Final dimensions — compute from actual participant positions
+  const firstX = participantX.get(participants[0]!.id)!;
+  const lastX = participantX.get(participants[participants.length - 1]!.id)!;
+  const firstHalf = (participantSizes.get(participants[0]!.id)?.width ?? opts.nodeWidth) / 2;
+  const lastHalf =
+    (participantSizes.get(participants[participants.length - 1]!.id)?.width ?? opts.nodeWidth) / 2;
   const diagramWidth =
-    (participants.length - 1) * opts.nodeSpacing + opts.nodeWidth + opts.diagramPadding * 2;
+    lastX + lastHalf + opts.diagramPadding - (firstX - firstHalf - opts.diagramPadding);
   const diagramHeight = diagramBottom + opts.diagramPadding;
 
   return {

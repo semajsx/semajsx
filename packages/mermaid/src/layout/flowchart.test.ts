@@ -282,6 +282,238 @@ describe("flowchart layout", () => {
     expect(cloud.y + cloud.height).toBeGreaterThanOrEqual(vpc.y + vpc.height);
   });
 
+  it("aligns single child directly beneath parent", () => {
+    // A -> B: B should be horizontally aligned with A
+    const result = flowchartLayout(simpleDiagram("TD"));
+    const nodeA = result.nodes.find((n) => n.node.id === "A")!;
+    const nodeB = result.nodes.find((n) => n.node.id === "B")!;
+    expect(nodeA.x).toBeCloseTo(nodeB.x, 0);
+  });
+
+  it("centers parent between two children (diamond pattern)", () => {
+    const result = flowchartLayout({
+      type: "flowchart",
+      direction: "TD",
+      nodes: [
+        { id: "A", label: "A", shape: "rect" },
+        { id: "B", label: "B", shape: "rect" },
+        { id: "C", label: "C", shape: "rect" },
+        { id: "D", label: "D", shape: "rect" },
+      ],
+      edges: [
+        {
+          source: "A",
+          target: "B",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "A",
+          target: "C",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "B",
+          target: "D",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "C",
+          target: "D",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+      ],
+      subgraphs: [],
+    });
+
+    const nodeA = result.nodes.find((n) => n.node.id === "A")!;
+    const nodeB = result.nodes.find((n) => n.node.id === "B")!;
+    const nodeC = result.nodes.find((n) => n.node.id === "C")!;
+    const nodeD = result.nodes.find((n) => n.node.id === "D")!;
+
+    // A should be centered between B and C
+    const midBC = (nodeB.x + nodeC.x) / 2;
+    expect(Math.abs(nodeA.x - midBC)).toBeLessThan(5);
+    // D should also be centered between B and C
+    expect(Math.abs(nodeD.x - midBC)).toBeLessThan(5);
+  });
+
+  it("adds extra spacing between different subgraph groups", () => {
+    const result = flowchartLayout({
+      type: "flowchart",
+      direction: "TD",
+      nodes: [
+        { id: "A", label: "A", shape: "rect" },
+        { id: "B1", label: "B1", shape: "rect" },
+        { id: "B2", label: "B2", shape: "rect" },
+        { id: "C1", label: "C1", shape: "rect" },
+        { id: "C2", label: "C2", shape: "rect" },
+      ],
+      edges: [
+        {
+          source: "A",
+          target: "B1",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "A",
+          target: "B2",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "A",
+          target: "C1",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "A",
+          target: "C2",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+      ],
+      subgraphs: [
+        { id: "sg1", label: "Group 1", nodes: ["B1", "B2"] },
+        { id: "sg2", label: "Group 2", nodes: ["C1", "C2"] },
+      ],
+    });
+
+    // The two subgraph bounding boxes should not overlap
+    const sg1 = result.subgraphs.find((s) => s.subgraph.id === "sg1")!;
+    const sg2 = result.subgraphs.find((s) => s.subgraph.id === "sg2")!;
+
+    const [left, right] = sg1.x < sg2.x ? [sg1, sg2] : [sg2, sg1];
+    expect(left.x + left.width).toBeLessThan(right.x);
+  });
+
+  it("preserves all edges through cycle removal", () => {
+    // A -> B and B -> A creates a cycle
+    const result = flowchartLayout({
+      type: "flowchart",
+      direction: "TD",
+      nodes: [
+        { id: "A", label: "A", shape: "rect" },
+        { id: "B", label: "B", shape: "rect" },
+      ],
+      edges: [
+        {
+          source: "A",
+          target: "B",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "B",
+          target: "A",
+          lineStyle: "dotted",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+      ],
+      subgraphs: [],
+    });
+    // Both edges should be routed (neither lost)
+    expect(result.edges).toHaveLength(2);
+    expect(result.edges[0].path).toMatch(/^M /);
+    expect(result.edges[1].path).toMatch(/^M /);
+  });
+
+  it("handles fan-out alignment (1 parent, 3 children)", () => {
+    const result = flowchartLayout({
+      type: "flowchart",
+      direction: "TD",
+      nodes: [
+        { id: "A", label: "Root", shape: "rect" },
+        { id: "B", label: "Left", shape: "rect" },
+        { id: "C", label: "Center", shape: "rect" },
+        { id: "D", label: "Right", shape: "rect" },
+      ],
+      edges: [
+        {
+          source: "A",
+          target: "B",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "A",
+          target: "C",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "A",
+          target: "D",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+      ],
+      subgraphs: [],
+    });
+
+    const nodeA = result.nodes.find((n) => n.node.id === "A")!;
+    const nodeB = result.nodes.find((n) => n.node.id === "B")!;
+    const nodeC = result.nodes.find((n) => n.node.id === "C")!;
+    const nodeD = result.nodes.find((n) => n.node.id === "D")!;
+
+    // A should be roughly centered above its 3 children
+    const midChildren = (nodeB.x + nodeC.x + nodeD.x) / 3;
+    expect(Math.abs(nodeA.x - midChildren)).toBeLessThan(10);
+  });
+
+  it("generates orthogonal edges (Manhattan routing)", () => {
+    const result = flowchartLayout(simpleDiagram(), { edgeRouting: "orthogonal" });
+    const path = result.edges[0].path;
+    // Orthogonal paths use only L (line-to) segments, no C (curves)
+    expect(path).not.toContain("C");
+    expect(path).toContain("L");
+
+    // Should have exactly 3 L segments for a Manhattan route
+    const lCount = (path.match(/L /g) ?? []).length;
+    expect(lCount).toBe(3);
+  });
+
+  it("orthogonal edges have only horizontal/vertical segments", () => {
+    const result = flowchartLayout(simpleDiagram("TD"), { edgeRouting: "orthogonal" });
+    const path = result.edges[0].path;
+
+    // Parse all points from the path
+    const points = path
+      .split(/[ML] /)
+      .filter(Boolean)
+      .map((s: string) => {
+        const [x, y] = s.trim().split(" ").map(Number);
+        return { x, y };
+      });
+
+    // Each consecutive pair should share either x or y (orthogonal)
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i - 1];
+      const curr = points[i];
+      const isHorizontal = prev.y === curr.y;
+      const isVertical = prev.x === curr.x;
+      expect(isHorizontal || isVertical).toBe(true);
+    }
+  });
+
   it("expands viewBox to include subgraph boxes", () => {
     const result = flowchartLayout({
       type: "flowchart",
