@@ -1,23 +1,14 @@
 /** @jsxImportSource @semajsx/dom */
 import type { JSXNode } from "@semajsx/core";
 import { messageLine, messageDotted, messageText } from "../../sequence.style";
-import type { ArrowType, MessageRenderProps } from "../../types";
-
-const MARKER: Record<ArrowType, string> = {
-  solid: "url(#mmd-arrow)",
-  dotted: "url(#mmd-arrow)",
-  solidCross: "url(#mmd-cross)",
-  dottedCross: "url(#mmd-cross)",
-  solidOpen: "url(#mmd-arrow-open)",
-  dottedOpen: "url(#mmd-arrow-open)",
-};
+import type { MessageRenderProps } from "../../types";
+import { sequenceMarker, isDottedArrow } from "../markers";
 
 export function Message(props: MessageRenderProps): JSXNode {
   const { message, fromX, toX, y } = props;
-  const isDotted =
-    message.arrow === "dotted" || message.arrow === "dottedCross" || message.arrow === "dottedOpen";
+  const isDotted = isDottedArrow(message.arrow);
   const midX = (fromX + toX) / 2;
-  const markerEnd = MARKER[message.arrow];
+  const markerEnd = sequenceMarker(message.arrow);
 
   return (
     <g class={props.class}>

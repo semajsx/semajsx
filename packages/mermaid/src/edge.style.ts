@@ -1,6 +1,7 @@
 import { classes, rule } from "@semajsx/style";
 import type { StyleToken, ClassRefs } from "@semajsx/style";
 import { tokens } from "./tokens";
+import { textLabel } from "./base.style";
 
 const EDGE_CLASSES = [
   "edgeLine",
@@ -55,12 +56,7 @@ export const edgeThick: StyleToken = rule`${c.edgeThick} {
 }`;
 
 export const edgeLabel: StyleToken = rule`${c.edgeLabel} {
-  fill: ${tokens.edgeLabelText};
-  stroke: none;
-  font-family: ${tokens.fontFamily};
-  font-size: 12px;
-  text-anchor: middle;
-  dominant-baseline: central;
+  ${textLabel(tokens.edgeLabelText, "12px")}
 }`;
 
 export const edgeLabelBg: StyleToken = rule`${c.edgeLabelBg} {

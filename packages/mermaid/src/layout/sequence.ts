@@ -8,8 +8,8 @@ import type {
   PositionedBlock,
   PositionedNote,
   LayoutOptions,
-  Size,
 } from "../types";
+import { estimateTextSize, measureNode } from "./measure";
 
 const DEFAULT_OPTIONS: LayoutOptions = {
   nodeSpacing: 200,
@@ -170,9 +170,8 @@ export function sequenceLayout(
   // Positioned participants
   const positionedParticipants: PositionedParticipant[] = participants.map((p) => {
     const x = participantX.get(p.id) ?? 0;
-    const size = estimateTextSize(p.label, 14);
-    const width = Math.max(size.width + opts.nodePadding * 2, opts.nodeWidth);
-    return { participant: p, x, y: headerY, width, height: opts.nodeHeight };
+    const size = measureNode(p.label, opts);
+    return { participant: p, x, y: headerY, width: size.width, height: opts.nodeHeight };
   });
 
   // Final dimensions
@@ -190,13 +189,5 @@ export function sequenceLayout(
     activations: positionedActivations,
     blocks: positionedBlocks,
     notes: positionedNotes,
-  };
-}
-
-function estimateTextSize(text: string, fontSize: number): Size {
-  const avgCharWidth = fontSize * 0.6;
-  return {
-    width: text.length * avgCharWidth,
-    height: fontSize * 1.4,
   };
 }

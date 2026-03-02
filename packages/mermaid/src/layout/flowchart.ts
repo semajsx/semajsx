@@ -1,7 +1,6 @@
 import type {
   FlowchartDiagram,
   FlowchartLayout,
-  FlowNode,
   FlowEdge,
   PositionedNode,
   PositionedEdge,
@@ -9,6 +8,7 @@ import type {
   LayoutOptions,
   Size,
 } from "../types";
+import { measureNode, measureLabel } from "./measure";
 
 const DEFAULT_OPTIONS: LayoutOptions = {
   nodeSpacing: 60,
@@ -34,7 +34,7 @@ export function flowchartLayout(
   // Phase 1: Measure node sizes
   const nodeSizes = new Map<string, Size>();
   for (const node of nodes) {
-    nodeSizes.set(node.id, measureNode(node, opts));
+    nodeSizes.set(node.id, measureNode(node.label, opts));
   }
 
   // Phase 2: Build adjacency + reverse edges for cycle removal
@@ -390,25 +390,4 @@ function buildEdgePath(
     path: `M ${sx} ${sy} L ${tx} ${ty}`,
     labelMid: { x: (sx + tx) / 2, y: (sy + ty) / 2 },
   };
-}
-
-function measureNode(node: FlowNode, opts: LayoutOptions): Size {
-  const measure = opts.measureText ?? estimateTextSize;
-  const textSize = measure(node.label, 14);
-  return {
-    width: Math.max(textSize.width + opts.nodePadding * 2, opts.nodeWidth),
-    height: Math.max(textSize.height + opts.nodePadding * 2, opts.nodeHeight),
-  };
-}
-
-function measureLabel(text: string, opts: LayoutOptions): Size {
-  const measure = opts.measureText ?? estimateTextSize;
-  return measure(text, 12);
-}
-
-function estimateTextSize(text: string, fontSize: number): Size {
-  const avgCharWidth = fontSize * 0.6;
-  const width = text.length * avgCharWidth;
-  const height = fontSize * 1.4;
-  return { width, height };
 }

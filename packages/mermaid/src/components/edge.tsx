@@ -9,19 +9,13 @@ import {
   edgeDotted,
   edgeThick,
 } from "../edge.style";
-import type { EdgeRenderProps, EdgeMarker, EdgeLineStyle } from "../types";
+import type { EdgeRenderProps, EdgeLineStyle } from "../types";
+import { MARKER_URL } from "./markers";
 
 const LINE_STYLE: Record<EdgeLineStyle, StyleToken | undefined> = {
   solid: undefined,
   dotted: edgeDotted,
   thick: edgeThick,
-};
-
-const MARKER_URL: Record<EdgeMarker, string | undefined> = {
-  arrow: "url(#mmd-arrow)",
-  dot: "url(#mmd-dot)",
-  cross: "url(#mmd-cross)",
-  none: undefined,
 };
 
 export function Edge(props: EdgeRenderProps): JSXNode {
