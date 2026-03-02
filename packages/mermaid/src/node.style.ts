@@ -33,6 +33,7 @@ ${c.nodeShape}:hover {
 
 export const nodeLabel: StyleToken = rule`${c.nodeLabel} {
   fill: ${tokens.nodeText};
+  stroke: none;
   font-family: ${tokens.fontFamily};
   font-size: ${tokens.fontSize}px;
   text-anchor: middle;
