@@ -1,5 +1,11 @@
 # semajsx
 
+## 0.7.0
+
+### Minor Changes
+
+- [#126](https://github.com/semajsx/semajsx/pull/126) [`fd4218e`](https://github.com/semajsx/semajsx/commit/fd4218ebf0ecafe68016ab513ba490c20eba1a65) Thanks [@github-actions](https://github.com/apps/github-actions)! - Add @semajsx/mermaid package for Mermaid diagram rendering, add missing SVG elements to JSX IntrinsicElements, fix SSR CSS collection
+
 ## 0.6.1
 
 ### Patch Changes

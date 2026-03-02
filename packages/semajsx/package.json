@@ -1,6 +1,6 @@
 {
   "name": "semajsx",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "A signal-based reactive JSX runtime for building modern web applications",
   "keywords": [
     "framework",
