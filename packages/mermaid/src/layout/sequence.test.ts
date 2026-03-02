@@ -72,6 +72,102 @@ describe("sequence layout", () => {
     expect(result.width).toBe(0);
   });
 
+  it("increases spacing for wide participant labels", () => {
+    const narrow: SequenceDiagram = {
+      type: "sequence",
+      participants: [
+        { id: "A", label: "A", type: "participant" },
+        { id: "B", label: "B", type: "participant" },
+      ],
+      messages: [],
+      blocks: [],
+      notes: [],
+    };
+    const wide: SequenceDiagram = {
+      type: "sequence",
+      participants: [
+        { id: "A", label: "Authentication Service Controller", type: "participant" },
+        { id: "B", label: "Database Connection Pool Manager", type: "participant" },
+      ],
+      messages: [],
+      blocks: [],
+      notes: [],
+    };
+
+    const narrowResult = sequenceLayout(narrow);
+    const wideResult = sequenceLayout(wide);
+
+    const narrowGap = narrowResult.participants[1].x - narrowResult.participants[0].x;
+    const wideGap = wideResult.participants[1].x - wideResult.participants[0].x;
+
+    // Wide labels should cause greater spacing
+    expect(wideGap).toBeGreaterThan(narrowGap);
+  });
+
+  it("handles self-messages", () => {
+    const diagram: SequenceDiagram = {
+      type: "sequence",
+      participants: [
+        { id: "A", label: "Alice", type: "participant" },
+        { id: "B", label: "Bob", type: "participant" },
+      ],
+      messages: [
+        { from: "A", to: "A", text: "Self call", arrow: "solid" },
+        { from: "A", to: "B", text: "Hello", arrow: "solid" },
+      ],
+      blocks: [],
+      notes: [],
+    };
+    const result = sequenceLayout(diagram);
+
+    // Self-message toX should be offset from fromX (not same position)
+    const selfMsg = result.messages[0];
+    expect(selfMsg.toX).toBeGreaterThan(selfMsg.fromX);
+
+    // Self-messages take more vertical space
+    const gap = result.messages[1].y - result.messages[0].y;
+    expect(gap).toBeGreaterThan(50); // More than standard rankSpacing
+  });
+
+  it("increases spacing for long message labels", () => {
+    const shortLabel: SequenceDiagram = {
+      type: "sequence",
+      participants: [
+        { id: "A", label: "A", type: "participant" },
+        { id: "B", label: "B", type: "participant" },
+      ],
+      messages: [{ from: "A", to: "B", text: "Hi", arrow: "solid" }],
+      blocks: [],
+      notes: [],
+    };
+    const longLabel: SequenceDiagram = {
+      type: "sequence",
+      participants: [
+        { id: "A", label: "A", type: "participant" },
+        { id: "B", label: "B", type: "participant" },
+      ],
+      messages: [
+        {
+          from: "A",
+          to: "B",
+          text: "POST /api/v2/authentication/tokens with credentials and refresh token",
+          arrow: "solid",
+        },
+      ],
+      blocks: [],
+      notes: [],
+    };
+
+    const shortResult = sequenceLayout(shortLabel);
+    const longResult = sequenceLayout(longLabel);
+
+    const shortGap = shortResult.participants[1].x - shortResult.participants[0].x;
+    const longGap = longResult.participants[1].x - longResult.participants[0].x;
+
+    // Long message labels should increase participant spacing
+    expect(longGap).toBeGreaterThan(shortGap);
+  });
+
   it("positions notes", () => {
     const diagram: SequenceDiagram = {
       ...simpleDiagram(),
