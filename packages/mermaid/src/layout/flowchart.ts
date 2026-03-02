@@ -2,6 +2,7 @@ import type {
   FlowchartDiagram,
   FlowchartLayout,
   FlowEdge,
+  Subgraph,
   PositionedNode,
   PositionedEdge,
   PositionedSubgraph,
@@ -125,7 +126,13 @@ export function flowchartLayout(
     layerGroups[layer]!.push(node.id);
   }
 
-  // Phase 5: Barycenter ordering
+  // Phase 5: Subgraph-aware barycenter ordering
+  // Build nodeId → immediate subgraph mapping so same-group nodes stay adjacent
+  const nodeSubgraph = new Map<string, string>();
+  for (const sg of subgraphs) {
+    mapNodesToSubgraph(sg, nodeSubgraph);
+  }
+
   for (let pass = 0; pass < 2; pass++) {
     for (let l = 1; l <= maxLayer; l++) {
       const layer = layerGroups[l]!;
@@ -145,7 +152,27 @@ export function flowchartLayout(
         barycenters.set(nodeId, count > 0 ? sum / count : prevLayer.length / 2);
       }
 
-      layer.sort((a, b) => (barycenters.get(a) ?? 0) - (barycenters.get(b) ?? 0));
+      // Sort: primary key = subgraph group barycenter, secondary = individual barycenter.
+      // This keeps same-subgraph nodes clustered together.
+      const groupBarycenter = new Map<string, number>();
+      for (const nodeId of layer) {
+        const sgId = nodeSubgraph.get(nodeId) ?? "";
+        if (!groupBarycenter.has(sgId)) {
+          // Average barycenter of all nodes in this subgraph within this layer
+          const members = layer.filter((n) => (nodeSubgraph.get(n) ?? "") === sgId);
+          const avg = members.reduce((s, n) => s + (barycenters.get(n) ?? 0), 0) / members.length;
+          groupBarycenter.set(sgId, avg);
+        }
+      }
+
+      layer.sort((a, b) => {
+        const sgA = nodeSubgraph.get(a) ?? "";
+        const sgB = nodeSubgraph.get(b) ?? "";
+        if (sgA !== sgB) {
+          return (groupBarycenter.get(sgA) ?? 0) - (groupBarycenter.get(sgB) ?? 0);
+        }
+        return (barycenters.get(a) ?? 0) - (barycenters.get(b) ?? 0);
+      });
     }
   }
 
@@ -249,8 +276,18 @@ export function flowchartLayout(
     return { edge, path: result.path, labelPosition, labelSize };
   });
 
-  // Phase 8: Subgraph bounding boxes
-  const positionedSubgraphs: PositionedSubgraph[] = subgraphs.map((sg) => {
+  // Phase 8: Subgraph bounding boxes (recursive — children first, parents expand)
+  const positionedSubgraphs: PositionedSubgraph[] = [];
+  const sgBounds = new Map<string, { x: number; y: number; width: number; height: number }>();
+
+  function layoutSubgraph(sg: Subgraph): PositionedSubgraph {
+    // Layout children first so their bounds are available
+    const childPositioned: PositionedSubgraph[] = [];
+    for (const child of sg.subgraphs ?? []) {
+      childPositioned.push(layoutSubgraph(child));
+    }
+
+    // Compute bounding box from direct nodes
     let sgMinX = Infinity,
       sgMinY = Infinity,
       sgMaxX = -Infinity,
@@ -267,19 +304,52 @@ export function flowchartLayout(
       }
     }
 
+    // Expand to include child subgraph boxes
+    for (const child of childPositioned) {
+      sgMinX = Math.min(sgMinX, child.x);
+      sgMinY = Math.min(sgMinY, child.y);
+      sgMaxX = Math.max(sgMaxX, child.x + child.width);
+      sgMaxY = Math.max(sgMaxY, child.y + child.height);
+    }
+
     const padding = opts.nodePadding;
-    return {
+    const positioned: PositionedSubgraph = {
       subgraph: sg,
       x: sgMinX - padding,
       y: sgMinY - padding - 20, // Extra for title
       width: sgMaxX - sgMinX + padding * 2,
       height: sgMaxY - sgMinY + padding * 2 + 20,
     };
-  });
 
-  // Final dimensions
-  const diagramWidth = maxX - minX + opts.diagramPadding * 2;
-  const diagramHeight = maxY - minY + opts.diagramPadding * 2;
+    sgBounds.set(sg.id, {
+      x: positioned.x,
+      y: positioned.y,
+      width: positioned.width,
+      height: positioned.height,
+    });
+    positionedSubgraphs.push(positioned);
+    return positioned;
+  }
+
+  for (const sg of subgraphs) {
+    layoutSubgraph(sg);
+  }
+
+  // Final dimensions — expand to include subgraph boxes
+  let finalMinX = minX;
+  let finalMinY = minY;
+  let finalMaxX = maxX;
+  let finalMaxY = maxY;
+
+  for (const psg of positionedSubgraphs) {
+    finalMinX = Math.min(finalMinX, psg.x - opts.diagramPadding);
+    finalMinY = Math.min(finalMinY, psg.y - opts.diagramPadding);
+    finalMaxX = Math.max(finalMaxX, psg.x + psg.width + opts.diagramPadding);
+    finalMaxY = Math.max(finalMaxY, psg.y + psg.height + opts.diagramPadding);
+  }
+
+  const diagramWidth = Math.max(maxX - minX + opts.diagramPadding * 2, finalMaxX - finalMinX);
+  const diagramHeight = Math.max(maxY - minY + opts.diagramPadding * 2, finalMaxY - finalMinY);
 
   return {
     width: diagramWidth,
@@ -289,6 +359,17 @@ export function flowchartLayout(
     edges: positionedEdges,
     subgraphs: positionedSubgraphs,
   };
+}
+
+/** Map each node to its most immediate (deepest) containing subgraph. */
+function mapNodesToSubgraph(sg: Subgraph, out: Map<string, string>): void {
+  for (const nodeId of sg.nodes) {
+    // Deeper subgraphs override shallower ones
+    out.set(nodeId, sg.id);
+  }
+  for (const child of sg.subgraphs ?? []) {
+    mapNodesToSubgraph(child, out);
+  }
 }
 
 /** Default curvature factor (matches xyflow) */

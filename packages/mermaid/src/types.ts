@@ -58,6 +58,7 @@ export interface Subgraph {
   id: string;
   label: string;
   nodes: string[];
+  subgraphs?: Subgraph[];
   direction?: Direction;
 }
 

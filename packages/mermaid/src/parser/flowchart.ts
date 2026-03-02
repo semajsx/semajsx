@@ -38,7 +38,7 @@ export function parseFlowchart(input: string): FlowchartDiagram | ParseError {
     return { message: "Expected 'graph' or 'flowchart' keyword", line: 1, column: 1 };
   }
 
-  // Parse body
+  // Parse body — subgraphs parsed recursively, then kept at top level
   while (!isEof(state)) {
     skipNewlines(state);
     if (isEof(state)) break;
@@ -333,9 +333,12 @@ function parseSubgraph(state: ParserState): { ok: true } | ParseError {
     skipSemicolon(state);
   }
 
-  // Collect node IDs until "end"
+  // Collect node IDs and child subgraphs until "end"
   const nodesBefore = new Set(state.nodes.keys());
+  const childSubgraphs: Subgraph[] = [];
+  const childNodeIds = new Set<string>(); // nodes owned by children
   const nodeIds: string[] = [];
+
   while (!isEof(state)) {
     skipNewlines(state);
     if (isEof(state)) break;
@@ -346,25 +349,51 @@ function parseSubgraph(state: ParserState): { ok: true } | ParseError {
       break;
     }
 
+    // Nested subgraph — recurse
+    if (token.type === "keyword" && token.value === "subgraph") {
+      const sgCountBefore = state.subgraphs.length;
+      const result = parseSubgraph(state);
+      if ("message" in result) return result;
+
+      // The child pushed itself to state.subgraphs — pop it and keep locally
+      if (state.subgraphs.length > sgCountBefore) {
+        const child = state.subgraphs.pop()!;
+        childSubgraphs.push(child);
+        // Mark all nodes reachable through child (direct + nested)
+        collectAllNodes(child, childNodeIds);
+      }
+      continue;
+    }
+
     // Parse statements inside subgraph
     const result = parseStatement(state);
     if (result && "message" in result) return result;
 
-    // Track only nodes added inside this subgraph
+    // Track only nodes added directly in this subgraph (not via children)
     for (const [nodeId] of state.nodes) {
-      if (!nodesBefore.has(nodeId) && !nodeIds.includes(nodeId)) {
+      if (!nodesBefore.has(nodeId) && !nodeIds.includes(nodeId) && !childNodeIds.has(nodeId)) {
         nodeIds.push(nodeId);
       }
     }
   }
 
-  state.subgraphs.push({
+  const sg: Subgraph = {
     id: id || `subgraph_${state.subgraphs.length}`,
     label,
     nodes: nodeIds,
     direction,
-  });
+  };
+  if (childSubgraphs.length > 0) {
+    sg.subgraphs = childSubgraphs;
+  }
+  state.subgraphs.push(sg);
   return { ok: true };
+}
+
+/** Recursively collect all node IDs owned by a subgraph and its children. */
+function collectAllNodes(sg: Subgraph, out: Set<string>): void {
+  for (const id of sg.nodes) out.add(id);
+  for (const child of sg.subgraphs ?? []) collectAllNodes(child, out);
 }
 
 interface ParsedArrow {
