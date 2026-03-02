@@ -177,4 +177,56 @@ describe("sequence layout", () => {
     expect(result.notes).toHaveLength(1);
     expect(result.notes[0].width).toBeGreaterThan(0);
   });
+
+  it("interleaves notes with messages using _noteMessageCounts", () => {
+    const diagram: SequenceDiagram = {
+      type: "sequence",
+      participants: [
+        { id: "A", label: "Alice", type: "participant" },
+        { id: "B", label: "Bob", type: "participant" },
+      ],
+      messages: [
+        { from: "A", to: "B", text: "Request", arrow: "solid" },
+        { from: "B", to: "A", text: "Response", arrow: "dotted" },
+      ],
+      blocks: [],
+      notes: [
+        { position: "right of", participants: ["A"], text: "Alice starts" },
+        { position: "over", participants: ["A", "B"], text: "Handshake done" },
+      ],
+      // note[0] before any messages, note[1] after 1st message
+      _noteMessageCounts: [0, 1],
+    };
+
+    const result = sequenceLayout(diagram);
+
+    // Notes should be interleaved: note0 < msg0 < note1 < msg1
+    const note0 = result.notes[0];
+    const msg0 = result.messages[0];
+    const note1 = result.notes[1];
+    const msg1 = result.messages[1];
+
+    expect(note0.y).toBeLessThan(msg0.y);
+    expect(msg0.y).toBeLessThan(note1.y);
+    expect(note1.y).toBeLessThan(msg1.y);
+  });
+
+  it("positions notes after all messages when _noteMessageCounts is absent", () => {
+    const diagram: SequenceDiagram = {
+      type: "sequence",
+      participants: [
+        { id: "A", label: "Alice", type: "participant" },
+        { id: "B", label: "Bob", type: "participant" },
+      ],
+      messages: [{ from: "A", to: "B", text: "Hello", arrow: "solid" }],
+      blocks: [],
+      notes: [{ position: "right of", participants: ["B"], text: "A note" }],
+      // No _noteMessageCounts → notes go after all messages (backward compat)
+    };
+
+    const result = sequenceLayout(diagram);
+    const msg = result.messages[0];
+    const note = result.notes[0];
+    expect(note.y).toBeGreaterThan(msg.y);
+  });
 });
