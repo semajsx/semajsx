@@ -151,8 +151,26 @@ export function flowchartLayout(
     }
   }
 
-  // Phase 6: Coordinate assignment with cross-layer median alignment
+  // Phase 5.5: Variable rank positions with subgraph-aware spacing
   const isVertical = direction === "TB" || direction === "TD" || direction === "BT";
+  const sgLayerRanges = computeSubgraphLayerRanges(subgraphs, layers);
+  const allSubgraphs = flattenSubgraphs(subgraphs);
+  const rankNodeDim = isVertical ? opts.nodeHeight : opts.nodeWidth;
+  const sgTitleHeight = 20;
+  const rankPos: number[] = [0];
+  for (let l = 0; l < maxLayer; l++) {
+    let overhead = 0;
+    for (const sg of allSubgraphs) {
+      const range = sgLayerRanges.get(sg.id);
+      if (!range || range.minLayer > range.maxLayer) continue;
+      if (range.maxLayer === l) overhead += opts.nodePadding;
+      if (range.minLayer === l + 1) overhead += opts.nodePadding + sgTitleHeight;
+    }
+    const extra = overhead > 0 ? Math.max(0, overhead - opts.rankSpacing + opts.nodePadding) : 0;
+    rankPos.push(rankPos[l]! + rankNodeDim + opts.rankSpacing + extra);
+  }
+
+  // Phase 6: Coordinate assignment with cross-layer median alignment
 
   // Primary-axis dimension of a node
   const dim = (id: string): number => {
@@ -200,9 +218,9 @@ export function flowchartLayout(
     const p = pos.get(node.id) ?? 0;
     const l = nodeLayer.get(node.id) ?? 0;
     if (isVertical) {
-      positions.set(node.id, { x: p, y: l * (opts.nodeHeight + opts.rankSpacing) });
+      positions.set(node.id, { x: p, y: rankPos[l]! });
     } else {
-      positions.set(node.id, { x: l * (opts.nodeWidth + opts.rankSpacing), y: p });
+      positions.set(node.id, { x: rankPos[l]!, y: p });
     }
   }
 
@@ -239,6 +257,23 @@ export function flowchartLayout(
     }
   }
 
+  // Ensure subgraph bounds stay within positive coordinates
+  if (subgraphs.length > 0) {
+    let extraShiftX = 0;
+    let extraShiftY = 0;
+    for (const sg of subgraphs) {
+      const sgMin = precomputeSgMin(sg, positions, nodeSizes, opts);
+      extraShiftX = Math.max(extraShiftX, opts.diagramPadding - sgMin.minX);
+      extraShiftY = Math.max(extraShiftY, opts.diagramPadding - sgMin.minY);
+    }
+    if (extraShiftX > 0 || extraShiftY > 0) {
+      for (const [, p] of positions) {
+        p.x += extraShiftX;
+        p.y += extraShiftY;
+      }
+    }
+  }
+
   // Build positioned nodes
   const positionedNodes: PositionedNode[] = nodes.map((node) => {
     const p = positions.get(node.id)!;
@@ -271,7 +306,6 @@ export function flowchartLayout(
 
   // Phase 8: Subgraph bounding boxes (recursive — children first, parents expand)
   const positionedSubgraphs: PositionedSubgraph[] = [];
-  const sgBounds = new Map<string, { x: number; y: number; width: number; height: number }>();
 
   function layoutSubgraph(sg: Subgraph): PositionedSubgraph {
     const childPositioned: PositionedSubgraph[] = [];
@@ -311,12 +345,6 @@ export function flowchartLayout(
       height: sgMaxY - sgMinY + padding * 2 + 20,
     };
 
-    sgBounds.set(sg.id, {
-      x: positioned.x,
-      y: positioned.y,
-      width: positioned.width,
-      height: positioned.height,
-    });
     positionedSubgraphs.push(positioned);
     return positioned;
   }
@@ -325,21 +353,20 @@ export function flowchartLayout(
     layoutSubgraph(sg);
   }
 
-  // Final dimensions — expand to include subgraph boxes
-  let finalMinX = minX;
-  let finalMinY = minY;
-  let finalMaxX = maxX;
-  let finalMaxY = maxY;
-
+  // Final dimensions — compute from actual element extents
+  let extMaxX = -Infinity;
+  let extMaxY = -Infinity;
+  for (const pn of positionedNodes) {
+    extMaxX = Math.max(extMaxX, pn.x + pn.width / 2);
+    extMaxY = Math.max(extMaxY, pn.y + pn.height / 2);
+  }
   for (const psg of positionedSubgraphs) {
-    finalMinX = Math.min(finalMinX, psg.x - opts.diagramPadding);
-    finalMinY = Math.min(finalMinY, psg.y - opts.diagramPadding);
-    finalMaxX = Math.max(finalMaxX, psg.x + psg.width + opts.diagramPadding);
-    finalMaxY = Math.max(finalMaxY, psg.y + psg.height + opts.diagramPadding);
+    extMaxX = Math.max(extMaxX, psg.x + psg.width);
+    extMaxY = Math.max(extMaxY, psg.y + psg.height);
   }
 
-  const diagramWidth = Math.max(maxX - minX + opts.diagramPadding * 2, finalMaxX - finalMinX);
-  const diagramHeight = Math.max(maxY - minY + opts.diagramPadding * 2, finalMaxY - finalMinY);
+  const diagramWidth = extMaxX + opts.diagramPadding;
+  const diagramHeight = extMaxY + opts.diagramPadding;
 
   return {
     width: diagramWidth,
@@ -612,5 +639,76 @@ function buildEdgePath(
   return {
     path: `M ${sx} ${sy} L ${tx} ${ty}`,
     labelMid: { x: (sx + tx) / 2, y: (sy + ty) / 2 },
+  };
+}
+
+/** Compute the layer range (min, max) for each subgraph including nested children. */
+function computeSubgraphLayerRanges(
+  subgraphs: Subgraph[],
+  layers: Map<string, number>,
+): Map<string, { minLayer: number; maxLayer: number }> {
+  const ranges = new Map<string, { minLayer: number; maxLayer: number }>();
+
+  function compute(sg: Subgraph): { minLayer: number; maxLayer: number } {
+    let minL = Infinity;
+    let maxL = -Infinity;
+    for (const nodeId of sg.nodes) {
+      const l = layers.get(nodeId);
+      if (l !== undefined) {
+        minL = Math.min(minL, l);
+        maxL = Math.max(maxL, l);
+      }
+    }
+    for (const child of sg.subgraphs ?? []) {
+      const childRange = compute(child);
+      minL = Math.min(minL, childRange.minLayer);
+      maxL = Math.max(maxL, childRange.maxLayer);
+    }
+    const range = { minLayer: minL, maxLayer: maxL };
+    ranges.set(sg.id, range);
+    return range;
+  }
+
+  for (const sg of subgraphs) compute(sg);
+  return ranges;
+}
+
+/** Flatten a subgraph tree into a flat array of all subgraphs. */
+function flattenSubgraphs(subgraphs: Subgraph[]): Subgraph[] {
+  const result: Subgraph[] = [];
+  function collect(sg: Subgraph): void {
+    result.push(sg);
+    for (const child of sg.subgraphs ?? []) collect(child);
+  }
+  for (const sg of subgraphs) collect(sg);
+  return result;
+}
+
+/** Pre-compute the minimum x/y bounds of a subgraph (including nested children). */
+function precomputeSgMin(
+  sg: Subgraph,
+  positions: Map<string, { x: number; y: number }>,
+  nodeSizes: Map<string, Size>,
+  opts: LayoutOptions,
+): { minX: number; minY: number } {
+  const titleHeight = 20;
+  let minX = Infinity;
+  let minY = Infinity;
+  for (const nodeId of sg.nodes) {
+    const p = positions.get(nodeId);
+    const size = nodeSizes.get(nodeId);
+    if (p && size) {
+      minX = Math.min(minX, p.x - size.width / 2);
+      minY = Math.min(minY, p.y - size.height / 2);
+    }
+  }
+  for (const child of sg.subgraphs ?? []) {
+    const childMin = precomputeSgMin(child, positions, nodeSizes, opts);
+    minX = Math.min(minX, childMin.minX);
+    minY = Math.min(minY, childMin.minY);
+  }
+  return {
+    minX: minX - opts.nodePadding,
+    minY: minY - opts.nodePadding - titleHeight,
   };
 }

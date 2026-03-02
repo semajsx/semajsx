@@ -160,12 +160,7 @@ export function sequenceLayout(
     return { participant: p, x, y1: headerY + opts.nodeHeight / 2, y2: diagramBottom };
   });
 
-  // Phase 5: Blocks — use message index for reliable y-lookup
-  const msgIndexMap = new Map<number, PositionedMessage>();
-  for (let i = 0; i < messages.length; i++) {
-    msgIndexMap.set(i, positionedMessages[i]!);
-  }
-
+  // Phase 5: Blocks
   const positionedBlocks: PositionedBlock[] = blocks.map((block) => {
     const blockMsgs = block.messages;
     const allMsgs = [...blockMsgs, ...(block.sections?.flatMap((s) => s.messages) ?? [])];
