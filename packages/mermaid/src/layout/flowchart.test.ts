@@ -176,4 +176,135 @@ describe("flowchart layout", () => {
     expect(result.subgraphs[0].width).toBeGreaterThan(0);
     expect(result.subgraphs[0].height).toBeGreaterThan(0);
   });
+
+  it("groups same-subgraph nodes together in the same layer", () => {
+    // C1, C2 are in "Backend", D1, D2 are in "Frontend" — all on same layer
+    const result = flowchartLayout({
+      type: "flowchart",
+      direction: "TD",
+      nodes: [
+        { id: "A", label: "A", shape: "rect" },
+        { id: "C1", label: "C1", shape: "rect" },
+        { id: "C2", label: "C2", shape: "rect" },
+        { id: "D1", label: "D1", shape: "rect" },
+        { id: "D2", label: "D2", shape: "rect" },
+      ],
+      edges: [
+        {
+          source: "A",
+          target: "C1",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "A",
+          target: "C2",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "A",
+          target: "D1",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "A",
+          target: "D2",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+      ],
+      subgraphs: [
+        { id: "backend", label: "Backend", nodes: ["C1", "C2"] },
+        { id: "frontend", label: "Frontend", nodes: ["D1", "D2"] },
+      ],
+    });
+
+    // Same-subgraph nodes should be adjacent (no interleaving)
+    const layer1 = result.nodes.filter((n) => n.node.id !== "A").sort((a, b) => a.x - b.x);
+    const ids = layer1.map((n) => n.node.id);
+    // C1, C2 should be next to each other
+    const c1Idx = ids.indexOf("C1");
+    const c2Idx = ids.indexOf("C2");
+    expect(Math.abs(c1Idx - c2Idx)).toBe(1);
+    // D1, D2 should be next to each other
+    const d1Idx = ids.indexOf("D1");
+    const d2Idx = ids.indexOf("D2");
+    expect(Math.abs(d1Idx - d2Idx)).toBe(1);
+  });
+
+  it("handles nested subgraphs", () => {
+    const result = flowchartLayout({
+      type: "flowchart",
+      direction: "TD",
+      nodes: [
+        { id: "A", label: "API", shape: "rect" },
+        { id: "B", label: "DB", shape: "cylinder" },
+      ],
+      edges: [
+        {
+          source: "A",
+          target: "B",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+      ],
+      subgraphs: [
+        {
+          id: "cloud",
+          label: "Cloud",
+          nodes: [],
+          subgraphs: [{ id: "vpc", label: "VPC", nodes: ["A", "B"] }],
+        },
+      ],
+    });
+
+    // Should produce 2 positioned subgraphs (vpc + cloud)
+    expect(result.subgraphs).toHaveLength(2);
+
+    const vpc = result.subgraphs.find((s) => s.subgraph.id === "vpc")!;
+    const cloud = result.subgraphs.find((s) => s.subgraph.id === "cloud")!;
+
+    // VPC should contain the nodes
+    expect(vpc.width).toBeGreaterThan(0);
+    expect(vpc.height).toBeGreaterThan(0);
+
+    // Cloud should fully contain VPC
+    expect(cloud.x).toBeLessThanOrEqual(vpc.x);
+    expect(cloud.y).toBeLessThanOrEqual(vpc.y);
+    expect(cloud.x + cloud.width).toBeGreaterThanOrEqual(vpc.x + vpc.width);
+    expect(cloud.y + cloud.height).toBeGreaterThanOrEqual(vpc.y + vpc.height);
+  });
+
+  it("expands viewBox to include subgraph boxes", () => {
+    const result = flowchartLayout({
+      type: "flowchart",
+      direction: "TD",
+      nodes: [
+        { id: "A", label: "A", shape: "rect" },
+        { id: "B", label: "B", shape: "rect" },
+      ],
+      edges: [
+        {
+          source: "A",
+          target: "B",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+      ],
+      subgraphs: [{ id: "sg1", label: "Group", nodes: ["A", "B"] }],
+    });
+
+    // The viewBox dimensions should be at least as large as the subgraph box
+    const sg = result.subgraphs[0];
+    expect(result.width).toBeGreaterThanOrEqual(sg.width);
+    expect(result.height).toBeGreaterThanOrEqual(sg.height);
+  });
 });

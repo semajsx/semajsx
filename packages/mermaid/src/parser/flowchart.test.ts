@@ -283,6 +283,74 @@ describe("flowchart parser", () => {
       expect(result.subgraphs[0].nodes).not.toContain("A");
       expect(result.subgraphs[0].nodes).not.toContain("B");
     });
+
+    it("parses nested subgraphs", () => {
+      const result = expectFlowchart(`
+        graph TD
+          subgraph Cloud
+            subgraph VPC
+              A[API]
+              B[DB]
+            end
+            C[CDN]
+          end
+      `);
+      expect(result.subgraphs).toHaveLength(1);
+      const cloud = result.subgraphs[0];
+      expect(cloud.label).toBe("Cloud");
+      // Cloud's direct nodes should only be C (not A, B which belong to VPC)
+      expect(cloud.nodes).toContain("C");
+      expect(cloud.nodes).not.toContain("A");
+      expect(cloud.nodes).not.toContain("B");
+      // VPC is a child subgraph
+      expect(cloud.subgraphs).toHaveLength(1);
+      const vpc = cloud.subgraphs![0];
+      expect(vpc.label).toBe("VPC");
+      expect(vpc.nodes).toContain("A");
+      expect(vpc.nodes).toContain("B");
+    });
+
+    it("parses deeply nested subgraphs", () => {
+      const result = expectFlowchart(`
+        graph TD
+          subgraph L1
+            subgraph L2
+              subgraph L3
+                X[Deep]
+              end
+            end
+          end
+      `);
+      expect(result.subgraphs).toHaveLength(1);
+      const l1 = result.subgraphs[0];
+      expect(l1.subgraphs).toHaveLength(1);
+      const l2 = l1.subgraphs![0];
+      expect(l2.subgraphs).toHaveLength(1);
+      const l3 = l2.subgraphs![0];
+      expect(l3.nodes).toContain("X");
+      // Parent layers should not contain X directly
+      expect(l2.nodes).not.toContain("X");
+      expect(l1.nodes).not.toContain("X");
+    });
+
+    it("parses sibling nested subgraphs", () => {
+      const result = expectFlowchart(`
+        graph TD
+          subgraph Parent
+            subgraph Left
+              A[A]
+            end
+            subgraph Right
+              B[B]
+            end
+          end
+      `);
+      const parent = result.subgraphs[0];
+      expect(parent.subgraphs).toHaveLength(2);
+      expect(parent.subgraphs![0].nodes).toContain("A");
+      expect(parent.subgraphs![1].nodes).toContain("B");
+      expect(parent.nodes).toHaveLength(0);
+    });
   });
 
   describe("semicolons", () => {
