@@ -351,6 +351,57 @@ describe("flowchart parser", () => {
       expect(parent.subgraphs![1].nodes).toContain("B");
       expect(parent.nodes).toHaveLength(0);
     });
+
+    it("collects pre-existing nodes referenced by bare ID inside subgraphs", () => {
+      const result = expectFlowchart(`
+        graph TD
+          LB[Load Balancer] --> API1[Server]
+          LB --> API2[Server]
+          API1 --> Cache[(Redis)]
+          API1 --> Queue[(Queue)]
+          Queue --> Worker[Worker]
+          Worker --> DB[(PostgreSQL)]
+
+          subgraph WebTier[Web Tier]
+            LB
+          end
+          subgraph AppTier[App Tier]
+            API1
+            API2
+          end
+          subgraph DataTier[Data Tier]
+            Cache
+            DB
+            subgraph AsyncProc[Async Processing]
+              Queue
+              Worker
+            end
+          end
+      `);
+      expect(result.subgraphs).toHaveLength(3);
+
+      const webTier = result.subgraphs.find((s) => s.label === "Web Tier")!;
+      expect(webTier.nodes).toContain("LB");
+      expect(webTier.nodes).toHaveLength(1);
+
+      const appTier = result.subgraphs.find((s) => s.label === "App Tier")!;
+      expect(appTier.nodes).toContain("API1");
+      expect(appTier.nodes).toContain("API2");
+      expect(appTier.nodes).toHaveLength(2);
+
+      const dataTier = result.subgraphs.find((s) => s.label === "Data Tier")!;
+      expect(dataTier.nodes).toContain("Cache");
+      expect(dataTier.nodes).toContain("DB");
+      expect(dataTier.nodes).not.toContain("Queue");
+      expect(dataTier.nodes).not.toContain("Worker");
+      expect(dataTier.subgraphs).toHaveLength(1);
+
+      const asyncProc = dataTier.subgraphs![0];
+      expect(asyncProc.label).toBe("Async Processing");
+      expect(asyncProc.nodes).toContain("Queue");
+      expect(asyncProc.nodes).toContain("Worker");
+      expect(asyncProc.nodes).toHaveLength(2);
+    });
   });
 
   describe("semicolons", () => {
