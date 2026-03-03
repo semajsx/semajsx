@@ -1,18 +1,18 @@
 ---
 title: Mermaid Diagrams
-description: Render Mermaid diagrams as reactive SVG with @semajsx/mermaid
+description: Render Mermaid diagrams as reactive SVG with semajsx/mermaid
 order: 11
 category: Packages
 ---
 
 # Mermaid Diagrams
 
-`@semajsx/mermaid` renders Mermaid diagram syntax as reactive SVG components. It supports flowcharts and sequence diagrams with full theming, custom renderers, and signal-driven reactivity.
+`semajsx/mermaid` renders Mermaid diagram syntax as reactive SVG components. It supports flowcharts and sequence diagrams with full theming, custom renderers, and signal-driven reactivity.
 
 ## Installation
 
 ```bash
-bun add @semajsx/mermaid
+bun add semajsx
 ```
 
 ## Quick Start
@@ -20,10 +20,10 @@ bun add @semajsx/mermaid
 Pass a Mermaid code string to the `<Mermaid>` component:
 
 ```tsx
-/** @jsxImportSource @semajsx/dom */
+/** @jsxImportSource semajsx/dom */
 
-import { render } from "@semajsx/dom";
-import { Mermaid } from "@semajsx/mermaid";
+import { render } from "semajsx/dom";
+import { Mermaid } from "semajsx/mermaid";
 
 const code = `graph TD
   A[Start] --> B{Decision}
@@ -349,11 +349,11 @@ sequenceDiagram
 Build diagrams from IR objects instead of DSL strings:
 
 ```tsx
-/** @jsxImportSource @semajsx/dom */
+/** @jsxImportSource semajsx/dom */
 
-import { render } from "@semajsx/dom";
-import { Flowchart } from "@semajsx/mermaid";
-import type { FlowchartDiagram } from "@semajsx/mermaid";
+import { render } from "semajsx/dom";
+import { Flowchart } from "semajsx/mermaid";
+import type { FlowchartDiagram } from "semajsx/mermaid";
 
 const diagram: FlowchartDiagram = {
   type: "flowchart",
@@ -382,7 +382,7 @@ Both `<Mermaid code={codeSignal}>` and `<Flowchart diagram={diagramSignal}>` acc
 Parse Mermaid DSL to the IR without rendering:
 
 ```tsx
-import { parse, parseFlowchart, parseSequence } from "@semajsx/mermaid";
+import { parse, parseFlowchart, parseSequence } from "semajsx/mermaid";
 
 // Auto-detect diagram type
 const result = parse("graph TD\n  A --> B");
@@ -401,9 +401,9 @@ const sequence = parseSequence("sequenceDiagram\n  A->>B: Hi");
 Switch between built-in themes or provide custom tokens:
 
 ```tsx
-/** @jsxImportSource @semajsx/dom */
+/** @jsxImportSource semajsx/dom */
 
-import { Mermaid, MermaidProvider, darkTheme } from "@semajsx/mermaid";
+import { Mermaid, MermaidProvider, darkTheme } from "semajsx/mermaid";
 
 function App() {
   return (
@@ -419,10 +419,10 @@ function App() {
 Override how specific elements are rendered:
 
 ```tsx
-/** @jsxImportSource @semajsx/dom */
+/** @jsxImportSource semajsx/dom */
 
-import { Mermaid, defaultRenderers } from "@semajsx/mermaid";
-import type { NodeRenderProps } from "@semajsx/mermaid";
+import { Mermaid, defaultRenderers } from "semajsx/mermaid";
+import type { NodeRenderProps } from "semajsx/mermaid";
 
 function DiamondNode(props: NodeRenderProps) {
   return (
@@ -451,7 +451,7 @@ render(<Mermaid code={code} renderers={renderers} />, document.getElementById("a
 Customize the layout engine by passing options to the `<Flowchart>` or `<Sequence>` component, or through `flowchartLayout()` / `sequenceLayout()` directly:
 
 ```tsx
-import { flowchartLayout } from "@semajsx/mermaid";
+import { flowchartLayout } from "semajsx/mermaid";
 
 const layout = flowchartLayout(diagram, {
   edgeRouting: "orthogonal", // "bezier" | "polyline" | "orthogonal"
@@ -479,7 +479,7 @@ Orthogonal routing works well for architecture diagrams where clean right-angle 
 The `remarkMermaid` plugin transforms fenced ` ```mermaid ` code blocks into rendered `<Mermaid>` components inside MDX files:
 
 ```tsx
-import { remarkMermaid } from "@semajsx/mermaid/remark";
+import { remarkMermaid } from "semajsx/mermaid/remark";
 
 // In your MDX / SSG config:
 mdx: {

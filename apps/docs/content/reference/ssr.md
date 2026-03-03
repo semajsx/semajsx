@@ -150,7 +150,7 @@ await app.dev({
 
 ## SSR + Styling
 
-Styles from `@semajsx/style` are automatically collected during SSR:
+Styles from `semajsx/style` are automatically collected during SSR:
 
 ```tsx
 import { renderToString } from "semajsx/ssr";
