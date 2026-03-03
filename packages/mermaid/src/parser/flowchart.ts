@@ -18,6 +18,8 @@ interface ParserState {
   edges: FlowEdge[];
   subgraphs: Subgraph[];
   direction: Direction;
+  /** When set, parseNodeRef pushes every referenced ID here. */
+  nodeRefCollector?: string[];
 }
 
 export function parseFlowchart(input: string): FlowchartDiagram | ParseError {
@@ -176,6 +178,7 @@ function parseNodeRef(state: ParserState): string | undefined {
       if (!state.nodes.has(id)) {
         state.nodes.set(id, shape);
       }
+      state.nodeRefCollector?.push(id);
       return id;
     }
   }
@@ -185,6 +188,7 @@ function parseNodeRef(state: ParserState): string | undefined {
     state.nodes.set(id, { id, label: id, shape: "rect" });
   }
 
+  state.nodeRefCollector?.push(id);
   return id;
 }
 
@@ -334,7 +338,6 @@ function parseSubgraph(state: ParserState): { ok: true } | ParseError {
   }
 
   // Collect node IDs and child subgraphs until "end"
-  const nodesBefore = new Set(state.nodes.keys());
   const childSubgraphs: Subgraph[] = [];
   const childNodeIds = new Set<string>(); // nodes owned by children
   const nodeIds: string[] = [];
@@ -365,13 +368,16 @@ function parseSubgraph(state: ParserState): { ok: true } | ParseError {
       continue;
     }
 
-    // Parse statements inside subgraph
+    // Parse statements inside subgraph, collecting all referenced node IDs
+    state.nodeRefCollector = [];
     const result = parseStatement(state);
+    const refs = state.nodeRefCollector;
+    state.nodeRefCollector = undefined;
     if (result && "message" in result) return result;
 
-    // Track only nodes added directly in this subgraph (not via children)
-    for (const [nodeId] of state.nodes) {
-      if (!nodesBefore.has(nodeId) && !nodeIds.includes(nodeId) && !childNodeIds.has(nodeId)) {
+    // Track only nodes referenced directly in this subgraph (not via children)
+    for (const nodeId of refs) {
+      if (!childNodeIds.has(nodeId) && !nodeIds.includes(nodeId)) {
         nodeIds.push(nodeId);
       }
     }
