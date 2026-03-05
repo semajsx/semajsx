@@ -14,6 +14,8 @@ const SEQUENCE_CLASSES = [
   "blockBg",
   "blockLabel",
   "blockLabelText",
+  "blockSectionLine",
+  "blockSectionLabel",
   "noteBg",
   "noteText",
 ] as const;
@@ -63,6 +65,18 @@ export const blockLabel: StyleToken = rule`${c.blockLabel} {
 export const blockLabelText: StyleToken = rule`${c.blockLabelText} {
   ${textLabel(tokens.nodeText, "11px")}
   font-weight: 600;
+}`;
+
+export const blockSectionLine: StyleToken = rule`${c.blockSectionLine} {
+  stroke: ${tokens.blockStroke};
+  stroke-width: 1;
+  stroke-dasharray: 6, 4;
+}`;
+
+export const blockSectionLabel: StyleToken = rule`${c.blockSectionLabel} {
+  ${textLabel(tokens.nodeText, "11px")}
+  font-weight: 600;
+  font-style: italic;
 }`;
 
 export const noteBg: StyleToken = rule`${c.noteBg} {

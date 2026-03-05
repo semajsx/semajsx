@@ -47,7 +47,14 @@ export function Sequence(props: SequenceProps, ctx?: ComponentAPI): JSXNode {
       ))}
 
       {positioned.blocks.map((b: PositionedBlock) => (
-        <BlockComp block={b.block} x={b.x} y={b.y} width={b.width} height={b.height} />
+        <BlockComp
+          block={b.block}
+          x={b.x}
+          y={b.y}
+          width={b.width}
+          height={b.height}
+          sectionDividers={b.sectionDividers}
+        />
       ))}
 
       {positioned.activations.map((a: PositionedActivation) => (

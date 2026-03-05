@@ -208,6 +208,8 @@ export interface PositionedBlock {
   y: number;
   width: number;
   height: number;
+  /** Y-coordinates of section dividers (for alt/par blocks with else/and clauses) */
+  sectionDividers?: { y: number; label: string }[];
 }
 
 export interface PositionedNote {
@@ -312,6 +314,7 @@ export interface BlockRenderProps {
   y: number;
   width: number;
   height: number;
+  sectionDividers?: { y: number; label: string }[];
   class?: ClassValue;
 }
 

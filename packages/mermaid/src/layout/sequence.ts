@@ -1,6 +1,7 @@
 import type {
   SequenceDiagram,
   SequenceLayout,
+  Message,
   Note,
   PositionedParticipant,
   PositionedMessage,
@@ -199,6 +200,12 @@ export function sequenceLayout(
   });
 
   // Phase 5: Blocks
+  // Build a message identity map for O(1) index lookup (reference equality)
+  const msgIndexMap = new Map<Message, number>();
+  for (let i = 0; i < messages.length; i++) {
+    msgIndexMap.set(messages[i]!, i);
+  }
+
   const positionedBlocks: PositionedBlock[] = blocks.map((block) => {
     const blockMsgs = block.messages;
     const allMsgs = [...blockMsgs, ...(block.sections?.flatMap((s) => s.messages) ?? [])];
@@ -213,12 +220,8 @@ export function sequenceLayout(
       maxX = Math.max(maxX, fromX, toX);
     }
 
-    // Find y range from positioned messages
-    const msgIndices = allMsgs
-      .map((m) =>
-        messages.findIndex((pm) => pm.from === m.from && pm.to === m.to && pm.text === m.text),
-      )
-      .filter((i) => i >= 0);
+    // Find y range from positioned messages using reference identity
+    const msgIndices = allMsgs.map((m) => msgIndexMap.get(m) ?? -1).filter((i) => i >= 0);
 
     const firstBlockMsg =
       msgIndices.length > 0 ? positionedMessages[Math.min(...msgIndices)] : undefined;
@@ -227,6 +230,24 @@ export function sequenceLayout(
     const startY = firstBlockMsg ? firstBlockMsg.y - 20 : headerBottom;
     const endY = lastBlockMsg ? lastBlockMsg.y + 20 : headerBottom + opts.rankSpacing;
 
+    // Compute section divider y-positions for alt/par blocks
+    let sectionDividers: { y: number; label: string }[] | undefined;
+    if (block.sections && block.sections.length > 0) {
+      sectionDividers = [];
+      for (const section of block.sections) {
+        // Find the first message in this section to determine the divider y
+        const sectionMsgIndices = section.messages
+          .map((m) => msgIndexMap.get(m) ?? -1)
+          .filter((i) => i >= 0);
+        if (sectionMsgIndices.length > 0) {
+          const firstSectionMsg = positionedMessages[Math.min(...sectionMsgIndices)];
+          if (firstSectionMsg) {
+            sectionDividers.push({ y: firstSectionMsg.y - 15, label: section.label });
+          }
+        }
+      }
+    }
+
     const padding = opts.nodePadding;
     return {
       block,
@@ -234,6 +255,7 @@ export function sequenceLayout(
       y: startY,
       width: maxX - minX + opts.nodeWidth + padding * 2,
       height: endY - startY,
+      sectionDividers,
     };
   });
 
