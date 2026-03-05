@@ -13,7 +13,7 @@ export { parseSequence } from "./parser/sequence";
 
 // ── Layout ────────────────────────────────────────────
 export { builtinLayout, flowchartLayout, sequenceLayout } from "./layout";
-export { estimateTextSize, measureNode, measureLabel } from "./layout/measure";
+export { estimateTextSize, canvasMeasureText, measureNode, measureLabel } from "./layout/measure";
 
 // ── Tokens & Themes ───────────────────────────────────
 export { tokens } from "./tokens";

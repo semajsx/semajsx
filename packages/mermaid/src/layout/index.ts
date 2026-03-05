@@ -9,4 +9,4 @@ export const builtinLayout: LayoutEngine = {
 
 export { flowchartLayout } from "./flowchart";
 export { sequenceLayout } from "./sequence";
-export { estimateTextSize, measureNode, measureLabel } from "./measure";
+export { estimateTextSize, canvasMeasureText, measureNode, measureLabel } from "./measure";

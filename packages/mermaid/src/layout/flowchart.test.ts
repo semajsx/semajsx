@@ -539,4 +539,239 @@ describe("flowchart layout", () => {
     expect(result.width).toBeGreaterThanOrEqual(sg.width);
     expect(result.height).toBeGreaterThanOrEqual(sg.height);
   });
+
+  it("routes long edges through dummy waypoints (3-layer span)", () => {
+    // A -> B -> C -> D, plus A -> D (spans 3 layers)
+    const result = flowchartLayout({
+      type: "flowchart",
+      direction: "TD",
+      nodes: [
+        { id: "A", label: "A", shape: "rect" },
+        { id: "B", label: "B", shape: "rect" },
+        { id: "C", label: "C", shape: "rect" },
+        { id: "D", label: "D", shape: "rect" },
+      ],
+      edges: [
+        {
+          source: "A",
+          target: "B",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "B",
+          target: "C",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "C",
+          target: "D",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "A",
+          target: "D",
+          lineStyle: "dotted",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+          label: "skip",
+        },
+      ],
+      subgraphs: [],
+    });
+
+    // All 4 edges should be routed
+    expect(result.edges).toHaveLength(4);
+    // The long edge (A->D) should have a valid path with curves
+    const longEdge = result.edges.find((e) => e.edge.source === "A" && e.edge.target === "D")!;
+    expect(longEdge.path).toMatch(/^M /);
+    // The long edge should have a label position
+    expect(longEdge.labelPosition).toBeDefined();
+  });
+
+  it("handles self-loop edges", () => {
+    const result = flowchartLayout({
+      type: "flowchart",
+      direction: "TD",
+      nodes: [
+        { id: "A", label: "A", shape: "rect" },
+        { id: "B", label: "B", shape: "rect" },
+      ],
+      edges: [
+        {
+          source: "A",
+          target: "B",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "A",
+          target: "A",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+      ],
+      subgraphs: [],
+    });
+
+    // Both edges should be present
+    expect(result.edges).toHaveLength(2);
+    // Self-loop should have a valid path with curves
+    const selfLoop = result.edges.find((e) => e.edge.source === "A" && e.edge.target === "A")!;
+    expect(selfLoop).toBeDefined();
+    expect(selfLoop.path).toMatch(/^M /);
+    expect(selfLoop.path).toContain("C");
+  });
+
+  it("excludes dummy nodes from diagram bounds", () => {
+    // A -> B -> C -> D, plus A -> D (creates dummy nodes)
+    const result = flowchartLayout({
+      type: "flowchart",
+      direction: "TD",
+      nodes: [
+        { id: "A", label: "A", shape: "rect" },
+        { id: "B", label: "B", shape: "rect" },
+        { id: "C", label: "C", shape: "rect" },
+        { id: "D", label: "D", shape: "rect" },
+      ],
+      edges: [
+        {
+          source: "A",
+          target: "B",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "B",
+          target: "C",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "C",
+          target: "D",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "A",
+          target: "D",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+      ],
+      subgraphs: [],
+    });
+
+    // Only real nodes in output (no dummy nodes)
+    expect(result.nodes).toHaveLength(4);
+    // Diagram should have reasonable dimensions (not inflated by dummies)
+    expect(result.width).toBeGreaterThan(0);
+    expect(result.height).toBeGreaterThan(0);
+    expect(result.width).toBeLessThan(2000);
+    expect(result.height).toBeLessThan(2000);
+  });
+
+  it("Brandes-Kopf alignment centers nodes symmetrically", () => {
+    // Tree: A -> B, A -> C, A -> D
+    const result = flowchartLayout({
+      type: "flowchart",
+      direction: "TD",
+      nodes: [
+        { id: "A", label: "Root", shape: "rect" },
+        { id: "B", label: "Left", shape: "rect" },
+        { id: "C", label: "Mid", shape: "rect" },
+        { id: "D", label: "Right", shape: "rect" },
+      ],
+      edges: [
+        {
+          source: "A",
+          target: "B",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "A",
+          target: "C",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "A",
+          target: "D",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+      ],
+      subgraphs: [],
+    });
+
+    const nodeA = result.nodes.find((n) => n.node.id === "A")!;
+    const nodeB = result.nodes.find((n) => n.node.id === "B")!;
+    const nodeD = result.nodes.find((n) => n.node.id === "D")!;
+
+    // A should be centered relative to B and D (leftmost and rightmost children)
+    const childCenter = (nodeB.x + nodeD.x) / 2;
+    expect(Math.abs(nodeA.x - childCenter)).toBeLessThan(10);
+  });
+
+  it("reduces crossings with transpose optimization", () => {
+    // Create a graph where barycenter alone produces crossings
+    // A -> D, B -> C (crossings when A,B on layer 0 and C,D on layer 1)
+    const result = flowchartLayout({
+      type: "flowchart",
+      direction: "TD",
+      nodes: [
+        { id: "A", label: "A", shape: "rect" },
+        { id: "B", label: "B", shape: "rect" },
+        { id: "C", label: "C", shape: "rect" },
+        { id: "D", label: "D", shape: "rect" },
+      ],
+      edges: [
+        {
+          source: "A",
+          target: "C",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "A",
+          target: "D",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+        {
+          source: "B",
+          target: "C",
+          lineStyle: "solid",
+          sourceMarker: "none",
+          targetMarker: "arrow",
+        },
+      ],
+      subgraphs: [],
+    });
+
+    // Should produce valid positioned nodes without errors
+    expect(result.nodes).toHaveLength(4);
+    const nodeC = result.nodes.find((n) => n.node.id === "C")!;
+    const nodeD = result.nodes.find((n) => n.node.id === "D")!;
+    // C and D should be on the same layer
+    expect(nodeC.y).toBe(nodeD.y);
+  });
 });

@@ -211,6 +211,64 @@ describe("sequence layout", () => {
     expect(note1.y).toBeLessThan(msg1.y);
   });
 
+  it("computes section dividers for alt blocks", () => {
+    const msg1 = { from: "A", to: "B", text: "Request", arrow: "solid" as const };
+    const msg2 = { from: "B", to: "A", text: "Error", arrow: "dotted" as const };
+    const diagram: SequenceDiagram = {
+      type: "sequence",
+      participants: [
+        { id: "A", label: "Alice", type: "participant" },
+        { id: "B", label: "Bob", type: "participant" },
+      ],
+      messages: [msg1, msg2],
+      blocks: [
+        {
+          type: "alt",
+          label: "Success",
+          messages: [msg1],
+          sections: [{ label: "Failure", messages: [msg2] }],
+        },
+      ],
+      notes: [],
+    };
+
+    const result = sequenceLayout(diagram);
+    expect(result.blocks).toHaveLength(1);
+    const block = result.blocks[0];
+
+    // Block should have section dividers
+    expect(block.sectionDividers).toBeDefined();
+    expect(block.sectionDividers).toHaveLength(1);
+    expect(block.sectionDividers![0].label).toBe("Failure");
+    // Divider y should be between the two messages
+    expect(block.sectionDividers![0].y).toBeGreaterThan(result.messages[0].y);
+    expect(block.sectionDividers![0].y).toBeLessThanOrEqual(result.messages[1].y);
+  });
+
+  it("block without sections has no dividers", () => {
+    const msg1 = { from: "A", to: "B", text: "Request", arrow: "solid" as const };
+    const diagram: SequenceDiagram = {
+      type: "sequence",
+      participants: [
+        { id: "A", label: "Alice", type: "participant" },
+        { id: "B", label: "Bob", type: "participant" },
+      ],
+      messages: [msg1],
+      blocks: [
+        {
+          type: "loop",
+          label: "Every 5s",
+          messages: [msg1],
+        },
+      ],
+      notes: [],
+    };
+
+    const result = sequenceLayout(diagram);
+    expect(result.blocks).toHaveLength(1);
+    expect(result.blocks[0].sectionDividers).toBeUndefined();
+  });
+
   it("positions notes after all messages when _noteMessageCounts is absent", () => {
     const diagram: SequenceDiagram = {
       type: "sequence",
