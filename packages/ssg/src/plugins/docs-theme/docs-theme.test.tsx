@@ -315,7 +315,7 @@ describe("docsTheme config() — home option", () => {
   });
 
   it("should register custom component home route when home is a function", () => {
-    const CustomHome = ({ Layout }: { Layout: unknown }) => (
+    const CustomHome = ({ Layout: _Layout }: { Layout: unknown }) => (
       <div>
         <h1>Custom Home</h1>
       </div>
