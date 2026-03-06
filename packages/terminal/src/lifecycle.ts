@@ -38,12 +38,16 @@ export function flushCleanups(): void {
   const ctx = getActiveContext();
   if (!ctx) return;
 
-  for (const fn of ctx.cleanupCallbacks) {
+  // Copy the array before iterating to avoid issues if a cleanup
+  // callback registers more cleanup callbacks during iteration
+  const callbacks = [...ctx.cleanupCallbacks];
+  ctx.cleanupCallbacks = [];
+
+  for (const fn of callbacks) {
     try {
       fn();
     } catch {
       // Silently ignore cleanup errors to ensure all callbacks run
     }
   }
-  ctx.cleanupCallbacks = [];
 }

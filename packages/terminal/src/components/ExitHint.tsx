@@ -1,27 +1,7 @@
 /** @jsxImportSource @semajsx/terminal */
-import { computed, signal, type WritableSignal } from "@semajsx/signal";
+import { computed, signal } from "@semajsx/signal";
 import { when, type JSXNode } from "@semajsx/core";
-
-/**
- * Global exiting signal for terminal rendering
- * Set to true during unmount to hide exit hints in final render
- */
-const globalExitingSignal = signal(false);
-
-/**
- * Get the global exiting signal
- * Used internally by render() to coordinate with ExitHint component
- */
-export function getExitingSignal(): WritableSignal<boolean> {
-  return globalExitingSignal;
-}
-
-/**
- * Reset the exiting signal (useful for testing or multiple render cycles)
- */
-export function resetExitingSignal(): void {
-  globalExitingSignal.value = false;
-}
+import { getActiveContext } from "../context";
 
 export interface ExitHintProps {
   /**
@@ -60,8 +40,11 @@ export interface ExitHintProps {
  * - The exit hint is hidden from final output
  */
 export function ExitHint({ children }: ExitHintProps): JSXNode {
+  const ctx = getActiveContext();
+  const exitingSignal = ctx?.exitingSignal ?? signal(false);
+
   // Create inverted signal: show when NOT exiting
-  const shouldShow = computed(globalExitingSignal, (isExiting) => !isExiting);
+  const shouldShow = computed(exitingSignal, (isExiting) => !isExiting);
 
   // Return signal directly - renderComponent now handles Signal<VNode>
   return when(shouldShow, children);

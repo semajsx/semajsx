@@ -15,6 +15,7 @@ export class TerminalRenderer {
   private lastOutputHeight: number = 0;
   private wasRawMode: boolean = false;
   private resizeHandler: (() => void) | null = null;
+  private resizeCallback: (() => void) | null = null;
 
   constructor(stream: NodeJS.WriteStream = process.stdout) {
     this.root = {
@@ -47,15 +48,26 @@ export class TerminalRenderer {
     // Hide cursor for cleaner rendering
     this.root.stream.write(ansiEscapes.cursorHide);
 
-    // Listen for terminal resize events to update root dimensions
+    // Listen for terminal resize events to update root dimensions and re-render
     this.resizeHandler = () => {
       const { columns, rows } = this.root.stream;
       if (this.root.yogaNode) {
         this.root.yogaNode.setWidth(columns || 80);
         this.root.yogaNode.setHeight(rows || 24);
       }
+      // Trigger re-render if callback is registered
+      if (this.resizeCallback) {
+        this.resizeCallback();
+      }
     };
     this.root.stream.on("resize", this.resizeHandler);
+  }
+
+  /**
+   * Set a callback to be called on terminal resize (triggers re-render).
+   */
+  setResizeCallback(callback: (() => void) | null): void {
+    this.resizeCallback = callback;
   }
 
   /**
