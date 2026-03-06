@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
-import { parseKeyEvent } from "@semajsx/terminal";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { parseKeyEvent, onKeypress } from "@semajsx/terminal";
+import { createRenderContext, setActiveContext } from "./context";
 
 describe("Keyboard Input API", () => {
   describe("parseKeyEvent", () => {
@@ -81,6 +82,32 @@ describe("Keyboard Input API", () => {
     it("should include raw string in event", () => {
       const event = parseKeyEvent(Buffer.from("x"));
       expect(event.raw).toBe("x");
+    });
+  });
+
+  describe("onKeypress", () => {
+    beforeEach(() => {
+      setActiveContext(createRenderContext());
+    });
+
+    afterEach(() => {
+      setActiveContext(null);
+    });
+
+    it("should return a noop unsubscribe if no context is active", () => {
+      setActiveContext(null);
+      const unsub = onKeypress(() => {});
+      expect(typeof unsub).toBe("function");
+      expect(() => unsub()).not.toThrow();
+    });
+
+    it("should register and unregister a listener", () => {
+      const handler = () => {};
+      const unsub = onKeypress(handler);
+      expect(typeof unsub).toBe("function");
+      unsub();
+      // Should not throw when called again
+      unsub();
     });
   });
 });

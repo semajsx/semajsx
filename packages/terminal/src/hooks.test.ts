@@ -1,11 +1,17 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { useExit, isRawModeSupported } from "@semajsx/terminal";
-import { setExitCallback } from "./hooks";
+import { createRenderContext, setActiveContext } from "./context";
 
 describe("Hooks", () => {
   describe("useExit", () => {
     beforeEach(() => {
-      setExitCallback(null);
+      // Set up a render context so hooks work
+      const ctx = createRenderContext();
+      setActiveContext(ctx);
+    });
+
+    afterEach(() => {
+      setActiveContext(null);
     });
 
     it("should return a function", () => {
@@ -15,9 +21,11 @@ describe("Hooks", () => {
 
     it("should call the registered exit callback", () => {
       let called = false;
-      setExitCallback(() => {
+      const ctx = createRenderContext();
+      ctx.exitCallback = () => {
         called = true;
-      });
+      };
+      setActiveContext(ctx);
 
       const exit = useExit();
       exit();
@@ -26,6 +34,12 @@ describe("Hooks", () => {
     });
 
     it("should not throw if no exit callback is registered", () => {
+      const exit = useExit();
+      expect(() => exit()).not.toThrow();
+    });
+
+    it("should not throw if no render context is active", () => {
+      setActiveContext(null);
       const exit = useExit();
       expect(() => exit()).not.toThrow();
     });

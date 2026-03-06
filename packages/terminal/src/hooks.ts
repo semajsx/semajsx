@@ -2,21 +2,17 @@
  * Terminal hooks for interactive CLI applications
  */
 
-/**
- * Exit callback type
- */
-type ExitCallback = () => void;
+import { getActiveContext } from "./context";
 
 /**
- * Global exit callback, set by render()
+ * Set the exit callback on the active render context.
+ * Called internally by render().
  */
-let globalExitCallback: ExitCallback | null = null;
-
-/**
- * Register the exit callback (called internally by render())
- */
-export function setExitCallback(callback: ExitCallback | null): void {
-  globalExitCallback = callback;
+export function setExitCallback(callback: (() => void) | null): void {
+  const ctx = getActiveContext();
+  if (ctx) {
+    ctx.exitCallback = callback;
+  }
 }
 
 /**
@@ -40,8 +36,9 @@ export function setExitCallback(callback: ExitCallback | null): void {
  */
 export function useExit(): () => void {
   return () => {
-    if (globalExitCallback) {
-      globalExitCallback();
+    const ctx = getActiveContext();
+    if (ctx?.exitCallback) {
+      ctx.exitCallback();
     }
   };
 }

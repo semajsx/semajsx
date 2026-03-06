@@ -14,6 +14,7 @@ export class TerminalRenderer {
   private previousOutput: string = "";
   private lastOutputHeight: number = 0;
   private wasRawMode: boolean = false;
+  private resizeHandler: (() => void) | null = null;
 
   constructor(stream: NodeJS.WriteStream = process.stdout) {
     this.root = {
@@ -45,6 +46,16 @@ export class TerminalRenderer {
 
     // Hide cursor for cleaner rendering
     this.root.stream.write(ansiEscapes.cursorHide);
+
+    // Listen for terminal resize events to update root dimensions
+    this.resizeHandler = () => {
+      const { columns, rows } = this.root.stream;
+      if (this.root.yogaNode) {
+        this.root.yogaNode.setWidth(columns || 80);
+        this.root.yogaNode.setHeight(rows || 24);
+      }
+    };
+    this.root.stream.on("resize", this.resizeHandler);
   }
 
   /**
@@ -250,6 +261,12 @@ export class TerminalRenderer {
 
     // Show cursor again on cleanup
     this.root.stream.write(ansiEscapes.cursorShow);
+
+    // Remove resize listener
+    if (this.resizeHandler) {
+      this.root.stream.removeListener("resize", this.resizeHandler);
+      this.resizeHandler = null;
+    }
 
     // Restore raw mode to previous state
     if (process.stdin.isTTY && process.stdin.setRawMode && !this.wasRawMode) {
