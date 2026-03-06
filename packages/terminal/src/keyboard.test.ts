@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { parseKeyEvent, onKeypress } from "@semajsx/terminal";
-import { createRenderContext, setActiveContext } from "./context";
+import { createTerminalSession, setActiveSession } from "./context";
 
 describe("Keyboard Input API", () => {
   describe("parseKeyEvent", () => {
@@ -87,15 +87,15 @@ describe("Keyboard Input API", () => {
 
   describe("onKeypress", () => {
     beforeEach(() => {
-      setActiveContext(createRenderContext());
+      setActiveSession(createTerminalSession());
     });
 
     afterEach(() => {
-      setActiveContext(null);
+      setActiveSession(null);
     });
 
     it("should return a noop unsubscribe if no context is active", () => {
-      setActiveContext(null);
+      setActiveSession(null);
       const unsub = onKeypress(() => {});
       expect(typeof unsub).toBe("function");
       expect(() => unsub()).not.toThrow();

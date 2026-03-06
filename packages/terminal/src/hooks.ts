@@ -2,14 +2,14 @@
  * Terminal hooks for interactive CLI applications
  */
 
-import { getActiveContext } from "./context";
+import { getActiveSession } from "./context";
 
 /**
  * Set the exit callback on the active render context.
  * Called internally by render().
  */
 export function setExitCallback(callback: (() => void) | null): void {
-  const ctx = getActiveContext();
+  const ctx = getActiveSession();
   if (ctx) {
     ctx.exitCallback = callback;
   }
@@ -36,7 +36,7 @@ export function setExitCallback(callback: (() => void) | null): void {
  */
 export function useExit(): () => void {
   return () => {
-    const ctx = getActiveContext();
+    const ctx = getActiveSession();
     if (ctx?.exitCallback) {
       ctx.exitCallback();
     }

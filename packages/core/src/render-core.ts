@@ -92,6 +92,19 @@ export interface RenderStrategy<TNode> {
     oldRendered: RenderedNode<TNode>,
     newRendered: RenderedNode<TNode>,
   ): boolean;
+
+  /**
+   * Optional: Called before a component function is invoked.
+   * Renderers can use this to set up per-component state (e.g., cleanup scopes).
+   */
+  onBeforeComponent?(): void;
+
+  /**
+   * Optional: Called after a component function returns.
+   * Returns an array of cleanup functions to attach to the component's RenderedNode subscriptions.
+   * This enables per-component lifecycle hooks like onCleanup().
+   */
+  onAfterComponent?(): Array<() => void>;
 }
 
 /**
@@ -520,8 +533,14 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
     // Create ComponentAPI
     const ctx = createComponentAPI(currentContext);
 
+    // Notify strategy before component render (for per-component lifecycle hooks)
+    strategy.onBeforeComponent?.();
+
     // Call component function with props and ctx
     const result = Component(props, ctx);
+
+    // Collect per-component cleanup subscriptions
+    const componentCleanups = strategy.onAfterComponent?.() ?? [];
 
     // Handle async component (Promise<VNode>)
     if (isPromise(result)) {
@@ -540,7 +559,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
       return {
         vnode,
         node: rendered.node,
-        subscriptions: rendered.subscriptions,
+        subscriptions: [...componentCleanups, ...rendered.subscriptions],
         children: [rendered],
       };
     }
@@ -562,7 +581,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
       return {
         vnode,
         node: rendered.node,
-        subscriptions: rendered.subscriptions,
+        subscriptions: [...componentCleanups, ...rendered.subscriptions],
         children: [rendered],
       };
     }
@@ -578,7 +597,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
       return {
         vnode,
         node: rendered.node,
-        subscriptions: rendered.subscriptions,
+        subscriptions: [...componentCleanups, ...rendered.subscriptions],
         children: [rendered],
       };
     }
@@ -590,7 +609,7 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
     return {
       vnode,
       node: rendered.node,
-      subscriptions: rendered.subscriptions,
+      subscriptions: [...componentCleanups, ...rendered.subscriptions],
       children: [rendered],
     };
   }

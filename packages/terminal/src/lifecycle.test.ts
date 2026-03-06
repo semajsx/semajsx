@@ -1,15 +1,15 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { onCleanup } from "@semajsx/terminal";
 import { flushCleanups } from "./lifecycle";
-import { createRenderContext, setActiveContext } from "./context";
+import { createTerminalSession, setActiveSession } from "./context";
 
 describe("Lifecycle", () => {
   beforeEach(() => {
-    setActiveContext(createRenderContext());
+    setActiveSession(createTerminalSession());
   });
 
   afterEach(() => {
-    setActiveContext(null);
+    setActiveSession(null);
   });
 
   describe("onCleanup", () => {
@@ -52,13 +52,13 @@ describe("Lifecycle", () => {
     });
 
     it("should not register if no context is active", () => {
-      setActiveContext(null);
+      setActiveSession(null);
       let called = false;
       onCleanup(() => {
         called = true;
       });
       // Re-activate and flush - should not run the callback
-      setActiveContext(createRenderContext());
+      setActiveSession(createTerminalSession());
       flushCleanups();
       expect(called).toBe(false);
     });

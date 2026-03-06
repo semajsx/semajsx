@@ -13,7 +13,6 @@ export class TerminalRenderer {
   private buffer: string[] = [];
   private previousOutput: string = "";
   private lastOutputHeight: number = 0;
-  private wasRawMode: boolean = false;
   private resizeHandler: (() => void) | null = null;
   private resizeCallback: (() => void) | null = null;
 
@@ -34,15 +33,6 @@ export class TerminalRenderer {
       // Set default flexbox properties to prevent children from stretching
       this.root.yogaNode.setFlexDirection(Yoga.FLEX_DIRECTION_COLUMN);
       this.root.yogaNode.setAlignItems(Yoga.ALIGN_FLEX_START);
-    }
-
-    // Enable raw mode to prevent ^C from being displayed
-    // Save the previous state so we can restore it
-    if (process.stdin.isTTY && process.stdin.setRawMode) {
-      this.wasRawMode = process.stdin.isRaw || false;
-      if (!this.wasRawMode) {
-        process.stdin.setRawMode(true);
-      }
     }
 
     // Hide cursor for cleaner rendering
@@ -278,11 +268,6 @@ export class TerminalRenderer {
     if (this.resizeHandler) {
       this.root.stream.removeListener("resize", this.resizeHandler);
       this.resizeHandler = null;
-    }
-
-    // Restore raw mode to previous state
-    if (process.stdin.isTTY && process.stdin.setRawMode && !this.wasRawMode) {
-      process.stdin.setRawMode(false);
     }
 
     // Free yoga layout
