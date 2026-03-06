@@ -1,4 +1,4 @@
-import { signal, type ReadonlySignal } from "@semajsx/signal";
+import { signal, type ReadableSignal } from "@semajsx/signal";
 import { getActiveSession } from "./context";
 
 /**
@@ -227,7 +227,7 @@ export function onKeypress(handler: KeyHandler): () => void {
  * // lastKey.value is null initially, then updated on each keypress
  * ```
  */
-export function useKeypress(): ReadonlySignal<KeyEvent | null> {
+export function useKeypress(): ReadableSignal<KeyEvent | null> {
   const ctx = getActiveSession();
   if (!ctx) {
     // Return a dead signal if no render context is active

@@ -1,5 +1,5 @@
 /** @jsxImportSource @semajsx/terminal */
-import { signal, computed, type ReadonlySignal } from "@semajsx/signal";
+import { signal, computed, type ReadableSignal } from "@semajsx/signal";
 import type { JSXNode } from "@semajsx/core";
 import { onKeypress } from "../keyboard";
 import { onCleanup } from "../lifecycle";
@@ -112,8 +112,8 @@ export function MultiSelect({
     });
 
     return (
-      <text key={option.value} color={color as ReadonlySignal<string | undefined>}>
-        {line as ReadonlySignal<string>}
+      <text key={option.value} color={color as ReadableSignal<string | undefined>}>
+        {line as ReadableSignal<string>}
       </text>
     );
   });

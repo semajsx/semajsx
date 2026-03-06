@@ -1,5 +1,5 @@
 /** @jsxImportSource @semajsx/terminal */
-import { signal, type ReadonlySignal } from "@semajsx/signal";
+import { signal, type ReadableSignal } from "@semajsx/signal";
 import type { JSXNode } from "@semajsx/core";
 import { onCleanup } from "../lifecycle";
 
@@ -77,11 +77,11 @@ export function Spinner({
   if (label) {
     return (
       <box flexDirection="row">
-        <text color={color}>{frameSignal as ReadonlySignal<string>}</text>
+        <text color={color}>{frameSignal as ReadableSignal<string>}</text>
         <text> {label}</text>
       </box>
     );
   }
 
-  return <text color={color}>{frameSignal as ReadonlySignal<string>}</text>;
+  return <text color={color}>{frameSignal as ReadableSignal<string>}</text>;
 }
