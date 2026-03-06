@@ -2,13 +2,13 @@ import { signal, type WritableSignal } from "@semajsx/signal";
 import type { KeyEvent, KeyHandler } from "./keyboard";
 
 /**
- * Per-render context that holds all mutable state for a terminal render instance.
+ * Per-render session that holds all mutable state for a terminal render instance.
  *
- * This replaces the previous global mutable state in keyboard.ts, hooks.ts,
- * and lifecycle.ts, enabling multiple concurrent render instances and
- * proper test isolation.
+ * Named "TerminalSession" to distinguish from core's ContextMap (provide/inject).
+ * ContextMap is for component dependency injection; TerminalSession is for
+ * render lifecycle state (keyboard, cleanup, exit coordination).
  */
-export interface RenderContext {
+export interface TerminalSession {
   /** Keyboard listener callbacks */
   keyboardListeners: KeyHandler[];
   /** Signal holding the last keypress event */
@@ -19,21 +19,21 @@ export interface RenderContext {
   stdinHandler: ((data: Buffer) => void) | null;
   /** Exit callback for useExit() */
   exitCallback: (() => void) | null;
-  /** Component cleanup callbacks for onCleanup() */
+  /** Component cleanup callbacks for onCleanup() (global fallback) */
   cleanupCallbacks: (() => void)[];
   /** Signal for ExitHint component coordination */
   exitingSignal: WritableSignal<boolean>;
 }
 
 /**
- * The active render context. Set by render(), cleared on unmount.
+ * The active terminal session. Set by render(), cleared on unmount.
  */
-let activeContext: RenderContext | null = null;
+let activeSession: TerminalSession | null = null;
 
 /**
- * Create a fresh render context
+ * Create a fresh terminal session
  */
-export function createRenderContext(): RenderContext {
+export function createTerminalSession(): TerminalSession {
   return {
     keyboardListeners: [],
     lastKeySignal: signal(null),
@@ -46,15 +46,23 @@ export function createRenderContext(): RenderContext {
 }
 
 /**
- * Set the active render context
+ * Set the active terminal session
  */
-export function setActiveContext(ctx: RenderContext | null): void {
-  activeContext = ctx;
+export function setActiveSession(session: TerminalSession | null): void {
+  activeSession = session;
 }
 
 /**
- * Get the active render context, or null if no render is active
+ * Get the active terminal session, or null if no render is active
  */
-export function getActiveContext(): RenderContext | null {
-  return activeContext;
+export function getActiveSession(): TerminalSession | null {
+  return activeSession;
 }
+
+// Backward-compatible aliases
+export {
+  type TerminalSession as RenderContext,
+  createTerminalSession as createRenderContext,
+  setActiveSession as setActiveContext,
+  getActiveSession as getActiveContext,
+};

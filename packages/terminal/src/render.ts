@@ -17,8 +17,8 @@ import { type ContextMap } from "@semajsx/core";
 import { createRenderer, type RenderStrategy } from "@semajsx/core";
 import { installKeyboardHandler, uninstallKeyboardHandler, onKeypress } from "./keyboard";
 import { setExitCallback } from "./hooks";
-import { flushCleanups } from "./lifecycle";
-import { createRenderContext, setActiveContext } from "./context";
+import { flushCleanups, pushCleanupScope, popCleanupScope } from "./lifecycle";
+import { createTerminalSession, setActiveSession } from "./context";
 
 /**
  * Terminal-specific render strategy (no reuse optimization needed)
@@ -35,7 +35,9 @@ const terminalStrategy: RenderStrategy<TerminalNode> = {
   replaceNode,
   setProperty,
   setSignalProperty,
-  // Terminal doesn't need tryReuseNode optimization
+  // Per-component lifecycle: enables onCleanup() to attach to individual components
+  onBeforeComponent: pushCleanupScope,
+  onAfterComponent: popCleanupScope,
 };
 
 // Create terminal renderer
@@ -124,9 +126,9 @@ export interface PrintOptions {
 export function render(element: VNode, options: RenderOptions = {}): RenderResult {
   const { renderer, autoRender = true, fps = 60, stream: outputStream = process.stdout } = options;
 
-  // Create and activate a per-render context
-  const renderContext = createRenderContext();
-  setActiveContext(renderContext);
+  // Create and activate a per-render session
+  const session = createTerminalSession();
+  setActiveSession(session);
 
   // Auto-create renderer if not provided (ink-style API)
   const autoCreated = !renderer;
@@ -251,7 +253,7 @@ export function render(element: VNode, options: RenderOptions = {}): RenderResul
     actualRenderer.destroy();
 
     // Deactivate the render context
-    setActiveContext(null);
+    setActiveSession(null);
 
     if (exitResolver) {
       exitResolver();
@@ -261,7 +263,7 @@ export function render(element: VNode, options: RenderOptions = {}): RenderResul
   // Unmount function
   const unmount = () => {
     // Mark as exiting to hide ExitHint components
-    renderContext.exitingSignal.value = true;
+    session.exitingSignal.value = true;
 
     // Trigger one final render to apply ExitHint changes
     // This removes exit prompts from the final output

@@ -1,5 +1,5 @@
 import { signal, type ReadonlySignal } from "@semajsx/signal";
-import { getActiveContext } from "./context";
+import { getActiveSession } from "./context";
 
 /**
  * Represents a parsed keyboard event
@@ -151,7 +151,7 @@ export function parseKeyEvent(data: Buffer): KeyEvent {
  * Called automatically by render() when setting up keyboard input.
  */
 export function installKeyboardHandler(): void {
-  const ctx = getActiveContext();
+  const ctx = getActiveSession();
   if (!ctx || ctx.keyboardInstalled) return;
   ctx.keyboardInstalled = true;
 
@@ -175,7 +175,7 @@ export function installKeyboardHandler(): void {
  * Called during cleanup/unmount.
  */
 export function uninstallKeyboardHandler(): void {
-  const ctx = getActiveContext();
+  const ctx = getActiveSession();
   if (!ctx || !ctx.keyboardInstalled) return;
   ctx.keyboardInstalled = false;
 
@@ -203,7 +203,7 @@ export function uninstallKeyboardHandler(): void {
  * ```
  */
 export function onKeypress(handler: KeyHandler): () => void {
-  const ctx = getActiveContext();
+  const ctx = getActiveSession();
   if (!ctx) return () => {};
 
   ctx.keyboardListeners.push(handler);
@@ -228,7 +228,7 @@ export function onKeypress(handler: KeyHandler): () => void {
  * ```
  */
 export function useKeypress(): ReadonlySignal<KeyEvent | null> {
-  const ctx = getActiveContext();
+  const ctx = getActiveSession();
   if (!ctx) {
     // Return a dead signal if no render context is active
     return signal(null);

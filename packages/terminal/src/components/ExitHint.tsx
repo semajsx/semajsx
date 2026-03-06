@@ -1,7 +1,7 @@
 /** @jsxImportSource @semajsx/terminal */
 import { computed, signal } from "@semajsx/signal";
 import { when, type JSXNode } from "@semajsx/core";
-import { getActiveContext } from "../context";
+import { getActiveSession } from "../context";
 
 export interface ExitHintProps {
   /**
@@ -40,7 +40,7 @@ export interface ExitHintProps {
  * - The exit hint is hidden from final output
  */
 export function ExitHint({ children }: ExitHintProps): JSXNode {
-  const ctx = getActiveContext();
+  const ctx = getActiveSession();
   const exitingSignal = ctx?.exitingSignal ?? signal(false);
 
   // Create inverted signal: show when NOT exiting
