@@ -1,5 +1,11 @@
 # semajsx
 
+## 0.10.0
+
+### Minor Changes
+
+- [#137](https://github.com/semajsx/semajsx/pull/137) [`6d987bd`](https://github.com/semajsx/semajsx/commit/6d987bdcce8de269e31fba18aa1b7b4f4e0ef9fe) Thanks [@github-actions](https://github.com/apps/github-actions)! - Add row/column shorthand JSX components and improve text measurement
+
 ## 0.9.0
 
 ### Minor Changes
