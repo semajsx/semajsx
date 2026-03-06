@@ -1,6 +1,7 @@
 /** @jsxImportSource @semajsx/terminal */
 import { signal, type ReadonlySignal } from "@semajsx/signal";
 import type { JSXNode } from "@semajsx/core";
+import { onCleanup } from "../lifecycle";
 
 /**
  * Built-in spinner frame sets
@@ -71,13 +72,7 @@ export function Spinner({
     frameSignal.value = frames[index]!;
   }, interval);
 
-  // Cleanup on unmount is handled by signal subscription cleanup
-  // The interval will be cleared when the component is garbage collected
-  // For robust cleanup, we store the timer reference
-  const cleanup = () => clearInterval(timer);
-
-  // Store cleanup on the signal for reference
-  (frameSignal as Record<string, unknown>)._spinnerCleanup = cleanup;
+  onCleanup(() => clearInterval(timer));
 
   if (label) {
     return (

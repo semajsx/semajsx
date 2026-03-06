@@ -18,6 +18,8 @@ import { type ContextMap } from "@semajsx/core";
 import { createRenderer, type RenderStrategy } from "@semajsx/core";
 import { installKeyboardHandler, uninstallKeyboardHandler, parseKeyEvent } from "./keyboard";
 import { setExitCallback } from "./hooks";
+import { flushCleanups } from "./lifecycle";
+import { createRenderContext, setActiveContext } from "./context";
 
 /**
  * Terminal-specific render strategy (no reuse optimization needed)
@@ -123,6 +125,10 @@ export interface PrintOptions {
 export function render(element: VNode, options: RenderOptions = {}): RenderResult {
   const { renderer, autoRender = true, fps = 60, stream: outputStream = process.stdout } = options;
 
+  // Create and activate a per-render context
+  const renderContext = createRenderContext();
+  setActiveContext(renderContext);
+
   // Reset exiting signal for new render
   resetExitingSignal();
 
@@ -209,6 +215,9 @@ export function render(element: VNode, options: RenderOptions = {}): RenderResul
       }
     }
 
+    // Flush component cleanup callbacks (timers, listeners, etc.)
+    flushCleanups();
+
     // Clear exit callback
     setExitCallback(null);
 
@@ -218,6 +227,9 @@ export function render(element: VNode, options: RenderOptions = {}): RenderResul
     // Clean up subscriptions only (preserve output on exit)
     cleanupSubscriptions(rendered);
     actualRenderer.destroy();
+
+    // Deactivate the render context
+    setActiveContext(null);
 
     if (exitResolver) {
       exitResolver();

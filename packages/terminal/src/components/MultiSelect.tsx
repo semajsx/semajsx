@@ -2,6 +2,7 @@
 import { signal, computed, type ReadonlySignal } from "@semajsx/signal";
 import type { JSXNode } from "@semajsx/core";
 import { onKeypress } from "../keyboard";
+import { onCleanup } from "../lifecycle";
 
 /**
  * An option in the MultiSelect component
@@ -88,6 +89,9 @@ export function MultiSelect({
       onCancel();
     }
   });
+
+  // Ensure listener is cleaned up on unmount even if user doesn't press Enter/Escape
+  onCleanup(unsub);
 
   const items = options.map((option, i) => {
     const isFocused = computed(focusIndex, (idx) => idx === i);

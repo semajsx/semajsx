@@ -1,4 +1,5 @@
-import { signal, type ReadonlySignal, type WritableSignal } from "@semajsx/signal";
+import { signal, type ReadonlySignal } from "@semajsx/signal";
+import { getActiveContext } from "./context";
 
 /**
  * Represents a parsed keyboard event
@@ -20,14 +21,6 @@ export interface KeyEvent {
  * Keyboard handler callback
  */
 export type KeyHandler = (event: KeyEvent) => void;
-
-/**
- * Global keyboard state
- */
-let keyboardListeners: KeyHandler[] = [];
-let lastKeySignal: WritableSignal<KeyEvent | null> = signal(null);
-let stdinHandler: ((data: Buffer) => void) | null = null;
-let installed = false;
 
 /**
  * Parse raw stdin data into a KeyEvent
@@ -154,41 +147,44 @@ export function parseKeyEvent(data: Buffer): KeyEvent {
 }
 
 /**
- * Install the global keyboard handler on stdin.
- * Called automatically by render() when using keyboard features.
+ * Install the keyboard handler on stdin for the active render context.
+ * Called automatically by render() when setting up keyboard input.
  */
 export function installKeyboardHandler(): void {
-  if (installed) return;
-  installed = true;
+  const ctx = getActiveContext();
+  if (!ctx || ctx.keyboardInstalled) return;
+  ctx.keyboardInstalled = true;
 
-  stdinHandler = (data: Buffer) => {
+  ctx.stdinHandler = (data: Buffer) => {
     const event = parseKeyEvent(data);
-    lastKeySignal.value = event;
-    for (const listener of keyboardListeners) {
+    ctx.lastKeySignal.value = event;
+    // Copy array to avoid mutation during iteration
+    const listeners = [...ctx.keyboardListeners];
+    for (const listener of listeners) {
       listener(event);
     }
   };
 
   if (process.stdin.isTTY) {
-    process.stdin.on("data", stdinHandler);
+    process.stdin.on("data", ctx.stdinHandler);
   }
 }
 
 /**
- * Uninstall the global keyboard handler.
+ * Uninstall the keyboard handler for the active render context.
  * Called during cleanup/unmount.
  */
 export function uninstallKeyboardHandler(): void {
-  if (!installed) return;
-  installed = false;
+  const ctx = getActiveContext();
+  if (!ctx || !ctx.keyboardInstalled) return;
+  ctx.keyboardInstalled = false;
 
-  if (stdinHandler) {
-    process.stdin.removeListener("data", stdinHandler);
-    stdinHandler = null;
+  if (ctx.stdinHandler) {
+    process.stdin.removeListener("data", ctx.stdinHandler);
+    ctx.stdinHandler = null;
   }
 
-  keyboardListeners = [];
-  lastKeySignal = signal(null);
+  ctx.keyboardListeners = [];
 }
 
 /**
@@ -207,13 +203,16 @@ export function uninstallKeyboardHandler(): void {
  * ```
  */
 export function onKeypress(handler: KeyHandler): () => void {
-  keyboardListeners.push(handler);
+  const ctx = getActiveContext();
+  if (!ctx) return () => {};
+
+  ctx.keyboardListeners.push(handler);
   installKeyboardHandler();
 
   return () => {
-    const idx = keyboardListeners.indexOf(handler);
+    const idx = ctx.keyboardListeners.indexOf(handler);
     if (idx !== -1) {
-      keyboardListeners.splice(idx, 1);
+      ctx.keyboardListeners.splice(idx, 1);
     }
   };
 }
@@ -229,6 +228,11 @@ export function onKeypress(handler: KeyHandler): () => void {
  * ```
  */
 export function useKeypress(): ReadonlySignal<KeyEvent | null> {
+  const ctx = getActiveContext();
+  if (!ctx) {
+    // Return a dead signal if no render context is active
+    return signal(null);
+  }
   installKeyboardHandler();
-  return lastKeySignal;
+  return ctx.lastKeySignal;
 }

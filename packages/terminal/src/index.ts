@@ -22,5 +22,8 @@ export type { KeyEvent, KeyHandler } from "./keyboard";
 // Hooks
 export { useExit, isRawModeSupported } from "./hooks";
 
+// Lifecycle
+export { onCleanup } from "./lifecycle";
+
 // Re-export helpers for convenience
 export { when, resource, stream } from "@semajsx/core";

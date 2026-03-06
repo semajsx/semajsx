@@ -69,7 +69,7 @@ export interface TerminalElement extends TerminalNodeBase {
   type: "element";
   tagName: string;
   style: TerminalStyle;
-  props: Record<string, any>;
+  props: Record<string, unknown>;
 }
 
 /**
