@@ -15,5 +15,12 @@ export * from "./rendering";
 export * from "./components";
 export * from "./utils";
 
+// Keyboard input API
+export { onKeypress, useKeypress, parseKeyEvent } from "./keyboard";
+export type { KeyEvent, KeyHandler } from "./keyboard";
+
+// Hooks
+export { useExit, isRawModeSupported } from "./hooks";
+
 // Re-export helpers for convenience
 export { when, resource, stream } from "@semajsx/core";
