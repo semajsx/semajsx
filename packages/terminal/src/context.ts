@@ -21,6 +21,8 @@ export interface RenderContext {
   exitCallback: (() => void) | null;
   /** Component cleanup callbacks for onCleanup() */
   cleanupCallbacks: (() => void)[];
+  /** Signal for ExitHint component coordination */
+  exitingSignal: WritableSignal<boolean>;
 }
 
 /**
@@ -39,6 +41,7 @@ export function createRenderContext(): RenderContext {
     stdinHandler: null,
     exitCallback: null,
     cleanupCallbacks: [],
+    exitingSignal: signal(false),
   };
 }
 

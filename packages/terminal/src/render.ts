@@ -13,10 +13,9 @@ import {
 } from "./operations";
 import { TerminalRenderer } from "./renderer";
 import type { TerminalNode } from "./types";
-import { getExitingSignal, resetExitingSignal } from "./components/ExitHint";
 import { type ContextMap } from "@semajsx/core";
 import { createRenderer, type RenderStrategy } from "@semajsx/core";
-import { installKeyboardHandler, uninstallKeyboardHandler, parseKeyEvent } from "./keyboard";
+import { installKeyboardHandler, uninstallKeyboardHandler, onKeypress } from "./keyboard";
 import { setExitCallback } from "./hooks";
 import { flushCleanups } from "./lifecycle";
 import { createRenderContext, setActiveContext } from "./context";
@@ -129,9 +128,6 @@ export function render(element: VNode, options: RenderOptions = {}): RenderResul
   const renderContext = createRenderContext();
   setActiveContext(renderContext);
 
-  // Reset exiting signal for new render
-  resetExitingSignal();
-
   // Auto-create renderer if not provided (ink-style API)
   const autoCreated = !renderer;
   const actualRenderer = renderer || new TerminalRenderer(outputStream);
@@ -157,17 +153,30 @@ export function render(element: VNode, options: RenderOptions = {}): RenderResul
   // Initial render
   actualRenderer.render();
 
-  // Rendering lock to prevent overlapping renders (race condition fix)
+  // Rendering lock to prevent overlapping renders
   let isRendering = false;
+  let renderPending = false;
   const safeRender = () => {
-    if (isRendering) return;
+    if (isRendering) {
+      // Queue a re-render instead of silently dropping
+      renderPending = true;
+      return;
+    }
     isRendering = true;
     try {
       actualRenderer.render();
+      // Flush queued renders
+      while (renderPending) {
+        renderPending = false;
+        actualRenderer.render();
+      }
     } finally {
       isRendering = false;
     }
   };
+
+  // Set resize callback so terminal resizes trigger an immediate re-render
+  actualRenderer.setResizeCallback(safeRender);
 
   // Auto re-render on signal changes (like ink)
   let renderInterval: NodeJS.Timeout | null = null;
@@ -187,26 +196,45 @@ export function render(element: VNode, options: RenderOptions = {}): RenderResul
   // Track original terminal state for cleanup
   const originalRawMode = process.stdin.isTTY && process.stdin.isRaw;
   let handleExit: (() => void) | null = null;
-  let handleKeypress: ((data: Buffer) => void) | null = null;
+  let exitKeyUnsub: (() => void) | null = null;
+
+  // Guard against double cleanup
+  let cleaned = false;
 
   // Cleanup function to restore terminal state
   const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+
     // Stop auto-rendering
     if (renderInterval) {
       clearInterval(renderInterval);
       renderInterval = null;
     }
 
-    // Remove event listeners
+    // Remove signal handlers
     if (handleExit) {
       process.removeListener("SIGINT", handleExit);
       process.removeListener("SIGTERM", handleExit);
     }
-    if (handleKeypress) {
-      process.stdin.removeListener("data", handleKeypress);
+
+    // Flush component cleanup callbacks (timers, listeners, etc.)
+    // Done before uninstalling keyboard so cleanups can still use onKeypress
+    flushCleanups();
+
+    // Clear exit callback
+    setExitCallback(null);
+
+    // Unsubscribe exit key handler
+    if (exitKeyUnsub) {
+      exitKeyUnsub();
+      exitKeyUnsub = null;
     }
 
-    // Restore original terminal state
+    // Uninstall keyboard handler (removes single stdin listener)
+    uninstallKeyboardHandler();
+
+    // Restore original terminal state (after component cleanups)
     if (process.stdin.isTTY && process.stdin.setRawMode) {
       try {
         process.stdin.setRawMode(originalRawMode || false);
@@ -215,17 +243,11 @@ export function render(element: VNode, options: RenderOptions = {}): RenderResul
       }
     }
 
-    // Flush component cleanup callbacks (timers, listeners, etc.)
-    flushCleanups();
-
-    // Clear exit callback
-    setExitCallback(null);
-
-    // Uninstall keyboard handler
-    uninstallKeyboardHandler();
-
     // Clean up subscriptions only (preserve output on exit)
     cleanupSubscriptions(rendered);
+
+    // Clear resize callback before destroy
+    actualRenderer.setResizeCallback(null);
     actualRenderer.destroy();
 
     // Deactivate the render context
@@ -239,7 +261,7 @@ export function render(element: VNode, options: RenderOptions = {}): RenderResul
   // Unmount function
   const unmount = () => {
     // Mark as exiting to hide ExitHint components
-    getExitingSignal().value = true;
+    renderContext.exitingSignal.value = true;
 
     // Trigger one final render to apply ExitHint changes
     // This removes exit prompts from the final output
@@ -268,20 +290,18 @@ export function render(element: VNode, options: RenderOptions = {}): RenderResul
         process.stdin.setRawMode(true);
         process.stdin.resume();
 
-        // Install the global keyboard handler for useKeypress/onKeypress
+        // Install the keyboard handler (single stdin listener for all keyboard events)
         installKeyboardHandler();
 
-        handleKeypress = (data: Buffer) => {
-          const event = parseKeyEvent(data);
-          // Ctrl+C or ESC to exit
+        // Register exit keys (Ctrl+C, ESC) through the keyboard system
+        // This avoids duplicate stdin handlers
+        exitKeyUnsub = onKeypress((event) => {
           if ((event.key === "c" && event.ctrl) || event.key === "escape") {
             if (handleExit) {
               handleExit();
             }
           }
-        };
-
-        process.stdin.on("data", handleKeypress);
+        });
       }
     } catch (err) {
       // If setup fails, clean up and rethrow
