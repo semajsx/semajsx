@@ -16,6 +16,8 @@ import type { TerminalNode } from "./types";
 import { getExitingSignal, resetExitingSignal } from "./components/ExitHint";
 import { type ContextMap } from "@semajsx/core";
 import { createRenderer, type RenderStrategy } from "@semajsx/core";
+import { installKeyboardHandler, uninstallKeyboardHandler, parseKeyEvent } from "./keyboard";
+import { setExitCallback } from "./hooks";
 
 /**
  * Terminal-specific render strategy (no reuse optimization needed)
@@ -207,6 +209,12 @@ export function render(element: VNode, options: RenderOptions = {}): RenderResul
       }
     }
 
+    // Clear exit callback
+    setExitCallback(null);
+
+    // Uninstall keyboard handler
+    uninstallKeyboardHandler();
+
     // Clean up subscriptions only (preserve output on exit)
     cleanupSubscriptions(rendered);
     actualRenderer.destroy();
@@ -228,6 +236,9 @@ export function render(element: VNode, options: RenderOptions = {}): RenderResul
     cleanup();
   };
 
+  // Register exit callback for useExit() hook
+  setExitCallback(unmount);
+
   // Handle Ctrl+C if auto-created
   if (autoCreated) {
     handleExit = () => {
@@ -245,10 +256,13 @@ export function render(element: VNode, options: RenderOptions = {}): RenderResul
         process.stdin.setRawMode(true);
         process.stdin.resume();
 
+        // Install the global keyboard handler for useKeypress/onKeypress
+        installKeyboardHandler();
+
         handleKeypress = (data: Buffer) => {
-          const key = data.toString();
+          const event = parseKeyEvent(data);
           // Ctrl+C or ESC to exit
-          if (key === "\u0003" || key === "\u001b") {
+          if ((event.key === "c" && event.ctrl) || event.key === "escape") {
             if (handleExit) {
               handleExit();
             }

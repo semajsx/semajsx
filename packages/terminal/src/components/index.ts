@@ -10,3 +10,9 @@ export type { ExitHintProps } from "./ExitHint";
 
 export { BlankLine } from "./BlankLine";
 export type { BlankLineProps } from "./BlankLine";
+
+export { Spinner, spinnerFrames } from "./Spinner";
+export type { SpinnerProps, SpinnerType } from "./Spinner";
+
+export { MultiSelect } from "./MultiSelect";
+export type { MultiSelectProps, MultiSelectOption } from "./MultiSelect";
