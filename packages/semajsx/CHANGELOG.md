@@ -1,5 +1,11 @@
 # semajsx
 
+## 0.9.0
+
+### Minor Changes
+
+- [#133](https://github.com/semajsx/semajsx/pull/133) [`35971ee`](https://github.com/semajsx/semajsx/commit/35971eec8a558a03b7bd3f08fe53be5b52c9d716) Thanks [@github-actions](https://github.com/apps/github-actions)! - Add keyboard input API, component lifecycle hooks, and interactive components (Spinner, MultiSelect)
+
 ## 0.8.0
 
 ### Minor Changes
