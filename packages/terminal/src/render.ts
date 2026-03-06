@@ -245,6 +245,11 @@ export function render(element: VNode, options: RenderOptions = {}): RenderResul
       }
     }
 
+    // Release stdin so the event loop can exit naturally
+    if (process.stdin.isTTY) {
+      process.stdin.unref();
+    }
+
     // Clean up subscriptions only (preserve output on exit)
     cleanupSubscriptions(rendered);
 

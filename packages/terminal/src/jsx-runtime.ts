@@ -106,6 +106,28 @@ export namespace JSX {
     box: BoxAttributes;
 
     /**
+     * Row component — shorthand for `<box flexDirection="row">`
+     *
+     * @example
+     * <row>
+     *   <text color="green">✓ </text>
+     *   <text>Task name</text>
+     * </row>
+     */
+    row: BoxAttributes;
+
+    /**
+     * Column component — shorthand for `<box flexDirection="column">`
+     *
+     * @example
+     * <column>
+     *   <text>Line 1</text>
+     *   <text>Line 2</text>
+     * </column>
+     */
+    column: BoxAttributes;
+
+    /**
      * Text component for displaying styled text
      *
      * Supports text styling:
