@@ -25,6 +25,15 @@ export function createElement(tagName: string): TerminalElement {
     yogaNode.setMeasureFunc(measureTextNode.bind(null, element));
   }
 
+  // row and column are box shortcuts with preset flexDirection
+  if (tagName === "row") {
+    yogaNode.setFlexDirection(Yoga.FLEX_DIRECTION_ROW);
+    element.style.flexDirection = "row";
+  } else if (tagName === "column") {
+    yogaNode.setFlexDirection(Yoga.FLEX_DIRECTION_COLUMN);
+    element.style.flexDirection = "column";
+  }
+
   return element;
 }
 
@@ -292,11 +301,13 @@ export function collectText(node: TerminalNode): string {
 }
 
 /**
- * Measure text node for Yoga layout
- * This is called by Yoga when calculating layout
+ * Measure text node for Yoga layout.
+ * Called by Yoga during layout calculation.
+ *
+ * Yoga passes (width, widthMode, height, heightMode) but we only use
+ * width. In MEASURE_MODE_UNDEFINED, width is NaN — return natural size.
  */
 function measureTextNode(node: TerminalElement, width: number): { width: number; height: number } {
-  // Collect all text from children
   const text = collectText(node);
 
   if (text.length === 0) {
@@ -307,17 +318,13 @@ function measureTextNode(node: TerminalElement, width: number): { width: number;
   const lines = text.split("\n");
   const height = lines.length;
 
-  // Text fits within width, no wrapping needed
-  if (textWidth <= width) {
+  // When width is NaN (MEASURE_MODE_UNDEFINED) or Infinity, or text fits,
+  // return the natural text size without wrapping
+  if (!Number.isFinite(width) || width < 1 || textWidth <= width) {
     return { width: textWidth, height };
   }
 
-  // Edge case: Yoga asking if we can fit in <1px
-  if (textWidth >= 1 && width > 0 && width < 1) {
-    return { width: textWidth, height };
-  }
-
-  // Wrap text if it exceeds width
+  // Wrap text if it exceeds the available width
   const wrappedText = wrapAnsi(text, Math.floor(width), {
     hard: true,
     trim: false,
