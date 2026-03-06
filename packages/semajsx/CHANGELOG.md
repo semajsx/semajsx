@@ -1,5 +1,11 @@
 # semajsx
 
+## 0.8.0
+
+### Minor Changes
+
+- [#130](https://github.com/semajsx/semajsx/pull/130) [`3aa031c`](https://github.com/semajsx/semajsx/commit/3aa031cc2c480310e618f5098c2449bea41bdaa4) Thanks [@github-actions](https://github.com/apps/github-actions)! - Enhance mermaid layout with nested subgraphs, self-messages, orthogonal routing, and improved layout algorithms
+
 ## 0.7.0
 
 ### Minor Changes
