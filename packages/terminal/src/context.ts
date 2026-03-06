@@ -58,11 +58,3 @@ export function setActiveSession(session: TerminalSession | null): void {
 export function getActiveSession(): TerminalSession | null {
   return activeSession;
 }
-
-// Backward-compatible aliases
-export {
-  type TerminalSession as RenderContext,
-  createTerminalSession as createRenderContext,
-  setActiveSession as setActiveContext,
-  getActiveSession as getActiveContext,
-};
