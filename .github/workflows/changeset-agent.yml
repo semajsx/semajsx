@@ -73,7 +73,8 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
-          bunx agent-worker run .workflows/agent-changeset.yaml
+          bunx agent-worker run github:lidessen/moniro#changeset -- \
+            --guidelines "Single published package: only 'semajsx' is valid. All @semajsx/* packages are internal and bundled into 'semajsx' via subpath exports. During 0.x development: use 'minor' for breaking changes (not 'major') to keep versions in 0.x range."
 
       - name: Check result
         id: result
