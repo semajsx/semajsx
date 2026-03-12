@@ -101,8 +101,8 @@
         "@semajsx/dom",
       ],
     },
-    "packages/prompt-ui": {
-      "name": "@semajsx/prompt-ui",
+    "packages/prompt": {
+      "name": "@semajsx/prompt",
       "version": "0.1.0",
       "dependencies": {
         "@semajsx/core": "workspace:*",
@@ -625,7 +625,7 @@
 
     "@semajsx/mermaid": ["@semajsx/mermaid@workspace:packages/mermaid"],
 
-    "@semajsx/prompt-ui": ["@semajsx/prompt-ui@workspace:packages/prompt-ui"],
+    "@semajsx/prompt": ["@semajsx/prompt@workspace:packages/prompt"],
 
     "@semajsx/signal": ["@semajsx/signal@workspace:packages/signal"],
 
