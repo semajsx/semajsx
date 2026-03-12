@@ -1,12 +1,15 @@
 /** @jsxImportSource @semajsx/prompt */
 
 import { describe, it, expect } from "vitest";
-import { renderToString } from "../render";
+import { signal } from "@semajsx/signal";
+import { render, renderToString } from "../render";
 import { Screen } from "./Screen";
 import { Section } from "./Section";
 import { List } from "./List";
 import { KeyValue } from "./KeyValue";
 import { ActionBar } from "./ActionBar";
+import { Each } from "./Each";
+import { Window } from "./Window";
 
 describe("Prompt UI Components", () => {
   describe("Screen", () => {
@@ -128,6 +131,153 @@ describe("Prompt UI Components", () => {
 
       expect(text).toContain("Thread Actions:");
       expect(text).toContain("Scroll Up => @act:scroll_up chat=A");
+    });
+  });
+
+  describe("Each", () => {
+    it("should render items from a signal", () => {
+      const names = signal(["Alice", "Bob", "Carol"]);
+      const text = renderToString(
+        <Section title="USERS">
+          <Each of={names} render={(name, i) => <item key={i}>{name}</item>} />
+        </Section>,
+      );
+
+      expect(text).toContain("[USERS]");
+      expect(text).toContain("- Alice");
+      expect(text).toContain("- Bob");
+      expect(text).toContain("- Carol");
+    });
+
+    it("should reactively update when signal changes", async () => {
+      const items = signal(["one", "two"]);
+      const result = render(<Each of={items} render={(item, i) => <item key={i}>{item}</item>} />);
+
+      expect(result.toString()).toContain("- one");
+      expect(result.toString()).toContain("- two");
+
+      items.value = ["one", "two", "three"];
+      await new Promise((r) => setTimeout(r, 10));
+
+      expect(result.toString()).toContain("- three");
+      result.unmount();
+    });
+  });
+
+  describe("Window", () => {
+    it("should render a sliced window with viewport (of mode)", () => {
+      const items = signal(["a", "b", "c", "d", "e"]);
+      const offset = signal(0);
+      const text = renderToString(
+        <Window
+          title="ITEMS"
+          of={items}
+          size={3}
+          offset={offset}
+          render={(item, i) => <item key={i}>{item}</item>}
+        />,
+      );
+
+      expect(text).toContain("[ITEMS] viewport=1-3/5");
+      expect(text).toContain("- a");
+      expect(text).toContain("- b");
+      expect(text).toContain("- c");
+      expect(text).not.toContain("- d");
+    });
+
+    it("should update when offset changes", async () => {
+      const items = signal(["a", "b", "c", "d", "e"]);
+      const offset = signal(0);
+      const result = render(
+        <Window
+          title="LIST"
+          of={items}
+          size={2}
+          offset={offset}
+          render={(item, i) => <item key={i}>{item}</item>}
+        />,
+      );
+
+      expect(result.toString()).toContain("viewport=1-2/5");
+      expect(result.toString()).toContain("- a");
+      expect(result.toString()).toContain("- b");
+
+      offset.value = 2;
+      await new Promise((r) => setTimeout(r, 10));
+
+      expect(result.toString()).toContain("viewport=3-4/5");
+      expect(result.toString()).toContain("- c");
+      expect(result.toString()).toContain("- d");
+      expect(result.toString()).not.toContain("- a");
+      result.unmount();
+    });
+
+    it("should render header before items", () => {
+      const items = signal(["x", "y"]);
+      const offset = signal(0);
+      const text = renderToString(
+        <Window
+          title="DATA"
+          of={items}
+          size={10}
+          offset={offset}
+          header={<line>Status: active</line>}
+          render={(item, i) => <item key={i}>{item}</item>}
+        />,
+      );
+
+      expect(text).toContain("Status: active");
+      expect(text).toContain("- x");
+    });
+
+    it("should work without title (no section wrapper)", () => {
+      const items = signal(["p", "q"]);
+      const offset = signal(0);
+      const text = renderToString(
+        <Window
+          of={items}
+          size={10}
+          offset={offset}
+          render={(item, i) => <item key={i}>{item}</item>}
+        />,
+      );
+
+      expect(text).not.toContain("[");
+      expect(text).toContain("- p");
+      expect(text).toContain("- q");
+    });
+
+    it("should support async fetch mode", async () => {
+      const offset = signal(0);
+      const fetcher = async (off: number, size: number) => {
+        const all = ["a", "b", "c", "d", "e", "f"];
+        return { items: all.slice(off, off + size), total: all.length };
+      };
+
+      const result = render(
+        <Window
+          title="ASYNC"
+          fetch={fetcher}
+          size={3}
+          offset={offset}
+          render={(item, i) => <item key={i}>{item}</item>}
+        />,
+      );
+
+      // Wait for async fetch to resolve
+      await new Promise((r) => setTimeout(r, 10));
+
+      expect(result.toString()).toContain("[ASYNC] viewport=1-3/6");
+      expect(result.toString()).toContain("- a");
+      expect(result.toString()).toContain("- c");
+
+      offset.value = 3;
+      await new Promise((r) => setTimeout(r, 10));
+
+      expect(result.toString()).toContain("viewport=4-6/6");
+      expect(result.toString()).toContain("- d");
+      expect(result.toString()).toContain("- f");
+      result.unmount();
     });
   });
 
