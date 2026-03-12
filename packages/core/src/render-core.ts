@@ -166,6 +166,12 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
     // Children are already attached to the node
     if (rendered.node) {
       nodes.push(rendered.node);
+    } else if (rendered.children.length > 0) {
+      // Component returned a Fragment or other node-less structure:
+      // recurse into children to collect actual nodes
+      for (const child of rendered.children) {
+        nodes.push(...collectNodes(child));
+      }
     }
 
     return nodes;

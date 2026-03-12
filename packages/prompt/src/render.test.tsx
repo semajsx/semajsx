@@ -1,0 +1,162 @@
+/** @jsxImportSource @semajsx/prompt */
+
+import { describe, it, expect } from "vitest";
+import { renderToString, render } from "./render";
+import { signal } from "@semajsx/signal";
+
+describe("Prompt UI Render", () => {
+  describe("renderToString", () => {
+    it("should render a simple section", () => {
+      const text = renderToString(
+        <section title="ROLE">
+          <line>Support Agent</line>
+        </section>,
+      );
+      expect(text).toBe("[ROLE]\nSupport Agent");
+    });
+
+    it("should render a header", () => {
+      const text = renderToString(<header name="Test Screen" time="2026-03-12" />);
+      expect(text).toBe("SCREEN Test Screen\nTIME 2026-03-12");
+    });
+
+    it("should render nested structure", () => {
+      const text = renderToString(
+        <>
+          <header name="Inbox" focus="thread:A" />
+          <section title="ROLE">
+            <line>Agent</line>
+          </section>
+          <section title="AWARENESS">
+            <item>Check messages</item>
+            <item>Be careful</item>
+          </section>
+        </>,
+      );
+
+      expect(text).toContain("SCREEN Inbox");
+      expect(text).toContain("FOCUS thread:A");
+      expect(text).toContain("[ROLE]");
+      expect(text).toContain("Agent");
+      expect(text).toContain("[AWARENESS]");
+      expect(text).toContain("- Check messages");
+      expect(text).toContain("- Be careful");
+    });
+
+    it("should render actions inline", () => {
+      const text = renderToString(
+        <actions>
+          <action label="Reply" name="reply" chat="A" />
+          <action label="Open" name="open" chat="B" />
+        </actions>,
+      );
+      expect(text).toBe("Actions: Reply => @act:reply chat=A | Open => @act:open chat=B");
+    });
+
+    it("should render items with signals (reads current value)", () => {
+      const count = signal(42);
+      const text = renderToString(
+        <section title="STATUS">
+          <line>Count: {count}</line>
+        </section>,
+      );
+      expect(text).toContain("[STATUS]");
+      expect(text).toContain("Count: 42");
+    });
+
+    it("should render fields", () => {
+      const text = renderToString(
+        <>
+          <field label="Name" value="Alice" />
+          <field label="Status" value="online" />
+        </>,
+      );
+      expect(text).toContain("Name: Alice");
+      expect(text).toContain("Status: online");
+    });
+
+    it("should render separator", () => {
+      const text = renderToString(
+        <>
+          <line>Before</line>
+          <separator />
+          <line>After</line>
+        </>,
+      );
+      expect(text).toBe("Before\n---\nAfter");
+    });
+  });
+
+  describe("render (reactive)", () => {
+    it("should return current text via toString", () => {
+      const result = render(
+        <section title="TEST">
+          <line>Hello</line>
+        </section>,
+      );
+      expect(result.toString()).toBe("[TEST]\nHello");
+      result.unmount();
+    });
+
+    it("should update when signals change", async () => {
+      const count = signal(0);
+      const result = render(
+        <section title="COUNT">
+          <line>Value: {count}</line>
+        </section>,
+      );
+
+      expect(result.toString()).toContain("Value: 0");
+
+      const updates: string[] = [];
+      result.subscribe((text) => updates.push(text));
+
+      count.value = 5;
+      // Wait for microtask
+      await new Promise((r) => queueMicrotask(r));
+
+      result.unmount();
+
+      // The subscribe callback should have been called
+      // and the text should reflect the new value
+      expect(updates.length).toBeGreaterThanOrEqual(1);
+      expect(updates[updates.length - 1]).toContain("Value: 5");
+    });
+
+    it("should support refresh()", () => {
+      const result = render(
+        <section title="TEST">
+          <line>Static</line>
+        </section>,
+      );
+
+      const updates: string[] = [];
+      result.subscribe((text) => updates.push(text));
+
+      // refresh should not trigger callback if text hasn't changed
+      result.refresh();
+      expect(updates).toHaveLength(0);
+
+      result.unmount();
+    });
+  });
+
+  describe("components", () => {
+    function MySection(props: { title: string; children?: any }): any {
+      return <section title={props.title}>{props.children}</section>;
+    }
+
+    it("should render function components", () => {
+      const text = renderToString(
+        <MySection title="CUSTOM">
+          <item>Item A</item>
+          <item>Item B</item>
+        </MySection>,
+      );
+
+      expect(text).toContain("[CUSTOM]");
+      expect(text).toContain("- Item A");
+      expect(text).toContain("- Item B");
+    });
+  });
+});

@@ -1,0 +1,254 @@
+/**
+ * Render functions for Prompt UI
+ *
+ * Provides both one-shot and reactive rendering of JSX to plain text.
+ */
+
+import type { VNode } from "@semajsx/core";
+import { type ContextMap, createRenderer, type RenderStrategy } from "@semajsx/core";
+import type { RenderedNode } from "@semajsx/core";
+import type { Signal } from "@semajsx/signal";
+import type { PromptNode } from "./types";
+import {
+  createElement,
+  createTextNode,
+  createComment,
+  appendChild,
+  removeChild,
+  insertBefore,
+  replaceNode,
+  getParent,
+  getNextSibling,
+  createRoot,
+} from "./operations";
+import { setProperty } from "./properties";
+import { serialize } from "./serialize";
+
+/**
+ * Recursively collect all actual PromptNode instances from a rendered tree.
+ * Handles fragments and components that have node=null by walking children.
+ */
+function collectRenderedNodes(rendered: RenderedNode<PromptNode>): PromptNode[] {
+  if (rendered.node) {
+    return [rendered.node];
+  }
+  const nodes: PromptNode[] = [];
+  for (const child of rendered.children) {
+    nodes.push(...collectRenderedNodes(child));
+  }
+  return nodes;
+}
+
+/**
+ * Global change notification callback.
+ * When a reactive render is active, signal property changes call this
+ * to schedule re-serialization.
+ */
+let onChangeCallback: (() => void) | null = null;
+
+/**
+ * Signal-aware property setter that notifies the active render of changes.
+ */
+function setSignalPropertyWithNotify<T = unknown>(
+  node: PromptNode,
+  key: string,
+  signal: Signal<T>,
+): () => void {
+  // Set initial value
+  setProperty(node, key, signal.value);
+
+  // Subscribe to changes - call setProperty AND notify
+  return signal.subscribe((value: T) => {
+    setProperty(node, key, value);
+    onChangeCallback?.();
+  });
+}
+
+/**
+ * Prompt UI render strategy for core's createRenderer
+ *
+ * Tree-mutating operations (insertBefore, appendChild, removeChild, replaceNode)
+ * are wrapped to notify the active render of changes. This catches both:
+ * - Signal prop changes (via setSignalPropertyWithNotify)
+ * - Signal child changes (via core's #signal VNode handling which mutates the tree)
+ */
+const promptStrategy: RenderStrategy<PromptNode> = {
+  createTextNode,
+  createComment,
+  createElement,
+  getParent,
+  getNextSibling,
+  insertBefore(parent, newNode, beforeNode) {
+    insertBefore(parent, newNode, beforeNode);
+    onChangeCallback?.();
+  },
+  appendChild(parent, child) {
+    appendChild(parent, child);
+    onChangeCallback?.();
+  },
+  removeChild(node) {
+    removeChild(node);
+    onChangeCallback?.();
+  },
+  replaceNode(oldNode, newNode) {
+    replaceNode(oldNode, newNode);
+    onChangeCallback?.();
+  },
+  setProperty,
+  setSignalProperty: setSignalPropertyWithNotify,
+};
+
+// Create the renderer using core's createRenderer
+const { renderNode, cleanupSubscriptions } = createRenderer(promptStrategy);
+
+/**
+ * Result of a reactive render
+ */
+export interface RenderResult {
+  /**
+   * Get the current rendered text
+   */
+  toString(): string;
+
+  /**
+   * Subscribe to re-renders. Callback is invoked whenever
+   * signal changes cause the tree to update.
+   * Returns an unsubscribe function.
+   */
+  subscribe(callback: (text: string) => void): () => void;
+
+  /**
+   * Trigger a manual re-serialization and notify subscribers
+   */
+  refresh(): void;
+
+  /**
+   * Unmount the tree and clean up all subscriptions
+   */
+  unmount(): void;
+}
+
+/**
+ * Render a VNode tree to a reactive text output.
+ *
+ * The returned RenderResult tracks signal changes and re-serializes
+ * the tree automatically. Use .toString() to get the current text,
+ * or .subscribe() to be notified of updates.
+ *
+ * @example
+ * const count = signal(0);
+ * const result = render(
+ *   <section title="STATUS">
+ *     <line>Count: {count}</line>
+ *   </section>
+ * );
+ *
+ * result.subscribe((text) => {
+ *   // Called whenever count changes
+ *   sendToLLM(text);
+ * });
+ *
+ * count.value = 1; // triggers re-render
+ */
+export function render(element: VNode): RenderResult {
+  const root = createRoot();
+  const initialContext: ContextMap = new Map();
+  const rendered = renderNode(element, initialContext);
+
+  const nodes = collectRenderedNodes(rendered);
+  for (const node of nodes) {
+    appendChild(root, node);
+  }
+
+  let currentText = serialize(root);
+  const listeners = new Set<(text: string) => void>();
+  let disposed = false;
+  let checkScheduled = false;
+
+  function flush(): void {
+    checkScheduled = false;
+    if (disposed) return;
+
+    const newText = serialize(root);
+    if (newText !== currentText) {
+      currentText = newText;
+      for (const listener of listeners) {
+        listener(currentText);
+      }
+    }
+  }
+
+  function scheduleFlush(): void {
+    if (!checkScheduled && !disposed) {
+      checkScheduled = true;
+      queueMicrotask(flush);
+    }
+  }
+
+  // Set up change notification
+  onChangeCallback = scheduleFlush;
+
+  return {
+    toString() {
+      return currentText;
+    },
+
+    subscribe(callback: (text: string) => void): () => void {
+      listeners.add(callback);
+      return () => {
+        listeners.delete(callback);
+      };
+    },
+
+    refresh() {
+      const newText = serialize(root);
+      if (newText !== currentText) {
+        currentText = newText;
+        for (const listener of listeners) {
+          listener(currentText);
+        }
+      }
+    },
+
+    unmount() {
+      disposed = true;
+      listeners.clear();
+      if (onChangeCallback === scheduleFlush) {
+        onChangeCallback = null;
+      }
+      cleanupSubscriptions(rendered);
+    },
+  };
+}
+
+/**
+ * Render a VNode tree to a string (one-shot, no reactivity).
+ *
+ * This is the simplest API for static prompt generation.
+ * Signals are read for their current value but not subscribed to.
+ *
+ * @example
+ * const text = renderToString(
+ *   <section title="ROLE">
+ *     <line>Support Agent</line>
+ *   </section>
+ * );
+ * // => "[ROLE]\nSupport Agent"
+ */
+export function renderToString(element: VNode): string {
+  const root = createRoot();
+  const initialContext: ContextMap = new Map();
+  const rendered = renderNode(element, initialContext);
+
+  const nodes = collectRenderedNodes(rendered);
+  for (const node of nodes) {
+    appendChild(root, node);
+  }
+
+  const text = serialize(root);
+
+  // Clean up subscriptions (signals read once, not tracked)
+  cleanupSubscriptions(rendered);
+
+  return text;
+}
