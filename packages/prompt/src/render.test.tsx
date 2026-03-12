@@ -123,6 +123,82 @@ describe("Prompt UI Render", () => {
       expect(updates[updates.length - 1]).toContain("Value: 5");
     });
 
+    it("should support multiple concurrent render instances", async () => {
+      const count1 = signal(0);
+      const count2 = signal(0);
+
+      const r1 = render(
+        <section title="R1">
+          <line>Count: {count1}</line>
+        </section>,
+      );
+      const r2 = render(
+        <section title="R2">
+          <line>Count: {count2}</line>
+        </section>,
+      );
+
+      const updates1: string[] = [];
+      const updates2: string[] = [];
+      r1.subscribe((text) => updates1.push(text));
+      r2.subscribe((text) => updates2.push(text));
+
+      // Update signal for r1 only
+      count1.value = 10;
+      await new Promise((r) => queueMicrotask(r));
+
+      expect(updates1.length).toBeGreaterThanOrEqual(1);
+      expect(updates1[updates1.length - 1]).toContain("Count: 10");
+      // r2 should not have changed
+      expect(updates2).toHaveLength(0);
+
+      // Update signal for r2 only
+      count2.value = 20;
+      await new Promise((r) => queueMicrotask(r));
+
+      expect(updates2.length).toBeGreaterThanOrEqual(1);
+      expect(updates2[updates2.length - 1]).toContain("Count: 20");
+
+      // r1 should still work after r2 was created
+      count1.value = 99;
+      await new Promise((r) => queueMicrotask(r));
+
+      expect(updates1[updates1.length - 1]).toContain("Count: 99");
+
+      r1.unmount();
+      r2.unmount();
+    });
+
+    it("should not break first render when second render is created", async () => {
+      const name = signal("Alice");
+
+      const r1 = render(
+        <section title="GREETING">
+          <line>Hello {name}</line>
+        </section>,
+      );
+
+      // Creating a second render should not steal r1's notifications
+      const r2 = render(
+        <section title="OTHER">
+          <line>Static</line>
+        </section>,
+      );
+
+      const updates1: string[] = [];
+      r1.subscribe((text) => updates1.push(text));
+
+      name.value = "Bob";
+      await new Promise((r) => queueMicrotask(r));
+
+      // r1 must still receive its update
+      expect(updates1.length).toBeGreaterThanOrEqual(1);
+      expect(updates1[updates1.length - 1]).toContain("Hello Bob");
+
+      r1.unmount();
+      r2.unmount();
+    });
+
     it("should support refresh()", () => {
       const result = render(
         <section title="TEST">

@@ -88,8 +88,6 @@ export function insertBefore(
     removeChild(newNode);
   }
 
-  newNode.parent = parent;
-
   if (!refNode) {
     appendChild(parent, newNode);
     return;
@@ -97,7 +95,11 @@ export function insertBefore(
 
   const index = parent.children.indexOf(refNode);
   if (index !== -1) {
+    newNode.parent = parent;
     parent.children.splice(index, 0, newNode);
+  } else {
+    // refNode not found in parent - fall back to append
+    appendChild(parent, newNode);
   }
 }
 
