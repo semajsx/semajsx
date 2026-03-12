@@ -40,11 +40,18 @@ function collectRenderedNodes(rendered: RenderedNode<PromptNode>): PromptNode[] 
 }
 
 /**
- * Global change notification callback.
- * When a reactive render is active, signal property changes call this
- * to schedule re-serialization.
+ * Set of active change notification callbacks.
+ * Each reactive render instance registers its own scheduleFlush here.
+ * When any signal or tree mutation occurs, all active renders are notified
+ * so each can re-serialize its own root and check for changes.
  */
-let onChangeCallback: (() => void) | null = null;
+const changeCallbacks = new Set<() => void>();
+
+function notifyChange(): void {
+  for (const cb of changeCallbacks) {
+    cb();
+  }
+}
 
 /**
  * Signal-aware property setter that notifies the active render of changes.
@@ -60,7 +67,7 @@ function setSignalPropertyWithNotify<T = unknown>(
   // Subscribe to changes - call setProperty AND notify
   return signal.subscribe((value: T) => {
     setProperty(node, key, value);
-    onChangeCallback?.();
+    notifyChange();
   });
 }
 
@@ -80,19 +87,19 @@ const promptStrategy: RenderStrategy<PromptNode> = {
   getNextSibling,
   insertBefore(parent, newNode, beforeNode) {
     insertBefore(parent, newNode, beforeNode);
-    onChangeCallback?.();
+    notifyChange();
   },
   appendChild(parent, child) {
     appendChild(parent, child);
-    onChangeCallback?.();
+    notifyChange();
   },
   removeChild(node) {
     removeChild(node);
-    onChangeCallback?.();
+    notifyChange();
   },
   replaceNode(oldNode, newNode) {
     replaceNode(oldNode, newNode);
-    onChangeCallback?.();
+    notifyChange();
   },
   setProperty,
   setSignalProperty: setSignalPropertyWithNotify,
@@ -185,8 +192,8 @@ export function render(element: VNode): RenderResult {
     }
   }
 
-  // Set up change notification
-  onChangeCallback = scheduleFlush;
+  // Register this instance's change notification
+  changeCallbacks.add(scheduleFlush);
 
   return {
     toString() {
@@ -213,9 +220,7 @@ export function render(element: VNode): RenderResult {
     unmount() {
       disposed = true;
       listeners.clear();
-      if (onChangeCallback === scheduleFlush) {
-        onChangeCallback = null;
-      }
+      changeCallbacks.delete(scheduleFlush);
       cleanupSubscriptions(rendered);
     },
   };

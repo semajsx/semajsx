@@ -116,6 +116,34 @@ describe("Prompt UI Operations", () => {
 
       expect(root.children).toHaveLength(1);
     });
+
+    it("should fall back to append when refNode is not in parent", () => {
+      const root = createRoot();
+      const a = createElement("line");
+      const orphan = createElement("line"); // not a child of root
+      const newNode = createElement("item");
+
+      appendChild(root, a);
+      insertBefore(root, newNode, orphan);
+
+      // Should append instead of leaving node in limbo
+      expect(root.children).toEqual([a, newNode]);
+      expect(newNode.parent).toBe(root);
+    });
+
+    it("should not leave inconsistent parent pointer on failed insert", () => {
+      const root = createRoot();
+      const orphan = createElement("line");
+      const newNode = createElement("item");
+
+      // Before the fix, newNode.parent would be set to root
+      // but newNode would not actually be in root.children
+      insertBefore(root, newNode, orphan);
+
+      // Now it falls back to append, so parent and children are consistent
+      expect(newNode.parent).toBe(root);
+      expect(root.children).toContain(newNode);
+    });
   });
 
   describe("replaceNode", () => {
