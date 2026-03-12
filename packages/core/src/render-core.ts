@@ -166,6 +166,12 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
     // Children are already attached to the node
     if (rendered.node) {
       nodes.push(rendered.node);
+    } else if (rendered.children.length > 0) {
+      // Component returned a Fragment or other node-less structure:
+      // recurse into children to collect actual nodes
+      for (const child of rendered.children) {
+        nodes.push(...collectNodes(child));
+      }
     }
 
     return nodes;
@@ -594,9 +600,11 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
         children: [],
       };
       const rendered = renderNode(signalVNode, currentContext);
+      // Return node: null so collectNodes recurses into children and finds the
+      // #signal rendered node, which correctly collects marker + content children.
       return {
         vnode,
-        node: rendered.node,
+        node: null,
         subscriptions: [...componentCleanups, ...rendered.subscriptions],
         children: [rendered],
       };
