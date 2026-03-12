@@ -12,3 +12,9 @@ export type { KeyValueProps, KeyValueEntry } from "./KeyValue";
 
 export { ActionBar } from "./ActionBar";
 export type { ActionBarProps, ActionDef } from "./ActionBar";
+
+export { Each } from "./Each";
+export type { EachProps } from "./Each";
+
+export { Window } from "./Window";
+export type { WindowProps, WindowPage, WindowFetcher } from "./Window";

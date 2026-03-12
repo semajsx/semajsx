@@ -5,7 +5,8 @@
  *
  * Demonstrates:
  * - Multiple signal-driven data sources (channels, messages, memories, focus)
- * - Computed derived views (filtered messages, active channel info)
+ * - Each component for reactive list rendering
+ * - Window component for paginated message feed
  * - Tool actions for the agent to switch channels, filter, and navigate
  * - Reactive re-rendering when any signal changes
  *
@@ -14,7 +15,7 @@
 
 import { signal, computed } from "@semajsx/signal";
 import { render } from "@semajsx/prompt";
-import { Screen, Section, ActionBar } from "@semajsx/prompt";
+import { Screen, Section, ActionBar, Each, Window } from "@semajsx/prompt";
 import type { Signal, ReadableSignal } from "@semajsx/signal";
 import type { JSXNode } from "@semajsx/core";
 
@@ -177,7 +178,6 @@ const channels: Signal<Channel[]> = signal([
 const focusChannel: Signal<string> = signal("ch-general");
 const filterMode: Signal<FilterMode> = signal("all");
 const scrollOffset: Signal<number> = signal(0);
-const messagesPerPage = 10;
 
 const memories: Signal<Memory[]> = signal([
   {
@@ -205,14 +205,10 @@ const memories: Signal<Memory[]> = signal([
 
 // ─── Derived State ───────────────────────────────────────────
 
-const activeChannel: ReadableSignal<Channel | undefined> = computed(
-  [channels, focusChannel],
-  (chs, focusId) => chs.find((c) => c.id === focusId),
-);
-
 const filteredMessages: ReadableSignal<Message[]> = computed(
-  [activeChannel, filterMode],
-  (ch, mode) => {
+  [channels, focusChannel, filterMode],
+  (chs, focusId, mode) => {
+    const ch = chs.find((c) => c.id === focusId);
     if (!ch) return [];
     switch (mode) {
       case "unread":
@@ -222,20 +218,6 @@ const filteredMessages: ReadableSignal<Message[]> = computed(
       default:
         return ch.messages;
     }
-  },
-);
-
-const visibleMessages: ReadableSignal<Message[]> = computed(
-  [filteredMessages, scrollOffset],
-  (msgs, offset) => msgs.slice(offset, offset + messagesPerPage),
-);
-
-const messageViewport: ReadableSignal<string> = computed(
-  [filteredMessages, scrollOffset],
-  (msgs, offset) => {
-    const start = offset + 1;
-    const end = Math.min(offset + messagesPerPage, msgs.length);
-    return `${start}-${end}/${msgs.length}`;
   },
 );
 
@@ -256,81 +238,45 @@ const relevantMemories: ReadableSignal<Memory[]> = computed(memories, (mems) =>
 function ChannelList(): JSXNode {
   return (
     <Section title="CHANNELS">
-      {computed(channelSummaries, (summaries) => summaries.map((s, i) => <item key={i}>{s}</item>))}
+      <Each of={channelSummaries} render={(s, i) => <item key={i}>{s}</item>} />
     </Section>
   );
 }
 
 function MessageFeed(): JSXNode {
   return (
-    <Section title="MESSAGES" viewport={messageViewport}>
-      <line>
-        Filter: {filterMode} | Channel: {computed(activeChannel, (ch) => ch?.name ?? "none")}
-      </line>
-      <separator />
-      {computed(visibleMessages, (msgs) =>
-        msgs.map((msg) => (
-          <line key={msg.id}>
-            [{msg.time}] {msg.from}: {msg.text}
-            {msg.unread ? " *NEW*" : ""}
-          </line>
-        )),
+    <Window
+      title="MESSAGES"
+      of={filteredMessages}
+      size={10}
+      offset={scrollOffset}
+      header={
+        <line>
+          Filter: {filterMode} | Channel: {computed(focusChannel, (id) => id)}
+        </line>
+      }
+      render={(msg) => (
+        <line key={msg.id}>
+          [{msg.time}] {msg.from}: {msg.text}
+          {msg.unread ? " *NEW*" : ""}
+        </line>
       )}
-    </Section>
+    />
   );
 }
 
 function MemoryPanel(): JSXNode {
   return (
     <Section title="RELEVANT MEMORIES">
-      {computed(relevantMemories, (mems) =>
-        mems.map((m) => (
+      <Each
+        of={relevantMemories}
+        render={(m) => (
           <item key={m.key}>
             [{m.key}] (relevance={m.relevance}) {m.content}
           </item>
-        )),
-      )}
+        )}
+      />
     </Section>
-  );
-}
-
-function ChannelActions(): JSXNode {
-  return (
-    <ActionBar
-      label="Channel Tools"
-      actions={[
-        { label: "Switch to #general", name: "switch_channel", channel: "ch-general" },
-        { label: "Switch to #backend", name: "switch_channel", channel: "ch-backend" },
-        { label: "Switch to #incidents", name: "switch_channel", channel: "ch-incidents" },
-      ]}
-    />
-  );
-}
-
-function FilterActions(): JSXNode {
-  return (
-    <ActionBar
-      label="Filters"
-      actions={[
-        { label: "Show All", name: "set_filter", mode: "all" },
-        { label: "Unread Only", name: "set_filter", mode: "unread" },
-        { label: "Mentions Only", name: "set_filter", mode: "mentions" },
-      ]}
-    />
-  );
-}
-
-function NavigationActions(): JSXNode {
-  return (
-    <ActionBar
-      label="Navigate"
-      actions={[
-        { label: "Scroll Up", name: "scroll", direction: "up", amount: "10" },
-        { label: "Scroll Down", name: "scroll", direction: "down", amount: "10" },
-        { label: "Mark Read", name: "mark_read", channel: "current" },
-        { label: "Reply", name: "reply", channel: "current" },
-      ]}
-    />
   );
 }
 
@@ -356,11 +302,33 @@ function SoulChatScreen(): JSXNode {
       <MemoryPanel />
 
       <Section title="TOOLS">
-        <ChannelActions />
+        <ActionBar
+          label="Channel Tools"
+          actions={[
+            { label: "Switch to #general", name: "switch_channel", channel: "ch-general" },
+            { label: "Switch to #backend", name: "switch_channel", channel: "ch-backend" },
+            { label: "Switch to #incidents", name: "switch_channel", channel: "ch-incidents" },
+          ]}
+        />
         <br />
-        <FilterActions />
+        <ActionBar
+          label="Filters"
+          actions={[
+            { label: "Show All", name: "set_filter", mode: "all" },
+            { label: "Unread Only", name: "set_filter", mode: "unread" },
+            { label: "Mentions Only", name: "set_filter", mode: "mentions" },
+          ]}
+        />
         <br />
-        <NavigationActions />
+        <ActionBar
+          label="Navigate"
+          actions={[
+            { label: "Scroll Up", name: "scroll", direction: "up", amount: "10" },
+            { label: "Scroll Down", name: "scroll", direction: "down", amount: "10" },
+            { label: "Mark Read", name: "mark_read", channel: "current" },
+            { label: "Reply", name: "reply", channel: "current" },
+          ]}
+        />
       </Section>
     </Screen>
   );
@@ -384,20 +352,16 @@ result.subscribe((text) => {
 // 1) Agent switches to unread filter
 console.log("\n--- Tool call: set_filter mode=unread ---");
 filterMode.value = "unread";
-
-// Allow microtask to flush
 await new Promise((r) => setTimeout(r, 10));
 
 // 2) Agent switches to #backend channel
 console.log("\n--- Tool call: switch_channel channel=ch-backend ---");
 focusChannel.value = "ch-backend";
-
 await new Promise((r) => setTimeout(r, 10));
 
 // 3) Agent switches to mentions filter
 console.log("\n--- Tool call: set_filter mode=mentions ---");
 filterMode.value = "mentions";
-
 await new Promise((r) => setTimeout(r, 10));
 
 // 4) New message arrives in #backend
@@ -412,16 +376,13 @@ if (backend) {
     time: "09:33",
     unread: true,
   });
-  // Trigger reactivity by assigning a new array reference
   channels.value = [...currentChannels];
 }
-
 await new Promise((r) => setTimeout(r, 10));
 
 // 5) Agent switches back to all messages
 console.log("\n--- Tool call: set_filter mode=all ---");
 filterMode.value = "all";
-
 await new Promise((r) => setTimeout(r, 10));
 
 // 6) Memory update - new context learned
@@ -435,7 +396,6 @@ memories.value = [
     relevance: 0.98,
   },
 ];
-
 await new Promise((r) => setTimeout(r, 10));
 
 // Clean up

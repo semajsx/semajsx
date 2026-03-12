@@ -600,9 +600,11 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
         children: [],
       };
       const rendered = renderNode(signalVNode, currentContext);
+      // Return node: null so collectNodes recurses into children and finds the
+      // #signal rendered node, which correctly collects marker + content children.
       return {
         vnode,
-        node: rendered.node,
+        node: null,
         subscriptions: [...componentCleanups, ...rendered.subscriptions],
         children: [rendered],
       };

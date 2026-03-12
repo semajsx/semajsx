@@ -26,9 +26,21 @@ import { serialize } from "./serialize";
 
 /**
  * Recursively collect all actual PromptNode instances from a rendered tree.
- * Handles fragments and components that have node=null by walking children.
+ * Handles fragments, signal markers, and components that have node=null by walking children.
  */
 function collectRenderedNodes(rendered: RenderedNode<PromptNode>): PromptNode[] {
+  // Signal marker: include marker node + content children
+  if (rendered.vnode.type === "#signal") {
+    const nodes: PromptNode[] = [];
+    if (rendered.node) {
+      nodes.push(rendered.node);
+    }
+    for (const child of rendered.children) {
+      nodes.push(...collectRenderedNodes(child));
+    }
+    return nodes;
+  }
+
   if (rendered.node) {
     return [rendered.node];
   }
