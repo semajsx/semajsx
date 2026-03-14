@@ -1,0 +1,41 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "oxfmt \"$CLAUDE_FILE_PATH\""
+          },
+          {
+            "type": "command",
+            "command": "oxlint \"$CLAUDE_FILE_PATH\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "case \"$CLAUDE_FILE_PATH\" in */bun.lock|*/package-lock.json) echo 'BLOCKED: Do not edit lock files directly. Run bun install instead.' && exit 1;; esac"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "tsgo --build --pretty 2>&1 | tail -20"
+          }
+        ]
+      }
+    ]
+  }
+}
