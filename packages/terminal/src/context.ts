@@ -1,5 +1,6 @@
 import { signal, type WritableSignal } from "@semajsx/signal";
 import type { KeyEvent, KeyHandler } from "./keyboard";
+import type { TerminalRenderer } from "./renderer";
 
 /**
  * Per-render session that holds all mutable state for a terminal render instance.
@@ -23,6 +24,8 @@ export interface TerminalSession {
   cleanupCallbacks: (() => void)[];
   /** Signal for ExitHint component coordination */
   exitingSignal: WritableSignal<boolean>;
+  /** Renderer instance for static output */
+  renderer: TerminalRenderer | null;
 }
 
 /**
@@ -42,6 +45,7 @@ export function createTerminalSession(): TerminalSession {
     exitCallback: null,
     cleanupCallbacks: [],
     exitingSignal: signal(false),
+    renderer: null,
   };
 }
 

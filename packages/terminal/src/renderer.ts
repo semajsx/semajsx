@@ -241,6 +241,29 @@ export class TerminalRenderer {
   }
 
   /**
+   * Commit text permanently above the dynamic render area.
+   *
+   * The committed lines are written to stdout and will NOT be erased
+   * on subsequent re-renders. The dynamic content renders below them.
+   *
+   * Used by the Static component to permanently output completed items.
+   */
+  commitStaticOutput(lines: string): void {
+    // Erase current dynamic output
+    if (this.lastOutputHeight > 0) {
+      this.root.stream.write(ansiEscapes.eraseLines(this.lastOutputHeight));
+    }
+
+    // Write static content permanently (with trailing newline)
+    this.root.stream.write(lines + "\n");
+
+    // Re-write dynamic output below
+    if (this.previousOutput) {
+      this.root.stream.write(this.previousOutput);
+    }
+  }
+
+  /**
    * Clear the rendered output
    */
   clear(): void {
