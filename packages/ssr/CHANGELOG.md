@@ -1,5 +1,12 @@
 # @semajsx/ssr
 
+## 0.1.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @semajsx/logger@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes

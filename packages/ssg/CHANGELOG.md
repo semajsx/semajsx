@@ -1,5 +1,12 @@
 # @semajsx/ssg
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @semajsx/ssr@0.1.2
+
 ## 0.2.0
 
 ### Minor Changes
