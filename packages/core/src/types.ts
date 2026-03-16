@@ -51,8 +51,7 @@ export type JSXNode =
   | Iterable<JSXNode>
   | ReadableSignal<JSXNode>
   | Promise<JSXNode>
-  | AsyncIterableIterator<JSXNode>
-  | (() => JSXNode);
+  | AsyncIterableIterator<JSXNode>;
 
 /**
  * Component type
