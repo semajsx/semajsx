@@ -73,9 +73,11 @@ export function Static<T>({ items, render: renderItem }: StaticProps<T>): JSXNod
         return true;
       }) as any;
 
-      print(element as VNode, { stream });
-
-      stream.write = origWrite;
+      try {
+        print(element as VNode, { stream });
+      } finally {
+        stream.write = origWrite;
+      }
 
       if (lines.length > 0) {
         session.renderer.commitStaticOutput(lines.join("\n"));

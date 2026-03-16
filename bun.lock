@@ -162,7 +162,6 @@
       "name": "@semajsx/signal",
       "version": "0.1.0",
       "dependencies": {
-        "@semajsx/core": "workspace:*",
         "@semajsx/utils": "workspace:*",
       },
       "devDependencies": {
