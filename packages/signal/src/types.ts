@@ -1,35 +1,38 @@
 /**
- * Signal types for @semajsx/signal implementation
+ * Signal types for @semajsx/signal
  *
- * This package extends the core Signal interfaces from @semajsx/core
- * with convenience methods (set, update) that are specific to this implementation.
+ * Base interfaces (ReadableSignal, WritableSignal) are defined here
+ * and re-exported by @semajsx/core. This avoids a circular dependency
+ * between signal and core at the package level.
  */
 
-import type {
-  MaybeSignal as CoreMaybeSignal,
-  ReadableSignal as CoreReadableSignal,
-  SignalValue as CoreSignalValue,
-  WritableSignal as CoreWritableSignal,
-} from "@semajsx/core";
-
 /**
- * ReadableSignal - Re-export from core
- */
-export type ReadableSignal<T = any> = CoreReadableSignal<T>;
-
-/**
- * WritableSignal - Extends core interface with convenience methods
+ * ReadableSignal - Read-only reactive value
  *
- * The core WritableSignal only requires a writable `value` property.
+ * Minimal interface for third-party signal compatibility.
+ * Any object with `value` and `subscribe()` can be used as a signal.
+ */
+export interface ReadableSignal<T = any> {
+  /** Current value of the signal */
+  readonly value: T;
+  /** Subscribe to changes. Returns an unsubscribe function. */
+  subscribe(listener: (value: T) => void): () => void;
+}
+
+/**
+ * WritableSignal - Extends ReadableSignal with set() and update()
+ *
+ * The base contract only requires a writable `value` property.
  * This implementation adds set() and update() as convenience methods.
  */
-export interface WritableSignal<T = any> extends CoreWritableSignal<T> {
+export interface WritableSignal<T = any> extends ReadableSignal<T> {
+  /** Current value of the signal (writable) */
+  value: T;
   /**
    * Set signal value (convenience method)
    * Equivalent to: signal.value = newValue
    */
   set(value: T): void;
-
   /**
    * Update signal value based on previous value (convenience method)
    * Equivalent to: signal.value = fn(signal.value)
@@ -38,13 +41,13 @@ export interface WritableSignal<T = any> extends CoreWritableSignal<T> {
 }
 
 /**
- * Legacy type alias for backward compatibility
+ * Legacy type alias
  * @deprecated Use ReadableSignal instead
  */
 export type Signal<T = any> = ReadableSignal<T>;
 
-/**
- * Re-export utility types from core
- */
-export type MaybeSignal<T> = CoreMaybeSignal<T>;
-export type SignalValue<S> = CoreSignalValue<S>;
+/** Value that may or may not be a signal */
+export type MaybeSignal<T> = T | ReadableSignal<T>;
+
+/** Extract the value type from a Signal */
+export type SignalValue<S> = S extends ReadableSignal<infer T> ? T : never;

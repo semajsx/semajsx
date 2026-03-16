@@ -100,6 +100,14 @@ export function TextInput({
 }: TextInputProps): JSXNode {
   const cursorOffset = signal(value.value.length);
 
+  // Clamp cursor when value changes externally (e.g. parent resets to "")
+  const unsubValue = value.subscribe((val) => {
+    if (cursorOffset.value > val.length) {
+      cursorOffset.value = val.length;
+    }
+  });
+  onCleanup(unsubValue);
+
   const unsub = onKeypress((event) => {
     if (!focus) return;
 
