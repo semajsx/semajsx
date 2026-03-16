@@ -44,7 +44,7 @@ export interface StaticProps<T> {
  * <text dim>Processing...</text>
  * ```
  */
-export function Static<T>({ items, render: renderItem }: StaticProps<T>): JSXNode {
+export function Static<T>({ items, render: renderItem }: StaticProps<T>): VNode | null {
   let renderedCount = 0;
 
   const flushNew = () => {
