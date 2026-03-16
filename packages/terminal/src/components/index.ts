@@ -19,3 +19,6 @@ export type { MultiSelectProps, MultiSelectOption } from "./MultiSelect";
 
 export { TextInput } from "./TextInput";
 export type { TextInputProps } from "./TextInput";
+
+export { Static } from "./Static";
+export type { StaticProps } from "./Static";

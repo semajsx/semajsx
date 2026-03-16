@@ -133,6 +133,7 @@ export function render(element: VNode, options: RenderOptions = {}): RenderResul
   // Auto-create renderer if not provided (ink-style API)
   const autoCreated = !renderer;
   const actualRenderer = renderer || new TerminalRenderer(outputStream);
+  session.renderer = actualRenderer;
 
   const root = actualRenderer.getRoot();
 
