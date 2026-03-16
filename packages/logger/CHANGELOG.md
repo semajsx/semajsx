@@ -1,5 +1,12 @@
 # @semajsx/logger
 
+## 0.1.2
+
+### Patch Changes
+
+- Updated dependencies [[`2de0956`](https://github.com/semajsx/semajsx/commit/2de095668ede928d2bd7711d434e8c131c51aae6)]:
+  - @semajsx/terminal@0.2.0
+
 ## 0.1.1
 
 ### Patch Changes
