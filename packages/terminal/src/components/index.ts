@@ -16,3 +16,6 @@ export type { SpinnerProps, SpinnerType } from "./Spinner";
 
 export { MultiSelect } from "./MultiSelect";
 export type { MultiSelectProps, MultiSelectOption } from "./MultiSelect";
+
+export { TextInput } from "./TextInput";
+export type { TextInputProps } from "./TextInput";
