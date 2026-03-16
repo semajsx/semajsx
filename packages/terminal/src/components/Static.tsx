@@ -1,21 +1,24 @@
 /** @jsxImportSource @semajsx/terminal */
-import { signal, computed, type ReadableSignal } from "@semajsx/signal";
 import type { VNode, JSXNode } from "@semajsx/core";
 import { onCleanup } from "../lifecycle";
 import { getActiveSession } from "../context";
 import { print } from "../render";
+import type { ReadableSignal } from "@semajsx/signal";
 
 export interface StaticProps<T> {
   /**
-   * Array of items to render. Only new items (appended to the end)
+   * Signal holding an array of items. Only new items (appended to the end)
    * will be rendered. Previously rendered items are never updated.
    */
-  items: T[];
+  items: ReadableSignal<T[]>;
   /**
    * Render function for each item. Must return a JSX element.
    * Called only once per item when it first appears.
+   *
+   * Passed as an explicit prop (not JSX children) because semajsx's
+   * child normalization drops function children.
    */
-  children: (item: T, index: number) => JSXNode;
+  render: (item: T, index: number) => JSXNode;
 }
 
 /**
@@ -23,7 +26,7 @@ export interface StaticProps<T> {
  *
  * Each item is rendered once and committed to the terminal output.
  * It will not be erased or re-rendered on subsequent updates.
- * Only new items appended to the `items` array trigger rendering.
+ * Only new items appended to the `items` signal trigger rendering.
  *
  * This is useful for:
  * - Test runners showing completed tests
@@ -32,35 +35,34 @@ export interface StaticProps<T> {
  *
  * @example
  * ```tsx
- * const [logs, setLogs] = signal([]);
+ * const logs = signal<string[]>([]);
  *
- * <Static items={logs.value}>
- *   {(log, i) => <text key={i} color="green">✔ {log}</text>}
- * </Static>
+ * <Static
+ *   items={logs}
+ *   render={(log, i) => <text color="green">✔ {log}</text>}
+ * />
  * <text dim>Processing...</text>
  * ```
  */
-export function Static<T>({ items, children }: StaticProps<T>): JSXNode {
+export function Static<T>({ items, render: renderItem }: StaticProps<T>): JSXNode {
   let renderedCount = 0;
 
   const flushNew = () => {
     const session = getActiveSession();
     if (!session?.renderer) return;
 
-    const newItems = items.slice(renderedCount);
+    const currentItems = items.value;
+    const newItems = currentItems.slice(renderedCount);
     if (newItems.length === 0) return;
 
-    // Render each new item using print() to capture its output,
-    // then commit via the renderer so it stays above dynamic content.
+    const stream = session.renderer.getRoot().stream;
+
     for (let i = 0; i < newItems.length; i++) {
       const item = newItems[i]!;
       const globalIndex = renderedCount + i;
-      const element = children(item, globalIndex);
+      const element = renderItem(item, globalIndex);
 
-      // Use the renderer's stream to capture print output
-      const stream = session.renderer.getRoot().stream;
-
-      // Capture the rendered text by temporarily redirecting print
+      // Capture print output by intercepting stream.write
       const lines: string[] = [];
       const origWrite = stream.write;
       stream.write = ((chunk: any) => {
@@ -80,16 +82,19 @@ export function Static<T>({ items, children }: StaticProps<T>): JSXNode {
       }
     }
 
-    renderedCount = items.length;
+    renderedCount = currentItems.length;
   };
 
-  // Flush on first render
-  flushNew();
+  // Subscribe to the signal so we flush when items change
+  const unsub = items.subscribe(() => {
+    // Defer to next microtask so the signal value is settled
+    queueMicrotask(flushNew);
+  });
 
-  // Set up a timer to check for new items (signals trigger re-render at 60fps,
-  // but Static needs to flush before the dynamic re-render)
-  const timer = setInterval(flushNew, 16);
-  onCleanup(() => clearInterval(timer));
+  onCleanup(unsub);
+
+  // Flush any initial items
+  flushNew();
 
   // Return nothing — static items are committed directly to the terminal
   return null;

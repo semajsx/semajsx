@@ -1,22 +1,24 @@
 /** @jsxImportSource @semajsx/terminal */
-import { signal, computed, type ReadableSignal } from "@semajsx/signal";
+import { computed, type WritableSignal, type ReadableSignal } from "@semajsx/signal";
 import type { JSXNode } from "@semajsx/core";
 import { onKeypress } from "../keyboard";
 import { onCleanup } from "../lifecycle";
+import { signal } from "@semajsx/signal";
 
 export interface TextInputProps {
   /**
-   * Current value of the input.
+   * Writable signal holding the current input value.
+   * The component reads and writes this signal directly.
    */
-  value: string;
-  /**
-   * Callback when value changes.
-   */
-  onChange: (value: string) => void;
+  value: WritableSignal<string>;
   /**
    * Callback when Enter is pressed.
    */
   onSubmit?: (value: string) => void;
+  /**
+   * Callback when value changes (in addition to updating the signal).
+   */
+  onChange?: (value: string) => void;
   /**
    * Text to display when value is empty.
    */
@@ -62,30 +64,33 @@ const SPECIAL_KEYS = new Set([
 /**
  * TextInput component — a single-line text input for terminal UIs.
  *
- * Controlled component: pass `value` and `onChange` to manage state externally.
+ * Accepts a WritableSignal for the value, making it reactive and
+ * compatible with semajsx's signal-based architecture.
  *
  * @example
  * ```tsx
- * const [query, setQuery] = useState("");
- * <TextInput value={query} onChange={setQuery} onSubmit={handleSearch} />
+ * const query = signal("");
+ * <TextInput value={query} onSubmit={(v) => search(v)} />
  * ```
  *
  * @example
  * ```tsx
  * // Password input
- * <TextInput value={password} onChange={setPassword} mask="*" />
+ * const password = signal("");
+ * <TextInput value={password} mask="*" />
  * ```
  *
  * @example
  * ```tsx
  * // With placeholder
- * <TextInput value="" onChange={setValue} placeholder="Type something..." />
+ * const name = signal("");
+ * <TextInput value={name} placeholder="Type something..." />
  * ```
  */
 export function TextInput({
   value,
-  onChange,
   onSubmit,
+  onChange,
   placeholder,
   focus = true,
   showCursor = true,
@@ -93,18 +98,15 @@ export function TextInput({
   color,
   placeholderColor = "gray",
 }: TextInputProps): JSXNode {
-  const cursorOffset = signal(value.length);
-
-  // Clamp cursor when value changes externally
-  if (cursorOffset.value > value.length) {
-    cursorOffset.value = value.length;
-  }
+  const cursorOffset = signal(value.value.length);
 
   const unsub = onKeypress((event) => {
     if (!focus) return;
 
+    const current = value.value;
+
     if (event.key === "return") {
-      onSubmit?.(value);
+      onSubmit?.(current);
       return;
     }
 
@@ -114,62 +116,57 @@ export function TextInput({
     }
 
     if (event.key === "right" && showCursor) {
-      cursorOffset.value = Math.min(value.length, cursorOffset.value + 1);
+      cursorOffset.value = Math.min(current.length, cursorOffset.value + 1);
       return;
     }
 
-    if (event.key === "home" && showCursor) {
+    if ((event.key === "home" || (event.ctrl && event.key === "a")) && showCursor) {
       cursorOffset.value = 0;
       return;
     }
 
-    if (event.key === "end" && showCursor) {
-      cursorOffset.value = value.length;
+    if ((event.key === "end" || (event.ctrl && event.key === "e")) && showCursor) {
+      cursorOffset.value = current.length;
       return;
     }
 
     if (event.key === "backspace") {
       if (cursorOffset.value > 0) {
-        const before = value.slice(0, cursorOffset.value - 1);
-        const after = value.slice(cursorOffset.value);
+        const before = current.slice(0, cursorOffset.value - 1);
+        const after = current.slice(cursorOffset.value);
         cursorOffset.value = Math.max(0, cursorOffset.value - 1);
-        onChange(before + after);
+        const next = before + after;
+        value.value = next;
+        onChange?.(next);
       }
       return;
     }
 
     if (event.key === "delete") {
-      if (cursorOffset.value < value.length) {
-        const before = value.slice(0, cursorOffset.value);
-        const after = value.slice(cursorOffset.value + 1);
-        onChange(before + after);
+      if (cursorOffset.value < current.length) {
+        const before = current.slice(0, cursorOffset.value);
+        const after = current.slice(cursorOffset.value + 1);
+        const next = before + after;
+        value.value = next;
+        onChange?.(next);
       }
       return;
     }
 
     // Ctrl+U: clear line before cursor
     if (event.ctrl && event.key === "u") {
-      const after = value.slice(cursorOffset.value);
+      const after = current.slice(cursorOffset.value);
       cursorOffset.value = 0;
-      onChange(after);
+      value.value = after;
+      onChange?.(after);
       return;
     }
 
     // Ctrl+K: clear line after cursor
     if (event.ctrl && event.key === "k") {
-      onChange(value.slice(0, cursorOffset.value));
-      return;
-    }
-
-    // Ctrl+A: move to start
-    if (event.ctrl && event.key === "a" && showCursor) {
-      cursorOffset.value = 0;
-      return;
-    }
-
-    // Ctrl+E: move to end
-    if (event.ctrl && event.key === "e" && showCursor) {
-      cursorOffset.value = value.length;
+      const next = current.slice(0, cursorOffset.value);
+      value.value = next;
+      onChange?.(next);
       return;
     }
 
@@ -180,25 +177,27 @@ export function TextInput({
     // Insert printable characters (single char, IME multi-char, space)
     const char = event.key === "space" ? " " : event.key;
     if (char) {
-      const before = value.slice(0, cursorOffset.value);
-      const after = value.slice(cursorOffset.value);
+      const before = current.slice(0, cursorOffset.value);
+      const after = current.slice(cursorOffset.value);
       cursorOffset.value += char.length;
-      onChange(before + char + after);
+      const next = before + char + after;
+      value.value = next;
+      onChange?.(next);
     }
   });
 
   onCleanup(unsub);
 
-  // Build the display string with cursor
-  const display = computed(cursorOffset, (offset) => {
+  // Build the display string with cursor — reactive via signals
+  const display = computed([value, cursorOffset], (val: string, offset: number) => {
     // Empty: show placeholder
-    if (!value && !focus) {
+    if (!val && !focus) {
       return placeholder
         ? `\x1b[${placeholderColorCode(placeholderColor)}m${placeholder}\x1b[0m`
         : "";
     }
 
-    if (!value && placeholder && focus) {
+    if (!val && placeholder && focus) {
       if (!showCursor) {
         return `\x1b[${placeholderColorCode(placeholderColor)}m${placeholder}\x1b[0m`;
       }
@@ -208,16 +207,17 @@ export function TextInput({
       return `\x1b[7m${first}\x1b[0m\x1b[${placeholderColorCode(placeholderColor)}m${rest}\x1b[0m`;
     }
 
-    const displayValue = mask ? mask.repeat(value.length) : value;
+    const displayValue = mask ? mask.repeat(val.length) : val;
 
     if (!showCursor || !focus) {
       return displayValue;
     }
 
     // Render with cursor (inverse char at cursor position)
-    const before = displayValue.slice(0, offset);
-    const cursorChar = offset < displayValue.length ? displayValue[offset] : " ";
-    const after = displayValue.slice(offset + 1);
+    const clampedOffset = Math.min(offset, displayValue.length);
+    const before = displayValue.slice(0, clampedOffset);
+    const cursorChar = clampedOffset < displayValue.length ? displayValue[clampedOffset] : " ";
+    const after = displayValue.slice(clampedOffset + 1);
     return `${before}\x1b[7m${cursorChar}\x1b[0m${after}`;
   });
 
