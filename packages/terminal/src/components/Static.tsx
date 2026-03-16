@@ -1,5 +1,5 @@
 /** @jsxImportSource @semajsx/terminal */
-import type { VNode, JSXNode } from "@semajsx/core";
+import type { VNode } from "@semajsx/core";
 import { onCleanup } from "../lifecycle";
 import { getActiveSession } from "../context";
 import { print } from "../render";
@@ -18,7 +18,7 @@ export interface StaticProps<T> {
    * Passed as an explicit prop (not JSX children) because semajsx's
    * child normalization drops function children.
    */
-  render: (item: T, index: number) => JSXNode;
+  render: (item: T, index: number) => VNode;
 }
 
 /**
@@ -74,7 +74,7 @@ export function Static<T>({ items, render: renderItem }: StaticProps<T>): JSXNod
       }) as any;
 
       try {
-        print(element as VNode, { stream });
+        print(element, { stream });
       } finally {
         stream.write = origWrite;
       }
