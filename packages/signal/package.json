@@ -37,6 +37,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@semajsx/core": "workspace:*",
     "@semajsx/utils": "workspace:*"
   },
   "devDependencies": {
