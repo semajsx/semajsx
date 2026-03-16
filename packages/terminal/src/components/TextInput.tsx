@@ -1,9 +1,10 @@
 /** @jsxImportSource @semajsx/terminal */
-import { computed, type WritableSignal, type ReadableSignal } from "@semajsx/signal";
+import { computed, signal } from "@semajsx/signal";
+import type { ReadableSignal } from "@semajsx/signal";
+import type { WritableSignal } from "@semajsx/core";
 import type { JSXNode } from "@semajsx/core";
 import { onKeypress } from "../keyboard";
 import { onCleanup } from "../lifecycle";
-import { signal } from "@semajsx/signal";
 
 export interface TextInputProps {
   /**
