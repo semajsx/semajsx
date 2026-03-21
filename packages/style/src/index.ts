@@ -47,7 +47,7 @@ export { StyleRegistry, createRegistry, createCx } from "./registry";
 export { hashString, uniqueId } from "./hash";
 
 // Theme system
-export { defineTokens, createTheme, isTokenRef } from "./theme";
+export { defineTokens, defineAndInjectTokens, createTheme, isTokenRef } from "./theme";
 
 // Keyframes & Animations
 export { keyframes, keyframesToken, isKeyframeRef } from "./keyframes";

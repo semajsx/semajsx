@@ -98,5 +98,38 @@ describe("component normalization", () => {
         "Invalid component return type",
       );
     });
+
+    it("should include component name in error when provided", () => {
+      expect(() =>
+        normalizeComponentResult(Symbol("test") as unknown as string, "CreateAgentDialog"),
+      ).toThrow("Invalid component return type: symbol (in component 'CreateAgentDialog')");
+    });
+
+    it("should throw for function return type with specific message", () => {
+      const fn = () => "hello";
+      expect(() => normalizeComponentResult(fn as unknown as string)).toThrow(
+        "Component returned a function 'fn' instead of JSX. " +
+          "Did you mean to return JSX directly, or wrap with when() for conditional rendering?",
+      );
+    });
+
+    it("should include component name in function return error", () => {
+      function MyHelper() {
+        return "hello";
+      }
+      expect(() => normalizeComponentResult(MyHelper as unknown as string, "MyComponent")).toThrow(
+        "Component returned a function 'MyHelper' instead of JSX (in component 'MyComponent'). " +
+          "Did you mean to return JSX directly, or wrap with when() for conditional rendering?",
+      );
+    });
+
+    it("should include function name in function return error", () => {
+      function renderItems() {
+        return "items";
+      }
+      expect(() => normalizeComponentResult(renderItems as unknown as string)).toThrow(
+        "Component returned a function 'renderItems' instead of JSX.",
+      );
+    });
   });
 });

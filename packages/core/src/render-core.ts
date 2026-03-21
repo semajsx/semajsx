@@ -543,7 +543,15 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
     strategy.onBeforeComponent?.();
 
     // Call component function with props and ctx
-    const result = Component(props, ctx);
+    // Wrap in try/catch to ensure onAfterComponent runs even if component throws,
+    // preventing a dangling scope on the cleanup stack.
+    let result;
+    try {
+      result = Component(props, ctx);
+    } catch (err) {
+      strategy.onAfterComponent?.();
+      throw err;
+    }
 
     // Collect per-component cleanup subscriptions
     const componentCleanups = strategy.onAfterComponent?.() ?? [];
@@ -611,7 +619,8 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
     }
 
     // Handle normal sync component (VNode)
-    const normalizedResult = normalizeComponentResult(result);
+    const componentName = Component.name || (Component as any).displayName;
+    const normalizedResult = normalizeComponentResult(result, componentName);
     const rendered = renderNode(normalizedResult, currentContext);
 
     return {
@@ -678,9 +687,13 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
    * Unmount a rendered node
    */
   function unmount(node: RenderedNode<TNode>): void {
-    // Cleanup subscriptions
+    // Cleanup subscriptions (error-isolated so one failure doesn't abort the rest)
     for (const unsub of node.subscriptions) {
-      unsub();
+      try {
+        unsub();
+      } catch {
+        /* cleanup errors must not prevent other cleanups */
+      }
     }
 
     // Recursively unmount children
@@ -698,9 +711,13 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
    * Clean up subscriptions without removing nodes from tree
    */
   function cleanupSubscriptions(node: RenderedNode<TNode>): void {
-    // Cleanup subscriptions
+    // Cleanup subscriptions (error-isolated)
     for (const unsub of node.subscriptions) {
-      unsub();
+      try {
+        unsub();
+      } catch {
+        /* cleanup errors must not prevent other cleanups */
+      }
     }
 
     // Recursively cleanup children

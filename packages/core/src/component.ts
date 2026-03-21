@@ -21,8 +21,14 @@ export function normalizeChildrenProp(children: VNode[]): VNode | VNode[] | unde
 
 /**
  * Normalize any JSXNode result from a component into a concrete VNode.
+ *
+ * @param result - The raw return value from a component function
+ * @param componentName - Optional component name for error messages (from VNode.type.name)
  */
-export function normalizeComponentResult(result: VNode | JSXPrimitive | Iterable<JSXNode>): VNode {
+export function normalizeComponentResult(
+  result: VNode | JSXPrimitive | Iterable<JSXNode>,
+  componentName?: string,
+): VNode {
   if (isVNode(result)) {
     return result;
   }
@@ -44,7 +50,17 @@ export function normalizeComponentResult(result: VNode | JSXPrimitive | Iterable
     };
   }
 
-  throw new Error(`Invalid component return type: ${typeof result}`);
+  const hint = componentName ? ` (in component '${componentName}')` : "";
+
+  if (typeof result === "function") {
+    const fnName = (result as Function).name ? ` '${(result as Function).name}'` : "";
+    throw new Error(
+      `Component returned a function${fnName} instead of JSX${hint}. ` +
+        `Did you mean to return JSX directly, or wrap with when() for conditional rendering?`,
+    );
+  }
+
+  throw new Error(`Invalid component return type: ${typeof result}${hint}`);
 }
 
 function normalizeIterableChildren(children: Iterable<JSXNode>): VNode[] {

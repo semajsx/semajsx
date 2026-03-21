@@ -65,6 +65,12 @@ function normalizeChildren(children: JSXNode[]): VNode[] {
     } else if (isVNode(child)) {
       // Already a VNode
       result.push(child);
+    } else if (typeof child === "function") {
+      const fnName = (child as Function).name || "anonymous";
+      console.warn(
+        `[semajsx] Function '${fnName}' passed as child will be ignored. ` +
+          `Did you mean to call it, wrap it with when(), or pass a signal instead?`,
+      );
     } else {
       // Unknown type, skip
       console.warn("Unknown child type:", typeof child);

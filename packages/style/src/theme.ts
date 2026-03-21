@@ -36,6 +36,7 @@
  */
 
 import { hashString } from "./hash";
+import { inject } from "./inject";
 
 /**
  * A token reference that stringifies to a CSS var() expression
@@ -105,10 +106,24 @@ export function isTokenRef(value: unknown): value is TokenRef {
 }
 
 /**
- * Define design tokens as CSS custom properties
+ * Define design tokens as CSS custom properties.
  *
- * Creates a typed token object where each leaf value becomes a CSS custom property.
+ * Creates a typed token object where each leaf value becomes a CSS custom property reference.
  * Token refs stringify to `var(--path-to-token)` for use in CSS rules.
+ *
+ * **Important**: This function only creates token *references* (e.g., `var(--colors-primary)`).
+ * It does NOT inject CSS variables into the document. To actually apply the token values,
+ * you must also call `createTheme(tokens)` and then `inject(theme)`:
+ *
+ * ```ts
+ * import { defineTokens, createTheme, inject } from "@semajsx/style";
+ *
+ * const tokens = defineTokens({ colors: { primary: "#3b82f6" } });
+ * const theme = createTheme(tokens);  // generates :root { --colors-primary: #3b82f6 }
+ * inject(theme);                       // injects the CSS into the document
+ * ```
+ *
+ * For a convenience function that does all three steps, see {@link defineAndInjectTokens}.
  *
  * @example
  * ```ts
@@ -285,4 +300,42 @@ export function createTheme<T extends TokenDefinition>(
   };
   Object.defineProperty(token, STYLE_TOKEN_BRAND, { value: true });
   return token;
+}
+
+/**
+ * Convenience: defineTokens + createTheme + inject in one step.
+ * Returns the token refs (same as defineTokens), but also immediately
+ * injects the CSS custom properties into :root.
+ *
+ * **Note**: This function has a side effect (injects a `<style>` element into `document.head`).
+ * For SSR or cases where you need to control injection timing, use `defineTokens()` +
+ * `createTheme()` + `inject()` separately.
+ *
+ * @param definition - Token definitions (same as defineTokens)
+ * @returns The token refs for use in CSS rules
+ *
+ * @example
+ * ```ts
+ * import { defineAndInjectTokens } from "@semajsx/style";
+ *
+ * const tokens = defineAndInjectTokens({
+ *   colors: {
+ *     primary: "#3b82f6",
+ *     background: "#ffffff",
+ *   },
+ *   space: {
+ *     sm: "0.5rem",
+ *     md: "1rem",
+ *   },
+ * });
+ *
+ * // tokens.colors.primary.toString() === "var(--colors-primary)"
+ * // CSS variables are already injected into :root
+ * ```
+ */
+export function defineAndInjectTokens<T extends TokenDefinition>(definition: T): TokenRefs<T> {
+  const tokens = defineTokens(definition);
+  const theme = createTheme(tokens);
+  inject(theme);
+  return tokens;
 }

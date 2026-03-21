@@ -1,0 +1,51 @@
+{
+  "name": "@semajsx/icons",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Lucide icon components for SemaJSX",
+  "keywords": [
+    "icons",
+    "lucide",
+    "semajsx",
+    "svg"
+  ],
+  "license": "MIT",
+  "author": "lidessen",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "./dist/index.mjs",
+      "./package.json": "./package.json"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest --config vitest.config.ts",
+    "test:run": "vitest run --config vitest.config.ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@semajsx/core": "workspace:*",
+    "lucide": "^0.577.0"
+  },
+  "devDependencies": {
+    "@semajsx/configs": "workspace:*",
+    "@semajsx/dom": "workspace:*",
+    "tsdown": "^0.20.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "peerDependencies": {
+    "@semajsx/dom": "workspace:*"
+  }
+}
