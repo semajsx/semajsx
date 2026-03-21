@@ -14,7 +14,8 @@
       "@semajsx/prompt": ["./packages/prompt/src/index.ts"],
       "@semajsx/terminal": ["./packages/terminal/src/index.ts"],
       "@semajsx/ui": ["./packages/ui/src/index.ts"],
-      "@semajsx/utils": ["./packages/utils/src/index.ts"]
+      "@semajsx/utils": ["./packages/utils/src/index.ts"],
+      "@semajsx/icons": ["./packages/icons/src/index.ts"]
     }
   },
   "files": [],
@@ -31,6 +32,7 @@
     { "path": "./packages/ssr" },
     { "path": "./packages/ssg" },
     { "path": "./packages/ui" },
+    { "path": "./packages/icons" },
     { "path": "./packages/semajsx" },
     { "path": "./apps/docs" }
   ]

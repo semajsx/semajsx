@@ -103,6 +103,18 @@
       "source": "./src/terminal/jsx-runtime.ts",
       "default": "./dist/terminal/jsx-runtime.mjs"
     },
+    "./blocks": {
+      "source": "./src/blocks/index.ts",
+      "default": "./dist/blocks/index.mjs"
+    },
+    "./blocks/renderers": {
+      "source": "./src/blocks/renderers.ts",
+      "default": "./dist/blocks/renderers.mjs"
+    },
+    "./chat": {
+      "source": "./src/chat/index.ts",
+      "default": "./dist/chat/index.mjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -128,6 +140,9 @@
       "./terminal": "./dist/terminal/index.mjs",
       "./terminal/jsx-dev-runtime": "./dist/terminal/jsx-dev-runtime.mjs",
       "./terminal/jsx-runtime": "./dist/terminal/jsx-runtime.mjs",
+      "./blocks": "./dist/blocks/index.mjs",
+      "./blocks/renderers": "./dist/blocks/renderers.mjs",
+      "./chat": "./dist/chat/index.mjs",
       "./package.json": "./package.json"
     }
   },
@@ -160,6 +175,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@semajsx/blocks": "workspace:*",
+    "@semajsx/chat": "workspace:*",
     "@semajsx/configs": "workspace:*",
     "@semajsx/core": "workspace:*",
     "@semajsx/dom": "workspace:*",
