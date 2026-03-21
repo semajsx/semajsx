@@ -36,16 +36,14 @@ export function signal<T>(initialValue: T): WritableSignal<T> {
     },
   };
 
+  const notifyCallback = () => {
+    for (const listener of subscribers) {
+      listener(value);
+    }
+  };
+
   function notify() {
-    // Schedule the notification instead of running it immediately
-    // This allows batching multiple updates into a single microtask
-    scheduleUpdate(() => {
-      // Directly iterate over the Set - no need to copy to array
-      // The Set is stable during iteration even if modified
-      for (const listener of subscribers) {
-        listener(value);
-      }
-    });
+    scheduleUpdate(notifyCallback);
   }
 
   return sig;

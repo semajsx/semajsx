@@ -27,6 +27,18 @@
       "source": "./src/index.ts",
       "default": "./dist/index.mjs"
     },
+    "./blocks": {
+      "source": "./src/blocks/index.ts",
+      "default": "./dist/blocks/index.mjs"
+    },
+    "./blocks/renderers": {
+      "source": "./src/blocks/renderers.ts",
+      "default": "./dist/blocks/renderers.mjs"
+    },
+    "./chat": {
+      "source": "./src/chat/index.ts",
+      "default": "./dist/chat/index.mjs"
+    },
     "./dom": {
       "source": "./src/dom/index.ts",
       "default": "./dist/dom/index.mjs"
@@ -103,24 +115,15 @@
       "source": "./src/terminal/jsx-runtime.ts",
       "default": "./dist/terminal/jsx-runtime.mjs"
     },
-    "./blocks": {
-      "source": "./src/blocks/index.ts",
-      "default": "./dist/blocks/index.mjs"
-    },
-    "./blocks/renderers": {
-      "source": "./src/blocks/renderers.ts",
-      "default": "./dist/blocks/renderers.mjs"
-    },
-    "./chat": {
-      "source": "./src/chat/index.ts",
-      "default": "./dist/chat/index.mjs"
-    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
     "access": "public",
     "exports": {
       ".": "./dist/index.mjs",
+      "./blocks": "./dist/blocks/index.mjs",
+      "./blocks/renderers": "./dist/blocks/renderers.mjs",
+      "./chat": "./dist/chat/index.mjs",
       "./dom": "./dist/dom/index.mjs",
       "./dom/jsx-dev-runtime": "./dist/dom/jsx-dev-runtime.mjs",
       "./dom/jsx-runtime": "./dist/dom/jsx-runtime.mjs",
@@ -140,9 +143,6 @@
       "./terminal": "./dist/terminal/index.mjs",
       "./terminal/jsx-dev-runtime": "./dist/terminal/jsx-dev-runtime.mjs",
       "./terminal/jsx-runtime": "./dist/terminal/jsx-runtime.mjs",
-      "./blocks": "./dist/blocks/index.mjs",
-      "./blocks/renderers": "./dist/blocks/renderers.mjs",
-      "./chat": "./dist/chat/index.mjs",
       "./package.json": "./package.json"
     }
   },

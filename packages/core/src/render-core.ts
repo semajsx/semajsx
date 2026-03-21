@@ -261,11 +261,64 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
     // Get initial value and render it
     const initialValue = signal.value;
     let currentRendered = renderValueToNode(initialValue, contextForSignal);
+    let previousValue: unknown = initialValue;
 
     const subscriptions: Array<() => void> = [];
 
     // Subscribe to signal changes
     const unsubscribe = signal.subscribe((value) => {
+      // Fast path: array append detection
+      if (
+        Array.isArray(value) &&
+        Array.isArray(previousValue) &&
+        value.length > previousValue.length
+      ) {
+        const oldLen = (previousValue as unknown[]).length;
+        let isAppend = true;
+        for (let i = 0; i < oldLen; i++) {
+          if (value[i] !== (previousValue as unknown[])[i]) {
+            isAppend = false;
+            break;
+          }
+        }
+
+        if (isAppend) {
+          const newItems = value.slice(oldLen).filter(isVNode);
+          if (newItems.length > 0) {
+            const appendFragment: VNode = {
+              type: Fragment,
+              props: {},
+              children: newItems,
+            };
+            const appendRendered = renderNode(appendFragment, contextForSignal);
+            const appendNodes = collectNodes(appendRendered);
+
+            const parent = strategy.getParent(marker);
+            if (parent) {
+              // Insert after last existing content node (or after marker if none)
+              const existingNodes = collectNodes(currentRendered);
+              const lastNode =
+                existingNodes.length > 0 ? existingNodes[existingNodes.length - 1] : marker;
+              let insertRef = strategy.getNextSibling(lastNode!);
+
+              for (const node of appendNodes) {
+                strategy.insertBefore(parent, node, insertRef);
+                insertRef = strategy.getNextSibling(node);
+              }
+
+              // Extend currentRendered's children so future unmount/collectNodes works
+              currentRendered.children.push(...appendRendered.children);
+              // Also extend subscriptions
+              currentRendered.subscriptions.push(...appendRendered.subscriptions);
+            }
+          }
+          previousValue = value;
+          return; // Skip full re-render
+        }
+      }
+
+      // Slow path: full replacement (existing code unchanged)
+      previousValue = value;
       const newRendered = renderValueToNode(value, contextForSignal);
 
       // Collect actual DOM nodes from old and new rendered trees

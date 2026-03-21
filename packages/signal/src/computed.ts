@@ -45,15 +45,14 @@ export function computed(deps: any, compute: any): ReadableSignal<any> {
   };
 
   // Notify subscribers
+  const notifyCallback = () => {
+    for (const listener of subscribers) {
+      listener(value);
+    }
+  };
+
   const notify = () => {
-    // Schedule the notification instead of running it immediately
-    // This allows batching multiple updates into a single microtask
-    scheduleUpdate(() => {
-      // Directly iterate over the Set - no need to copy to array
-      for (const listener of subscribers) {
-        listener(value);
-      }
-    });
+    scheduleUpdate(notifyCallback);
   };
 
   // Initial computation

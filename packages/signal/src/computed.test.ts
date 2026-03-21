@@ -106,4 +106,18 @@ describe("computed", () => {
     await waitForUpdate();
     expect(profile.value).toBe("Jane Doe, 30 years old");
   });
+
+  it("should coalesce when dependency changes rapidly", async () => {
+    const count = signal(0);
+    const doubled = computed(count, (c) => c * 2);
+    const listener = vi.fn();
+    doubled.subscribe(listener);
+    count.value = 1;
+    count.value = 2;
+    count.value = 3;
+    await new Promise((r) => queueMicrotask(r));
+    await new Promise((r) => queueMicrotask(r));
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith(6);
+  });
 });
