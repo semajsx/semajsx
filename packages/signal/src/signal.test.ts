@@ -100,4 +100,16 @@ describe("signal", () => {
     expect(listener).toHaveBeenCalledWith([4, 5, 6]);
     expect(s.value).toEqual([4, 5, 6]);
   });
+
+  it("should coalesce rapid updates into single notification", async () => {
+    const s = signal(0);
+    const listener = vi.fn();
+    s.subscribe(listener);
+    s.value = 1;
+    s.value = 2;
+    s.value = 3;
+    await new Promise((r) => queueMicrotask(r));
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith(3);
+  });
 });
