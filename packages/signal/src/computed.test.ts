@@ -120,4 +120,128 @@ describe("computed", () => {
     expect(listener).toHaveBeenCalledTimes(1);
     expect(listener).toHaveBeenCalledWith(6);
   });
+
+  // ── Lazy activation/deactivation tests ──────────────────────────────
+
+  it("should not subscribe to deps until first subscriber (lazy)", () => {
+    const computeFn = vi.fn((c: number) => c * 2);
+    const count = signal(5);
+    const doubled = computed(count, computeFn);
+
+    // Reading .value without subscribers computes on demand
+    expect(doubled.value).toBe(10);
+    // compute is called on each .value access when inactive
+    expect(doubled.value).toBe(10);
+    expect(computeFn).toHaveBeenCalledTimes(2);
+  });
+
+  it("should activate on first subscriber and deactivate on last unsubscribe", async () => {
+    const count = signal(0);
+    const doubled = computed(count, (c) => c * 2);
+    const listener = vi.fn();
+
+    // Subscribe → activate
+    const unsub = doubled.subscribe(listener);
+
+    count.value = 5;
+    await waitForUpdate();
+    await waitForUpdate();
+    expect(listener).toHaveBeenCalledWith(10);
+
+    // Unsubscribe → deactivate
+    unsub();
+    listener.mockClear();
+
+    count.value = 10;
+    await waitForUpdate();
+    await waitForUpdate();
+    // No notification after deactivation
+    expect(listener).not.toHaveBeenCalled();
+
+    // But .value still works (on-demand compute)
+    expect(doubled.value).toBe(20);
+  });
+
+  it("should reactivate correctly after deactivation", async () => {
+    const count = signal(1);
+    const doubled = computed(count, (c) => c * 2);
+
+    // First subscribe/unsubscribe cycle
+    const unsub1 = doubled.subscribe(() => {});
+    unsub1();
+
+    // Change value while deactivated
+    count.value = 5;
+
+    // Re-subscribe — should see current value
+    const listener = vi.fn();
+    const unsub2 = doubled.subscribe(listener);
+    expect(doubled.value).toBe(10);
+
+    // Should react to new changes
+    count.value = 7;
+    await waitForUpdate();
+    await waitForUpdate();
+    expect(listener).toHaveBeenCalledWith(14);
+
+    unsub2();
+  });
+
+  it("should cascade activation through computed chains", async () => {
+    const count = signal(2);
+    const doubled = computed(count, (c) => c * 2);
+    const quadrupled = computed(doubled, (d) => d * 2);
+    const listener = vi.fn();
+
+    // Subscribe to end of chain → cascading activation
+    const unsub = quadrupled.subscribe(listener);
+
+    count.value = 3;
+    await waitForUpdate();
+    await waitForUpdate();
+    await waitForUpdate();
+    expect(listener).toHaveBeenCalledWith(12);
+
+    // Unsubscribe → cascading deactivation
+    unsub();
+    listener.mockClear();
+
+    count.value = 5;
+    await waitForUpdate();
+    await waitForUpdate();
+    expect(listener).not.toHaveBeenCalled();
+
+    // On-demand still works through the chain
+    expect(quadrupled.value).toBe(20);
+  });
+
+  it("should handle multiple subscribers correctly", async () => {
+    const count = signal(0);
+    const doubled = computed(count, (c) => c * 2);
+    const listener1 = vi.fn();
+    const listener2 = vi.fn();
+
+    const unsub1 = doubled.subscribe(listener1);
+    const unsub2 = doubled.subscribe(listener2);
+
+    count.value = 3;
+    await waitForUpdate();
+    await waitForUpdate();
+    expect(listener1).toHaveBeenCalledWith(6);
+    expect(listener2).toHaveBeenCalledWith(6);
+
+    // Remove first subscriber — still active (second remains)
+    unsub1();
+    listener1.mockClear();
+    listener2.mockClear();
+
+    count.value = 5;
+    await waitForUpdate();
+    await waitForUpdate();
+    expect(listener1).not.toHaveBeenCalled();
+    expect(listener2).toHaveBeenCalledWith(10);
+
+    // Remove last subscriber → deactivate
+    unsub2();
+  });
 });
