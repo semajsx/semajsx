@@ -42,8 +42,9 @@ describe("helpers", () => {
       const factory = vi.fn(() => h("div", null, "lazy"));
       const result = when(condition, factory);
 
-      expect(factory).toHaveBeenCalled();
+      // Factory is called when .value is accessed (lazy computed)
       expect(result.value?.type).toBe("div");
+      expect(factory).toHaveBeenCalled();
     });
 
     it("should not call factory when condition is false", () => {
@@ -57,16 +58,22 @@ describe("helpers", () => {
     it("should call factory each time condition becomes true", async () => {
       const condition = signal(false);
       const factory = vi.fn(() => h("div", null, "lazy"));
-      when(condition, factory);
+      const result = when(condition, factory);
+
+      // Subscribe to mirror real render-layer usage (activates the computed)
+      result.subscribe(() => {});
 
       condition.value = true;
+      await waitForUpdate();
       await waitForUpdate();
       expect(factory).toHaveBeenCalledTimes(1);
 
       condition.value = false;
       await waitForUpdate();
+      await waitForUpdate();
 
       condition.value = true;
+      await waitForUpdate();
       await waitForUpdate();
       expect(factory).toHaveBeenCalledTimes(2);
     });
