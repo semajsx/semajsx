@@ -130,6 +130,11 @@ export interface RenderResult {
   toString(): string;
 
   /**
+   * Wait for pending reactive updates to settle, then return the rendered text.
+   */
+  toStringAsync(): Promise<string>;
+
+  /**
    * Subscribe to re-renders. Callback is invoked whenever
    * signal changes cause the tree to update.
    * Returns an unsubscribe function.
@@ -182,12 +187,28 @@ export function render(element: VNode): RenderResult {
   let currentText = serialize(root);
   const listeners = new Set<(text: string) => void>();
   let disposed = false;
-  let checkScheduled = false;
+  let dirty = false;
+  let flushScheduled = false;
+  let settleResolvers: Array<(text: string) => void> = [];
+
+  function resolveSettled(): void {
+    if (settleResolvers.length === 0) return;
+    const resolvers = settleResolvers;
+    settleResolvers = [];
+    for (const resolve of resolvers) {
+      resolve(currentText);
+    }
+  }
 
   function flush(): void {
-    checkScheduled = false;
+    flushScheduled = false;
     if (disposed) return;
+    if (!dirty) {
+      resolveSettled();
+      return;
+    }
 
+    dirty = false;
     const newText = serialize(root);
     if (newText !== currentText) {
       currentText = newText;
@@ -195,12 +216,15 @@ export function render(element: VNode): RenderResult {
         listener(currentText);
       }
     }
+    resolveSettled();
   }
 
   function scheduleFlush(): void {
-    if (!checkScheduled && !disposed) {
-      checkScheduled = true;
-      queueMicrotask(flush);
+    if (disposed) return;
+    dirty = true;
+    if (!flushScheduled) {
+      flushScheduled = true;
+      setTimeout(flush, 0);
     }
   }
 
@@ -209,7 +233,27 @@ export function render(element: VNode): RenderResult {
 
   return {
     toString() {
+      if (dirty && !disposed) {
+        currentText = serialize(root);
+        dirty = false;
+      }
       return currentText;
+    },
+
+    async toStringAsync() {
+      if (disposed) return currentText;
+
+      // Give signal/computed microtasks a chance to mark this render dirty
+      // and schedule a commit before deciding whether we can return immediately.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      if (!dirty && !flushScheduled) {
+        return this.toString();
+      }
+
+      return new Promise((resolve) => {
+        settleResolvers.push(resolve);
+      });
     },
 
     subscribe(callback: (text: string) => void): () => void {
@@ -221,18 +265,21 @@ export function render(element: VNode): RenderResult {
 
     refresh() {
       const newText = serialize(root);
+      dirty = false;
       if (newText !== currentText) {
         currentText = newText;
         for (const listener of listeners) {
           listener(currentText);
         }
       }
+      resolveSettled();
     },
 
     unmount() {
       disposed = true;
       listeners.clear();
       changeCallbacks.delete(scheduleFlush);
+      resolveSettled();
       cleanupSubscriptions(rendered);
     },
   };

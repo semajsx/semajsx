@@ -2,7 +2,7 @@
 
 import { describe, it, expect } from "vitest";
 import { renderToString, render } from "./render";
-import { signal } from "@semajsx/signal";
+import { computed, signal } from "@semajsx/signal";
 
 describe("Prompt UI Render", () => {
   describe("renderToString", () => {
@@ -112,13 +112,13 @@ describe("Prompt UI Render", () => {
       result.subscribe((text) => updates.push(text));
 
       count.value = 5;
-      // Wait for microtask
-      await new Promise((r) => queueMicrotask(r));
+      const settled = await result.toStringAsync();
 
       result.unmount();
 
       // The subscribe callback should have been called
       // and the text should reflect the new value
+      expect(settled).toContain("Value: 5");
       expect(updates.length).toBeGreaterThanOrEqual(1);
       expect(updates[updates.length - 1]).toContain("Value: 5");
     });
@@ -145,7 +145,7 @@ describe("Prompt UI Render", () => {
 
       // Update signal for r1 only
       count1.value = 10;
-      await new Promise((r) => queueMicrotask(r));
+      await r1.toStringAsync();
 
       expect(updates1.length).toBeGreaterThanOrEqual(1);
       expect(updates1[updates1.length - 1]).toContain("Count: 10");
@@ -154,14 +154,14 @@ describe("Prompt UI Render", () => {
 
       // Update signal for r2 only
       count2.value = 20;
-      await new Promise((r) => queueMicrotask(r));
+      await r2.toStringAsync();
 
       expect(updates2.length).toBeGreaterThanOrEqual(1);
       expect(updates2[updates2.length - 1]).toContain("Count: 20");
 
       // r1 should still work after r2 was created
       count1.value = 99;
-      await new Promise((r) => queueMicrotask(r));
+      await r1.toStringAsync();
 
       expect(updates1[updates1.length - 1]).toContain("Count: 99");
 
@@ -189,7 +189,7 @@ describe("Prompt UI Render", () => {
       r1.subscribe((text) => updates1.push(text));
 
       name.value = "Bob";
-      await new Promise((r) => queueMicrotask(r));
+      await r1.toStringAsync();
 
       // r1 must still receive its update
       expect(updates1.length).toBeGreaterThanOrEqual(1);
@@ -212,6 +212,32 @@ describe("Prompt UI Render", () => {
       // refresh should not trigger callback if text hasn't changed
       result.refresh();
       expect(updates).toHaveLength(0);
+
+      result.unmount();
+    });
+
+    it("should commit only settled state for chained reactive updates", async () => {
+      const focus = signal("general");
+      const message = computed(focus, (channel) => `message:${channel}`);
+
+      const result = render(
+        <section title="STATE">
+          <line>Focus: {focus}</line>
+          <line>Message: {message}</line>
+        </section>,
+      );
+
+      const updates: string[] = [];
+      result.subscribe((text) => updates.push(text));
+
+      focus.value = "backend";
+      const settled = await result.toStringAsync();
+
+      expect(settled).toContain("Focus: backend");
+      expect(settled).toContain("Message: message:backend");
+      expect(updates).toHaveLength(1);
+      expect(updates[0]).toContain("Focus: backend");
+      expect(updates[0]).toContain("Message: message:backend");
 
       result.unmount();
     });
