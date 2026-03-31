@@ -18,6 +18,7 @@ export type {
   ContextProvide,
   JSXNode,
   Ref,
+  SignalOr,
   VNode,
   WithKey,
   WithSignals,

@@ -4,7 +4,7 @@
  */
 
 import { Fragment } from "@semajsx/core";
-import type { ComponentAPI, JSXNode, VNode, WithSignals, SignalOr } from "@semajsx/core";
+import type { ComponentAPI, JSXNode, VNode, SignalOr } from "@semajsx/core";
 
 export { jsx, jsxs } from "@semajsx/core";
 export { Fragment };
