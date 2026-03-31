@@ -4,6 +4,9 @@ export default defineConfig({
   entry: [
     "src/index.ts",
     "src/signal/index.ts",
+    "src/prompt/index.ts",
+    "src/prompt/jsx-runtime.ts",
+    "src/prompt/jsx-dev-runtime.ts",
     "src/dom/index.ts",
     "src/dom/jsx-runtime.ts",
     "src/dom/jsx-dev-runtime.ts",
