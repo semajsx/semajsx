@@ -1,5 +1,6 @@
 /** @jsxImportSource @semajsx/dom */
 
+import type { JSXNode } from "@semajsx/core";
 import { classes, rule } from "@semajsx/style";
 import type { ClassValue } from "../types";
 
@@ -73,7 +74,7 @@ function renderMarkdown(text: string): string {
 }
 
 /** Generic text/markdown block renderer. */
-export function TextRenderer(props: { data: TextBlockData; class?: ClassValue }): JSX.Element {
+export function TextRenderer(props: { data: TextBlockData; class?: ClassValue }): JSXNode {
   const { text } = props.data;
 
   const hasMarkdown =
@@ -88,7 +89,7 @@ export function TextRenderer(props: { data: TextBlockData; class?: ClassValue })
     el.className = String(textStyles.root);
     if (props.class) el.className += ` ${props.class}`;
     el.innerHTML = renderMarkdown(text);
-    return el as unknown as JSX.Element;
+    return el as unknown as JSXNode;
   }
 
   return <div class={[textStyles.root, props.class]}>{text}</div>;

@@ -1,5 +1,6 @@
 /** @jsxImportSource @semajsx/dom */
 
+import type { JSXNode } from "@semajsx/core";
 import { classes, rule } from "@semajsx/style";
 import type { ClassValue } from "../types";
 
@@ -41,7 +42,7 @@ export interface CodeBlockData {
 }
 
 /** Code block renderer with optional language label. */
-export function CodeRenderer(props: { data: CodeBlockData; class?: ClassValue }): JSX.Element {
+export function CodeRenderer(props: { data: CodeBlockData; class?: ClassValue }): JSXNode {
   const { code, language } = props.data;
 
   return (

@@ -41,7 +41,8 @@ export function EventList(props: { events: ReadableSignal<ChatEvent[]>; class?: 
   return (
     <div
       class={props.class ? `${styles.container} ${props.class}` : styles.container}
-      ref={(el: HTMLDivElement) => {
+      ref={(el: HTMLDivElement | null) => {
+        if (!el) return;
         scrollRef = el;
         el.addEventListener("scroll", handleScroll, { passive: true });
         const observer = new MutationObserver(() => {

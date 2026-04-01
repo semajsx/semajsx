@@ -1,5 +1,6 @@
 /** @jsxImportSource @semajsx/dom */
 
+import { computed } from "@semajsx/signal";
 import type { ReadableSignal } from "@semajsx/signal";
 import * as styles from "./chat-input.style.ts";
 
@@ -50,8 +51,8 @@ export function ChatInput(props: ChatInputProps) {
   // Build disabled accessor for the JSX attribute
   const disabledAttr =
     typeof props.disabled === "object" && props.disabled !== null && "value" in props.disabled
-      ? () => (props.disabled as ReadableSignal<boolean>).value
-      : () => !!props.disabled;
+      ? computed(props.disabled as ReadableSignal<boolean>, Boolean)
+      : !!props.disabled;
 
   return (
     <div class={props.class ? `${styles.bar} ${props.class}` : styles.bar}>
@@ -62,7 +63,7 @@ export function ChatInput(props: ChatInputProps) {
         disabled={disabledAttr}
         oninput={autoResize}
         onkeydown={handleKeydown}
-        ref={(el: HTMLTextAreaElement) => {
+        ref={(el: HTMLTextAreaElement | null) => {
           textareaRef = el;
         }}
       />

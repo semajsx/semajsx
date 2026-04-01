@@ -1,5 +1,6 @@
 /** @jsxImportSource @semajsx/dom */
 
+import type { JSXNode } from "@semajsx/core";
 import { BlockView } from "./block-view";
 import type { Block, BlockRegistry, ClassValue } from "./types";
 
@@ -8,7 +9,7 @@ export function BlockList(props: {
   registry: BlockRegistry;
   blocks: Block[];
   class?: ClassValue;
-}): JSX.Element {
+}): JSXNode {
   const { registry, blocks } = props;
 
   return (
