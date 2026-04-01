@@ -4,7 +4,8 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "skipLibCheck": true,
-    "jsxImportSource": "@semajsx/dom"
+    "jsxImportSource": "@semajsx/dom",
+    "isolatedDeclarations": false
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "dist", "src/**/*.test.ts", "src/**/*.test.tsx"]

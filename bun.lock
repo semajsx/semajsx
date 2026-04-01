@@ -98,6 +98,7 @@
       "name": "@semajsx/icons",
       "version": "0.1.0",
       "dependencies": {
+        "@semajsx/core": "workspace:*",
         "lucide": "^0.577.0",
       },
       "devDependencies": {
@@ -183,6 +184,7 @@
         "@semajsx/core": "workspace:*",
         "@semajsx/dom": "workspace:*",
         "@semajsx/logger": "workspace:*",
+        "@semajsx/prompt": "workspace:*",
         "@semajsx/signal": "workspace:*",
         "@semajsx/ssg": "workspace:*",
         "@semajsx/ssr": "workspace:*",
