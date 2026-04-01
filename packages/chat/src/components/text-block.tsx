@@ -49,7 +49,8 @@ export function TextBlock(props: { event: ChatEvent }) {
     return (
       <div
         class={styles.block}
-        ref={(el: HTMLDivElement) => {
+        ref={(el: HTMLDivElement | null) => {
+          if (!el) return;
           el.innerHTML = renderMarkdown(text);
         }}
       />

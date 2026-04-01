@@ -1,5 +1,6 @@
 /** @jsxImportSource @semajsx/dom */
 
+import type { JSXNode } from "@semajsx/core";
 import { classes, rule } from "@semajsx/style";
 import type { ClassValue } from "../types";
 
@@ -31,10 +32,7 @@ export interface FallbackBlockData {
 }
 
 /** Default renderer for unknown block types — shows type + JSON data. */
-export function FallbackRenderer(props: {
-  data: FallbackBlockData;
-  class?: ClassValue;
-}): JSX.Element {
+export function FallbackRenderer(props: { data: FallbackBlockData; class?: ClassValue }): JSXNode {
   const { type, data } = props.data;
 
   return (

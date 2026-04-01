@@ -1,5 +1,6 @@
 /** @jsxImportSource @semajsx/dom */
 
+import type { JSXNode } from "@semajsx/core";
 import { classes, rule } from "@semajsx/style";
 import type { ClassValue } from "../types";
 
@@ -20,9 +21,6 @@ export interface DividerBlockData {
 }
 
 /** Horizontal rule / divider renderer. */
-export function DividerRenderer(props: {
-  data: DividerBlockData;
-  class?: ClassValue;
-}): JSX.Element {
+export function DividerRenderer(props: { data: DividerBlockData; class?: ClassValue }): JSXNode {
   return <hr class={[dividerStyles.root, props.class]} />;
 }

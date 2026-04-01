@@ -1,5 +1,6 @@
 /** @jsxImportSource @semajsx/dom */
 
+import type { JSXNode } from "@semajsx/core";
 import type { Block, BlockRegistry, ClassValue } from "./types";
 
 /** Renders a single block by looking up its renderer in the registry. */
@@ -7,7 +8,7 @@ export function BlockView(props: {
   registry: BlockRegistry;
   block: Block;
   class?: ClassValue;
-}): JSX.Element {
+}): JSXNode {
   const { registry, block } = props;
   const renderer = registry.get(block.type);
 
