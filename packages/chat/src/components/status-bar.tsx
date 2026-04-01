@@ -2,8 +2,8 @@
 
 import type { ReadableSignal } from "@semajsx/signal";
 import { computed } from "@semajsx/signal";
-import { chatTokens as t } from "../theme/tokens.ts";
-import * as styles from "./status-bar.style.ts";
+import { chatTokens as t } from "../theme/tokens";
+import * as styles from "./status-bar.style";
 
 export interface StatusBarProps {
   status: ReadableSignal<string>;

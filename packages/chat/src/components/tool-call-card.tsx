@@ -2,9 +2,9 @@
 
 import { signal, computed } from "@semajsx/signal";
 import { when } from "@semajsx/core";
-import type { ChatEvent } from "../types.ts";
-import { chatTokens as t } from "../theme/tokens.ts";
-import * as styles from "./tool-call-card.style.ts";
+import type { ChatEvent } from "../types";
+import { chatTokens as t } from "../theme/tokens";
+import * as styles from "./tool-call-card.style";
 
 function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms}ms`;

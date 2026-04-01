@@ -1,12 +1,12 @@
 /** @jsxImportSource @semajsx/dom */
 
-import type { ChatEvent } from "../types.ts";
-import { TextBlock } from "./text-block.tsx";
-import { ToolCallCard } from "./tool-call-card.tsx";
-import { RunBlock } from "./run-block.tsx";
-import { ErrorBlock } from "./error-block.tsx";
-import { UserMessageBlock } from "./user-message-block.tsx";
-import { ThinkingBlock } from "./thinking-block.tsx";
+import type { ChatEvent } from "../types";
+import { TextBlock } from "./text-block";
+import { ToolCallCard } from "./tool-call-card";
+import { RunBlock } from "./run-block";
+import { ErrorBlock } from "./error-block";
+import { UserMessageBlock } from "./user-message-block";
+import { ThinkingBlock } from "./thinking-block";
 
 function isTextEvent(event: ChatEvent): boolean {
   const t = event.type;

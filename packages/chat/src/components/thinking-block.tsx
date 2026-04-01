@@ -2,8 +2,8 @@
 
 import { signal, computed } from "@semajsx/signal";
 import { when } from "@semajsx/core";
-import type { ChatEvent } from "../types.ts";
-import * as styles from "./thinking-block.style.ts";
+import type { ChatEvent } from "../types";
+import * as styles from "./thinking-block.style";
 
 export function ThinkingBlock(props: { event: ChatEvent }) {
   const expanded = signal(false);

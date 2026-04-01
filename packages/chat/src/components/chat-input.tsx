@@ -2,7 +2,7 @@
 
 import { computed } from "@semajsx/signal";
 import type { ReadableSignal } from "@semajsx/signal";
-import * as styles from "./chat-input.style.ts";
+import * as styles from "./chat-input.style";
 
 export interface ChatInputProps {
   onSend: (text: string) => void;

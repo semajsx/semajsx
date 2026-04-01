@@ -1,7 +1,7 @@
 /** @jsxImportSource @semajsx/dom */
 
-import type { ChatEvent } from "../types.ts";
-import * as styles from "./text-block.style.ts";
+import type { ChatEvent } from "../types";
+import * as styles from "./text-block.style";
 
 /**
  * Minimal markdown-to-HTML renderer.
