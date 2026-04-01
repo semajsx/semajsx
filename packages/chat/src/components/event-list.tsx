@@ -2,9 +2,9 @@
 
 import type { ReadableSignal } from "@semajsx/signal";
 import { computed } from "@semajsx/signal";
-import type { ChatEvent } from "../types.ts";
-import { EventRenderer } from "./event-renderer.tsx";
-import * as styles from "./event-list.style.ts";
+import type { ChatEvent } from "../types";
+import { EventRenderer } from "./event-renderer";
+import * as styles from "./event-list.style";
 
 export function EventList(props: { events: ReadableSignal<ChatEvent[]>; class?: string }) {
   let scrollRef: HTMLDivElement | null = null;

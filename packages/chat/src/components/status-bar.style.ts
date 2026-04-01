@@ -1,5 +1,5 @@
 import { classes, rule } from "@semajsx/style";
-import { chatTokens as t } from "../theme/tokens.ts";
+import { chatTokens as t } from "../theme/tokens";
 
 const c = classes(["bar", "dot", "text"] as const);
 

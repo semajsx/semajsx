@@ -1,7 +1,7 @@
 /** @jsxImportSource @semajsx/dom */
 
-import type { ChatEvent } from "../types.ts";
-import * as styles from "./error-block.style.ts";
+import type { ChatEvent } from "../types";
+import * as styles from "./error-block.style";
 
 export function ErrorBlock(props: { event: ChatEvent }) {
   const { event } = props;

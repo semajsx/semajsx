@@ -1,7 +1,7 @@
 /** @jsxImportSource @semajsx/dom */
 
-import type { ChatEvent } from "../types.ts";
-import * as styles from "./run-block.style.ts";
+import type { ChatEvent } from "../types";
+import * as styles from "./run-block.style";
 
 function formatDuration(ms: number): string {
   if (ms < 1000) return `${ms}ms`;
