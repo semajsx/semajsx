@@ -51,6 +51,10 @@
       "source": "./src/dom/jsx-runtime.ts",
       "default": "./dist/dom/jsx-runtime.mjs"
     },
+    "./icons": {
+      "source": "./src/icons/index.ts",
+      "default": "./dist/icons/index.mjs"
+    },
     "./prompt": {
       "source": "./src/prompt/index.ts",
       "default": "./dist/prompt/index.mjs"
@@ -127,6 +131,7 @@
       "./dom": "./dist/dom/index.mjs",
       "./dom/jsx-dev-runtime": "./dist/dom/jsx-dev-runtime.mjs",
       "./dom/jsx-runtime": "./dist/dom/jsx-runtime.mjs",
+      "./icons": "./dist/icons/index.mjs",
       "./prompt": "./dist/prompt/index.mjs",
       "./prompt/jsx-dev-runtime": "./dist/prompt/jsx-dev-runtime.mjs",
       "./prompt/jsx-runtime": "./dist/prompt/jsx-runtime.mjs",
@@ -180,6 +185,7 @@
     "@semajsx/configs": "workspace:*",
     "@semajsx/core": "workspace:*",
     "@semajsx/dom": "workspace:*",
+    "@semajsx/icons": "workspace:*",
     "@semajsx/logger": "workspace:*",
     "@semajsx/prompt": "workspace:*",
     "@semajsx/signal": "workspace:*",
