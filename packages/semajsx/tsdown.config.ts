@@ -25,6 +25,7 @@ export default defineConfig({
     "src/blocks/index.ts",
     "src/blocks/renderers.ts",
     "src/chat/index.ts",
+    "src/icons/index.ts",
   ],
   format: ["esm"],
   dts: true,
