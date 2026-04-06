@@ -18,8 +18,6 @@ export { setProperty, setSignalProperty, setRef } from "./properties";
 export { render } from "./render";
 export type { DOMRenderResult } from "./render";
 
-export { onCleanup } from "./lifecycle";
-
 export { createPortal, PortalComponent } from "./portal";
 export type { PortalProps } from "./portal";
 

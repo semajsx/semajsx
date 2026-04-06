@@ -12,7 +12,6 @@ import {
   type ContextMap,
 } from "@semajsx/core";
 import { setProperty, setSignalProperty, setRef } from "./properties";
-import { pushCleanupScope, popCleanupScope } from "./lifecycle";
 import {
   appendChild,
   createElement,
@@ -98,9 +97,6 @@ const domStrategy: RenderStrategy<Node> = {
   setSignalProperty,
   setRef,
   tryReuseNode,
-  // Per-component lifecycle: enables onCleanup() to attach to individual components
-  onBeforeComponent: pushCleanupScope,
-  onAfterComponent: popCleanupScope,
 };
 
 // Create DOM renderer with optimization

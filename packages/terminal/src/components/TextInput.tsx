@@ -1,10 +1,9 @@
 /** @jsxImportSource @semajsx/terminal */
 import { computed, signal } from "@semajsx/signal";
 import type { ReadableSignal } from "@semajsx/signal";
-import type { WritableSignal } from "@semajsx/core";
+import type { ComponentAPI, WritableSignal } from "@semajsx/core";
 import type { JSXNode } from "@semajsx/core";
 import { onKeypress } from "../keyboard";
-import { onCleanup } from "../lifecycle";
 
 export interface TextInputProps {
   /**
@@ -88,17 +87,20 @@ const SPECIAL_KEYS = new Set([
  * <TextInput value={name} placeholder="Type something..." />
  * ```
  */
-export function TextInput({
-  value,
-  onSubmit,
-  onChange,
-  placeholder,
-  focus = true,
-  showCursor = true,
-  mask,
-  color,
-  placeholderColor = "gray",
-}: TextInputProps): JSXNode {
+export function TextInput(
+  {
+    value,
+    onSubmit,
+    onChange,
+    placeholder,
+    focus = true,
+    showCursor = true,
+    mask,
+    color,
+    placeholderColor = "gray",
+  }: TextInputProps,
+  ctx?: ComponentAPI,
+): JSXNode {
   const cursorOffset = signal(value.value.length);
 
   // Clamp cursor when value changes externally (e.g. parent resets to "")
@@ -107,7 +109,7 @@ export function TextInput({
       cursorOffset.value = val.length;
     }
   });
-  onCleanup(unsubValue);
+  ctx?.onCleanup(unsubValue);
 
   const unsub = onKeypress((event) => {
     if (!focus) return;
@@ -195,7 +197,7 @@ export function TextInput({
     }
   });
 
-  onCleanup(unsub);
+  ctx?.onCleanup(unsub);
 
   // Build the display string with cursor — reactive via signals
   const display = computed([value, cursorOffset], (val: string, offset: number) => {

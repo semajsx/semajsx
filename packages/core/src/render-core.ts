@@ -92,19 +92,6 @@ export interface RenderStrategy<TNode> {
     oldRendered: RenderedNode<TNode>,
     newRendered: RenderedNode<TNode>,
   ): boolean;
-
-  /**
-   * Optional: Called before a component function is invoked.
-   * Renderers can use this to set up per-component state (e.g., cleanup scopes).
-   */
-  onBeforeComponent?(): void;
-
-  /**
-   * Optional: Called after a component function returns.
-   * Returns an array of cleanup functions to attach to the component's RenderedNode subscriptions.
-   * This enables per-component lifecycle hooks like onCleanup().
-   */
-  onAfterComponent?(): Array<() => void>;
 }
 
 /**
@@ -589,25 +576,18 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
       }
     }
 
-    // Create ComponentAPI
-    const ctx = createComponentAPI(currentContext);
+    const componentCleanups: Array<() => void> = [];
 
-    // Notify strategy before component render (for per-component lifecycle hooks)
-    strategy.onBeforeComponent?.();
+    // Create ComponentAPI
+    const ctx = createComponentAPI(currentContext, componentCleanups);
 
     // Call component function with props and ctx
-    // Wrap in try/catch to ensure onAfterComponent runs even if component throws,
-    // preventing a dangling scope on the cleanup stack.
     let result;
     try {
       result = Component(props, ctx);
     } catch (err) {
-      strategy.onAfterComponent?.();
       throw err;
     }
-
-    // Collect per-component cleanup subscriptions
-    const componentCleanups = strategy.onAfterComponent?.() ?? [];
 
     // Handle async component (Promise<VNode>)
     if (isPromise(result)) {
@@ -623,10 +603,11 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
         children: [],
       };
       const rendered = renderNode(signalVNode, currentContext);
+      componentCleanups.push(...rendered.subscriptions);
       return {
         vnode,
         node: rendered.node,
-        subscriptions: [...componentCleanups, ...rendered.subscriptions],
+        subscriptions: componentCleanups,
         children: [rendered],
       };
     }
@@ -645,10 +626,11 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
         children: [],
       };
       const rendered = renderNode(signalVNode, currentContext);
+      componentCleanups.push(...rendered.subscriptions);
       return {
         vnode,
         node: rendered.node,
-        subscriptions: [...componentCleanups, ...rendered.subscriptions],
+        subscriptions: componentCleanups,
         children: [rendered],
       };
     }
@@ -661,12 +643,13 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
         children: [],
       };
       const rendered = renderNode(signalVNode, currentContext);
+      componentCleanups.push(...rendered.subscriptions);
       // Return node: null so collectNodes recurses into children and finds the
       // #signal rendered node, which correctly collects marker + content children.
       return {
         vnode,
         node: null,
-        subscriptions: [...componentCleanups, ...rendered.subscriptions],
+        subscriptions: componentCleanups,
         children: [rendered],
       };
     }
@@ -675,11 +658,12 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
     const componentName = Component.name || (Component as any).displayName;
     const normalizedResult = normalizeComponentResult(result, componentName);
     const rendered = renderNode(normalizedResult, currentContext);
+    componentCleanups.push(...rendered.subscriptions);
 
     return {
       vnode,
       node: rendered.node,
-      subscriptions: [...componentCleanups, ...rendered.subscriptions],
+      subscriptions: componentCleanups,
       children: [rendered],
     };
   }

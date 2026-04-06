@@ -1,16 +1,15 @@
 /** @jsxImportSource @semajsx/dom */
 import { describe, it, expect, vi } from "vitest";
 import { signal } from "@semajsx/signal";
-import { when } from "@semajsx/core";
+import { when, type ComponentAPI } from "@semajsx/core";
 import { render } from "./render";
-import { onCleanup } from "./lifecycle";
 
-describe("onCleanup", () => {
+describe("ctx.onCleanup", () => {
   it("fires registered callback on unmount", () => {
     const cleanedUp = vi.fn();
 
-    function MyComponent() {
-      onCleanup(cleanedUp);
+    function MyComponent(_props: Record<string, never>, ctx?: ComponentAPI) {
+      ctx?.onCleanup(cleanedUp);
       return <div>hello</div>;
     }
 
@@ -25,10 +24,10 @@ describe("onCleanup", () => {
   it("fires multiple callbacks in registration order", () => {
     const order: number[] = [];
 
-    function MyComponent() {
-      onCleanup(() => order.push(1));
-      onCleanup(() => order.push(2));
-      onCleanup(() => order.push(3));
+    function MyComponent(_props: Record<string, never>, ctx?: ComponentAPI) {
+      ctx?.onCleanup(() => order.push(1));
+      ctx?.onCleanup(() => order.push(2));
+      ctx?.onCleanup(() => order.push(3));
       return <div>hello</div>;
     }
 
@@ -39,29 +38,17 @@ describe("onCleanup", () => {
     expect(order).toEqual([1, 2, 3]);
   });
 
-  it("warns when called outside component render scope", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-    onCleanup(() => {});
-
-    expect(warnSpy).toHaveBeenCalledWith(
-      "[semajsx/dom] onCleanup() called outside component render scope. Callback will not run.",
-    );
-
-    warnSpy.mockRestore();
-  });
-
   it("fires cleanups for nested components on parent unmount", () => {
     const parentCleanup = vi.fn();
     const childCleanup = vi.fn();
 
-    function Child() {
-      onCleanup(childCleanup);
+    function Child(_props: Record<string, never>, ctx?: ComponentAPI) {
+      ctx?.onCleanup(childCleanup);
       return <span>child</span>;
     }
 
-    function Parent() {
-      onCleanup(parentCleanup);
+    function Parent(_props: Record<string, never>, ctx?: ComponentAPI) {
+      ctx?.onCleanup(parentCleanup);
       return (
         <div>
           <Child />
@@ -85,8 +72,8 @@ describe("onCleanup", () => {
     const cleanedUp = vi.fn();
     const show = signal(true);
 
-    function Conditional() {
-      onCleanup(cleanedUp);
+    function Conditional(_props: Record<string, never>, ctx?: ComponentAPI) {
+      ctx?.onCleanup(cleanedUp);
       return <span>visible</span>;
     }
 
@@ -108,6 +95,27 @@ describe("onCleanup", () => {
     // Hide the component
     show.value = false;
     await new Promise((r) => queueMicrotask(r));
+
+    expect(cleanedUp).toHaveBeenCalledOnce();
+  });
+
+  it("supports async registration after await", async () => {
+    const cleanedUp = vi.fn();
+    let capturedCtx: ComponentAPI | undefined;
+
+    async function AsyncComponent(_props: Record<string, never>, ctx?: ComponentAPI) {
+      capturedCtx = ctx;
+      await Promise.resolve();
+      ctx?.onCleanup(cleanedUp);
+      return <div>async</div>;
+    }
+
+    const container = document.createElement("div");
+    const { unmount } = render(<AsyncComponent />, container);
+
+    await Promise.resolve();
+    expect(capturedCtx).toBeDefined();
+    unmount();
 
     expect(cleanedUp).toHaveBeenCalledOnce();
   });
