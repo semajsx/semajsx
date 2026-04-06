@@ -1,7 +1,6 @@
 /** @jsxImportSource @semajsx/terminal */
 import { signal, type ReadableSignal } from "@semajsx/signal";
-import type { JSXNode } from "@semajsx/core";
-import { onCleanup } from "../lifecycle";
+import type { ComponentAPI, JSXNode } from "@semajsx/core";
 
 /**
  * Built-in spinner frame sets
@@ -53,13 +52,16 @@ export interface SpinnerProps {
  * <Spinner frames={["🌑", "🌒", "🌓", "🌔", "🌕"]} interval={150} />
  * ```
  */
-export function Spinner({
-  type = "dots",
-  frames: customFrames,
-  interval: customInterval,
-  label,
-  color = "cyan",
-}: SpinnerProps): JSXNode {
+export function Spinner(
+  {
+    type = "dots",
+    frames: customFrames,
+    interval: customInterval,
+    label,
+    color = "cyan",
+  }: SpinnerProps,
+  ctx?: ComponentAPI,
+): JSXNode {
   const config = spinnerFrames[type];
   const frames = customFrames ?? config.frames;
   const interval = customInterval ?? config.interval;
@@ -72,7 +74,7 @@ export function Spinner({
     frameSignal.value = frames[index]!;
   }, interval);
 
-  onCleanup(() => clearInterval(timer));
+  ctx?.onCleanup(() => clearInterval(timer));
 
   if (label) {
     return (

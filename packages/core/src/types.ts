@@ -69,6 +69,7 @@ export interface ComponentAPI {
    * @returns The current value of the context, or undefined if not provided
    */
   inject<T>(context: Context<T>): T | undefined;
+  onCleanup(fn: () => void): void;
 }
 
 /**

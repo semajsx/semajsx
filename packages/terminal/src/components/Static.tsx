@@ -1,6 +1,5 @@
 /** @jsxImportSource @semajsx/terminal */
-import type { VNode } from "@semajsx/core";
-import { onCleanup } from "../lifecycle";
+import type { ComponentAPI, VNode } from "@semajsx/core";
 import { getActiveSession } from "../context";
 import { print } from "../render";
 import type { ReadableSignal } from "@semajsx/signal";
@@ -44,7 +43,10 @@ export interface StaticProps<T> {
  * <text dim>Processing...</text>
  * ```
  */
-export function Static<T>({ items, render: renderItem }: StaticProps<T>): VNode | null {
+export function Static<T>(
+  { items, render: renderItem }: StaticProps<T>,
+  ctx?: ComponentAPI,
+): VNode | null {
   let renderedCount = 0;
 
   const flushNew = () => {
@@ -93,7 +95,7 @@ export function Static<T>({ items, render: renderItem }: StaticProps<T>): VNode 
     queueMicrotask(flushNew);
   });
 
-  onCleanup(unsub);
+  ctx?.onCleanup(unsub);
 
   // Flush any initial items
   flushNew();

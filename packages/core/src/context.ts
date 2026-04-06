@@ -67,10 +67,16 @@ export function Context(props: ContextProps): VNode {
  * @param contextMap - The context map for current render environment
  * @returns ComponentAPI instance
  */
-export function createComponentAPI(contextMap: ContextMap): ComponentAPI {
+export function createComponentAPI(
+  contextMap: ContextMap,
+  cleanupCallbacks: Array<() => void> = [],
+): ComponentAPI {
   return {
     inject<T>(context: ContextType<T>): T | undefined {
       return contextMap.get(context);
+    },
+    onCleanup(fn: () => void): void {
+      cleanupCallbacks.push(fn);
     },
   };
 }

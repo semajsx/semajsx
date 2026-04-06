@@ -20,8 +20,6 @@ export interface TerminalSession {
   stdinHandler: ((data: Buffer) => void) | null;
   /** Exit callback for useExit() */
   exitCallback: (() => void) | null;
-  /** Component cleanup callbacks for onCleanup() (global fallback) */
-  cleanupCallbacks: (() => void)[];
   /** Signal for ExitHint component coordination */
   exitingSignal: WritableSignal<boolean>;
   /** Renderer instance for static output */
@@ -43,7 +41,6 @@ export function createTerminalSession(): TerminalSession {
     keyboardInstalled: false,
     stdinHandler: null,
     exitCallback: null,
-    cleanupCallbacks: [],
     exitingSignal: signal(false),
     renderer: null,
   };

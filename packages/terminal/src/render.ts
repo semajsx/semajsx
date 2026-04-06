@@ -17,7 +17,6 @@ import { type ContextMap } from "@semajsx/core";
 import { createRenderer, type RenderStrategy } from "@semajsx/core";
 import { installKeyboardHandler, uninstallKeyboardHandler, onKeypress } from "./keyboard";
 import { setExitCallback } from "./hooks";
-import { flushCleanups, pushCleanupScope, popCleanupScope } from "./lifecycle";
 import { createTerminalSession, setActiveSession } from "./context";
 
 /**
@@ -35,9 +34,6 @@ const terminalStrategy: RenderStrategy<TerminalNode> = {
   replaceNode,
   setProperty,
   setSignalProperty,
-  // Per-component lifecycle: enables onCleanup() to attach to individual components
-  onBeforeComponent: pushCleanupScope,
-  onAfterComponent: popCleanupScope,
 };
 
 // Create terminal renderer
@@ -220,10 +216,6 @@ export function render(element: VNode, options: RenderOptions = {}): RenderResul
       process.removeListener("SIGINT", handleExit);
       process.removeListener("SIGTERM", handleExit);
     }
-
-    // Flush component cleanup callbacks (timers, listeners, etc.)
-    // Done before uninstalling keyboard so cleanups can still use onKeypress
-    flushCleanups();
 
     // Clear exit callback
     setExitCallback(null);
