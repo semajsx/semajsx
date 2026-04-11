@@ -5,7 +5,8 @@ import type {
   RenderToStringOptions,
   SSRResult,
 } from "./shared/types";
-import { Fragment } from "@semajsx/core";
+import { Fragment, createComponentAPI } from "@semajsx/core";
+import type { ContextMap } from "@semajsx/core";
 import { getIslandMetadata, isIslandVNode } from "./client/island";
 import { STYLE_MARKER, LINK_MARKER, ASSET_MARKER } from "./client/resource";
 import { isSignal, unwrap } from "@semajsx/signal";
@@ -117,7 +118,7 @@ export async function renderToString(
   };
 
   // Render HTML and collect islands in one pass (fixes duplicate rendering)
-  const html = await renderVNodeToHTML(vnode, context);
+  const html = await renderVNodeToHTML(vnode, context, new Map());
 
   // Generate script tags for islands (only if transformer is provided)
   const scripts = generateIslandScripts(context.islands, islandBasePath, transformIslandScript);
@@ -303,7 +304,11 @@ function isAsyncIterator(value: any): value is AsyncIterableIterator<any> {
 /**
  * Render VNode to HTML string
  */
-async function renderVNodeToHTML(vnode: VNode | JSXNode, context: RenderContext): Promise<string> {
+async function renderVNodeToHTML(
+  vnode: VNode | JSXNode,
+  context: RenderContext,
+  parentContext: ContextMap,
+): Promise<string> {
   // Handle null/undefined
   if (vnode == null) {
     return "";
@@ -311,7 +316,7 @@ async function renderVNodeToHTML(vnode: VNode | JSXNode, context: RenderContext)
 
   // Handle signals
   if (isSignal(vnode)) {
-    return renderVNodeToHTML(unwrap(vnode), context);
+    return renderVNodeToHTML(unwrap(vnode), context, parentContext);
   }
 
   // Handle primitives
@@ -325,7 +330,9 @@ async function renderVNodeToHTML(vnode: VNode | JSXNode, context: RenderContext)
 
   // Handle arrays
   if (Array.isArray(vnode)) {
-    const results = await Promise.all(vnode.map((child) => renderVNodeToHTML(child, context)));
+    const results = await Promise.all(
+      vnode.map((child) => renderVNodeToHTML(child, context, parentContext)),
+    );
     return results.join("");
   }
 
@@ -346,7 +353,7 @@ async function renderVNodeToHTML(vnode: VNode | JSXNode, context: RenderContext)
     const signal = vnodeTyped.props?.signal;
     if (signal && isSignal<VNode>(signal)) {
       const unwrapped = unwrap(signal);
-      const rendered = await renderVNodeToHTML(unwrapped, context);
+      const rendered = await renderVNodeToHTML(unwrapped, context, parentContext);
       // If signal renders to empty content, use a comment marker for hydration
       // This ensures the client can find a DOM node to attach the signal subscription to
       return rendered || "<!--signal-empty-->";
@@ -356,7 +363,7 @@ async function renderVNodeToHTML(vnode: VNode | JSXNode, context: RenderContext)
 
   // Handle islands - render content AND mark for hydration
   if (isIslandVNode(vnodeTyped)) {
-    return renderIsland(vnodeTyped, context);
+    return renderIsland(vnodeTyped, context, parentContext);
   }
 
   // Handle Style resource - collect CSS path, render nothing
@@ -399,7 +406,7 @@ async function renderVNodeToHTML(vnode: VNode | JSXNode, context: RenderContext)
   // Handle fragments
   if (vnodeTyped.type === Fragment) {
     const results = await Promise.all(
-      vnodeTyped.children.map((child: JSXNode) => renderVNodeToHTML(child, context)),
+      vnodeTyped.children.map((child: JSXNode) => renderVNodeToHTML(child, context, parentContext)),
     );
     return results.join("");
   }
@@ -413,7 +420,8 @@ async function renderVNodeToHTML(vnode: VNode | JSXNode, context: RenderContext)
           ? { ...vnodeTyped.props, children: vnodeTyped.children }
           : vnodeTyped.props || {};
 
-      let result: any = vnodeTyped.type(props);
+      const currentContext = resolveComponentContext(vnodeTyped.type, props, parentContext);
+      let result: any = vnodeTyped.type(props, createComponentAPI(currentContext));
 
       // Handle async component - await the Promise
       if (result instanceof Promise) {
@@ -431,7 +439,7 @@ async function renderVNodeToHTML(vnode: VNode | JSXNode, context: RenderContext)
         result = unwrap(result);
       }
 
-      return renderVNodeToHTML(result, context);
+      return renderVNodeToHTML(result, context, currentContext);
     } catch (error) {
       console.error("Error rendering component:", error);
       // Return error fallback
@@ -441,7 +449,7 @@ async function renderVNodeToHTML(vnode: VNode | JSXNode, context: RenderContext)
 
   // Handle DOM elements
   if (typeof vnodeTyped.type === "string") {
-    return renderElement(vnodeTyped, context);
+    return renderElement(vnodeTyped, context, parentContext);
   }
 
   return "";
@@ -523,7 +531,11 @@ function injectIslandAttrs(
  * - If hydration disabled: renders as plain HTML (no markers)
  * - If hydration enabled: adds markers for client-side hydration
  */
-async function renderIsland(vnode: VNode, context: RenderContext): Promise<string> {
+async function renderIsland(
+  vnode: VNode,
+  context: RenderContext,
+  parentContext: ContextMap,
+): Promise<string> {
   const metadata = getIslandMetadata(vnode);
   if (!metadata) {
     return "";
@@ -537,7 +549,9 @@ async function renderIsland(vnode: VNode, context: RenderContext): Promise<strin
   let content = "";
   let result: any;
   try {
-    result = metadata.component(metadata.props || {});
+    const props = metadata.props || {};
+    const currentContext = resolveComponentContext(metadata.component, props, parentContext);
+    result = metadata.component(props, createComponentAPI(currentContext));
 
     // Handle async component - await the Promise
     if (result instanceof Promise) {
@@ -555,7 +569,7 @@ async function renderIsland(vnode: VNode, context: RenderContext): Promise<strin
       result = unwrap(result);
     }
 
-    content = await renderVNodeToHTML(result, context);
+    content = await renderVNodeToHTML(result, context, currentContext);
   } catch (error) {
     console.error(`[SSR] Error rendering island (${componentName}):`, error);
     return renderErrorFallback(error, vnode);
@@ -611,7 +625,11 @@ async function renderIsland(vnode: VNode, context: RenderContext): Promise<strin
 /**
  * Render a DOM element to HTML
  */
-async function renderElement(vnode: VNode, context: RenderContext): Promise<string> {
+async function renderElement(
+  vnode: VNode,
+  context: RenderContext,
+  parentContext: ContextMap,
+): Promise<string> {
   const tag = vnode.type as string;
   const props = vnode.props || {};
 
@@ -655,7 +673,9 @@ async function renderElement(vnode: VNode, context: RenderContext): Promise<stri
 
   // Regular tag with children
   const childResults = await Promise.all(
-    (vnode.children || []).map((child: JSXNode) => renderVNodeToHTML(child, context)),
+    (vnode.children || []).map((child: JSXNode) =>
+      renderVNodeToHTML(child, context, parentContext),
+    ),
   );
   const children = childResults.join("");
 
@@ -682,6 +702,35 @@ function extractRawText(vnode: JSXNode): string {
     return (v.children || []).map(extractRawText).join("");
   }
   return "";
+}
+
+function resolveComponentContext(
+  component: Function,
+  props: Record<string, any>,
+  parentContext: ContextMap,
+): ContextMap {
+  const isContextProvider = (component as any).__isContextProvider;
+  if (!isContextProvider) {
+    return parentContext;
+  }
+
+  const currentContext = new Map(parentContext);
+  const provide = (props as any).provide;
+  if (!provide) {
+    return currentContext;
+  }
+
+  const isSingle = provide.length === 2 && typeof provide[0] === "symbol";
+  if (isSingle) {
+    const [context, value] = provide;
+    currentContext.set(context, value);
+    return currentContext;
+  }
+
+  for (const [context, value] of provide) {
+    currentContext.set(context, value);
+  }
+  return currentContext;
 }
 
 /**

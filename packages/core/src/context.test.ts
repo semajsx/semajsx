@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { context, Context, createComponentAPI } from "../src/context";
-import type { ContextMap } from "../src/context";
+import type { ComponentRuntimeState, ContextMap } from "../src/context";
 
 describe("context", () => {
   describe("context()", () => {
@@ -122,6 +122,51 @@ describe("context", () => {
 
       expect(user?.id).toBe(1);
       expect(user?.name).toBe("Bob");
+    });
+
+    it("should expose runtime disposal state", () => {
+      const contextMap: ContextMap = new Map();
+      const runtimeState: ComponentRuntimeState = {
+        cleanupCallbacks: [],
+        disposed: false,
+      };
+
+      const api = createComponentAPI(contextMap, runtimeState);
+
+      expect(api.isDisposed()).toBe(false);
+      runtimeState.disposed = true;
+      expect(api.isDisposed()).toBe(true);
+    });
+
+    it("should register cleanup callbacks while component is active", () => {
+      const contextMap: ContextMap = new Map();
+      const runtimeState: ComponentRuntimeState = {
+        cleanupCallbacks: [],
+        disposed: false,
+      };
+      const api = createComponentAPI(contextMap, runtimeState);
+      const cleanup = () => {};
+
+      api.onCleanup(cleanup);
+
+      expect(runtimeState.cleanupCallbacks).toEqual([cleanup]);
+    });
+
+    it("should run cleanup immediately when component is already disposed", () => {
+      const contextMap: ContextMap = new Map();
+      const runtimeState: ComponentRuntimeState = {
+        cleanupCallbacks: [],
+        disposed: true,
+      };
+      const api = createComponentAPI(contextMap, runtimeState);
+      let cleanedUp = false;
+
+      api.onCleanup(() => {
+        cleanedUp = true;
+      });
+
+      expect(cleanedUp).toBe(true);
+      expect(runtimeState.cleanupCallbacks).toEqual([]);
     });
   });
 });

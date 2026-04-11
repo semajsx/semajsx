@@ -4,7 +4,7 @@
  */
 
 import { Fragment } from "@semajsx/core";
-import type { ComponentAPI, JSXNode, VNode, WithSignals } from "@semajsx/core";
+import type { ComponentAPI, JSXNode, RuntimeComponent, VNode, WithSignals } from "@semajsx/core";
 import type { TerminalStyle } from "./types";
 
 export { jsx, jsxs } from "@semajsx/core";
@@ -64,6 +64,7 @@ export namespace JSX {
   export type ElementType =
     | keyof IntrinsicElements
     | ((props: any) => JSXNode)
+    | RuntimeComponent<any>
     | ((props: any, ctx: ComponentAPI) => JSXNode);
 
   export interface ElementChildrenAttribute {

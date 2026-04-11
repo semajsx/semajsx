@@ -5,7 +5,13 @@
 export { createFragment, createTextVNode, h, isVNode } from "./vnode";
 export { Forward, Fragment, Portal } from "./types";
 export { ISLAND_MARKER } from "./shared/island-marker";
-export { Context, context, createComponentAPI, type ContextMap } from "./context";
+export {
+  Context,
+  context,
+  createComponentAPI,
+  type ComponentRuntimeState,
+  type ContextMap,
+} from "./context";
 export { resource, stream, when } from "./helpers";
 export { jsx, jsxs } from "./jsx";
 export { createRenderer, isAsyncIterator, isPromise } from "./render-core";
@@ -13,6 +19,7 @@ export { createRenderer, isAsyncIterator, isPromise } from "./render-core";
 export type {
   Component,
   ComponentAPI,
+  RuntimeComponent,
   Context as ContextType,
   ContextProps,
   ContextProvide,

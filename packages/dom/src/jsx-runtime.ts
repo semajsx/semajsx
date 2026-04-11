@@ -4,7 +4,15 @@
  */
 
 import { Forward, Fragment, jsx, jsxs } from "@semajsx/core";
-import type { ComponentAPI, JSXNode, Ref, VNode, WithKey, WithSignals } from "@semajsx/core";
+import type {
+  ComponentAPI,
+  JSXNode,
+  Ref,
+  RuntimeComponent,
+  VNode,
+  WithKey,
+  WithSignals,
+} from "@semajsx/core";
 import type { Signal } from "@semajsx/signal";
 import type { StyleToken, ClassRef } from "@semajsx/style";
 
@@ -437,6 +445,7 @@ export namespace JSX {
   export type ElementType =
     | keyof IntrinsicElements
     | ((props: any) => JSXNode)
+    | RuntimeComponent<any>
     | ((props: any, ctx: ComponentAPI) => JSXNode);
 
   export interface ElementChildrenAttribute {

@@ -43,10 +43,14 @@ export interface StaticProps<T> {
  * <text dim>Processing...</text>
  * ```
  */
-export function Static<T>(
+export interface StaticComponent {
+  <T>(props: StaticProps<T>, ctx: ComponentAPI): VNode | null;
+}
+
+export const Static: StaticComponent = <T,>(
   { items, render: renderItem }: StaticProps<T>,
-  ctx?: ComponentAPI,
-): VNode | null {
+  ctx: ComponentAPI,
+): VNode | null => {
   let renderedCount = 0;
 
   const flushNew = () => {
@@ -95,11 +99,11 @@ export function Static<T>(
     queueMicrotask(flushNew);
   });
 
-  ctx?.onCleanup(unsub);
+  ctx.onCleanup(unsub);
 
   // Flush any initial items
   flushNew();
 
   // Return nothing — static items are committed directly to the terminal
   return null;
-}
+};

@@ -4,7 +4,8 @@
  */
 
 import type { VNode } from "@semajsx/core";
-import { Fragment, h } from "@semajsx/core";
+import { Fragment, createComponentAPI, h } from "@semajsx/core";
+import type { ContextMap } from "@semajsx/core";
 import { setProperty, render } from "@semajsx/dom";
 import { isSignal } from "@semajsx/signal";
 
@@ -55,7 +56,7 @@ export function hydrate(vnode: VNode, container: Element): Node | null {
 
   if (!nodeToHydrate) {
     console.warn("[Hydrate] Container is empty, falling back to render");
-    const rendered = renderNode(vnode, container);
+    const rendered = renderNode(vnode, container, new Map());
     if (rendered) {
       container.appendChild(rendered);
     }
@@ -64,21 +65,26 @@ export function hydrate(vnode: VNode, container: Element): Node | null {
 
   // Hydrate the VNode tree onto the existing DOM
   try {
-    hydrateNode(vnode, nodeToHydrate, container);
+    hydrateNode(vnode, nodeToHydrate, container, new Map());
     return nodeToHydrate;
   } catch (error) {
     console.error("[Hydrate] Error during hydration:", error);
     // Fall back to client-side rendering if hydration fails
     console.warn("[Hydrate] Falling back to client-side rendering");
     container.innerHTML = "";
-    return renderNode(vnode, container);
+    return renderNode(vnode, container, new Map());
   }
 }
 
 /**
  * Hydrate a VNode onto an existing DOM node
  */
-function hydrateNode(vnode: VNode | any, domNode: Node, parentElement: Element): void {
+function hydrateNode(
+  vnode: VNode | any,
+  domNode: Node,
+  parentElement: Element,
+  parentContext: ContextMap,
+): void {
   // Handle null/undefined
   if (vnode == null) {
     return;
@@ -88,7 +94,7 @@ function hydrateNode(vnode: VNode | any, domNode: Node, parentElement: Element):
   if (isSignal(vnode)) {
     // For signal VNodes, we need to hydrate the current value
     // and set up reactivity to update when signal changes
-    hydrateSignalNode(vnode, domNode, parentElement);
+    hydrateSignalNode(vnode, domNode, parentElement, parentContext);
     return;
   }
 
@@ -110,7 +116,7 @@ function hydrateNode(vnode: VNode | any, domNode: Node, parentElement: Element):
     let currentDomNode: Node | null = domNode;
     for (const child of vnode) {
       if (currentDomNode) {
-        hydrateNode(child, currentDomNode, parentElement);
+        hydrateNode(child, currentDomNode, parentElement, parentContext);
         currentDomNode = currentDomNode.nextSibling;
       }
     }
@@ -128,7 +134,7 @@ function hydrateNode(vnode: VNode | any, domNode: Node, parentElement: Element):
   if (vnodeTyped.type === "#signal") {
     const signal = vnodeTyped.props?.signal;
     if (signal && isSignal(signal)) {
-      hydrateSignalNode(signal, domNode, parentElement);
+      hydrateSignalNode(signal, domNode, parentElement, parentContext);
     }
     return;
   }
@@ -138,7 +144,7 @@ function hydrateNode(vnode: VNode | any, domNode: Node, parentElement: Element):
     let currentDomNode: Node | null = domNode;
     for (const child of vnodeTyped.children) {
       if (currentDomNode) {
-        hydrateNode(child, currentDomNode, parentElement);
+        hydrateNode(child, currentDomNode, parentElement, parentContext);
         currentDomNode = currentDomNode.nextSibling;
       }
     }
@@ -152,23 +158,24 @@ function hydrateNode(vnode: VNode | any, domNode: Node, parentElement: Element):
       vnodeTyped.children && vnodeTyped.children.length > 0
         ? { ...vnodeTyped.props, children: vnodeTyped.children }
         : vnodeTyped.props || {};
-    let result = vnodeTyped.type(props);
+    const currentContext = resolveComponentContext(vnodeTyped.type, props, parentContext);
+    let result = vnodeTyped.type(props, createComponentAPI(currentContext));
 
     // Handle async component
     if (result instanceof Promise) {
-      result.then((resolved) => hydrateNode(resolved, domNode, parentElement));
+      result.then((resolved) => hydrateNode(resolved, domNode, parentElement, currentContext));
       return;
     }
 
     // Handle async iterator (streaming component)
     if (isAsyncIterator(result)) {
       result.next().then(({ value }) => {
-        hydrateNode(value, domNode, parentElement);
+        hydrateNode(value, domNode, parentElement, currentContext);
       });
       return;
     }
 
-    hydrateNode(result, domNode, parentElement);
+    hydrateNode(result, domNode, parentElement, currentContext);
     return;
   }
 
@@ -199,7 +206,7 @@ function hydrateNode(vnode: VNode | any, domNode: Node, parentElement: Element):
     hydrateProperties(element, vnodeTyped.props || {});
 
     // Hydrate children
-    hydrateChildren(element, vnodeTyped.children);
+    hydrateChildren(element, vnodeTyped.children, parentContext);
     return;
   }
 }
@@ -254,7 +261,7 @@ function hydrateProperties(element: Element, props: Record<string, any>): void {
 /**
  * Hydrate children elements
  */
-function hydrateChildren(element: Element, children: any[]): void {
+function hydrateChildren(element: Element, children: any[], parentContext: ContextMap): void {
   let currentDomNode = element.firstChild;
 
   for (const child of children) {
@@ -262,14 +269,14 @@ function hydrateChildren(element: Element, children: any[]): void {
       // Mismatch: VNode has more children than DOM
       // Fall back to appending new nodes
       console.warn("[Hydrate] Missing DOM node for child, appending");
-      const newNode = renderNode(child, element);
+      const newNode = renderNode(child, element, parentContext);
       if (newNode) {
         element.appendChild(newNode);
       }
       continue;
     }
 
-    hydrateNode(child, currentDomNode, element);
+    hydrateNode(child, currentDomNode, element, parentContext);
     currentDomNode = currentDomNode.nextSibling;
   }
 
@@ -281,7 +288,12 @@ function hydrateChildren(element: Element, children: any[]): void {
  * Hydrate a signal VNode
  * Set up reactivity to replace content when signal changes
  */
-function hydrateSignalNode(signal: any, domNode: Node, parentElement: Element): void {
+function hydrateSignalNode(
+  signal: any,
+  domNode: Node,
+  parentElement: Element,
+  parentContext: ContextMap,
+): void {
   // Get current signal value
   const currentValue = signal.value;
 
@@ -308,7 +320,7 @@ function hydrateSignalNode(signal: any, domNode: Node, parentElement: Element): 
     }
   } else {
     // For complex values (VNodes, etc.), do full hydration
-    hydrateNode(currentValue, domNode, parentElement);
+    hydrateNode(currentValue, domNode, parentElement, parentContext);
   }
 
   // Set up reactivity to handle signal changes
@@ -344,7 +356,7 @@ function hydrateSignalNode(signal: any, domNode: Node, parentElement: Element): 
     currentNodes = [];
 
     // Render and insert new content after anchor
-    const newNode = renderNode(newValue, parentElement);
+    const newNode = renderNode(newValue, parentElement, parentContext);
     if (newNode) {
       if (newNode.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
         // Fragment: insert all children after anchor in correct order
@@ -372,13 +384,13 @@ function hydrateSignalNode(signal: any, domNode: Node, parentElement: Element): 
  * This is a simplified version of render() just for hydration fallback
  */
 // oxlint-disable-next-line only-used-in-recursion
-function renderNode(vnode: any, parentElement: Element): Node | null {
+function renderNode(vnode: any, parentElement: Element, parentContext: ContextMap): Node | null {
   if (vnode == null || vnode === false || vnode === true) {
     return document.createComment("empty");
   }
 
   if (isSignal(vnode)) {
-    return renderNode(vnode.value, parentElement);
+    return renderNode(vnode.value, parentElement, parentContext);
   }
 
   if (typeof vnode === "string" || typeof vnode === "number") {
@@ -393,7 +405,7 @@ function renderNode(vnode: any, parentElement: Element): Node | null {
 
     const fragment = document.createDocumentFragment();
     for (const child of vnode) {
-      const node = renderNode(child, parentElement);
+      const node = renderNode(child, parentElement, parentContext);
       if (node) {
         fragment.appendChild(node);
       }
@@ -412,7 +424,7 @@ function renderNode(vnode: any, parentElement: Element): Node | null {
     if (vnodeTyped.type === "#signal") {
       const signal = vnodeTyped.props?.signal;
       if (signal && isSignal(signal)) {
-        return renderNode(signal.value, parentElement);
+        return renderNode(signal.value, parentElement, parentContext);
       }
       return document.createTextNode("");
     }
@@ -420,7 +432,7 @@ function renderNode(vnode: any, parentElement: Element): Node | null {
     if (vnodeTyped.type === Fragment) {
       const fragment = document.createDocumentFragment();
       for (const child of vnodeTyped.children) {
-        const node = renderNode(child, parentElement);
+        const node = renderNode(child, parentElement, parentContext);
         if (node) {
           fragment.appendChild(node);
         }
@@ -429,8 +441,13 @@ function renderNode(vnode: any, parentElement: Element): Node | null {
     }
 
     if (typeof vnodeTyped.type === "function") {
-      const result = vnodeTyped.type(vnodeTyped.props || {});
-      return renderNode(result, parentElement);
+      const props =
+        vnodeTyped.children && vnodeTyped.children.length > 0
+          ? { ...vnodeTyped.props, children: vnodeTyped.children }
+          : vnodeTyped.props || {};
+      const currentContext = resolveComponentContext(vnodeTyped.type, props, parentContext);
+      const result = vnodeTyped.type(props, createComponentAPI(currentContext));
+      return renderNode(result, parentElement, currentContext);
     }
 
     if (typeof vnodeTyped.type === "string") {
@@ -445,7 +462,7 @@ function renderNode(vnode: any, parentElement: Element): Node | null {
 
       // Render children
       for (const child of vnodeTyped.children) {
-        const childNode = renderNode(child, element);
+        const childNode = renderNode(child, element, parentContext);
         if (childNode) {
           element.appendChild(childNode);
         }
@@ -456,6 +473,35 @@ function renderNode(vnode: any, parentElement: Element): Node | null {
   }
 
   return null;
+}
+
+function resolveComponentContext(
+  component: Function,
+  props: Record<string, any>,
+  parentContext: ContextMap,
+): ContextMap {
+  const isContextProvider = (component as any).__isContextProvider;
+  if (!isContextProvider) {
+    return parentContext;
+  }
+
+  const currentContext = new Map(parentContext);
+  const provide = (props as any).provide;
+  if (!provide) {
+    return currentContext;
+  }
+
+  const isSingle = provide.length === 2 && typeof provide[0] === "symbol";
+  if (isSingle) {
+    const [context, value] = provide;
+    currentContext.set(context, value);
+    return currentContext;
+  }
+
+  for (const [context, value] of provide) {
+    currentContext.set(context, value);
+  }
+  return currentContext;
 }
 
 /**
@@ -936,7 +982,7 @@ export function hydrateAllIslands(
 
       // Hydrate in-place: attach event listeners, signal subscriptions,
       // and refs while preserving existing DOM and SSR-rendered children.
-      hydrateNode(vnode, element, element.parentNode as Element);
+      hydrateNode(vnode, element, element.parentNode as Element, new Map());
       element.setAttribute("data-hydrated", "true");
     } catch (error) {
       // SSR content is preserved — the island stays as static HTML
@@ -1013,7 +1059,7 @@ export function hydrateAllIslands(
           props,
           children: [],
         };
-        hydrateNode(vnode, container, container);
+        hydrateNode(vnode, container, container, new Map());
 
         // Move hydrated nodes back between markers
         while (container.firstChild) {

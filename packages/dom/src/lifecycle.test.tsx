@@ -1,17 +1,17 @@
 /** @jsxImportSource @semajsx/dom */
 import { describe, it, expect, vi } from "vitest";
 import { signal } from "@semajsx/signal";
-import { when, type ComponentAPI } from "@semajsx/core";
+import { when, type ComponentAPI, type RuntimeComponent } from "@semajsx/core";
 import { render } from "./render";
 
 describe("ctx.onCleanup", () => {
   it("fires registered callback on unmount", () => {
     const cleanedUp = vi.fn();
 
-    function MyComponent(_props: Record<string, never>, ctx?: ComponentAPI) {
-      ctx?.onCleanup(cleanedUp);
+    const MyComponent: RuntimeComponent<Record<string, never>> = (_props, ctx) => {
+      ctx.onCleanup(cleanedUp);
       return <div>hello</div>;
-    }
+    };
 
     const container = document.createElement("div");
     const { unmount } = render(<MyComponent />, container);
@@ -24,12 +24,12 @@ describe("ctx.onCleanup", () => {
   it("fires multiple callbacks in registration order", () => {
     const order: number[] = [];
 
-    function MyComponent(_props: Record<string, never>, ctx?: ComponentAPI) {
-      ctx?.onCleanup(() => order.push(1));
-      ctx?.onCleanup(() => order.push(2));
-      ctx?.onCleanup(() => order.push(3));
+    const MyComponent: RuntimeComponent<Record<string, never>> = (_props, ctx) => {
+      ctx.onCleanup(() => order.push(1));
+      ctx.onCleanup(() => order.push(2));
+      ctx.onCleanup(() => order.push(3));
       return <div>hello</div>;
-    }
+    };
 
     const container = document.createElement("div");
     const { unmount } = render(<MyComponent />, container);
@@ -42,19 +42,19 @@ describe("ctx.onCleanup", () => {
     const parentCleanup = vi.fn();
     const childCleanup = vi.fn();
 
-    function Child(_props: Record<string, never>, ctx?: ComponentAPI) {
-      ctx?.onCleanup(childCleanup);
+    const Child: RuntimeComponent<Record<string, never>> = (_props, ctx) => {
+      ctx.onCleanup(childCleanup);
       return <span>child</span>;
-    }
+    };
 
-    function Parent(_props: Record<string, never>, ctx?: ComponentAPI) {
-      ctx?.onCleanup(parentCleanup);
+    const Parent: RuntimeComponent<Record<string, never>> = (_props, ctx) => {
+      ctx.onCleanup(parentCleanup);
       return (
         <div>
           <Child />
         </div>
       );
-    }
+    };
 
     const container = document.createElement("div");
     const { unmount } = render(<Parent />, container);
@@ -72,10 +72,10 @@ describe("ctx.onCleanup", () => {
     const cleanedUp = vi.fn();
     const show = signal(true);
 
-    function Conditional(_props: Record<string, never>, ctx?: ComponentAPI) {
-      ctx?.onCleanup(cleanedUp);
+    const Conditional: RuntimeComponent<Record<string, never>> = (_props, ctx) => {
+      ctx.onCleanup(cleanedUp);
       return <span>visible</span>;
-    }
+    };
 
     function App() {
       return (
@@ -103,12 +103,12 @@ describe("ctx.onCleanup", () => {
     const cleanedUp = vi.fn();
     let capturedCtx: ComponentAPI | undefined;
 
-    async function AsyncComponent(_props: Record<string, never>, ctx?: ComponentAPI) {
+    const AsyncComponent: RuntimeComponent<Record<string, never>> = async (_props, ctx) => {
       capturedCtx = ctx;
       await Promise.resolve();
-      ctx?.onCleanup(cleanedUp);
+      ctx.onCleanup(cleanedUp);
       return <div>async</div>;
-    }
+    };
 
     const container = document.createElement("div");
     const { unmount } = render(<AsyncComponent />, container);
@@ -117,6 +117,27 @@ describe("ctx.onCleanup", () => {
     expect(capturedCtx).toBeDefined();
     unmount();
 
+    expect(cleanedUp).toHaveBeenCalledOnce();
+  });
+
+  it("runs late cleanup registration immediately after unmount", async () => {
+    const cleanedUp = vi.fn();
+    let capturedCtx: ComponentAPI | undefined;
+
+    const AsyncComponent: RuntimeComponent<Record<string, never>> = async (_props, ctx) => {
+      capturedCtx = ctx;
+      await Promise.resolve();
+      return <div>async</div>;
+    };
+
+    const container = document.createElement("div");
+    const { unmount } = render(<AsyncComponent />, container);
+
+    await Promise.resolve();
+    unmount();
+    capturedCtx?.onCleanup(cleanedUp);
+
+    expect(capturedCtx?.isDisposed()).toBe(true);
     expect(cleanedUp).toHaveBeenCalledOnce();
   });
 });
