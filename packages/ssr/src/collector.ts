@@ -1,7 +1,8 @@
 import type { VNode } from "@semajsx/core";
 import type { IslandMetadata } from "./shared/types";
 import { isIslandVNode, getIslandMetadata } from "./client/island";
-import { Fragment } from "@semajsx/core";
+import { Fragment, createComponentAPI } from "@semajsx/core";
+import type { ContextMap } from "@semajsx/core";
 
 /**
  * Island collector - traverses VNode tree and collects island metadata
@@ -16,14 +17,14 @@ export class IslandCollector {
   collect(vnode: VNode): IslandMetadata[] {
     this.islands = [];
     this.counter = 0;
-    this.traverse(vnode);
+    this.traverse(vnode, new Map());
     return this.islands;
   }
 
   /**
    * Traverse VNode tree and collect islands
    */
-  private traverse(vnode: VNode | null | undefined): void {
+  private traverse(vnode: VNode | null | undefined, parentContext: ContextMap): void {
     if (!vnode) return;
 
     // Check if this VNode is an island
@@ -44,7 +45,7 @@ export class IslandCollector {
     // Handle fragments
     if (vnode.type === Fragment) {
       for (const child of vnode.children) {
-        this.traverse(child);
+        this.traverse(child, parentContext);
       }
       return;
     }
@@ -52,10 +53,15 @@ export class IslandCollector {
     // Handle function components - need to render them first
     if (typeof vnode.type === "function") {
       try {
-        const result = vnode.type(vnode.props || {});
+        const props =
+          vnode.children && vnode.children.length > 0
+            ? { ...vnode.props, children: vnode.children }
+            : vnode.props || {};
+        const currentContext = resolveComponentContext(vnode.type, props, parentContext);
+        const result = vnode.type(props, createComponentAPI(currentContext));
         // If result is a VNode, traverse it
         if (result && typeof result === "object" && "type" in result) {
-          this.traverse(result as VNode);
+          this.traverse(result as VNode, currentContext);
         }
       } catch (error) {
         console.warn("Error rendering component during collection:", error);
@@ -66,7 +72,7 @@ export class IslandCollector {
     // Traverse children
     if (vnode.children && Array.isArray(vnode.children)) {
       for (const child of vnode.children) {
-        this.traverse(child);
+        this.traverse(child, parentContext);
       }
     }
   }
@@ -126,6 +132,35 @@ export class IslandCollector {
 
     return serialized;
   }
+}
+
+function resolveComponentContext(
+  component: Function,
+  props: Record<string, any>,
+  parentContext: ContextMap,
+): ContextMap {
+  const isContextProvider = (component as any).__isContextProvider;
+  if (!isContextProvider) {
+    return parentContext;
+  }
+
+  const currentContext = new Map(parentContext);
+  const provide = (props as any).provide;
+  if (!provide) {
+    return currentContext;
+  }
+
+  const isSingle = provide.length === 2 && typeof provide[0] === "symbol";
+  if (isSingle) {
+    const [context, value] = provide;
+    currentContext.set(context, value);
+    return currentContext;
+  }
+
+  for (const [context, value] of provide) {
+    currentContext.set(context, value);
+  }
+  return currentContext;
 }
 
 /**

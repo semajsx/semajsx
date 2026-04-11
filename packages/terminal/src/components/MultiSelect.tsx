@@ -1,6 +1,6 @@
 /** @jsxImportSource @semajsx/terminal */
 import { signal, computed, type ReadableSignal } from "@semajsx/signal";
-import type { ComponentAPI, JSXNode } from "@semajsx/core";
+import type { JSXNode, RuntimeComponent } from "@semajsx/core";
 import { onKeypress } from "../keyboard";
 
 /**
@@ -52,7 +52,7 @@ export interface MultiSelectProps {
  * />
  * ```
  */
-export function MultiSelect(
+export const MultiSelect: RuntimeComponent<MultiSelectProps> = (
   {
     options,
     onConfirm,
@@ -64,8 +64,8 @@ export function MultiSelect(
     focusColor = "cyan",
     selectedColor = "green",
   }: MultiSelectProps,
-  ctx?: ComponentAPI,
-): JSXNode {
+  ctx,
+): JSXNode => {
   const focusIndex = signal(0);
   const selectedSet = signal<Set<string>>(new Set());
 
@@ -93,7 +93,7 @@ export function MultiSelect(
   });
 
   // Ensure listener is cleaned up on unmount even if user doesn't press Enter/Escape
-  ctx?.onCleanup(unsub);
+  ctx.onCleanup(unsub);
 
   const items = options.map((option, i) => {
     const isFocused = computed(focusIndex, (idx) => idx === i);
@@ -129,4 +129,4 @@ export function MultiSelect(
       </text>
     </box>
   );
-}
+};

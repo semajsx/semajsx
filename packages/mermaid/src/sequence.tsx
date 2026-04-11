@@ -1,5 +1,5 @@
 /** @jsxImportSource @semajsx/dom */
-import type { ComponentAPI, JSXNode } from "@semajsx/core";
+import type { JSXNode, RuntimeComponent } from "@semajsx/core";
 import { unwrap } from "@semajsx/signal";
 import { svgRoot } from "./root.style";
 import { Defs } from "./components/defs";
@@ -19,9 +19,9 @@ import type {
   PositionedParticipant,
 } from "./types";
 
-export function Sequence(props: SequenceProps, ctx?: ComponentAPI): JSXNode {
-  const engine: LayoutEngine = ctx?.inject(MermaidLayout) ?? builtinLayout;
-  const renderers: RendererMap = ctx?.inject(MermaidRenderers) ?? defaultRenderers;
+export const Sequence: RuntimeComponent<SequenceProps> = (props, ctx): JSXNode => {
+  const engine: LayoutEngine = ctx.inject(MermaidLayout) ?? builtinLayout;
+  const renderers: RendererMap = ctx.inject(MermaidRenderers) ?? defaultRenderers;
 
   const graphData = unwrap(props.graph);
   const positioned = engine.sequence(graphData);
@@ -86,4 +86,4 @@ export function Sequence(props: SequenceProps, ctx?: ComponentAPI): JSXNode {
       ))}
     </svg>
   );
-}
+};

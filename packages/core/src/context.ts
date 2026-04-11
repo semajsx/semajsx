@@ -9,6 +9,11 @@ import type { ComponentAPI, Context as ContextType, ContextProps, VNode } from "
 // Context map type - stores context values for current render environment
 export type ContextMap = Map<symbol, any>;
 
+export interface ComponentRuntimeState {
+  cleanupCallbacks: Array<() => void>;
+  disposed: boolean;
+}
+
 /**
  * Create a new Context (returns a typed Symbol)
  *
@@ -69,14 +74,21 @@ export function Context(props: ContextProps): VNode {
  */
 export function createComponentAPI(
   contextMap: ContextMap,
-  cleanupCallbacks: Array<() => void> = [],
+  runtimeState: ComponentRuntimeState = { cleanupCallbacks: [], disposed: false },
 ): ComponentAPI {
   return {
     inject<T>(context: ContextType<T>): T | undefined {
       return contextMap.get(context);
     },
+    isDisposed(): boolean {
+      return runtimeState.disposed;
+    },
     onCleanup(fn: () => void): void {
-      cleanupCallbacks.push(fn);
+      if (runtimeState.disposed) {
+        fn();
+        return;
+      }
+      runtimeState.cleanupCallbacks.push(fn);
     },
   };
 }

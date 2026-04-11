@@ -20,7 +20,13 @@ export const Forward: symbol = Symbol.for("semajsx.forward");
  * VNode types
  * - The runtime VNode tree always resolves to these `type` values
  */
-export type VNodeType = string | Component<any> | typeof Fragment | typeof Portal | typeof Forward;
+export type VNodeType =
+  | string
+  | Component<any>
+  | RuntimeComponent<any>
+  | typeof Fragment
+  | typeof Portal
+  | typeof Forward;
 
 /**
  * VNode: The basic unit of the runtime render tree
@@ -60,6 +66,12 @@ export type JSXNode =
 export type Component<P = any> = (props: P, ctx?: ComponentAPI) => JSXNode;
 
 /**
+ * RuntimeComponent type
+ * - Explicitly marks components that require renderer-provided runtime APIs
+ */
+export type RuntimeComponent<P = any> = (props: P, ctx: ComponentAPI) => JSXNode;
+
+/**
  * ComponentAPI - Runtime API available to components via second parameter
  */
 export interface ComponentAPI {
@@ -69,6 +81,14 @@ export interface ComponentAPI {
    * @returns The current value of the context, or undefined if not provided
    */
   inject<T>(context: Context<T>): T | undefined;
+  /**
+   * Whether the owning component instance has already been disposed.
+   */
+  isDisposed(): boolean;
+  /**
+   * Register cleanup work for the current component instance.
+   * If the component is already disposed, the cleanup runs immediately.
+   */
   onCleanup(fn: () => void): void;
 }
 

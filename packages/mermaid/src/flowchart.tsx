@@ -1,5 +1,5 @@
 /** @jsxImportSource @semajsx/dom */
-import type { ComponentAPI, JSXNode } from "@semajsx/core";
+import type { JSXNode, RuntimeComponent } from "@semajsx/core";
 import { unwrap } from "@semajsx/signal";
 import { svgRoot } from "./root.style";
 import { Defs } from "./components/defs";
@@ -20,9 +20,9 @@ import type {
   NodeShape,
 } from "./types";
 
-export function Flowchart(props: FlowchartProps, ctx?: ComponentAPI): JSXNode {
-  const engine: LayoutEngine = ctx?.inject(MermaidLayout) ?? builtinLayout;
-  const renderers: RendererMap = ctx?.inject(MermaidRenderers) ?? defaultRenderers;
+export const Flowchart: RuntimeComponent<FlowchartProps> = (props, ctx): JSXNode => {
+  const engine: LayoutEngine = ctx.inject(MermaidLayout) ?? builtinLayout;
+  const renderers: RendererMap = ctx.inject(MermaidRenderers) ?? defaultRenderers;
 
   const graphData = unwrap(props.graph);
   const positioned = engine.flowchart(graphData);
@@ -61,4 +61,4 @@ export function Flowchart(props: FlowchartProps, ctx?: ComponentAPI): JSXNode {
       })}
     </svg>
   );
-}
+};

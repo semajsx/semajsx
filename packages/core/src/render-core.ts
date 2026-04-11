@@ -3,7 +3,7 @@ import { Fragment, Forward, Portal } from "./types";
 import { isSignal } from "@semajsx/signal";
 import { isVNode } from "./vnode";
 import { resource, stream } from "./helpers";
-import { type ContextMap, createComponentAPI } from "./context";
+import { type ComponentRuntimeState, type ContextMap, createComponentAPI } from "./context";
 import { normalizeChildrenProp, normalizeComponentResult } from "./component";
 
 /**
@@ -576,10 +576,22 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
       }
     }
 
-    const componentCleanups: Array<() => void> = [];
+    const componentState: ComponentRuntimeState = {
+      cleanupCallbacks: [],
+      disposed: false,
+    };
 
     // Create ComponentAPI
-    const ctx = createComponentAPI(currentContext, componentCleanups);
+    const ctx = createComponentAPI(currentContext, componentState);
+
+    const disposeComponent = () => {
+      if (componentState.disposed) return;
+      componentState.disposed = true;
+      const cleanupCallbacks = componentState.cleanupCallbacks.splice(0);
+      for (const cleanup of cleanupCallbacks) {
+        cleanup();
+      }
+    };
 
     // Call component function with props and ctx
     let result;
@@ -603,11 +615,10 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
         children: [],
       };
       const rendered = renderNode(signalVNode, currentContext);
-      componentCleanups.push(...rendered.subscriptions);
       return {
         vnode,
         node: rendered.node,
-        subscriptions: componentCleanups,
+        subscriptions: [disposeComponent],
         children: [rendered],
       };
     }
@@ -626,11 +637,10 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
         children: [],
       };
       const rendered = renderNode(signalVNode, currentContext);
-      componentCleanups.push(...rendered.subscriptions);
       return {
         vnode,
         node: rendered.node,
-        subscriptions: componentCleanups,
+        subscriptions: [disposeComponent],
         children: [rendered],
       };
     }
@@ -643,13 +653,12 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
         children: [],
       };
       const rendered = renderNode(signalVNode, currentContext);
-      componentCleanups.push(...rendered.subscriptions);
       // Return node: null so collectNodes recurses into children and finds the
       // #signal rendered node, which correctly collects marker + content children.
       return {
         vnode,
         node: null,
-        subscriptions: componentCleanups,
+        subscriptions: [disposeComponent],
         children: [rendered],
       };
     }
@@ -658,12 +667,11 @@ export function createRenderer<TNode>(strategy: RenderStrategy<TNode>): {
     const componentName = Component.name || (Component as any).displayName;
     const normalizedResult = normalizeComponentResult(result, componentName);
     const rendered = renderNode(normalizedResult, currentContext);
-    componentCleanups.push(...rendered.subscriptions);
 
     return {
       vnode,
       node: rendered.node,
-      subscriptions: componentCleanups,
+      subscriptions: [disposeComponent],
       children: [rendered],
     };
   }

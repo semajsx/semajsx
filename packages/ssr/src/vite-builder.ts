@@ -145,6 +145,7 @@ export class ViteIslandBuilder {
     return `
 // Island hydration entry point: ${displayName}
 import { hydrate, markIslandHydrated } from 'semajsx/ssr/client';
+import { h } from 'semajsx';
 import * as ComponentModule from '${componentPath}';
 
 // Get the component
@@ -166,7 +167,7 @@ if (!Component) {
   } else {
     try {
       // Create VNode
-      const vnode = Component(props);
+      const vnode = h(Component, props);
 
       // Hydrate (attach interactivity to server-rendered content)
       hydrate(vnode, placeholder);
