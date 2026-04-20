@@ -11,23 +11,13 @@
   ],
   "license": "MIT",
   "author": "lidessen",
-  "files": [
-    "dist"
-  ],
   "type": "module",
-  "types": "./src/index.ts",
   "exports": {
     ".": {
       "source": "./src/index.ts",
       "default": "./dist/index.mjs"
     },
     "./package.json": "./package.json"
-  },
-  "publishConfig": {
-    "exports": {
-      ".": "./dist/index.mjs",
-      "./package.json": "./package.json"
-    }
   },
   "dependencies": {
     "@semajsx/core": "workspace:*",

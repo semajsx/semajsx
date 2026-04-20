@@ -12,12 +12,12 @@
   },
   "dependencies": {
     "@semajsx/ssg": "workspace:*",
-    "@shikijs/rehype": "^3.22.0"
+    "@shikijs/rehype": "^4.0.2"
   },
   "devDependencies": {
     "@semajsx/configs": "workspace:*",
-    "@shikijs/rehype": "^3.22.0",
+    "@shikijs/rehype": "^4.0.2",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "vite": "^8.0.9"
   }
 }

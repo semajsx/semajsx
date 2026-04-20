@@ -10,33 +10,19 @@
   ],
   "license": "MIT",
   "author": "lidessen",
-  "files": [
-    "dist"
-  ],
   "type": "module",
-  "types": "./dist/index.d.mts",
   "exports": {
     ".": "./src/index.ts",
     "./package.json": "./package.json"
   },
-  "publishConfig": {
-    "exports": {
-      ".": "./dist/index.mjs",
-      "./package.json": "./package.json"
-    }
-  },
   "scripts": {
-    "build": "tsdown",
-    "dev": "tsdown --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
-    "test:run": "vitest run",
-    "clean": "rm -rf dist"
+    "test:run": "vitest run"
   },
   "devDependencies": {
     "@semajsx/configs": "workspace:*",
-    "tsdown": "^0.20.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.4"
   }
 }
