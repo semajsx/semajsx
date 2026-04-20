@@ -6,6 +6,8 @@ This file provides guidance to Claude Code when working with this repository.
 
 SemaJSX is a lightweight, signal-based reactive JSX runtime for building modern web applications. It uses fine-grained reactivity with signals for efficient updates without virtual DOM diffing.
 
+**Before starting any work, read [design/DESIGN.md](./design/DESIGN.md)** — the one-page system skeleton. Deeper dives live in [design/DESIGN-reactivity.md](./design/DESIGN-reactivity.md) and [design/DESIGN-rendering.md](./design/DESIGN-rendering.md). This project follows a design-driven loop: if a task changes the shape (module boundaries, data flow, key mechanisms), write a proposal in [design/decisions/](./design/decisions/) before coding. Task-level blueprints live in [tasks/](./tasks/).
+
 ## Current Status (2026-02-20)
 
 ### What's Done
@@ -82,6 +84,7 @@ See [design/ROADMAP.md](./design/ROADMAP.md) for full roadmap with phases and me
 
 ### When Writing Documentation
 
+- **System-shape change?** → Proposal in `design/decisions/` first; update `design/DESIGN*.md` on adoption
 - **Designing a feature?** → Create design doc in `design/designs/`
 - **Teaching users?** → Add tutorial in `apps/docs/content/guides/`
 - **Documenting an API?** → Update package README or `apps/docs/content/reference/`
