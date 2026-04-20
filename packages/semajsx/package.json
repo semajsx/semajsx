@@ -17,6 +17,9 @@
     "url": "https://github.com/semajsx/semajsx",
     "directory": "packages/semajsx"
   },
+  "bin": {
+    "semajsx": "./dist/cli/index.mjs"
+  },
   "files": [
     "dist"
   ],
@@ -38,6 +41,10 @@
     "./chat": {
       "source": "./src/chat/index.ts",
       "default": "./dist/chat/index.mjs"
+    },
+    "./cli": {
+      "source": "./src/cli/index.ts",
+      "default": "./dist/cli/index.mjs"
     },
     "./dom": {
       "source": "./src/dom/index.ts",
@@ -128,6 +135,7 @@
       "./blocks": "./dist/blocks/index.mjs",
       "./blocks/renderers": "./dist/blocks/renderers.mjs",
       "./chat": "./dist/chat/index.mjs",
+      "./cli": "./dist/cli/index.mjs",
       "./dom": "./dist/dom/index.mjs",
       "./dom/jsx-dev-runtime": "./dist/dom/jsx-dev-runtime.mjs",
       "./dom/jsx-runtime": "./dist/dom/jsx-runtime.mjs",
@@ -165,18 +173,19 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "ansi-escapes": "^7.2.0",
+    "ansi-escapes": "^7.3.0",
+    "cac": "^7.0.0",
     "chalk": "^5.6.2",
     "cli-boxes": "^4.0.1",
-    "glob": "^13.0.0",
+    "glob": "^13.0.6",
     "gray-matter": "^4.0.3",
-    "lightningcss": "^1.31.1",
-    "lucide": "^0.575.0",
-    "minimatch": "^10.1.1",
+    "lightningcss": "^1.32.0",
+    "lucide": "^1.8.0",
+    "minimatch": "^10.2.5",
     "remark-gfm": "^4.0.1",
-    "slice-ansi": "^7.1.2",
-    "string-width": "^8.1.0",
-    "wrap-ansi": "^9.0.2",
+    "slice-ansi": "^9.0.0",
+    "string-width": "^8.2.0",
+    "wrap-ansi": "^10.0.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -196,14 +205,14 @@
     "@semajsx/terminal": "workspace:*",
     "@semajsx/utils": "workspace:*",
     "@types/bun": "latest",
-    "@types/node": "^25.0.10",
-    "@vitest/browser": "^4.0.18",
-    "@vitest/browser-playwright": "^4.0.18",
-    "playwright": "^1.58.0",
-    "tsdown": "^0.20.1",
+    "@types/node": "^25.6.0",
+    "@vitest/browser": "^4.1.4",
+    "@vitest/browser-playwright": "^4.1.4",
+    "playwright": "^1.59.1",
+    "tsdown": "^0.21.9",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1",
-    "vitest": "^4.0.18"
+    "vite": "^8.0.9",
+    "vitest": "^4.1.4"
   },
   "peerDependencies": {
     "@mdx-js/mdx": "^3.1.1",

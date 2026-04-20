@@ -26,12 +26,16 @@ export default defineConfig({
     "src/blocks/renderers.ts",
     "src/chat/index.ts",
     "src/icons/index.ts",
+    "src/cli/index.ts",
   ],
   format: ["esm"],
   dts: true,
   clean: true,
   sourcemap: true,
   splitting: true,
+  outputOptions: {
+    banner: (chunk) => (chunk.fileName === "cli/index.mjs" ? "#!/usr/bin/env node\n" : ""),
+  },
   // Bundle all @semajsx/* workspace packages into the output.
   // Everything in dependencies/peerDependencies is auto-externalized by tsdown.
   noExternal: [/^@semajsx\//],
