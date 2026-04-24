@@ -1,5 +1,23 @@
 # semajsx
 
+## 0.12.0
+
+### Minor Changes
+
+- [#145](https://github.com/semajsx/semajsx/pull/145) [`8955087`](https://github.com/semajsx/semajsx/commit/8955087e5b0bfd0c15d7141031808706f6a4316f) Thanks [@lidessen](https://github.com/lidessen)! - Add `semajsx preview` CLI — boot a Vite dev server and mount any
+  component's default (or sole named) export with zero config:
+
+  ```bash
+  semajsx ./Component.tsx
+  ```
+
+  See [design/rfcs/009-cli-preview.md](./design/rfcs/009-cli-preview.md)
+  for the full shape.
+
+  Also bumps most major dependencies across the monorepo (TypeScript 6
+  and `@typescript/native-preview` stay pinned pending a separate
+  ambient-type regression fix).
+
 ## 0.11.0
 
 ### Minor Changes
